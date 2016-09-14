@@ -45,9 +45,7 @@
     "redis": "^2.6.2",
     "sendgrid": "^4.1.0",
     "sequelize": "^3.24.3",
-    "winston": "^2.2.0"
-  },
-  "devDependencies": {
+    "winston": "^2.2.0",
     "deepmerge": "^0.2.10"
   }
 }
