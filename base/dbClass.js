@@ -10,9 +10,9 @@ class Base {
 			page: 1,
 			perPage: 10
 		}
-		this.mailClient = settings.mailClient
-		this.cfg = settings.cfg
-		this.logger = settings.logger
+		this.mailClient = mailClient
+		this.cfg = cfg
+		this.logger = logger
 	}
 
 	associate(components) {
