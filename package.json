@@ -1,0 +1,53 @@
+{
+  "name": "ramster",
+  "version": "0.1.0",
+  "description": "A standalone NodeJS MVC boilerplate.",
+  "main": "index.js",
+  "scripts": {
+    "test-servers": "node test/servers.js",
+    "test-devservers": "node test/devservers.js",
+    "test-builds": "node test/builds.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RazorDude/ramster.git"
+  },
+  "keywords": [
+    "nodejs",
+    "mvc",
+    "boilerplate",
+    "ramster"
+  ],
+  "author": "Rumen Rumenov <mmetalonlyy@gmail.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/RazorDude/ramster/issues"
+  },
+  "homepage": "https://github.com/RazorDude/ramster#readme",
+  "dependencies": {
+    "body-parser": "^1.15.2",
+    "co": "^4.6.0",
+    "co-express": "^1.2.2",
+    "connect-multiparty": "^2.0.0",
+    "connect-redis": "^3.1.0",
+    "cookie-parser": "^1.4.3",
+    "csv": "^1.1.0",
+    "express": "^4.14.0",
+    "express-session": "^1.14.1",
+    "jsonwebtoken": "^7.1.9",
+    "moment": "^2.15.0",
+    "morgan": "^1.7.0",
+    "node-xlsx": "^0.7.2",
+    "passport": "^0.3.2",
+    "pg": "^6.1.0",
+    "pretty-data": "^0.40.0",
+    "pug": "^2.0.0-beta6",
+    "redis": "^2.6.2",
+    "sendgrid": "^4.1.0",
+    "sequelize": "^3.24.3",
+    "winston": "^2.2.0"
+  },
+  "devDependencies": {
+    "deepmerge": "^0.2.10"
+  }
+}
