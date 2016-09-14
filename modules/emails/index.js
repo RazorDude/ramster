@@ -6,13 +6,14 @@ let sendgrid = require('sendgrid'),
 
 let emails = class Emails {
     constructor(cfg) {
-        this.sendgrid = sendgrid(cfg.emails.sendgridApiKey)
-        this.sender = cfg.emails.emailSender
+		this.cfg = cfg
+        this.sendgrid = sendgrid(this.cfg.emails.sendgridApiKey)
+        this.sender = this.cfg.emails.emailSender
     }
 
     sendEmail({to, sender, subject, templateName, fields}) {
         return new Promise((res, rej) => {
-            let template = (pug.compileFile(path.join(__dirname, `./templates/${data.templateName}.pug`), {}))(data.fields || {})
+            let template = (pug.compileFile(path.join(this.cfg.emails.templatesPath, `${data.templateName}.pug`), {}))(data.fields || {})
             this.sendgrid.send({
                 to: data.to,
                 from: this.sender,
