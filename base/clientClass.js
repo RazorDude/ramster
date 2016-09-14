@@ -41,10 +41,10 @@ class Base {
 			let fileName = inputFileName,
 				extNameRegex = new RegExp(/\.[^/.]+$/),
 				extName = extNameRegex.exec(fileName),
-				inputFileData = fs.readFileSync(path.join(locals.cfg.common.uploadPath, inputFileName)),
+				inputFileData = fs.readFileSync(path.join(locals.cfg.globalUploadPath, inputFileName)),
 				parsedInputFileData = null,
 				template = {
-					fileData: fs.readFileSync(path.join(locals.cfg.common.storagePath, `/importTemplates/${instance.componentName}.csv`)),
+					fileData: fs.readFileSync(path.join(locals.cfg.globalStoragePath, `/importTemplates/${instance.componentName}.csv`)),
 					columns: []
 				},
 				matchesTemplate = true,
