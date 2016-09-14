@@ -1,6 +1,7 @@
 'use strict'
 
-let logger = require('./modules/errorLogger'),
+let csvPromise = require('./modules/csvPromise'),
+	logger = require('./modules/errorLogger'),
 	emails = require('./modules/emails'),
 	generalStore = require('./modules/generalStore'),
 	tokenManager = require('./modules/tokenManager'),
@@ -373,5 +374,6 @@ module.exports = {
 	Core,
 	baseDBClass,
 	baseClientClass,
-	baseApiClass
+	baseApiClass,
+	csvPromise: new csvPromise()
 }
