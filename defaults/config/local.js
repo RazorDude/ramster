@@ -7,6 +7,9 @@ let hostAddress = '127.0.0.1',
 	},
 	sampleApiModule = {
 		port: 669
+	},
+	migrations = {
+		port: 700
 	}
 
 module.exports = {
@@ -38,5 +41,11 @@ module.exports = {
 		jwt: {
 			secret: 'jwtsecret'
 		}
+	},
+	migrations: {
+		serverPort: migrations.port,
+		hostAddress,
+		host: `http://127.0.0.1:${migrations.port}`,
+		passKey: 'SUPERSECRET'
 	}
 }

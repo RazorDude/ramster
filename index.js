@@ -5,6 +5,7 @@ let csvPromise = require('./modules/csvPromise'),
 	emails = require('./modules/emails'),
 	generalStore = require('./modules/generalStore'),
 	tokenManager = require('./modules/tokenManager'),
+	migrations = require('./modules/migrations'),
 	Sequelize = require('sequelize'),
 	express = require('express'),
 	wrap = require('co-express'),
@@ -82,6 +83,11 @@ class Core {
 
 			this.modules.db.sequelize.sync()
 
+			if (!this.cfg.migrations) {
+				this.cfg.migrations = defaultConfig.migrations
+			}
+			this.migrations = new migrations(this.cfg, this.modules.db)
+
 
 			// ####### ------------ LOAD THE CLIENT SERVER MODULES ---------- ####### \\
 			this.modules.clients = {}
@@ -124,14 +130,15 @@ class Core {
 			modulesDirPath = this.cfg.apiModulesPath
 			modulesDirData = fs.readdirSync(modulesDirPath)
 			settings = {}
+
 			modulesDirData.forEach((moduleDir, index) => {
-				if (moduleDir.indexOf('.') === -1) {
+				if ((moduleDir !== 'migrations') && (moduleDir.indexOf('.') === -1)) {
 					let moduleDirPath = path.join(modulesDirPath, moduleDir),
 						moduleDirData = fs.readdirSync(moduleDirPath),
 						moduleData = {},
 						moduleSettings = {}
 
-					try{
+					try {
 						moduleSettings = require(path.join(moduleDirPath, 'settings'))
 					} catch (e) {
 						console.log(`Could not load the settings for API module ${moduleDir}. Using defaults.`)
@@ -364,6 +371,13 @@ class Core {
 					console.log(`[${moduleName} API] Configuration profile:`, this.cfg.name)
 				})
 			}
+
+			let migrationsApiServer = http.createServer(this.migrations.app)
+			migrationsApiServer.listen(this.cfg.migrations.serverPort, () => {
+				console.log(`[Migrations Module API] Server started.`)
+				console.log(`[Migrations Module API] Port:`, this.cfg.migrations.serverPort)
+				console.log(`[Migrations Module API] Configuration profile:`, this.cfg.name)
+			})
 		} catch (e) {
 			this.logger.error(e)
 		}
