@@ -2,7 +2,8 @@
 
 let sendgrid = require('sendgrid'),
     pug = require('pug'),
-    path = require('path')
+    path = require('path'),
+	co = require('co')
 
 let emails = class Emails {
     constructor(cfg) {
@@ -12,33 +13,51 @@ let emails = class Emails {
     }
 
     sendEmail({to, subject, templateName, fields}) {
-        let template = (pug.compileFile(path.join(this.cfg.emails.templatesPath, `${templateName}.pug`), {}))(fields || {})
-        return this.sendgrid.API(this.sendgrid.emptyRequest({
-			method: 'POST',
-		  	path: '/v3/mail/send',
-			body: {
-				personalizations: [
-					{
-						to: [
-							{
-								email: to,
-							},
-						],
-						bcc: this.cfg.emails.bcc,
-						subject: subject
-					}
-				],
-				from: {
-					email: this.sender,
-				},
-				content: [
-					{
-					    type: 'text/html',
-					    value: template,
-					}
-				]
+		let instance = this
+		return co(function*(){
+	        let template = (pug.compileFile(path.join(instance.cfg.emails.templatesPath, `${templateName}.pug`), {}))(fields || {}),
+				receivers = [],
+				bccs = []
+
+			if (to instanceof Array) {
+				to.forEach((el, i) => {
+					receivers.push({email: el})
+				})
+			} else {
+				receivers.push({email: to})
 			}
-		}))
+
+			if (instance.cfg.emails.bcc instanceof Array) {
+				instance.cfg.emails.bcc.forEach((el, i) => {
+					bccs.push({email: el})
+				})
+			} else {
+				bccs.push({email: instance.cfg.emails.bcc})
+			}
+
+			return yield instance.sendgrid.API(instance.sendgrid.emptyRequest({
+				method: 'POST',
+			  	path: '/v3/mail/send',
+				body: {
+					personalizations: [
+						{
+							to: receivers,
+							bcc: bccs,
+							subject: subject
+						}
+					],
+					from: {
+						email: instance.sender,
+					},
+					content: [
+						{
+						    type: 'text/html',
+						    value: template,
+						}
+					]
+				}
+			}))
+		})
     }
 }
 module.exports = emails
