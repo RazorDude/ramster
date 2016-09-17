@@ -53,7 +53,7 @@ class Migrations {
 		this.router.get('/generateSeed', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.generateSeed({
-					seedFileName: req.query.seedFileName && decodeURIComponent(req.query.seedFileName) || instance.config.migrations.defaultSeedfileName
+					seedFile: req.query.seedFile && decodeURIComponent(req.query.seedFile) || instance.config.migrations.defaultSeedfileName
 				})})
 			} catch (error) {
 				req.locals = {error}
@@ -286,21 +286,22 @@ class Migrations {
 		})
 	}
 
-	generateSeed({seedFileName}) {
+	generateSeed({seedFile}) {
 		let instance = this
 		return co(function*() {
+			console.log(instance.config.migrations.seedFilesPath)
 			let seed = JSON.stringify(yield instance.getFullTableData()),
 				now = new Date().getTime(),
-				oldFilePath = path.join(instance.config.migrations.seedfilesPath, `${seedFileName}_${now}.json`)
+				oldFilePath = path.join(instance.config.migrations.seedFilesPath, `${seedFile}_${now}.json`)
 			try {
 				//write a backup copy to preserve the old seed as history, then to the file that will be used for seeding
 				let fileDescriptor = yield fs.open(oldFilePath, 'w')
-				yield fs.write(fileDescriptor, (yield fs.readFile(path.join(instance.config.migrations.seedfilesPath, `${seedFileName}.json`))).toString())
+				yield fs.write(fileDescriptor, (yield fs.readFile(path.join(instance.config.migrations.seedFilesPath, `${seedFile}.json`))).toString())
 				yield fs.close(fileDescriptor)
 			} catch (e) {
 				yield fs.unlink(oldFilePath)
 			}
-			let newFileDescriptor = yield fs.open(path.join(instance.config.migrations.seedfilesPath, `${seedFileName}.json`), 'w'),
+			let newFileDescriptor = yield fs.open(path.join(instance.config.migrations.seedFilesPath, `${seedFile}.json`), 'w'),
 			 	result = yield fs.write(newFileDescriptor, seed)
 			yield fs.close(newFileDescriptor)
 			return result
