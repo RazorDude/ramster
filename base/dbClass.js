@@ -207,6 +207,12 @@ class Base {
 					if (element.associatedModel) {
 						searchHolder = relSearch[element.associatedModel]
 						field = element.associatedModelField
+						if (element.nestedInclude) {
+							if (!searchHolder.nestedIncludeFields) {
+								searchHolder.nestedIncludeFields = {}
+							}
+							searchHolder = searchHolder.nestedIncludeFields
+						}
 					}
 
 					if ((typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')) {
@@ -257,17 +263,32 @@ class Base {
 			//assemble the join query
 			instance.relReadKeys.forEach((key, index) => {
 				if (data[key]) {
-					let thisInclude = {}
+					let thisInclude = {},
+						relS = relSearch[key]
 					for (let iKey in rel[key].include) {
 						thisInclude[iKey] = rel[key].include[iKey]
 					}
 
 					if (Object.keys(relSearch[key]).length > 0) {
 						if (!thisInclude.where) {
-							thisInclude.where = relSearch[key]
+							thisInclude.where = relS
 						} else {
-							for (let sKey in relSearch[key]) {
-								thisInclude.where[sKey] = relSearch[key][sKey]
+							for (let sKey in relS) {
+								thisInclude.where[sKey] = relS[sKey]
+							}
+						}
+
+						if (thisInclude.nestedIncludeFields) {
+							delete thisInclude.nestedIncludeFields
+							for (let sKey in relSearch.nestedIncludeFields) {
+								let whereClause = thisInclude.include.where
+								if (!whereClause) {
+									whereClause = relS.nestedIncludeFields
+								} else {
+									for (let sKey in relS.nestedIncludeFields) {
+										whereClause[sKey] = relS.nestedIncludeFields[sKey]
+									}
+								}
 							}
 						}
 					}
