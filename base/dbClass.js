@@ -262,7 +262,7 @@ class Base {
 
 			//assemble the join query
 			instance.relReadKeys.forEach((key, index) => {
-				if (data[key]) {
+				if (data[key] || relSearch[key]) {
 					let thisInclude = {},
 						relS = relSearch[key]
 					for (let iKey in rel[key].include) {
