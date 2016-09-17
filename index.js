@@ -98,7 +98,7 @@ class Core {
 					let moduleDirPath = path.join(modulesDirPath, moduleDir),
 						moduleDirData = fs.readdirSync(moduleDirPath),
 						moduleData = {},
-						moduleSettings = this.cfg[moduleName]
+						moduleSettings = this.cfg[moduleDir]
 
 					moduleDirData.forEach((componentDir, index) => {
 						if (componentDir.indexOf('.') === -1) {
@@ -127,7 +127,7 @@ class Core {
 					let moduleDirPath = path.join(modulesDirPath, moduleDir),
 						moduleDirData = fs.readdirSync(moduleDirPath),
 						moduleData = {},
-						moduleSettings = this.cfg[moduleName]
+						moduleSettings = this.cfg[moduleDir]
 
 					moduleDirData.forEach((componentDir, index) => {
 						if (componentDir.indexOf('.') === -1) {
