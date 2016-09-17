@@ -24,7 +24,16 @@ let deepmerge = require('deepmerge'),
 			seedingOrder: [],
 		},
 		sampleClientModule: {
-			publicPath: path.join(__dirname, '../../../../public/sampleClientModule')
+			publicPath: path.join(__dirname, '../../../../public/sampleClientModule'),
+			anonymousAccessRoutes: ['/', '/login'],
+			unathorizedRedirectRoute: '/',
+			notFoundRedirectRoutes: {
+				default: '/',
+				authenticated: '/'
+			}
+		},
+		samleApiModule: {
+			anonymousAccessRoutes: ['/', '/login']
 		},
 		migrations: {
 			baseMigrationsPath: migrations.baseMigrationsPath,

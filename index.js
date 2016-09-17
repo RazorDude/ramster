@@ -24,8 +24,6 @@ let csvPromise = require('./modules/csvPromise'),
 	moment = require('moment'),
 	pd = require('pretty-data').pd,
 	defaultConfig = require('./defaults/config'),
-	defaultClientSettings = require('./defaults/clientSettings'),
-	defaultApiSettings = require('./defaults/apiSettings'),
 	baseDBClass = require('./base/dbClass'),
 	baseClientClass = require('./base/clientClass'),
 	baseApiClass = require('./base/apiClass')
@@ -100,14 +98,7 @@ class Core {
 					let moduleDirPath = path.join(modulesDirPath, moduleDir),
 						moduleDirData = fs.readdirSync(moduleDirPath),
 						moduleData = {},
-						moduleSettings = {}
-
-					try{
-						moduleSettings = require(path.join(moduleDirPath, 'settings'))
-					} catch (e) {
-						console.log(`Could not load the settings for client module ${moduleDir}. Using defaults.`)
-						moduleSettings = defaultClientSettings
-					}
+						moduleSettings = this.cfg[moduleName]
 
 					moduleDirData.forEach((componentDir, index) => {
 						if (componentDir.indexOf('.') === -1) {
@@ -136,14 +127,7 @@ class Core {
 					let moduleDirPath = path.join(modulesDirPath, moduleDir),
 						moduleDirData = fs.readdirSync(moduleDirPath),
 						moduleData = {},
-						moduleSettings = {}
-
-					try {
-						moduleSettings = require(path.join(moduleDirPath, 'settings'))
-					} catch (e) {
-						console.log(`Could not load the settings for API module ${moduleDir}. Using defaults.`)
-						moduleSettings = defaultApiSettings
-					}
+						moduleSettings = this.cfg[moduleName]
 
 					moduleDirData.forEach((componentDir, index) => {
 						if (componentDir.indexOf('.') === -1) {

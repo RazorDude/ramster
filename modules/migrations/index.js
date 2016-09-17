@@ -32,7 +32,7 @@ class Migrations {
 		this.router.get('/seed', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.seed({
-					seedFolder: req.query.seedFolder && decodeURIComponent(req.query.seedFolder) || instance.config.migrations.seedFilesFolder,
+					seedFolder: req.query.seedFolder && decodeURIComponent(req.query.seedFolder) || instance.config.migrations.seedfilesFolder,
 					seedFile: req.query.seedFile && decodeURIComponent(req.query.seedFile) || instance.config.migrations.defaultSeedfileName
 				})})
 			} catch (error) {
