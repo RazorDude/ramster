@@ -11,22 +11,34 @@ let emails = class Emails {
         this.sender = this.cfg.emails.emailSender
     }
 
-    sendEmail({to, sender, subject, templateName, fields}) {
-        return new Promise((res, rej) => {
-            let template = (pug.compileFile(path.join(this.cfg.emails.templatesPath, `${data.templateName}.pug`), {}))(data.fields || {})
-            this.sendgrid.send({
-                to: data.to,
-                from: this.sender,
-                bcc: this.cfg.emails.bcc,
-                subject: data.subject,
-                html: template
-            }, (err, json) => {
-                if (err) {
-                    rej(err)
-                }
-                res(json)
-            })
-        })
+    sendEmail({to, subject, templateName, fields}) {
+        let template = (pug.compileFile(path.join(this.cfg.emails.templatesPath, `${templateName}.pug`), {}))(fields || {})
+        return this.sendgrid.API(this.sendgrid.emptyRequest({
+			method: 'POST',
+		  	path: '/v3/mail/send',
+			body: {
+				personalizations: [
+					{
+						to: [
+							{
+								email: to,
+							},
+						],
+						bcc: this.cfg.emails.bcc,
+						subject: subject
+					}
+				],
+				from: {
+					email: this.sender,
+				},
+				content: [
+					{
+					    type: 'text/html',
+					    value: template,
+					}
+				]
+			}
+		}))
     }
 }
 module.exports = emails

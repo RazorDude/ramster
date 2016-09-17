@@ -32,8 +32,8 @@ class Migrations {
 		this.router.get('/seed', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.seed({
-					seedFolder: req.query.seedFolder && decodeURIComponent(req.query.seedFolder) || insance.config.migrations.seedfilesFolder,
-					seedFile: req.query.seedFile && decodeURIComponent(req.query.seedFile) || insance.config.migrations.defaultSeedfileName
+					seedFolder: req.query.seedFolder && decodeURIComponent(req.query.seedFolder) || instance.config.migrations.seedfilesFolder,
+					seedFile: req.query.seedFile && decodeURIComponent(req.query.seedFile) || instance.config.migrations.defaultSeedfileName
 				})})
 			} catch (error) {
 				req.locals = {error}
@@ -53,7 +53,7 @@ class Migrations {
 		this.router.get('/generateSeed', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.generateSeed({
-					seedFileName: req.query.seedFileName && decodeURIComponent(req.query.seedFileName) || insance.config.migrations.defaultSeedfileName
+					seedFileName: req.query.seedFileName && decodeURIComponent(req.query.seedFileName) || instance.config.migrations.defaultSeedfileName
 				})})
 			} catch (error) {
 				req.locals = {error}
@@ -268,9 +268,9 @@ class Migrations {
 		let instance = this
 		return co(function*() {
 			let data = yield instance.getFullTableData(),
-				fileDescriptor = yield fs.open(path.join(config.migrations.syncHistoryPath, `${(new Date()).getTime()}.json`), 'w'),
+				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `${(new Date()).getTime()}.json`), 'w'),
 				bytesWritten = yield fs.write(fileDescriptor, JSON.stringify(data))
-			yield fs.closeFile(fileDescriptor)
+			yield fs.close(fileDescriptor)
 			return {
 				bytesWritten,
 				success: yield instance.insertData(data)
@@ -281,7 +281,7 @@ class Migrations {
 	seed({seedFolder, seedFile}) {
 		let instance = this
 		return co(function*() {
-			return yield instance.insertData(JSON.parse((yield fs.readFile(path.join(config.migrations.baseMigrationsPath, seedFolder, `${seedFile}.json`))).toString()))
+			return yield instance.insertData(JSON.parse((yield fs.readFile(path.join(instance.config.migrations.baseMigrationsPath, seedFolder, `${seedFile}.json`))).toString()))
 		})
 	}
 
@@ -290,18 +290,18 @@ class Migrations {
 		return co(function*() {
 			let seed = JSON.stringify(yield instance.getFullTableData()),
 				now = new Date().getTime(),
-				oldFilePath = path.join(config.migrations.seedfilesPath, `${seedFileName}_${now}.json`)
+				oldFilePath = path.join(instance.config.migrations.seedfilesPath, `${seedFileName}_${now}.json`)
 			try {
 				//write a backup copy to preserve the old seed as history, then to the file that will be used for seeding
 				let fileDescriptor = yield fs.open(oldFilePath, 'w')
-				yield fs.write(fileDescriptor, (yield fs.readFile(path.join(config.migrations.seedfilesPath, `${seedFileName}.json`))).toString())
-				yield fs.closeFile(fileDescriptor)
+				yield fs.write(fileDescriptor, (yield fs.readFile(path.join(instance.config.migrations.seedfilesPath, `${seedFileName}.json`))).toString())
+				yield fs.close(fileDescriptor)
 			} catch (e) {
 				yield fs.unlink(oldFilePath)
 			}
-			let newFileDescriptor = yield fs.open(path.join(config.migrations.seedfilesPath, `${seedFileName}.json`), 'w'),
+			let newFileDescriptor = yield fs.open(path.join(instance.config.migrations.seedfilesPath, `${seedFileName}.json`), 'w'),
 			 	result = yield fs.write(newFileDescriptor, seed)
-			yield fs.closeFile(newFileDescriptor)
+			yield fs.close(newFileDescriptor)
 			return result
 		})
 	}
@@ -311,9 +311,9 @@ class Migrations {
 		return co(function*() {
 			let seed = JSON.stringify(yield instance.getFullTableData()),
 				now = new Date().getTime(),
-				fileDescriptor = yield fs.open(path.join(config.migrations.backupPath, `backup_${now}.json`), 'w'),
+				fileDescriptor = yield fs.open(path.join(instance.config.migrations.backupPath, `backup_${now}.json`), 'w'),
 				result = yield fs.write(fileDescriptor, seed)
-			yield fs.closeFile(fileDescriptor)
+			yield fs.close(fileDescriptor)
 			return result
 		})
 	}
