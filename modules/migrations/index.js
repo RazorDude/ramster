@@ -86,10 +86,10 @@ class Migrations {
 			return co(function*() {
 				let data = {},
 					schemas = yield instance.db.sequelize.query('SELECT "t"."table_name" FROM "information_schema"."tables" AS "t" ' +
-						'WHERE "t"."table_schema"=\'' + instance.config.schema + '\'')
+						'WHERE "t"."table_schema"=\'' + instance.config.db.schema + '\'')
 				for (let i = 0; i < schemas[0].length; i++) {
 					data[schemas[0][i].table_name] = (yield instance.db.sequelize.query('SELECT * FROM "' +
-						instance.config.schema + '"."' + schemas[0][i].table_name + '"'))[0]
+						instance.config.db.schema + '"."' + schemas[0][i].table_name + '"'))[0]
 				}
 				return data
 			})
@@ -105,7 +105,7 @@ class Migrations {
 				let data = {},
 					schemas = yield instance.db.sequelize.query('SELECT "t"."table_name","c"."column_name" FROM "information_schema"."tables" AS "t" ' +
 						'INNER JOIN "information_schema"."columns" AS "c" ON "t"."table_name"="c"."table_name"' +
-						'WHERE "t"."table_schema"=\'' + instance.config.schema + '\'', {transaction: t})
+						'WHERE "t"."table_schema"=\'' + instance.config.db.schema + '\'', {transaction: t})
 				for (let i = 0; i < schemas[0].length; i++) {
 					if (typeof(data[schemas[0][i].table_name]) === 'undefined') {
 						data[schemas[0][i].table_name] = []
@@ -270,6 +270,7 @@ class Migrations {
 			let data = yield instance.getFullTableData(),
 				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `${(new Date()).getTime()}.json`), 'w'),
 				bytesWritten = yield fs.write(fileDescriptor, JSON.stringify(data))
+			return true
 			yield fs.close(fileDescriptor)
 			return {
 				bytesWritten,

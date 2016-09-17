@@ -12,10 +12,10 @@ module.exports = {
 	name: 'local',
 	postgres: {
 		user: 'postgres',
-		pass: 'ramster',
+		pass: 'postgres',
 		host: '127.0.0.1',
 		port: '5432',
-		database: 'ramster',
+		database: 'staffed',
 		logging: true
 	},
 	redis: {
@@ -35,6 +35,7 @@ module.exports = {
 	db: {
 		modulePath: path.join(__dirname, './modules/db'),
 		seedingOrder: [],
+		schema: 'public'
 	},
 	sampleClientModule: {
 		serverPort: sampleClientModule.port,
