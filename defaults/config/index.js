@@ -40,7 +40,8 @@ let deepmerge = require('deepmerge'),
 			syncHistoryPath: path.join(migrations.baseMigrationsPath, migrations.syncHistoryFolder),
 			seedFilesPath: path.join(migrations.baseMigrationsPath, migrations.seedfilesFolder),
 			backupPath: path.join(migrations.baseMigrationsPath, migrations.backupFolder),
-			defaultSeedfileName: 'seedfile_current'
+			defaultSeedfileName: 'seedfile_current',
+			startAPI: true
 		}
 	}
 

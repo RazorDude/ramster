@@ -84,7 +84,9 @@ class Core {
 			if (!this.cfg.migrations) {
 				this.cfg.migrations = defaultConfig.migrations
 			}
-			this.migrations = new migrations(this.cfg, this.modules.db)
+			if (this.cfg.migrations.startAPI) {
+				this.migrations = new migrations(this.cfg, this.modules.db)
+			}
 
 
 			// ####### ------------ LOAD THE CLIENT SERVER MODULES ---------- ####### \\
@@ -356,12 +358,14 @@ class Core {
 				})
 			}
 
-			let migrationsApiServer = http.createServer(this.migrations.app)
-			migrationsApiServer.listen(this.cfg.migrations.serverPort, () => {
-				console.log(`[Migrations Module API] Server started.`)
-				console.log(`[Migrations Module API] Port:`, this.cfg.migrations.serverPort)
-				console.log(`[Migrations Module API] Configuration profile:`, this.cfg.name)
-			})
+			if (this.cfg.migrations.startAPI) {
+				let migrationsApiServer = http.createServer(this.migrations.app)
+				migrationsApiServer.listen(this.cfg.migrations.serverPort, () => {
+					console.log(`[Migrations Module API] Server started.`)
+					console.log(`[Migrations Module API] Port:`, this.cfg.migrations.serverPort)
+					console.log(`[Migrations Module API] Configuration profile:`, this.cfg.name)
+				})
+			}
 		} catch (e) {
 			this.logger.error(e)
 		}
