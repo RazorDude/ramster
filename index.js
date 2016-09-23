@@ -6,6 +6,7 @@ let csvPromise = require('./modules/csvPromise'),
 	generalStore = require('./modules/generalStore'),
 	tokenManager = require('./modules/tokenManager'),
 	migrations = require('./modules/migrations'),
+	queryBuilder = require('./modules/queryBuilder'),
 	Sequelize = require('sequelize'),
 	express = require('express'),
 	wrap = require('co-express'),
@@ -74,6 +75,7 @@ class Core {
 			}
 			this.modules.db.sequelize = sequelize
 			this.modules.db.Sequelize = Sequelize
+			this.modules.db.QueryBuilder = queryBuilder
 			for (let componentName in this.modules.db.components) {
 				let component = this.modules.db.components[componentName]
 				component.setDb(this.modules.db)
@@ -84,9 +86,7 @@ class Core {
 			if (!this.cfg.migrations) {
 				this.cfg.migrations = defaultConfig.migrations
 			}
-			if (this.cfg.migrations.startAPI) {
-				this.migrations = new migrations(this.cfg, this.modules.db)
-			}
+			this.migrations = new migrations(this.cfg, this.modules.db)
 
 
 			// ####### ------------ LOAD THE CLIENT SERVER MODULES ---------- ####### \\
@@ -358,14 +358,12 @@ class Core {
 				})
 			}
 
-			if (this.cfg.migrations.startAPI) {
-				let migrationsApiServer = http.createServer(this.migrations.app)
-				migrationsApiServer.listen(this.cfg.migrations.serverPort, () => {
-					console.log(`[Migrations Module API] Server started.`)
-					console.log(`[Migrations Module API] Port:`, this.cfg.migrations.serverPort)
-					console.log(`[Migrations Module API] Configuration profile:`, this.cfg.name)
-				})
-			}
+			let migrationsApiServer = http.createServer(this.migrations.app)
+			migrationsApiServer.listen(this.cfg.migrations.serverPort, () => {
+				console.log(`[Migrations Module API] Server started.`)
+				console.log(`[Migrations Module API] Port:`, this.cfg.migrations.serverPort)
+				console.log(`[Migrations Module API] Configuration profile:`, this.cfg.name)
+			})
 		} catch (e) {
 			this.logger.error(e)
 		}

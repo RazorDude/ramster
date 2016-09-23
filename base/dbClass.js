@@ -3,7 +3,7 @@
 let co = require('co')
 
 class Base {
-	constructor({mailClient, cfg, logger}) {
+	constructor({mailClient, cfg, logger, queryBuilder}) {
 		this.defaults = {
 			orderBy: 'id',
 			orderDirection: 'DESC',
@@ -13,6 +13,7 @@ class Base {
 		this.mailClient = mailClient
 		this.cfg = cfg
 		this.logger = logger
+		this.queryBuilder = queryBuilder
 	}
 
 	associate(components) {
@@ -43,6 +44,82 @@ class Base {
 			buf[i] = Math.floor(Math.random() * 256)
 		}
 		return buf
+	}
+
+	assembleSearchConditionsFromFilterObject({filters, exactMatch}) {
+		let instance = this,
+			rel = instance.relations,
+			result = {},
+			relFilters = {}
+
+		for (let key in rel) {
+			relFilters[key] = {}
+		}
+
+		if ((typeof filters === 'object') && Object.keys(filters).length > 0) {
+			instance.searchFields.forEach((element, index) => {
+				let fieldData = filters[element.field],
+					field = element.field,
+					searchHolder = result,
+					hasValue = (typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')
+
+				if (element.associatedModel && (hasValue || element.between)) {
+					searchHolder = relFilters[element.associatedModel]
+					field = element.associatedModelField
+					if (typeof element.innerIndex !== 'undefined') {
+						if (!searchHolder.nestedIncludeFields) {
+							searchHolder.nestedIncludeFields = {}
+						}
+						if (!searchHolder.nestedIncludeFields[element.innerIndex]) {
+							searchHolder.nestedIncludeFields[element.innerIndex] = {}
+						}
+						searchHolder = searchHolder.nestedIncludeFields[element.innerIndex]
+					}
+				}
+
+				if (hasValue) {
+					if (element.like && (exactMatch.indexOf(field) === -1)) {
+						let prefix = '',
+							suffix = ''
+						if (element.like[0] === '%') {
+							prefix = '%'
+						}
+						if (element.like[1] === '%') {
+							suffix = '%'
+						}
+						searchHolder[field] = {$like: `${prefix}${fieldData}${suffix}`}
+						return
+					}
+					searchHolder[field] = fieldData
+					return
+				}
+
+				if (element.between) {
+					let from = {field: `${field}${element.between[0]}`, condition: '$gt'},
+						to = {field: `${field}${element.between[1]}`, condition: '$lt'}
+					if (exactMatch.indexOf(field) !== -1) {
+						from.condition = '$gte'
+						to.condition = '$lte'
+					} else {
+						if (exactMatch.indexOf(to.field) !== -1) {
+							from.condition = '$gte'
+						}
+						if (exactMatch.indexOf(to.field) !== -1) {
+							to.condition = '$lte'
+						}
+					}
+					if ((typeof filters[from.field] !== 'undefined') && (typeof filters[from.field] !== 'object')) {
+						searchHolder[from.field] = {[from.condition]: filters[from.field]}
+					}
+					if ((typeof filters[to.field] !== 'undefined') && (typeof filters[to.field] !== 'object')) {
+						searchHolder[to.field] = {[to.condition]: filters[to.field]}
+					}
+				}
+			})
+		}
+
+		result.relFilters = relFilters
+		return result
 	}
 
 	create(data) {
@@ -180,145 +257,42 @@ class Base {
 	readList(data) {
 		let instance = this
 		return co(function*() {
-			let order = [
-					[data.orderBy || instance.defaults.orderBy, data.orderDirection || instance.defaults.orderDirection]
-				],
-				page = data.page ? parseInt(data.page, 10) : instance.defaults.page,
-				perPage = data.perPage ? parseInt(data.perPage, 10) : instance.defaults.perPage,
-				where = {},
-				include = [],
+			// if (data.fields) {
+			// 	options.attributes = data.fields
+			// }
+
+			let queryBuilder = new instance.db.QueryBuilder({queryInterface: instance.db.sequelize.getQueryInterface(), mainModel: instance.model, mainModelAlias: instance.modelName, mainModelScope: instance.scopes && (instance.scopes[data.scope] || instance.scopes.default) || {}}),
 				more = false,
-				rel = instance.relations,
-				relSearch = {},
-				filters = data.filters || {},
-				exactMatch = (data.exactMatch instanceof Array) && data.exactMatch || [] //disables 'like' and makes 'between' >= <=, instead of > <
-
-			for (let key in rel) {
-				relSearch[key] = {}
-			}
-
-			//assemble the where clause
-			if ((typeof filters === 'object') && Object.keys(filters).length > 0) {
-				instance.searchFields.forEach((element, index) => {
-					let fieldData = filters[element.field],
-						field = element.field,
-						searchHolder = where
-
-					if (element.associatedModel) {
-						searchHolder = relSearch[element.associatedModel]
-						field = element.associatedModelField
-						if (element.nestedInclude) {
-							if (!searchHolder.nestedIncludeFields) {
-								searchHolder.nestedIncludeFields = {}
-							}
-							searchHolder = searchHolder.nestedIncludeFields
-						}
-					}
-
-					if ((typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')) {
-						if (element.like && (exactMatch.indexOf(field) === -1)) {
-							let prefix = '',
-								suffix = ''
-							if (element.like[0] === '%') {
-								prefix = '%'
-							}
-							if (element.like[1] === '%') {
-								suffix = '%'
-							}
-							searchHolder[field] = {$like: `${prefix}${fieldData}${suffix}`}
-							return;
-						}
-						searchHolder[field] = fieldData
-						return;
-					}
-
-					if (element.between) {
-						let from = {field: `${field}${element.between[0]}`, condition: '$gt'},
-							to = {field: `${field}${element.between[1]}`, condition: '$lt'},
-							clause = {}
-						if (exactMatch.indexOf(field) !== -1) {
-							from.condition = '$gte'
-							to.condition = '$lte'
-						} else {
-							if (exactMatch.indexOf(to.field) !== -1) {
-								from.condition = '$lte'
-							}
-							if (exactMatch.indexOf(to.field) !== -1) {
-								to.condition = '$lte'
-							}
-						}
-						if ((typeof filters[from.field] !== 'undefined') && (typeof filters[from.field] !== 'object')) {
-							clause[from.condition] = filters[from.field]
-						}
-						if ((typeof filters[to.field] !== 'undefined') && (typeof filters[to.field] !== 'object')) {
-							clause[to.condition] = filters[to.field]
-						}
-						if (Object.keys(clause).length > 0) {
-							searchHolder[field] = clause
-						}
-					}
-				})
-			}
+				exactMatch = (data.exactMatch instanceof Array) && data.exactMatch || [], //disables 'like' and makes 'between' >= <=, instead of > <
+				filters = instance.assembleSearchConditionsFromFilterObject({filters: data.filters || {}, exactMatch}),
+				relFilters = filters.relFilters
 
 			//assemble the join query
 			instance.relReadKeys.forEach((key, index) => {
-				if (data[key] || relSearch[key]) {
-					let thisInclude = {},
-						relS = relSearch[key]
-					for (let iKey in rel[key].include) {
-						thisInclude[iKey] = rel[key].include[iKey]
-					}
-
-					if (Object.keys(relSearch[key]).length > 0) {
-						if (!thisInclude.where) {
-							thisInclude.where = relS
-						} else {
-							for (let sKey in relS) {
-								thisInclude.where[sKey] = relS[sKey]
-							}
-						}
-
-						if (thisInclude.nestedIncludeFields) {
-							delete thisInclude.nestedIncludeFields
-							for (let sKey in relSearch.nestedIncludeFields) {
-								let whereClause = thisInclude.include.where
-								if (!whereClause) {
-									whereClause = relS.nestedIncludeFields
-								} else {
-									for (let sKey in relS.nestedIncludeFields) {
-										whereClause[sKey] = relS.nestedIncludeFields[sKey]
-									}
-								}
-							}
-						}
-					}
-
-					include.push(thisInclude)
+				let relFiltersLength = relFilters[key] && Object.keys(relFilters[key]).length || 0
+				if (data[key] || relFiltersLength) {
+					queryBuilder.buildJoinQuery({relationsData: instance.relations[key], filters: relFiltersLength ? relFilters[key] : null, targetTableAliasPrefix: `${instance.modelName}.`})
 				}
 			})
 
-			let options = {
-				where: where,
-				include: include,
-				offset: (page - 1) * perPage,
-				limit: perPage + 1,
-				order: order
-			}
+			queryBuilder.buildWhereQuery({filters})
+			queryBuilder.buildOrderByQuery({orderBy: data.orderBy || instance.defaults.orderBy, orderDirection: data.orderDirection || instance.defaults.orderDirection})
+			queryBuilder.buildPaginationQuery({page: data.page && parseInt(data.page, 10) || instance.defaults.page, perPage: data.perPage && parseInt(data.perPage, 10) || instance.defaults.perPage})
 
-			if (data.fields) {
-				options.attributes = data.fields
-			}
+			let results = yield instance.db.sequelize.query(queryBuilder.getFullQuery()),
+				totalCount = yield instance.db.sequelize.query(queryBuilder.getCountQuery())
 
-			let results = yield instance.model.findAll(options),
-				totalCount = yield instance.model.count({where: options.where, include: options.include})
-			if (results.length === (perPage + 1)) {
+			results = queryBuilder.getFormattedResults({resultData: results})
+			if (results.length === (queryBuilder.perPage + 1)) {
 				results.pop()
 				more = true
 			}
+
+			totalCount = totalCount && totalCount[0] && totalCount[0][0] && totalCount[0][0].count || 0
 			return {
-				totalPages: Math.ceil(totalCount / perPage),
-				page: page,
-				perPage: perPage,
+				totalPages: Math.ceil(totalCount / queryBuilder.perPage),
+				page: queryBuilder.page,
+				perPage: queryBuilder.perPage,
 				more: more,
 				results: results
 			}
