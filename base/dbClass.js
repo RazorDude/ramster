@@ -202,9 +202,10 @@ class Base {
 				instance.searchFields.forEach((element, index) => {
 					let fieldData = filters[element.field],
 						field = element.field,
-						searchHolder = where
+						searchHolder = where,
+						hasValue = (typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')
 
-					if (element.associatedModel) {
+					if (element.associatedModel && (hasValue || element.between)) {
 						searchHolder = relSearch[element.associatedModel]
 						field = element.associatedModelField
 						if (element.nestedInclude) {
@@ -215,7 +216,7 @@ class Base {
 						}
 					}
 
-					if ((typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')) {
+					if (hasValue) {
 						if (element.like && (exactMatch.indexOf(field) === -1)) {
 							let prefix = '',
 								suffix = ''
@@ -262,14 +263,15 @@ class Base {
 
 			//assemble the join query
 			instance.relReadKeys.forEach((key, index) => {
-				if (data[key] || relSearch[key]) {
+				let relSearchLength = relSearch[key] && Object.keys(relSearch[key]).length || 0
+				if (data[key] || relSearchLength) {
 					let thisInclude = {},
 						relS = relSearch[key]
 					for (let iKey in rel[key].include) {
 						thisInclude[iKey] = rel[key].include[iKey]
 					}
 
-					if (Object.keys(relSearch[key]).length > 0) {
+					if (relSearchLength) {
 						if (!thisInclude.where) {
 							thisInclude.where = relS
 						} else {
@@ -278,15 +280,14 @@ class Base {
 							}
 						}
 
-						if (thisInclude.nestedIncludeFields) {
-							delete thisInclude.nestedIncludeFields
-							for (let sKey in relSearch.nestedIncludeFields) {
-								let whereClause = thisInclude.include.where
-								if (!whereClause) {
-									whereClause = relS.nestedIncludeFields
+						if (thisInclude.where.nestedIncludeFields) {
+							delete thisInclude.where.nestedIncludeFields
+							for (let sKey in relS.nestedIncludeFields) {
+								if (!thisInclude.include.where) {
+									thisInclude.include.where = relS.nestedIncludeFields
 								} else {
 									for (let sKey in relS.nestedIncludeFields) {
-										whereClause[sKey] = relS.nestedIncludeFields[sKey]
+										thisInclude.include.where[sKey] = relS.nestedIncludeFields[sKey]
 									}
 								}
 							}

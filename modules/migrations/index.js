@@ -270,7 +270,6 @@ class Migrations {
 			let data = yield instance.getFullTableData(),
 				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `${(new Date()).getTime()}.json`), 'w'),
 				bytesWritten = yield fs.write(fileDescriptor, JSON.stringify(data))
-			return true
 			yield fs.close(fileDescriptor)
 			return {
 				bytesWritten,
