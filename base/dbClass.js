@@ -45,6 +45,113 @@ class Base {
 		return buf
 	}
 
+	getWhereQuery({filters, relSearch, exactMatch}) {
+		let where = {}
+		if ((typeof filters === 'object') && Object.keys(filters).length > 0) {
+			this.searchFields.forEach((element, index) => {
+				let fieldData = filters[element.field],
+					field = element.field,
+					searchHolder = where,
+					hasValue = (typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')
+
+				if (element.associatedModel && (hasValue || element.between)) {
+					searchHolder = relSearch[element.associatedModel]
+					field = element.associatedModelField
+					if (element.nestedInclude) {
+						if (!searchHolder.nestedIncludeFields) {
+							searchHolder.nestedIncludeFields = {}
+						}
+						searchHolder = searchHolder.nestedIncludeFields
+					}
+				}
+
+				if (hasValue) {
+					if (element.like && (exactMatch.indexOf(field) === -1)) {
+						let prefix = '',
+							suffix = ''
+						if (element.like[0] === '%') {
+							prefix = '%'
+						}
+						if (element.like[1] === '%') {
+							suffix = '%'
+						}
+						searchHolder[field] = {$like: `${prefix}${fieldData}${suffix}`}
+						return;
+					}
+					searchHolder[field] = fieldData
+					return;
+				}
+
+				if (element.between) {
+					let from = {field: `${field}${element.between[0]}`, condition: '$gt'},
+						to = {field: `${field}${element.between[1]}`, condition: '$lt'},
+						clause = {}
+					if (exactMatch.indexOf(field) !== -1) {
+						from.condition = '$gte'
+						to.condition = '$lte'
+					} else {
+						if (exactMatch.indexOf(to.field) !== -1) {
+							from.condition = '$lte'
+						}
+						if (exactMatch.indexOf(to.field) !== -1) {
+							to.condition = '$lte'
+						}
+					}
+					if ((typeof filters[from.field] !== 'undefined') && (typeof filters[from.field] !== 'object')) {
+						clause[from.condition] = filters[from.field]
+					}
+					if ((typeof filters[to.field] !== 'undefined') && (typeof filters[to.field] !== 'object')) {
+						clause[to.condition] = filters[to.field]
+					}
+					if (Object.keys(clause).length > 0) {
+						searchHolder[field] = clause
+					}
+				}
+			})
+		}
+		return where
+	}
+
+	getIncludeQuery({data, rel, relSearch}) {
+		let include = []
+		this.relReadKeys.forEach((key, index) => {
+			let relSearchLength = relSearch[key] && Object.keys(relSearch[key]).length || 0
+			if (data[key] || relSearchLength) {
+				let thisInclude = {},
+					relS = relSearch[key]
+				for (let iKey in rel[key].include) {
+					thisInclude[iKey] = rel[key].include[iKey]
+				}
+
+				if (relSearchLength) {
+					if (!thisInclude.where) {
+						thisInclude.where = relS
+					} else {
+						for (let sKey in relS) {
+							thisInclude.where[sKey] = relS[sKey]
+						}
+					}
+
+					if (thisInclude.where.nestedIncludeFields) {
+						delete thisInclude.where.nestedIncludeFields
+						for (let sKey in relS.nestedIncludeFields) {
+							if (!thisInclude.include.where) {
+								thisInclude.include.where = relS.nestedIncludeFields
+							} else {
+								for (let sKey in relS.nestedIncludeFields) {
+									thisInclude.include.where[sKey] = relS.nestedIncludeFields[sKey]
+								}
+							}
+						}
+					}
+				}
+
+				include.push(thisInclude)
+			}
+		})
+		return include
+	}
+
 	create(data) {
 		let instance = this
 		return co(function*() {
@@ -64,25 +171,16 @@ class Base {
 		return co(function*() {
 			let where = {},
 				include = [],
-				rel = instance.relations
+				rel = instance.relations,
+				relSearch = {},
+				exactMatch = (data.exactMatch instanceof Array) && data.exactMatch || []
 
-			//assemble the where clause
-			instance.searchFields.forEach((element, index) => {
-				if (typeof data[element.field] !== 'undefined') {
-					where[element.field] = data[element.field]
-				}
-			})
-
-			//assemble the join query
-			instance.relReadKeys.forEach((key, index) => {
-				if (data[key]) {
-					include.push(rel[key].include)
-				}
-			})
-
+			for (let key in rel) {
+				relSearch[key] = {}
+			}
 			let options = {
-				where: where,
-				include: include
+				where: instance.getWhereQuery({filters: data, relSearch, exactMatch}),
+				include: instance.getIncludeQuery({data, rel, relSearch})
 			}
 
 			return yield instance.model.findOne(options)
@@ -185,7 +283,6 @@ class Base {
 				],
 				page = data.page ? parseInt(data.page, 10) : instance.defaults.page,
 				perPage = data.perPage ? parseInt(data.perPage, 10) : instance.defaults.perPage,
-				where = {},
 				include = [],
 				more = false,
 				rel = instance.relations,
@@ -197,113 +294,12 @@ class Base {
 				relSearch[key] = {}
 			}
 
-			//assemble the where clause
-			if ((typeof filters === 'object') && Object.keys(filters).length > 0) {
-				instance.searchFields.forEach((element, index) => {
-					let fieldData = filters[element.field],
-						field = element.field,
-						searchHolder = where,
-						hasValue = (typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')
-
-					if (element.associatedModel && (hasValue || element.between)) {
-						searchHolder = relSearch[element.associatedModel]
-						field = element.associatedModelField
-						if (element.nestedInclude) {
-							if (!searchHolder.nestedIncludeFields) {
-								searchHolder.nestedIncludeFields = {}
-							}
-							searchHolder = searchHolder.nestedIncludeFields
-						}
-					}
-
-					if (hasValue) {
-						if (element.like && (exactMatch.indexOf(field) === -1)) {
-							let prefix = '',
-								suffix = ''
-							if (element.like[0] === '%') {
-								prefix = '%'
-							}
-							if (element.like[1] === '%') {
-								suffix = '%'
-							}
-							searchHolder[field] = {$like: `${prefix}${fieldData}${suffix}`}
-							return;
-						}
-						searchHolder[field] = fieldData
-						return;
-					}
-
-					if (element.between) {
-						let from = {field: `${field}${element.between[0]}`, condition: '$gt'},
-							to = {field: `${field}${element.between[1]}`, condition: '$lt'},
-							clause = {}
-						if (exactMatch.indexOf(field) !== -1) {
-							from.condition = '$gte'
-							to.condition = '$lte'
-						} else {
-							if (exactMatch.indexOf(to.field) !== -1) {
-								from.condition = '$lte'
-							}
-							if (exactMatch.indexOf(to.field) !== -1) {
-								to.condition = '$lte'
-							}
-						}
-						if ((typeof filters[from.field] !== 'undefined') && (typeof filters[from.field] !== 'object')) {
-							clause[from.condition] = filters[from.field]
-						}
-						if ((typeof filters[to.field] !== 'undefined') && (typeof filters[to.field] !== 'object')) {
-							clause[to.condition] = filters[to.field]
-						}
-						if (Object.keys(clause).length > 0) {
-							searchHolder[field] = clause
-						}
-					}
-				})
-			}
-
-			//assemble the join query
-			instance.relReadKeys.forEach((key, index) => {
-				let relSearchLength = relSearch[key] && Object.keys(relSearch[key]).length || 0
-				if (data[key] || relSearchLength) {
-					let thisInclude = {},
-						relS = relSearch[key]
-					for (let iKey in rel[key].include) {
-						thisInclude[iKey] = rel[key].include[iKey]
-					}
-
-					if (relSearchLength) {
-						if (!thisInclude.where) {
-							thisInclude.where = relS
-						} else {
-							for (let sKey in relS) {
-								thisInclude.where[sKey] = relS[sKey]
-							}
-						}
-
-						if (thisInclude.where.nestedIncludeFields) {
-							delete thisInclude.where.nestedIncludeFields
-							for (let sKey in relS.nestedIncludeFields) {
-								if (!thisInclude.include.where) {
-									thisInclude.include.where = relS.nestedIncludeFields
-								} else {
-									for (let sKey in relS.nestedIncludeFields) {
-										thisInclude.include.where[sKey] = relS.nestedIncludeFields[sKey]
-									}
-								}
-							}
-						}
-					}
-
-					include.push(thisInclude)
-				}
-			})
-
 			let options = {
-				where: where,
-				include: include,
+				where: instance.getWhereQuery({filters, relSearch, exactMatch}),
+				include: instance.getIncludeQuery({data, rel, relSearch}),
 				offset: (page - 1) * perPage,
 				limit: perPage + 1,
-				order: order
+				order
 			}
 
 			if (data.fields) {
