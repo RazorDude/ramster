@@ -6,6 +6,7 @@ let csvPromise = require('./modules/csvPromise'),
 	generalStore = require('./modules/generalStore'),
 	tokenManager = require('./modules/tokenManager'),
 	migrations = require('./modules/migrations'),
+	toolBelt = require('./modules/toolBelt'),
 	Sequelize = require('sequelize'),
 	express = require('express'),
 	wrap = require('co-express'),
@@ -383,5 +384,6 @@ module.exports = {
 	baseDBClass,
 	baseClientClass,
 	baseApiClass,
-	csvPromise: new csvPromise()
+	csvPromise: new csvPromise(),
+	toolBelt
 }
