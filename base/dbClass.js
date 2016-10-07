@@ -297,8 +297,6 @@ class Base {
 			let options = {
 				where: instance.getWhereQuery({filters, relSearch, exactMatch}),
 				include: instance.getIncludeQuery({data, rel, relSearch}),
-				offset: (page - 1) * perPage,
-				limit: perPage + 1,
 				order
 			}
 
@@ -306,19 +304,30 @@ class Base {
 				options.attributes = data.fields
 			}
 
-			let results = yield instance.model.findAll(options),
-				totalCount = yield instance.model.count({where: options.where, include: options.include})
+			if ((data.excludeIdsFromSearch instanceof Array) && data.excludeIdsFromSearch.length) {
+				if (typeof options.where.id !== 'undefined') {
+					options.where.id = {$and: [options.where.id, {$not: data.excludeIdsFromSearch}]}
+				} else {
+					options.where.id = {$not: data.excludeIdsFromSearch}
+				}
+			}
+
+			let totalCount = yield instance.model.count({where: options.where, include: options.include}),
+				totalPages = Math.ceil(totalCount / perPage)
+			if (page > totalPages) {
+				page = totalPages
+			}
+
+			options.offset = (page - 1) * perPage
+			options.limit = perPage + 1
+
+
+			let results = yield instance.model.findAll(options)
 			if (results.length === (perPage + 1)) {
 				results.pop()
 				more = true
 			}
-			return {
-				totalPages: Math.ceil(totalCount / perPage),
-				page: page,
-				perPage: perPage,
-				more: more,
-				results: results
-			}
+			return {totalPages, page, perPage, more, results}
 		})
 	}
 
