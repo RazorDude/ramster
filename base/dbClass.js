@@ -314,7 +314,7 @@ class Base {
 
 			let totalCount = yield instance.model.count({where: options.where, include: options.include}),
 				totalPages = Math.ceil(totalCount / perPage)
-			if (page > totalPages) {
+			if ((totalpages > 0) && (page > totalPages)) {
 				page = totalPages
 			}
 
