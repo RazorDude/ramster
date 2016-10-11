@@ -52,7 +52,25 @@ class Base {
 				let fieldData = filters[element.field],
 					field = element.field,
 					searchHolder = where,
-					hasValue = (typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')
+					hasValue = true
+					// hasValue = (typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')
+
+				if (typeof fieldData === 'undefined') {
+					hasValue = false
+				} else {
+					if (typeof fieldData === 'object') {
+						if (fieldData instanceof Array) {
+							for (let i in fieldData) {
+								if (typeof fieldData[i] === 'object') {
+									hasValue = false
+									break
+								}
+							}
+						} else {
+							hasValue = false
+						}
+					}
+				}
 
 				if (element.associatedModel && (hasValue || element.between)) {
 					searchHolder = relSearch[element.associatedModel]
