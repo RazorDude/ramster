@@ -84,7 +84,7 @@ class Base {
 				}
 
 				if (hasValue) {
-					if (element.like && (exactMatch.indexOf(field) === -1)) {
+					if (element.like && (exactMatch.indexOf(element.field) === -1)) {
 						let prefix = '',
 							suffix = ''
 						if (element.like[0] === '%') {
@@ -101,14 +101,14 @@ class Base {
 				}
 
 				if (element.between) {
-					let from = {field: `${field}${element.between[0]}`, condition: '$gt'},
-						to = {field: `${field}${element.between[1]}`, condition: '$lt'},
+					let from = {field: `${element.field}${element.between[0]}`, condition: '$gt'},
+						to = {field: `${element.field}${element.between[1]}`, condition: '$lt'},
 						clause = {}
 					if (exactMatch.indexOf(field) !== -1) {
 						from.condition = '$gte'
 						to.condition = '$lte'
 					} else {
-						if (exactMatch.indexOf(to.field) !== -1) {
+						if (exactMatch.indexOf(from.field) !== -1) {
 							from.condition = '$lte'
 						}
 						if (exactMatch.indexOf(to.field) !== -1) {
