@@ -18,6 +18,7 @@ let csvPromise = require('./modules/csvPromise'),
 	bodyParser = require('body-parser'),
 	multipart = require('connect-multiparty'),
 	cookieParser = require('cookie-parser'),
+	Cookies = require('cookies'),
 	requestLogger = require('morgan'),
 	path = require('path'),
 	pug = require('pug'),
@@ -218,10 +219,12 @@ class Core {
 
 				//before every route - set up post params logging, redirects and locals
 				clientModule.app.use(clientModule.paths, wrap(function* (req, res, next) {
-					let originalUrl = req.originalUrl.split('?')[0]
+					let originalUrl = req.originalUrl.split('?')[0],
+						cookies = new Cookies(req, res)
 					console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
 					if (clientModule.settings.unathorizedRedirectRoute && !req.isAuthenticated() && (clientModule.settings.anonymousAccessRoutes.indexOf(originalUrl) === -1)) {
+						cookies.set('beforeLoginURL', req.originalUrl)
 						res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
 						return;
 					}
