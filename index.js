@@ -192,7 +192,7 @@ class Core {
 					resave: true,
 					saveUninitialized: true,
 					cookie: {
-						httpOnly: true
+						httpOnly: false
 					},
 					store: sessionStore,
 					passport: {}
@@ -224,7 +224,7 @@ class Core {
 					console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
 					if (clientModule.settings.unathorizedRedirectRoute && !req.isAuthenticated() && (clientModule.settings.anonymousAccessRoutes.indexOf(originalUrl) === -1)) {
-						cookies.set('beforeLoginURL', req.originalUrl)
+						cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
 						res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
 						return;
 					}
