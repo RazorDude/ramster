@@ -29,7 +29,7 @@ let csvPromise = require('./modules/csvPromise'),
 	baseDBClass = require('./base/dbClass'),
 	baseClientClass = require('./base/clientClass'),
 	baseApiClass = require('./base/apiClass'),
-	cron = require('cron').CronJob
+	CronJob = require('cron').CronJob
 
 class Core {
 	constructor(cfg) {
