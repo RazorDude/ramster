@@ -28,7 +28,8 @@ let csvPromise = require('./modules/csvPromise'),
 	defaultConfig = require('./defaults/config'),
 	baseDBClass = require('./base/dbClass'),
 	baseClientClass = require('./base/clientClass'),
-	baseApiClass = require('./base/apiClass')
+	baseApiClass = require('./base/apiClass'),
+	cron = require('cron').CronJob
 
 class Core {
 	constructor(cfg) {
@@ -146,6 +147,40 @@ class Core {
 					this.modules.apis[moduleDir] = {moduleData, settings}
 				}
 			})
+
+			// ####### ------------ SCHEDULE THE CRON JOBS ---------- ####### \\
+			try {
+				let cronJobsModule = require(this.cfg.cronJobs.path),
+					jobs = cronJobsModule.getJobs({})
+				if (jobs instanceof Array) {
+					jobs.forEach((jobData, index) => {
+						try {
+							if (!jobData.start) {
+								jobData.start = true
+							}
+							new CronJob(jobData)
+						} catch (e) {
+							console.log('Error starting a cron job:')
+							logger.error(e)
+						}
+					})
+				}
+			} catch (e) {
+				console.log('Error loading the cron jobs module:')
+				logger.error(e)
+			}
+				// moduleName,
+				// cfg: CORE.cfg,
+				// settings: clientModule.settings,
+				// logger: CORE.logger,
+				// mailClient: CORE.mailClient,
+				// generalStore: CORE.generalStore,
+				// tokenManager: CORE.tokenManager,
+				// db: CORE.modules.db,
+				// passport: clientModule.settings.passport,
+				// error: null,
+				// errorStatus: 500,
+				// originalUrl
 		} catch (e) {
 			console.log(e)
 		}

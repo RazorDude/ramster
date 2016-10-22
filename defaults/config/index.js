@@ -19,6 +19,9 @@ let deepmerge = require('deepmerge'),
 			bcc: 'admin@ramster.com',
 			templatesPath: path.join(__dirname, '../../../../modules/emails/templates')
 		},
+		cronJobs: {
+			path: path.join(__dirname, '../../../../modules/cronJobs')
+		},
 		db: {
 			modulePath: path.join(__dirname, '../../../../modules/db'),
 			seedingOrder: [],
