@@ -151,7 +151,14 @@ class Core {
 			// ####### ------------ SCHEDULE THE CRON JOBS ---------- ####### \\
 			try {
 				let cronJobsModule = require(this.cfg.cronJobs.path),
-					jobs = cronJobsModule.getJobs({})
+					jobs = cronJobsModule.getJobs({
+						cfg: CORE.cfg,
+						logger: CORE.logger,
+						mailClient: CORE.mailClient,
+						generalStore: CORE.generalStore,
+						tokenManager: CORE.tokenManager,
+						db: CORE.modules.db
+					})
 				if (jobs instanceof Array) {
 					jobs.forEach((jobData, index) => {
 						try {
@@ -169,18 +176,6 @@ class Core {
 				console.log('Error loading the cron jobs module:')
 				CORE.logger.error(e)
 			}
-				// moduleName,
-				// cfg: CORE.cfg,
-				// settings: clientModule.settings,
-				// logger: CORE.logger,
-				// mailClient: CORE.mailClient,
-				// generalStore: CORE.generalStore,
-				// tokenManager: CORE.tokenManager,
-				// db: CORE.modules.db,
-				// passport: clientModule.settings.passport,
-				// error: null,
-				// errorStatus: 500,
-				// originalUrl
 		} catch (e) {
 			console.log(e)
 		}
