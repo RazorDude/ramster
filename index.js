@@ -161,13 +161,13 @@ class Core {
 							new CronJob(jobData)
 						} catch (e) {
 							console.log('Error starting a cron job:')
-							logger.error(e)
+							CORE.logger.error(e)
 						}
 					})
 				}
 			} catch (e) {
 				console.log('Error loading the cron jobs module:')
-				logger.error(e)
+				CORE.logger.error(e)
 			}
 				// moduleName,
 				// cfg: CORE.cfg,
