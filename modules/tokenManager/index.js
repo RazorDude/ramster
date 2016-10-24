@@ -57,7 +57,7 @@ class TokenManager{
 				return token
 			}
 
-			if(type === 'refresh') {
+			if (type === 'refresh') {
 				let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
 				if (!currentAccessToken) {
 					throw {customMessage: 'No access token to create a refresh token for.'}
@@ -80,7 +80,7 @@ class TokenManager{
 	validate({secret, moduleName}) {
 		return (req, res, next) => {
 			try {
-				if(!req.headers['Authorization']) {
+				if (!req.headers['Authorization']) {
 					throw {customMessage: 'No authorization token provided.', status: 401}
 				}
 
