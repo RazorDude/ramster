@@ -9,7 +9,7 @@ class TokenManager{
 	signToken({userId, secret, expiresInMinutes}) {
 		return new Promise((resolve, reject) => {
 			if (expiresInMinutes) {
-				jwt.sign({id: userId}, secret, { expiresInMinutes }, (err, token) => {
+				jwt.sign({id: userId}, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
 					if (err) {
 						reject({customMessage: 'Failed to sign token.', status: 401})
 						return;
@@ -17,7 +17,7 @@ class TokenManager{
 					resolve(token)
 				})
 			}
-			jwt.sign({id: userId}, secret, (err, token) => {
+			jwt.sign({id: userId}, secret, null, (err, token) => {
 				if (err) {
 					reject({customMessage: 'Failed to sign token.', status: 401})
 					return;

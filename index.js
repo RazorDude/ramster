@@ -315,7 +315,6 @@ class Core {
 
 			// ------------ LOAD THE APIS' ROUTES ---------- \\
 			for (let moduleName in this.modules.apis) {
-				// build the initial index.html file
 				let apiModule = this.modules.apis[moduleName]
 
 				apiModule.app = express()
