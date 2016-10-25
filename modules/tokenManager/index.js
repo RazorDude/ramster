@@ -80,14 +80,14 @@ class TokenManager{
 	validate({secret, moduleName}) {
 		return (req, res, next) => {
 			try {
-				if (!req.headers['Authorization']) {
+				if (!req.headers['authorization']) {
 					throw {customMessage: 'No authorization token provided.', status: 401}
 				}
 
-				let tokens = req.headers['Authorization'].split(' '),
+				let tokens = req.headers['authorization'].split(' '),
 					instance = this
-				if ((tokens[0] !== 'Bearer') || !tokens[1]) {
-					throw {customMessage: 'Invalid header format.', status: 401}
+				if ((tokens[0] !== 'Bearer') || (tokens[1] === 'undefined')) {
+					// throw {customMessage: 'Invalid header format.', status: 401}
 				}
 
 				co(function* () {
@@ -104,38 +104,47 @@ class TokenManager{
 						}
 
 						req.user = {id: decoded.id}
-					} catch(e) {
-						if (!e.tokenExpired) {
-							throw e
-						}
-
-						if (!tokens[2]) {
-							throw {customMessage: 'Invalid access token. No refresh token provided.', status: 401}
-						}
-
-						let decoded = yield instance.verifyToken({token: tokens[2], secret})
-						if (!decoded.id) {
-							throw {customMessage: 'Invalid access token. Invalid refresh token.'}
-						}
-
-						let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${decoded.id}AccessToken`),
-							currentRefreshToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`),
-							currentRefreshTokenBlacklisted = yield instance.generalStore.getStoredEntry(`${moduleName}refreshTokenBlacklist-${currentAccessToken}`)
-						yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentAccessToken}`)
-						if ((currentRefreshToken !== tokens[2]) || currentRefreshTokenBlacklisted) {
-							throw {customMessage: 'Invalid access token. Invalid refresh token.'}
-						}
-
-						let newAccessToken = yield req.locals.tokenManager.createToken({type: 'access', userId: user.id, secret: req.locals.cfg.mobile.jwt.secret})
-						yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
-						yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${newAccessToken}`, currentRefreshToken)
-
-						req.user = {id: decoded.id}
-						res.set('Authorization-NewAccessToken', newAccessToken)
 						return true
+					} catch(e) {
+						try {
+							if (!e.tokenExpired) {
+								throw e
+							}
+
+							if (tokens[2] === 'undefined') {
+								throw {customMessage: 'Invalid access token. No refresh token provided.', status: 401}
+							}
+
+							let decoded = yield instance.verifyToken({token: tokens[2], secret})
+							if (!decoded.id) {
+								throw {customMessage: 'Invalid access token. Invalid refresh token.'}
+							}
+
+							let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${decoded.id}AccessToken`),
+								currentRefreshToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`),
+								currentRefreshTokenBlacklisted = yield instance.generalStore.getStoredEntry(`${moduleName}refreshTokenBlacklist-${currentAccessToken}`)
+							yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentAccessToken}`)
+							if ((currentRefreshToken !== tokens[2]) || currentRefreshTokenBlacklisted) {
+								throw {customMessage: 'Invalid access token. Invalid refresh token.'}
+							}
+
+							let newAccessToken = yield req.locals.tokenManager.createToken({type: 'access', userId: user.id, secret: req.locals.cfg.mobile.jwt.secret})
+							yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
+							yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${newAccessToken}`, currentRefreshToken)
+
+							req.user = {id: decoded.id}
+							res.set('authorization-newaccesstoken', newAccessToken)
+							return true
+						} catch (innerError) {
+							req.user = null
+							res.status(innerError.status || 500).json({error: innerError.customMessage || 'An internal server error has occurred.'})
+							return false
+						}
 					}
 				}).then((result) => {
-					next()
+					if (result) {
+						next()
+					}
 				}, (error) => {
 					throw error
 				})

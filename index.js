@@ -288,7 +288,7 @@ class Core {
 
 				//after every route - return handled errors and set up redirects
 				clientModule.app.use('*', function (req, res) {
-					if (req.locals.error === null) {
+					if (!req.locals || (req.locals.error === null)) {
 						if (req.isAuthenticated()) {
 							res.redirect(302, clientModule.settings.notFoundRedirectRoutes.authenticated)
 							return;
@@ -378,7 +378,7 @@ class Core {
 
 				//after every route - return handled errors and set up redirects
 				apiModule.app.use('*', function (req, res, next) {
-					if (req.locals.error === null) {
+					if (!req.locals || (req.locals.error === null)) {
 						res.status(404).json({error: 'Not found.'})
 						return;
 					}
