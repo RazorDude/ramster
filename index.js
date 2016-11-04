@@ -113,13 +113,14 @@ class Core {
 						}
 					})
 
-					if (this.cfg.useNGINX) {
-						let configFilePath = path.join(this.cfg.nginxConfigFolderPath, `${moduleDir}.conf`),
+					// add nginx support - configuration generation
+					if (this.cfg.webserver === 'nginx') {
+						let configFilePath = path.join(this.cfg.wsConfigFolderPath, `${moduleDir}.conf`),
 							configFile = fs.openSync(configFilePath, 'w')
 
 						fs.writeFileSync(configFile, `
 							server {
-								listen       ${moduleSettings.externalPort};
+								listen       ${moduleSettings.wsPort};
 								server_name  ${this.cfg.hostAddress};
 
 								#charset koi8-r;
@@ -282,6 +283,11 @@ class Core {
 						cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
 						res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
 						return;
+					}
+
+					// add a cookie with the wsPort (nginx/apache static files serving), if used - for front-end reference
+					if (instance.cfg.webserver === 'nginx') {
+						cookies.set('wsPort', clientModule.settings.wsPort, {httpOnly: false})
 					}
 
 					req.locals = {
