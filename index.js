@@ -125,8 +125,14 @@ class Core {
 
 								#charset koi8-r;
 
-								location / {
-									root   ${moduleSettings.publicPath};
+								location /static {
+									root ${moduleSettings.webpackHost || moduleSettings.publicPath};
+								}
+
+								location * {
+									proxy_set_header Host $host;
+									proxy_set_header X-Real-IP $remote_addr;
+									proxy_pass 127.0.0.1:${moduleSettings.port};
 								}
 
 								# redirect server error pages to the static page /50x.html
@@ -218,7 +224,7 @@ class Core {
 			for (let moduleName in this.modules.clients) {
 				// build the layout.html file
 				let publicSourcesPath = path.join(this.cfg.clientModulesPublicSourcesPath, moduleName),
-					layoutData = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + this.cfg.name + '.pug'), {}))(),
+					layoutData = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + this.cfg.name + '.pug'), {wsAddress}))(),
 					layoutFilePath = path.join(this.cfg[moduleName].publicPath, 'layout.html'),
 					layoutFile = fs.openSync(layoutFilePath, 'w'),
 					clientModule = this.modules.clients[moduleName]
