@@ -132,7 +132,7 @@ class Core {
 								location * {
 									proxy_set_header Host $host;
 									proxy_set_header X-Real-IP $remote_addr;
-									proxy_pass 127.0.0.1:${moduleSettings.port};
+									proxy_pass 127.0.0.1:${moduleSettings.serverPort};
 								}
 
 								# redirect server error pages to the static page /50x.html
