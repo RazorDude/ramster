@@ -224,7 +224,7 @@ class Core {
 			for (let moduleName in this.modules.clients) {
 				// build the layout.html file
 				let publicSourcesPath = path.join(this.cfg.clientModulesPublicSourcesPath, moduleName),
-					layoutData = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + this.cfg.name + '.pug'), {wsAddress}))(),
+					layoutData = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + this.cfg.name + '.pug'), {}))(),
 					layoutFilePath = path.join(this.cfg[moduleName].publicPath, 'layout.html'),
 					layoutFile = fs.openSync(layoutFilePath, 'w'),
 					clientModule = this.modules.clients[moduleName]
