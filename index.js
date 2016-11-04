@@ -230,7 +230,10 @@ class Core {
 				clientModule.app.use(clientModule.settings.passport.initialize())
 				clientModule.app.use(clientModule.settings.passport.session())
 
-				clientModule.app.use(express.static(this.cfg[moduleName].publicPath)) //serve static files
+ 				//serve static files - not recommended; preferrably use nginx or apache; ideally for SPAs, your server should serve only the layout.html (index) file
+				if (this.cfg[moduleName].serveStaticFiles) {
+					clientModule.app.use(express.static(this.cfg[moduleName].publicPath))
+				}
 
 				//load all route paths
 				for (let i in clientModule.moduleData) {
