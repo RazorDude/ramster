@@ -29,7 +29,8 @@ let csvPromise = require('./modules/csvPromise'),
 	baseDBClass = require('./base/dbClass'),
 	baseClientClass = require('./base/clientClass'),
 	baseApiClass = require('./base/apiClass'),
-	CronJob = require('cron').CronJob
+	CronJob = require('cron').CronJob,
+	merge = require('deepmerge')
 
 class Core {
 	constructor(cfg) {
@@ -103,7 +104,8 @@ class Core {
 					let moduleDirPath = path.join(modulesDirPath, moduleDir),
 						moduleDirData = fs.readdirSync(moduleDirPath),
 						moduleData = {},
-						moduleSettings = this.cfg[moduleDir]
+						moduleSettings = this.cfg[moduleDir],
+						currentSettings = merge(settings, moduleSettings)
 
 					moduleDirData.forEach((componentDir, index) => {
 						if (componentDir.indexOf('.') === -1) {
@@ -111,11 +113,33 @@ class Core {
 						}
 					})
 
-					for (let key in moduleSettings){
-						settings[key] = moduleSettings[key]
+					if (this.cfg.useNGINX) {
+						let configFilePath = path.join(this.cfg.nginxConfigFolderPath, `${moduleDir}.conf`),
+							configFile = fs.openSync(configFilePath, 'w')
+
+						fs.writeFileSync(configFile, `
+							server {
+								listen       ${moduleSettings.externalPort};
+								server_name  ${this.cfg.hostAddress};
+
+								#charset koi8-r;
+
+								location / {
+									root   ${moduleSettings.publicPath};
+								}
+
+								# redirect server error pages to the static page /50x.html
+								#
+								error_page   500 502 503 504  /50x.html;
+								location = /50x.html {
+									root   html;
+								}
+							}
+						`)
+						fs.closeSync(configFile)
 					}
 
-					this.modules.clients[moduleDir] = {moduleData, settings}
+					this.modules.clients[moduleDir] = {moduleData, settings: currentSettings}
 				}
 			})
 
@@ -132,7 +156,8 @@ class Core {
 					let moduleDirPath = path.join(modulesDirPath, moduleDir),
 						moduleDirData = fs.readdirSync(moduleDirPath),
 						moduleData = {},
-						moduleSettings = this.cfg[moduleDir]
+						moduleSettings = this.cfg[moduleDir],
+						currentSettings = merge(settings, moduleSettings)
 
 					moduleDirData.forEach((componentDir, index) => {
 						if (componentDir.indexOf('.') === -1) {
@@ -140,11 +165,7 @@ class Core {
 						}
 					})
 
-					for (let key in moduleSettings){
-						settings[key] = moduleSettings[key]
-					}
-
-					this.modules.apis[moduleDir] = {moduleData, settings}
+					this.modules.apis[moduleDir] = {moduleData, settings: currentSettings}
 				}
 			})
 
@@ -196,12 +217,13 @@ class Core {
 			for (let moduleName in this.modules.clients) {
 				// build the layout.html file
 				let publicSourcesPath = path.join(this.cfg.clientModulesPublicSourcesPath, moduleName),
-					layoutFile = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + this.cfg.name + '.pug'), {}))(),
+					layoutData = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + this.cfg.name + '.pug'), {}))(),
 					layoutFilePath = path.join(this.cfg[moduleName].publicPath, 'layout.html'),
+					layoutFile = fs.openSync(layoutFilePath, 'w'),
 					clientModule = this.modules.clients[moduleName]
 
-				fs.openSync(layoutFilePath, 'w')
-				fs.writeFileSync(layoutFilePath, layoutFile)
+				fs.writeFileSync(layoutFile, layoutData)
+				fs.closeSync(layoutFile)
 
 				clientModule.app = express()
 				clientModule.router = express.Router()
