@@ -116,7 +116,24 @@ class Core {
 					// add nginx support - configuration generation
 					if (this.cfg.webserver === 'nginx') {
 						let configFilePath = path.join(this.cfg.wsConfigFolderPath, `${moduleDir}.conf`),
-							configFile = fs.openSync(configFilePath, 'w')
+							configFile = fs.openSync(configFilePath, 'w'),
+							bundle = ''
+
+						if (moduleSettings.webpackHost) {
+							bundle = `
+								location ^~ /bundle {
+									proxy_set_header Host $host;
+									proxy_set_header X-Real-IP $remote_addr;
+									proxy_pass ${moduleSettings.webpackHost}/dist;
+								}
+							`
+						} else {
+							bundle = `
+								location ^~ /bundle {
+									root ${moduleSettings.publicPath};
+								}
+							`
+						}
 
 						fs.writeFileSync(configFile, `
 							server {
@@ -125,14 +142,16 @@ class Core {
 
 								#charset koi8-r;
 
-								location /static {
-									root ${moduleSettings.webpackHost || moduleSettings.publicPath};
+								${bundle}
+
+								location ^~ /static {
+									root ${moduleSettings.publicPath};
 								}
 
-								location * {
+								location / {
 									proxy_set_header Host $host;
 									proxy_set_header X-Real-IP $remote_addr;
-									proxy_pass 127.0.0.1:${moduleSettings.serverPort};
+									proxy_pass ${this.cfg.protocol}://127.0.0.1:${moduleSettings.serverPort};
 								}
 
 								# redirect server error pages to the static page /50x.html
@@ -292,7 +311,7 @@ class Core {
 					}
 
 					// add a cookie with the wsPort (nginx/apache static files serving), if used - for front-end reference
-					if (instance.cfg.webserver === 'nginx') {
+					if (CORE.cfg.webserver === 'nginx') {
 						cookies.set('wsPort', clientModule.settings.wsPort, {httpOnly: false})
 					}
 
