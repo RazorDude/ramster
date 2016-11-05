@@ -310,11 +310,7 @@ class Core {
 						return;
 					}
 
-					// add a cookie with the wsPort (nginx/apache static files serving), if used - for front-end reference
-					if (CORE.cfg.webserver === 'nginx') {
-						cookies.set('wsPort', clientModule.settings.wsPort, {httpOnly: false})
-					}
-
+					
 					req.locals = {
 						moduleName,
 						cfg: CORE.cfg,
