@@ -154,8 +154,6 @@ class Core {
 									proxy_pass ${this.cfg.protocol}://127.0.0.1:${moduleSettings.serverPort};
 								}
 
-								# redirect server error pages to the static page /50x.html
-								#
 								error_page   500 502 503 504  /50x.html;
 								location = /50x.html {
 									root   html;
@@ -310,7 +308,7 @@ class Core {
 						return;
 					}
 
-					
+
 					req.locals = {
 						moduleName,
 						cfg: CORE.cfg,
