@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "0.4.1",
+  "version": "0.4.2",
   "description": "A standalone NodeJS MVC boilerplate.",
   "main": "index.js",
   "scripts": {
