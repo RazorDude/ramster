@@ -78,8 +78,8 @@ class Core {
 			this.modules.db.sequelize = sequelize
 			this.modules.db.Sequelize = Sequelize
 
-			if (thic.cfg.customMailClientPath) {
-				let customMailClient = require(thic.cfg.customMailClientPath)
+			if (thic.cfg.emails.customModulePath) {
+				let customMailClient = require(this.cfg.emails.customModulePath)
 				this.mailClient = new customMailClient(this.cfg, this.modules.db)
 			} else {
 				this.mailClient = new emails(this.cfg, this.modules.db)
