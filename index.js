@@ -37,7 +37,6 @@ class Core {
 		try {
 			this.cfg = cfg || defaultConfig
 			this.logger = new logger(this.cfg)
-			this.mailClient = new emails(this.cfg)
 			this.generalStore = new generalStore(this.cfg)
 			this.tokenManager = new tokenManager({generalStore: this.generalStore})
 			this.modules = {}
@@ -50,9 +49,9 @@ class Core {
 					dialect: 'postgres',
 					logging: (this.cfg.postgres.logging === true) ?
 						(sql) => {
-							console.log('================ SQL ==================')
+							console.log('================ /SQL\\ ==================')
 							console.log(pd.sql(sql))
-							console.log('================ /SQL ==================')
+							console.log('================ \\SQL/ ==================')
 						} : false
 				}),
 				CORE = this
@@ -78,9 +77,17 @@ class Core {
 			}
 			this.modules.db.sequelize = sequelize
 			this.modules.db.Sequelize = Sequelize
+
+			if (thic.cfg.customMailClientPath) {
+				let customMailClient = require(thic.cfg.customMailClientPath)
+				this.mailClient = new customMailClient(this.cfg, this.modules.db)
+			} else {
+				this.mailClient = new emails(this.cfg, this.modules.db)
+			}
 			for (let componentName in this.modules.db.components) {
 				let component = this.modules.db.components[componentName]
 				component.setDb(this.modules.db)
+				component.mailClient = this.mailClient
 			}
 
 			this.modules.db.sequelize.sync()

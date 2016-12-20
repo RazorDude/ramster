@@ -10,7 +10,6 @@ class Base {
 			page: 1,
 			perPage: 10
 		}
-		this.mailClient = mailClient
 		this.cfg = cfg
 		this.logger = logger
 	}
