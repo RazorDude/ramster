@@ -115,7 +115,7 @@ class Core {
 
 					// add nginx support - configuration generation
 					if (this.cfg.webserver === 'nginx') {
-						let configFilePath = path.join(this.cfg.wsConfigFolderPath, `${moduleDir}.conf`),
+						let configFilePath = path.join(this.cfg.wsConfigFolderPath, `${this.cfg.projectName}-${moduleDir}.conf`),
 							configFile = fs.openSync(configFilePath, 'w'),
 							bundle = ''
 

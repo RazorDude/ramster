@@ -29,7 +29,7 @@ Ramster uses its core classes to comprise the following architecture:
 &nbsp;&nbsp;&nbsp;&nbsp;Client module requests (and access, in general) are secured with passport authentication strategies.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;Example: let's say you have a website platform for your customers and a CMS for your support staff. Although those two share the DB module, each of them has a client module of its own. They're in separate folders, each folder containing a number of classes that inherit the clientClass. Effectively, each client module is the API for a specific front-end client.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;<i>Tip: for SPAs, define a "layout" client module for each front-end client, and use ramster's built-in functionality to build and serve your layout.html file, which is the entry point for your front-end code. More on that later.</i>
-* The API modules - the classes that inherit the apiClass contain the endpoints intended for APIs (modile apps and external integrations, for example). Just like the client modules, they are grouped by you in separate folders.<br/>
+* The API modules - the classes that inherit the apiClass contain the endpoints intended for APIs (mobile apps and external integrations, for example). Just like the client modules, they are grouped by you in separate folders.<br/>
 &nbsp;&nbsp;&nbsp;&nbsp;API module requests using JWTs.
 
 ___
