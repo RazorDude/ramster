@@ -131,17 +131,13 @@ class Core {
 
 						if (moduleSettings.prependWSServerConfigFromFiles instanceof Array) {
 							moduleSettings.prependWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
-								let cfgFile = fs.openSync(cfgFilePath, 'w')
 								prependToServerCfg += fs.readFileSync(cfgFile)
-								fs.closeSync(cfgFile)
 							})
 						}
 
 						if (moduleSettings.appendWSServerConfigFromFiles instanceof Array) {
 							moduleSettings.appendWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
-								let cfgFile = fs.openSync(cfgFilePath, 'w')
 								appendToServerCfg += fs.readFileSync(cfgFile)
-								fs.closeSync(cfgFile)
 							})
 						}
 
