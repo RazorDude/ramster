@@ -226,32 +226,34 @@ class Core {
 			})
 
 			// ####### ------------ SCHEDULE THE CRON JOBS ---------- ####### \\
-			try {
-				let cronJobsModule = require(this.cfg.cronJobs.path),
-					jobs = cronJobsModule.getJobs({
-						cfg: CORE.cfg,
-						logger: CORE.logger,
-						mailClient: CORE.mailClient,
-						generalStore: CORE.generalStore,
-						tokenManager: CORE.tokenManager,
-						db: CORE.modules.db
-					})
-				if (jobs instanceof Array) {
-					jobs.forEach((jobData, index) => {
-						try {
-							if (!jobData.start) {
-								jobData.start = true
+			if (this.cfg.cronJobs) {
+				try {
+					let cronJobsModule = require(this.cfg.cronJobs.path),
+						jobs = cronJobsModule.getJobs({
+							cfg: CORE.cfg,
+							logger: CORE.logger,
+							mailClient: CORE.mailClient,
+							generalStore: CORE.generalStore,
+							tokenManager: CORE.tokenManager,
+							db: CORE.modules.db
+						})
+					if (jobs instanceof Array) {
+						jobs.forEach((jobData, index) => {
+							try {
+								if (!jobData.start) {
+									jobData.start = true
+								}
+								new CronJob(jobData)
+							} catch (e) {
+								console.log('Error starting a cron job:')
+								CORE.logger.error(e)
 							}
-							new CronJob(jobData)
-						} catch (e) {
-							console.log('Error starting a cron job:')
-							CORE.logger.error(e)
-						}
-					})
+						})
+					}
+				} catch (e) {
+					console.log('Error loading the cron jobs module:')
+					CORE.logger.error(e)
 				}
-			} catch (e) {
-				console.log('Error loading the cron jobs module:')
-				CORE.logger.error(e)
 			}
 		} catch (e) {
 			console.log(e)
