@@ -131,13 +131,13 @@ class Core {
 
 						if (moduleSettings.prependWSServerConfigFromFiles instanceof Array) {
 							moduleSettings.prependWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
-								prependToServerCfg += fs.readFileSync(cfgFile)
+								prependToServerCfg += fs.readFileSync(cfgFilePath)
 							})
 						}
 
 						if (moduleSettings.appendWSServerConfigFromFiles instanceof Array) {
 							moduleSettings.appendWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
-								appendToServerCfg += fs.readFileSync(cfgFile)
+								appendToServerCfg += fs.readFileSync(cfgFilePath)
 							})
 						}
 
