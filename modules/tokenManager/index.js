@@ -150,7 +150,14 @@ class TokenManager{
 				})
 			} catch(e) {
 				req.user = null
-				res.status(e.status || 500).json({error: e.customMessage || 'An internal server error has occurred.'})
+				let response = {},
+					error = e.customMessage || 'An internal server error has occurred. Please try again.'
+				if (req.locals.settings.responseType === 'serviceName') {
+					response = {serviceName: req.locals.serviceName, data: null, message: error}
+				} else {
+					response = {error}
+				}
+				res.status(e.status || req.locals.errorStatus || 500).json(response)
 			}
 		}
 	}
