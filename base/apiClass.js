@@ -2,9 +2,7 @@
 
 let fs = require('fs'),
 	path = require('path'),
-	co = require('co'),
-	csv = new (require('../modules/csvPromise/index'))(),
-	xlsx = require('node-xlsx')
+	co = require('co')
 
 class Base {
 	constructor({componentName, componentNameSingular, routes, addDefaultRoutes}) {
@@ -33,46 +31,6 @@ class Base {
 
 	getRoutes() {
 		return this.routes
-	}
-
-	importFileCheck({locals, inputFileName, delimiter}) {
-		let instance = this
-		return co(function*() {
-			let fileName = inputFileName,
-				extNameRegex = new RegExp(/\.[^/.]+$/),
-				extName = extNameRegex.exec(fileName),
-				inputFileData = fs.readFileSync(path.join(locals.cfg.common.uploadPath, inputFileName)),
-				parsedInputFileData = null,
-				template = {
-					fileData: fs.readFileSync(path.join(locals.cfg.common.storagePath, `/importTemplates/${instance.componentName}.csv`)),
-					columns: []
-				},
-				matchesTemplate = true,
-				columns = []
-			extName = extName && extName[0] || ''
-			template.data = yield csv.parse({data: template.fileData, options: {delimiter: ';'}})
-			template.data[0].forEach((column, index) => {
-				template.columns.push(column)
-			})
-
-			if (extName === '.csv') {
-				parsedInputFileData = yield csv.parse({data: inputFileData, options: {delimiter: delimiter}})
-			}
-			if (extName === '.xlsx') {
-				parsedInputFileData = xlsx.parse(inputFileData)
-				parsedInputFileData = parsedInputFileData[0] && parsedInputFileData[0].data || null
-			}
-
-			if (parsedInputFileData && parsedInputFileData[0]) {
-				parsedInputFileData[0].forEach((column, index) => {
-					if (matchesTemplate && (template.columns[index] !== column)) {
-						matchesTemplate = false
-					}
-					columns.push(column)
-				})
-			}
-			return {matchesTemplate, columns, templateColumns: template.columns, fileData: parsedInputFileData}
-		})
 	}
 
 	create() {
