@@ -130,7 +130,7 @@ class Core {
 							bundle = ''
 
 						if (moduleSettings.prependWSServerConfigFromFiles instanceof Array) {
-							fmoduleSettings.prependWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
+							moduleSettings.prependWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
 								let cfgFile = fs.openSync(cfgFilePath, 'w')
 								prependToServerCfg += fs.readFileSync(cfgFile)
 								fs.closeSync(cfgFile)
@@ -138,7 +138,7 @@ class Core {
 						}
 
 						if (moduleSettings.appendWSServerConfigFromFiles instanceof Array) {
-							fmoduleSettings.appendWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
+							moduleSettings.appendWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
 								let cfgFile = fs.openSync(cfgFilePath, 'w')
 								appendToServerCfg += fs.readFileSync(cfgFile)
 								fs.closeSync(cfgFile)
