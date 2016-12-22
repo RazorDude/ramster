@@ -171,7 +171,7 @@ class Core {
 		${prependToServerCfg}
 
 		${bundle}
-		
+
 		location ^~ /static {
 			root ${moduleSettings.publicPath};
 		}
@@ -468,7 +468,15 @@ class Core {
 					if (req.locals.error.message && req.locals.error.message.indexOf('Validation error') !== -1) {
 						req.locals.error.customMessage = 'Validation error - please make sure all required fields are present and in the correct format.'
 					}
-					res.status(req.locals.errorStatus).json({error: req.locals.error.customMessage || 'An internal server error has occurred. Please try again.'})
+
+					let response = {},
+						error = req.locals.error.customMessage || 'An internal server error has occurred. Please try again.'
+					if (apiModule.settings.responseType === 'serviceName') {
+						response = {serviceName: req.locals.serviceName, data: null, message: error}
+					} else {
+						response = {error}
+					}
+					res.status(req.locals.errorStatus).json(response)
 				})
 
 				apiModule.server = http.createServer(apiModule.app)
