@@ -124,49 +124,74 @@ class Core {
 					if (this.cfg.webserver === 'nginx') {
 						let configFilePath = path.join(this.cfg.wsConfigFolderPath, `${this.cfg.projectName}-${moduleDir}.conf`),
 							configFile = fs.openSync(configFilePath, 'w'),
+							newFileContents = '',
+							prependToServerCfg = '',
+							appendToServerCfg = '',
 							bundle = ''
+
+						if (moduleSettings.prependWSServerConfigFromFiles instanceof Array) {
+							fmoduleSettings.prependWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
+								let cfgFile = fs.openSync(cfgFilePath, 'w')
+								prependToServerCfg += fs.readFileSync(cfgFile)
+								fs.closeSync(cfgFile)
+							})
+						}
+
+						if (moduleSettings.appendWSServerConfigFromFiles instanceof Array) {
+							fmoduleSettings.appendWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
+								let cfgFile = fs.openSync(cfgFilePath, 'w')
+								appendToServerCfg += fs.readFileSync(cfgFile)
+								fs.closeSync(cfgFile)
+							})
+						}
 
 						if (moduleSettings.webpackHost) {
 							bundle = `
-								location ^~ /bundle {
-									proxy_set_header Host $host;
-									proxy_set_header X-Real-IP $remote_addr;
-									proxy_pass ${moduleSettings.webpackHost}/dist;
-								}
+		location ^~ /bundle {
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_pass ${moduleSettings.webpackHost}/dist;
+		}
 							`
 						} else {
 							bundle = `
-								location ^~ /bundle {
-									root ${moduleSettings.publicPath};
-								}
+		location ^~ /bundle {
+			root ${moduleSettings.publicPath};
+		}
 							`
 						}
 
-						fs.writeFileSync(configFile, `
-							server {
-								listen       ${moduleSettings.wsPort};
-								server_name  ${this.cfg.hostAddress};
+						newFileContents += `
+	server {
+		listen       ${moduleSettings.wsPort};
+		server_name  ${this.cfg.hostAddress};
 
-								#charset koi8-r;
+		#charset koi8-r;
 
-								${bundle}
+		${prependToServerCfg}
 
-								location ^~ /static {
-									root ${moduleSettings.publicPath};
-								}
+		${bundle}
+		
+		location ^~ /static {
+			root ${moduleSettings.publicPath};
+		}
 
-								location / {
-									proxy_set_header Host $host;
-									proxy_set_header X-Real-IP $remote_addr;
-									proxy_pass ${this.cfg.protocol}://127.0.0.1:${moduleSettings.serverPort};
-								}
+		location / {
+			proxy_set_header Host $host;
+			proxy_set_header X-Real-IP $remote_addr;
+			proxy_pass ${this.cfg.protocol}://127.0.0.1:${moduleSettings.serverPort};
+		}
 
-								error_page   500 502 503 504  /50x.html;
-								location = /50x.html {
-									root   html;
-								}
-							}
-						`)
+		${appendToServerCfg}
+
+		error_page   500 502 503 504  /50x.html;
+		location = /50x.html {
+			root   html;
+		}
+	}
+						`
+
+						fs.writeFileSync(configFile, newFileContents)
 						fs.closeSync(configFile)
 					}
 
