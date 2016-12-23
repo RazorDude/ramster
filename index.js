@@ -423,7 +423,8 @@ class Core {
 
 				//before every route - set up post params logging, redirects and locals
 				apiModule.app.use(apiModule.paths, wrap(function* (req, res, next) {
-					let originalUrl = req.originalUrl.split('?')[0]
+					let originalUrl = req.originalUrl.split('?')[0],
+						serviceNameData = originalUrl.split('/')
 					console.log(`[${moduleName} API]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
 					req.locals = {
@@ -435,6 +436,7 @@ class Core {
 						generalStore: CORE.generalStore,
 						tokenManager: CORE.tokenManager,
 						db: CORE.modules.db,
+						serviceName: serviceNameData[serviceNameData.length - 1],
 						error: null,
 						errorStatus: 500,
 						originalUrl
