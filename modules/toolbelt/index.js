@@ -22,7 +22,7 @@ let emptyToNull = (data, outputData) => {
 		}
 		return outputData
 	},
-	getNested = ({parent, field}) => {
+	getNested = (parent, field) => {
 		if ((typeof parent !== 'object') || (typeof field !== 'string')) {
 			return null
 		}
