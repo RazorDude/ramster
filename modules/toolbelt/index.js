@@ -61,4 +61,4 @@ let emptyToNull = (data, outputData) => {
 		return str
 	}
 
-module.exports = {emptyToNull, getNested}
+module.exports = {emptyToNull, getNested, changeKeyCase}
