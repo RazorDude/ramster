@@ -43,11 +43,11 @@ class TokenManager{
 		})
 	}
 
-	createToken({type, userId, secret, moduleName}) {
+	createToken({type, userId, secret, moduleName, expiresInMinutes}) {
 		let instance = this
 		return co(function* () {
 			if (type === 'access') {
-				let token = yield instance.signToken({userId, secret, expiresInMinutes: 60}),
+				let token = yield instance.signToken({userId, secret, expiresInMinutes}),
 					currentToken = instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
 				if (currentToken) {
 					yield instance.generalStore.removeEntry(`${moduleName}user${userId}AccessToken`)
@@ -77,9 +77,11 @@ class TokenManager{
 		})
 	}
 
-	validate({secret, moduleName}) {
+	validate() {
 		return (req, res, next) => {
 			try {
+				let moduleName = req.locals.moduleName,
+					config = req.locals.cfg[moduleName]
 				if (!req.headers['authorization']) {
 					throw {customMessage: 'No authorization token provided.', status: 401}
 				}
@@ -92,7 +94,7 @@ class TokenManager{
 
 				co(function* () {
 					try {
-						let decoded = yield instance.verifyToken({token: tokens[1], secret})
+						let decoded = yield instance.verifyToken({token: tokens[1], secret: config.jwt.secret})
 						if (!decoded.id) {
 							throw {customMessage: 'Invalid access token.'}
 						}
@@ -115,7 +117,7 @@ class TokenManager{
 								throw {customMessage: 'Invalid access token. No refresh token provided.', status: 401}
 							}
 
-							let decoded = yield instance.verifyToken({token: tokens[2], secret})
+							let decoded = yield instance.verifyToken({token: tokens[2], secret: config.jwt.secret})
 							if (!decoded.id) {
 								throw {customMessage: 'Invalid access token. Invalid refresh token.'}
 							}
@@ -128,7 +130,7 @@ class TokenManager{
 								throw {customMessage: 'Invalid access token. Invalid refresh token.'}
 							}
 
-							let newAccessToken = yield req.locals.tokenManager.createToken({type: 'access', userId: user.id, secret: req.locals.cfg.mobile.jwt.secret})
+							let newAccessToken = yield req.locals.tokenManager.createToken({type: 'access', userId: user.id, secret: config.jwt.secret, expiresInMinutes: config.jwt.accessTokenExpiresInMinutes})
 							yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 							yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${newAccessToken}`, currentRefreshToken)
 
