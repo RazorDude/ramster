@@ -38,7 +38,7 @@ let emptyToNull = (data, outputData) => {
 		return currentElement
 	},
 	changeKeyCase = (keyMap, input, outputType) => {
-		let str = ''
+		let str = '',
 			inputType = ''
 		if (outputType === 'upper') {
 			inputType = 'lower'
