@@ -8,7 +8,7 @@ let fs = require('fs'),
 	toolbelt = require('../modules/toolbelt')
 
 class Base {
-	constructor({componentName, componentNameSingular, routes, addDefaultRoutes}) {
+	constructor({componentName, componentNameSingular, routes, additionalDefaultRoutes, addDefaultRoutes}) {
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
 
@@ -24,6 +24,11 @@ class Base {
 					delete: {method: 'get', path: `/${this.componentName}/delete`, func: 'delete'}
 				},
 				defaultRoutesToAdd = []
+			if (typeof additionalDefaultRoutes === 'object') {
+				for (let key in additionalDefaultRoutes) {
+					defaultRoutes[key] = additionalDefaultRoutes[key]
+				}
+			}
 			addDefaultRoutes.forEach((route, index) => {
 				if (defaultRoutes[route]) {
 					defaultRoutesToAdd.push(defaultRoutes[route])
