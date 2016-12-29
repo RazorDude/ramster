@@ -321,18 +321,18 @@ class Core {
 				const fieldCaseChangeSettings = clientModule.settings.fieldCaseChange,
 					fieldCaseMap = clientModule.settings.fieldCaseMap || CORE.db.fieldCaseMap || null
 				if (fieldCaseChangeSettings && fieldCaseMap) {
-					if (fieldCaseChangeSettings.query.out) {
+					if (fieldCaseChangeSettings.query) {
 						clientModule.app.use(function (req, res, next) {
 							if (req.query) {
-								req.query = toolbelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query.out)
+								req.query = toolbelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query)
 							}
 							next()
 						})
 					}
-					if (fieldCaseChangeSettings.body.out) {
+					if (fieldCaseChangeSettings.body) {
 						clientModule.app.use(function (req, res, next) {
 							if (req.body) {
-								req.body = toolbelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body.out)
+								req.body = toolbelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body)
 							}
 							next()
 						})
@@ -439,18 +439,18 @@ class Core {
 				const fieldCaseChangeSettings = apiModule.settings.fieldCaseChange,
 					fieldCaseMap = apiModule.settings.fieldCaseMap || CORE.db.fieldCaseMap || null
 				if (fieldCaseChangeSettings && fieldCaseMap) {
-					if (fieldCaseChangeSettings.query.out) {
+					if (fieldCaseChangeSettings.query) {
 						apiModule.app.use(function (req, res, next) {
 							if (req.query) {
-								req.query = toolbelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query.out)
+								req.query = toolbelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query)
 							}
 							next()
 						})
 					}
-					if (fieldCaseChangeSettings.body.out) {
+					if (fieldCaseChangeSettings.body) {
 						apiModule.app.use(function (req, res, next) {
 							if (req.body) {
-								req.body = toolbelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body.out)
+								req.body = toolbelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body)
 							}
 							next()
 						})
