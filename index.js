@@ -319,7 +319,7 @@ class Core {
 
 				//before every request - if query/body field case change is enabled
 				const fieldCaseChangeSettings = clientModule.settings.fieldCaseChange,
-					fieldCaseMap = clientModule.settings.fieldCaseMap || CORE.db.fieldCaseMap || null
+					fieldCaseMap = clientModule.settings.fieldCaseMap || CORE.modules.db.fieldCaseMap || null
 				if (fieldCaseChangeSettings && fieldCaseMap) {
 					if (fieldCaseChangeSettings.query) {
 						clientModule.app.use(function (req, res, next) {
@@ -437,7 +437,7 @@ class Core {
 
 				//before every request - if query/body field case change is enabled
 				const fieldCaseChangeSettings = apiModule.settings.fieldCaseChange,
-					fieldCaseMap = apiModule.settings.fieldCaseMap || CORE.db.fieldCaseMap || null
+					fieldCaseMap = apiModule.settings.fieldCaseMap || CORE.modules.db.fieldCaseMap || null
 				if (fieldCaseChangeSettings && fieldCaseMap) {
 					if (fieldCaseChangeSettings.query) {
 						apiModule.app.use(function (req, res, next) {
