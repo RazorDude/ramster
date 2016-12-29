@@ -338,7 +338,7 @@ class Core {
 						clientModule.app.use(function (req, res, next) {
 							try {
 								if (req.body) {
-									req.body = toolBelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body)
+									req.body = JSON.parse(toolBelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body))
 								}
 								next()
 							} catch (err) {
@@ -483,7 +483,7 @@ class Core {
 						apiModule.app.use(function (req, res, next) {
 							try {
 								if (req.body) {
-									req.body = toolBelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body)
+									req.body = JSON.parse(toolBelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body))
 								}
 								next()
 							} catch (err) {
