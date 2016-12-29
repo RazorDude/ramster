@@ -3,8 +3,9 @@
 let fs = require('fs'),
 	path = require('path'),
 	co = require('co'),
-	csv = new (require('../modules/csvPromise/index'))(),
-	xlsx = require('node-xlsx')
+	csv = new (require('../modules/csvPromise'))(),
+	xlsx = require('node-xlsx'),
+	toolbelt = require('../modules/toolbelt')
 
 class Base {
 	constructor({componentName, componentNameSingular, routes, addDefaultRoutes}) {
@@ -16,9 +17,10 @@ class Base {
 			let defaultRoutes = {
 					create: {method: 'post', path: `/${this.componentName}/create`, func: 'create'},
 					read: {method: 'get', path: `/${this.componentName}/read`, func: 'read'},
-					readAssociated: {method: 'post', path: `/${this.componentName}/readAssociated`, func: 'readAssociated'},
 					readList: {method: 'post', path: `/${this.componentName}/readList`, func: 'readList'},
 					update: {method: 'post', path: `/${this.componentName}/update`, func: 'update'},
+					checkImportFile: {method: 'get', path: `/locations/checkImportFile`, func: 'checkImportFile'},
+					importFile: {method: 'post', path: `/locations/importFile`, func: 'importFile'},
 					delete: {method: 'get', path: `/${this.componentName}/delete`, func: 'delete'}
 				},
 				defaultRoutesToAdd = []
@@ -109,18 +111,6 @@ class Base {
 		}
 	}
 
-	readAssociated() {
-		let instance = this
-		return function* (req, res, next) {
-			try {
-				res.json(yield req.locals.db.components[instance.componentName].readAssociated(req.body))
-			} catch (e) {
-				req.locals.error = e
-				next()
-			}
-		}
-	}
-
 	readList() {
 		let instance = this
 		return function* (req, res, next) {
@@ -138,6 +128,109 @@ class Base {
 		return function* (req, res, next) {
 			try {
 				res.json(yield req.locals.db.components[instance.componentName].update(req.body))
+			} catch (e) {
+				req.locals.error = e
+				next()
+			}
+		}
+	}
+
+	checkImportFile() {
+		let instance = this
+		return function* (req, res, next) {
+			try {
+				res.json(yield instance.importFileCheck({
+					locals: req.locals,
+					inputFileName: decodeURIComponent(req.query.fileName),
+					delimiter: ';'
+				}))
+			} catch (e) {
+				req.locals.error = e
+				next()
+			}
+		}
+	}
+
+	importFile() {
+		let instance = this
+		return function* (req, res, next) {
+			try {
+				let check = yield instance.importFileCheck({
+						locals: req.locals,
+						inputFileName: req.body.locationDataFile,
+						delimiter: req.body.delimiter || ';'
+					}),
+					dbComponent = req.locals.dbComponents[instance.componentName],
+					dataToInsert = [],
+					dataToUpdate = []
+
+				if (!(check.fileData instanceof Array) || (check.fileData.length < 2)) {
+					throw {customMessage: 'The file is empty or does not contain any data.'}
+				}
+
+				if (check.matchesTemplate) {
+					check.fileData.forEach((row, index) => {
+						if (index > 0) {
+							let item = {}
+							check.columns.forEach((column, cIndex) => {
+								item[column] = row[cIndex]
+							})
+							if (item.id) {
+								dataToUpdate.push(toolbelt.emptyToNull(item, {}))
+							} else {
+								dataToInsert.push(toolbelt.emptyToNull(item, {}))
+							}
+						}
+					})
+				} else {
+					let columnsToMatch = {}
+					check.templateColumns.forEach((column, cIndex) => {
+						let fileColumn = req.body[column]
+						if (!fileColumn) {
+							throw {customMessage: 'The file does not match the template and not all columns have been mapped.'}
+						}
+						columnsToMatch[column] = check.columns.indexOf(fileColumn)
+					})
+					check.fileData.forEach((row, index) => {
+						if (index > 0) {
+							let item = {}
+							check.templateColumns.forEach((column, cIndex) => {
+								item[column] = row[columnsToMatch[column]]
+							})
+							if (item.id) {
+								dataToUpdate.push(toolbelt.emptyToNull(item, {}))
+							} else {
+								dataToInsert.push(toolbelt.emptyToNull(item, {}))
+							}
+						}
+					})
+				}
+
+				req.body.UserId = req.session.passport.user
+
+				yield req.locals.db.sequelize.transaction((t) => {
+					return co(function*() {
+						req.body.transaction = t
+
+						if (dataToInsert.length) {
+							yield dbComponent.bulkCreate({
+								dbObjects: dataToInsert,
+								options: req.body
+							})
+						}
+
+						if (dataToUpdate.length) {
+							for (let i in dataToUpdate) {
+								let item = dataToUpdate[i]
+								yield dbComponent.update({dbObject: item, where: {id: item.id}, transaction: t})
+							}
+						}
+
+						return true
+					})
+				})
+
+				res.json({success: true})
 			} catch (e) {
 				req.locals.error = e
 				next()

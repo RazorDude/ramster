@@ -9,7 +9,7 @@ Key features
 * Easy to use - download the module, read the docs, and you're good to go
 * Powerful - built on top of the best and cutting edge dependencies; used in live projects, which guarantees it's stability and up-to-date status
 * Completely open source - don't like something? Fork it and do it the way you want to
-* Documentation full of bullet lists - .
+* Documentation full of bullet lists...
 
 ___
 Overview

@@ -176,10 +176,14 @@ class Base {
 		})
 	}
 
-	bulkCreate(data) {
+	bulkCreate({dbObjects, options}) {
 		let instance = this
 		return co(function*() {
-			return yield instance.model.bulkCreate(data)
+			let opt = {}
+			if (options.transaction) {
+				opt.transaction = options.transaction
+			}
+			return yield instance.model.bulkCreate(data, opt)
 		})
 	}
 
@@ -201,94 +205,6 @@ class Base {
 			}
 
 			return yield instance.model.findOne(options)
-		})
-	}
-
-	readAssociated(data) {
-		let instance = this
-		return co(function*() {
-			let order = [
-					[data.orderBy || instance.defaults.orderBy, data.orderDirection || instance.defaults.orderDirection]
-				],
-				page = data.page ? parseInt(data.page, 10) : instance.defaults.page,
-				perPage = data.perPage ? parseInt(data.perPage, 10) : instance.defaults.perPage,
-				where = {},
-				filter = {},
-				include = [],
-				more = false,
-				relComponent = instance.db.components[data.associatedModel],
-				rel = relComponent.relations
-
-			if (!rel || !relComponent || !rel[data.modelAlias]) {
-				throw {customMessage: 'Associated model not found.'}
-			}
-
-			if (!data.filters || !data.filters.id) {
-				return {
-					totalPages: 0,
-					page: page,
-					perPage: perPage,
-					more: false,
-					results: []
-				}
-			}
-
-			include.push(rel[data.modelAlias].include)
-			include[0].attributes = ['id']
-
-			//assemble the where clause
-			if (data.associatedModelFilters) {
-				relComponent.searchFields.forEach((element, index) => {
-					if (typeof data.associatedModelFilters[element.field] !== 'undefined') {
-						where[element.field] = data.associatedModelFilters[element.field]
-					}
-				})
-			}
-
-			//assemble the filter clause
-			instance.searchFields.forEach((element, index) => {
-				if (typeof data.filters[element.field] !== 'undefined') {
-					filter[element.field] = data.filters[element.field]
-				}
-			})
-
-			include[0].where = filter
-
-			//assemble the join query
-			if (data.associatedModels) {
-				instance.relReadKeys.forEach((key, index) => {
-					if (data.associatedModels.indexOf(key) !== -1) {
-						include.push(rel[key].include)
-					}
-				})
-			}
-
-			let options = {
-				where: where,
-				include: include,
-				offset: (page - 1) * perPage,
-				limit: perPage + 1,
-				order: order
-			}
-
-			if (data.fields) {
-				options.attributes = data.fields
-			}
-
-			let results = yield relComponent.model.findAll(options),
-				totalCount = yield relComponent.model.count({where: options.where, include: options.include})
-			if (results.length === (perPage + 1)) {
-				results.pop()
-				more = true
-			}
-
-			return {
-				totalPages: Math.ceil(totalCount / perPage),
-				page: page,
-				perPage: perPage,
-				more: more,
-				results: results
-			}
 		})
 	}
 
@@ -348,13 +264,17 @@ class Base {
 		})
 	}
 
-	update({dbObject, where}) {
+	update({dbObject, where, transaction}) {
 		let instance = this
 		return co(function*() {
-			return yield instance.model.update(dbObject, {
-				where: where,
+			let options = {
+				where,
 				returning: true
-			})
+			}
+			if (transaction) {
+				options.transaction = transaction
+			}
+			return yield instance.model.update(dbObject, options)
 		})
 	}
 
