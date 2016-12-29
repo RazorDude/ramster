@@ -323,18 +323,26 @@ class Core {
 				if (fieldCaseChangeSettings && fieldCaseMap) {
 					if (fieldCaseChangeSettings.query) {
 						clientModule.app.use(function (req, res, next) {
-							if (req.query) {
-								req.query = toolbelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query)
+							try {
+								if (req.query) {
+									req.query = toolBelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query)
+								}
+								next()
+							} catch (err) {
+								res.status(err.status || 500).json({error: err.customMessage || 'An internal server error has occurred. Please try again.'})
 							}
-							next()
 						})
 					}
 					if (fieldCaseChangeSettings.body) {
 						clientModule.app.use(function (req, res, next) {
-							if (req.body) {
-								req.body = toolbelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body)
+							try {
+								if (req.body) {
+									req.body = toolBelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body)
+								}
+								next()
+							} catch (err) {
+								res.status(err.status || 500).json({error: err.customMessage || 'An internal server error has occurred. Please try again.'})
 							}
-							next()
 						})
 					}
 				}
@@ -435,24 +443,56 @@ class Core {
 				apiModule.app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
 				apiModule.app.use(bodyParser.json())  // for 'application/json' request bodies
 
+				//before every request - add the service name
+				if (apiModule.settings.responseType === 'serviceName') {
+					apiModule.app.use(function (req, res, next) {
+						let originalUrl = req.originalUrl.split('?')[0],
+							serviceNameData = originalUrl.split('/')
+						req.locals = {serviceName: serviceNameData[serviceNameData.length - 1]}
+						next()
+					})
+				}
+
 				//before every request - if query/body field case change is enabled
 				const fieldCaseChangeSettings = apiModule.settings.fieldCaseChange,
 					fieldCaseMap = apiModule.settings.fieldCaseMap || CORE.modules.db.fieldCaseMap || null
 				if (fieldCaseChangeSettings && fieldCaseMap) {
 					if (fieldCaseChangeSettings.query) {
 						apiModule.app.use(function (req, res, next) {
-							if (req.query) {
-								req.query = toolbelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query)
+							try {
+								if (req.query) {
+									req.query = toolBelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query)
+								}
+								next()
+							} catch (err) {
+								let response = {},
+									error = err.customMessage || 'An internal server error has occurred. Please try again.'
+								if (apiModule.settings.responseType === 'serviceName') {
+									response = {serviceName: req.locals.serviceName, data: null, message: error}
+								} else {
+									response = {error}
+								}
+								res.status(err.status || 500).json(response)
 							}
-							next()
 						})
 					}
 					if (fieldCaseChangeSettings.body) {
 						apiModule.app.use(function (req, res, next) {
-							if (req.body) {
-								req.body = toolbelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body)
+							try {
+								if (req.body) {
+									req.body = toolBelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body)
+								}
+								next()
+							} catch (err) {
+								let response = {},
+									error = err.customMessage || 'An internal server error has occurred. Please try again.'
+								if (apiModule.settings.responseType === 'serviceName') {
+									response = {serviceName: req.locals.serviceName, data: null, message: error}
+								} else {
+									response = {error}
+								}
+								res.status(err.status || 500).json(response)
 							}
-							next()
 						})
 					}
 				}
@@ -474,8 +514,7 @@ class Core {
 
 				//before every route - set up post params logging, redirects and locals
 				apiModule.app.use(apiModule.paths, wrap(function* (req, res, next) {
-					let originalUrl = req.originalUrl.split('?')[0],
-						serviceNameData = originalUrl.split('/')
+					let originalUrl = req.originalUrl.split('?')[0]
 					console.log(`[${moduleName} API]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
 					req.locals = {
@@ -488,7 +527,7 @@ class Core {
 						generalStore: CORE.generalStore,
 						tokenManager: CORE.tokenManager,
 						db: CORE.modules.db,
-						serviceName: serviceNameData[serviceNameData.length - 1],
+						serviceName: req.locals && req.locals.serviceName || null,
 						error: null,
 						errorStatus: 500,
 						originalUrl
