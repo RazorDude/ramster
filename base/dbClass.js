@@ -246,14 +246,19 @@ class Base {
 			}
 
 			let totalCount = yield instance.model.count({where: options.where, include: options.include}),
+				totalPages = 0
+			if (data.readAll) {
+				totalPages = 1
+				page = 1
+				perPage = totalCount
+			} else {
 				totalPages = Math.ceil(totalCount / perPage)
-			if ((totalPages > 0) && (page > totalPages)) {
-				page = totalPages
+				if ((totalPages > 0) && (page > totalPages)) {
+					page = totalPages
+					options.offset = (page - 1) * perPage
+					options.limit = perPage + 1
+				}
 			}
-
-			options.offset = (page - 1) * perPage
-			options.limit = perPage + 1
-
 
 			let results = yield instance.model.findAll(options)
 			if (results.length === (perPage + 1)) {
