@@ -329,6 +329,7 @@ class Core {
 								}
 								next()
 							} catch (err) {
+								CORE.logger.error(err)
 								res.status(err.status || 500).json({error: err.customMessage || 'An internal server error has occurred. Please try again.'})
 							}
 						})
@@ -341,6 +342,7 @@ class Core {
 								}
 								next()
 							} catch (err) {
+								CORE.logger.error(err)
 								res.status(err.status || 500).json({error: err.customMessage || 'An internal server error has occurred. Please try again.'})
 							}
 						})
@@ -465,6 +467,7 @@ class Core {
 								}
 								next()
 							} catch (err) {
+								CORE.logger.error(err)
 								let response = {},
 									error = err.customMessage || 'An internal server error has occurred. Please try again.'
 								if (apiModule.settings.responseType === 'serviceName') {
@@ -484,6 +487,7 @@ class Core {
 								}
 								next()
 							} catch (err) {
+								CORE.logger.error(err)
 								let response = {},
 									error = err.customMessage || 'An internal server error has occurred. Please try again.'
 								if (apiModule.settings.responseType === 'serviceName') {
