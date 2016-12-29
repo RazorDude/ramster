@@ -83,20 +83,20 @@ class TokenManager{
 				let moduleName = req.locals.moduleName,
 					config = req.locals.cfg[moduleName]
 				if (!req.headers['authorization']) {
-					throw {customMessage: 'No authorization token provided.', status: 401}
+					throw {customMessage: 'No access token provided.', status: 401}
 				}
 
 				let tokens = req.headers['authorization'].split(' '),
 					instance = this
 				if ((tokens[0] !== 'Bearer') || (tokens[1] === 'undefined')) {
-					// throw {customMessage: 'Invalid header format.', status: 401}
+					throw {customMessage: 'No access token provided.', status: 401}
 				}
 
 				co(function* () {
 					try {
 						let decoded = yield instance.verifyToken({token: tokens[1], secret: config.jwt.secret})
 						if (!decoded.id) {
-							throw {customMessage: 'Invalid access token.'}
+							throw {customMessage: 'Invalid access token.', status: 401}
 						}
 
 						let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${decoded.id}AccessToken`),
@@ -114,7 +114,7 @@ class TokenManager{
 							}
 
 							if (tokens[2] === 'undefined') {
-								throw {customMessage: 'Invalid access token. No refresh token provided.', status: 401}
+								throw {customMessage: `Access token expired.${config.jwt.useRefreshTokens ? 'No refresh token provided.' : ''}`, status: 401}
 							}
 
 							let decoded = yield instance.verifyToken({token: tokens[2], secret: config.jwt.secret})
@@ -140,7 +140,13 @@ class TokenManager{
 						} catch (innerError) {
 							req.user = null
 							req.locals.logger.error(innerError)
-							res.status(innerError.status || 500).json({error: innerError.customMessage || 'An internal server error has occurred.'})
+							let status = innerError.status || 500,
+								message = innerError.customMessage || 'An internal server error has occurred.'
+							if (innerError.tokenExpired) {
+								status = 401
+								message = 'Access token expired. Refresh token expired.'
+							}
+							res.status(status).json({error: message})
 							return false
 						}
 					}
