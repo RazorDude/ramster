@@ -49,11 +49,11 @@ let emptyToNull = (data, outputData) => {
 		if (typeof input === 'object') {
 			str = JSON.stringify(input)
 			keyMap.forEach((e, i) => {
-				str = str.replace(new RegExp(`/("${e[inputType]}":)/g`), `"${e[outputType]}":`)
+				str = str.replace(new RegExp(`("${e[inputType]}":)`, 'g'), `"${e[outputType]}":`)
 			})
 		} else if (typeof input === 'string') {
 			keyMap.forEach((e, i) => {
-				str = str.replace(new RegExp(`/(?${e[inputType]}=)/g`), `?${e[outputType]}=`).replace(new RegExp(`/(&${e[inputType]}=)/g`), `&${e[outputType]}=`)
+				str = str.replace(new RegExp(`(?${e[inputType]}=)`, 'g'), `?${e[outputType]}=`).replace(new RegExp(`(&${e[inputType]}=)`, 'g'), `&${e[outputType]}=`)
 			})
 		} else {
 			str = input
