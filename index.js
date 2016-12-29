@@ -67,6 +67,8 @@ class Core {
 						cfg: this.cfg,
 						logger: this.logger
 					})
+				} else if (componentDir === 'fieldCaseMap.js') {
+					this.modules.db.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
 				}
 			})
 
@@ -117,6 +119,8 @@ class Core {
 					moduleDirData.forEach((componentDir, index) => {
 						if (componentDir.indexOf('.') === -1) {
 							moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(settings)
+						} else if (componentDir === 'fieldCaseMap.js') {
+							currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
 						}
 					})
 
@@ -214,6 +218,8 @@ class Core {
 					moduleDirData.forEach((componentDir, index) => {
 						if (componentDir.indexOf('.') === -1) {
 							moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(settings)
+						} else if (componentDir === 'fieldCaseMap.js') {
+							currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
 						}
 					})
 
@@ -311,6 +317,28 @@ class Core {
 					clientModule.app.use(express.static(this.cfg[moduleName].publicPath))
 				}
 
+				//before every request - if query/body field case change is enabled
+				const fieldCaseChangeSettings = clientModule.settings.fieldCaseChange,
+					fieldCaseMap = clientModule.settings.fieldCaseMap || CORE.db.fieldCaseMap || null
+				if (fieldCaseChangeSettings && fieldCaseMap) {
+					if (fieldCaseChangeSettings.query.out) {
+						clientModule.app.use(function (req, res, next) {
+							if (req.query) {
+								req.query = toolbelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query.out)
+							}
+							next()
+						})
+					}
+					if (fieldCaseChangeSettings.body.out) {
+						clientModule.app.use(function (req, res, next) {
+							if (req.body) {
+								req.body = toolbelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body.out)
+							}
+							next()
+						})
+					}
+				}
+
 				//load all route paths
 				for (let i in clientModule.moduleData) {
 					let component = clientModule.moduleData[i],
@@ -405,6 +433,28 @@ class Core {
 				//set up request logging and request body parsing
 				apiModule.app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
 				apiModule.app.use(bodyParser.json())  // for 'application/json' request bodies
+
+				//before every request - if query/body field case change is enabled
+				const fieldCaseChangeSettings = apiModule.settings.fieldCaseChange,
+					fieldCaseMap = apiModule.settings.fieldCaseMap || CORE.db.fieldCaseMap || null
+				if (fieldCaseChangeSettings && fieldCaseMap) {
+					if (fieldCaseChangeSettings.query.out) {
+						apiModule.app.use(function (req, res, next) {
+							if (req.query) {
+								req.query = toolbelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query.out)
+							}
+							next()
+						})
+					}
+					if (fieldCaseChangeSettings.body.out) {
+						apiModule.app.use(function (req, res, next) {
+							if (req.body) {
+								req.body = toolbelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body.out)
+							}
+							next()
+						})
+					}
+				}
 
 				//load all route paths
 				for (let i in apiModule.moduleData) {

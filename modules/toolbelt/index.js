@@ -36,6 +36,29 @@ let emptyToNull = (data, outputData) => {
 			currentElement = currentElement[innerElement]
 		}
 		return currentElement
+	},
+	changeKeyCase = (keyMap, input, outputType) => {
+		let str = ''
+			inputType = ''
+		if (outputType === 'upper') {
+			inputType = 'lower'
+		} else if (outputType === 'lower') {
+			inputType = 'upper'
+		}
+
+		if (typeof input === 'object') {
+			str = JSON.stringify(input)
+			keyMap.forEach((e, i) => {
+				str = str.replace(new RegExp(`/("${e[inputType]}":)/g`), `"${e[outputType]}":`)
+			})
+		} else if (typeof input === 'string') {
+			keyMap.forEach((e, i) => {
+				str = str.replace(new RegExp(`/(?${e[inputType]}=)/g`), `?${e[outputType]}=`).replace(new RegExp(`/(&${e[inputType]}=)/g`), `&${e[outputType]}=`)
+			})
+		} else {
+			str = input
+		}
+		return str
 	}
 
 module.exports = {emptyToNull, getNested}
