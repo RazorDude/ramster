@@ -137,6 +137,7 @@ class TokenManager{
 							return true
 						} catch (innerError) {
 							req.user = null
+							req.locals.logger.error(innerError)
 							res.status(innerError.status || 500).json({error: innerError.customMessage || 'An internal server error has occurred.'})
 							return false
 						}
@@ -157,6 +158,7 @@ class TokenManager{
 				} else {
 					response = {error}
 				}
+				req.locals.logger.error(e)
 				res.status(e.status || req.locals.errorStatus || 500).json(response)
 			}
 		}
