@@ -147,10 +147,10 @@ class Core {
 
 						if (moduleSettings.webpackHost) {
 							bundle = `
-		location ^~ /bundle {
+		location ~ ^/bundle(.*)$ {
 			proxy_set_header Host $host;
 			proxy_set_header X-Real-IP $remote_addr;
-			proxy_pass ${moduleSettings.webpackHost}/dist;
+			proxy_pass ${moduleSettings.webpackHost}/dist$1;
 		}
 							`
 						} else {
@@ -168,8 +168,9 @@ class Core {
 
 		${bundle}
 
-		location ^~ /static {
+		location ~ ^/static(.*)$ {
 			root ${moduleSettings.publicPath};
+			try_files $1 =404;
 		}
 
 		location / {
