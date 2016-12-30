@@ -13,9 +13,25 @@ let csvPromise = class CSVPromise {
 				csv.parse(data, options, (err, csvData) => {
 					if (err) {
 						rej(err)
-						return;
+						return
 					}
 					res(csvData)
+				})
+			} catch (e) {
+				rej(e)
+			}
+		})
+	}
+
+	stringify({data}) {
+		return new Promise((res, rej) => {
+			try {
+				csv.stringify(data, (err, result) => {
+					if (err) {
+						rej(err)
+						return
+					}
+					res(result)
 				})
 			} catch (e) {
 				rej(e)
