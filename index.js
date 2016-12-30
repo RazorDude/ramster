@@ -154,11 +154,7 @@ class Core {
 		}
 							`
 						} else {
-							bundle = `
-		location ^~ /bundle {
-			root ${moduleSettings.publicPath};
-		}
-							`
+							bundle = ``
 						}
 
 						newFileContents += `
