@@ -19,8 +19,8 @@ class Base {
 					read: {method: 'get', path: `/${this.componentName}/read`, func: 'read'},
 					readList: {method: 'post', path: `/${this.componentName}/readList`, func: 'readList'},
 					update: {method: 'post', path: `/${this.componentName}/update`, func: 'update'},
-					checkImportFile: {method: 'get', path: `/locations/checkImportFile`, func: 'checkImportFile'},
-					importFile: {method: 'post', path: `/locations/importFile`, func: 'importFile'},
+					checkImportFile: {method: 'get', path: `/${this.componentName}/checkImportFile`, func: 'checkImportFile'},
+					importFile: {method: 'post', path: `/${this.componentName}/importFile`, func: 'importFile'},
 					delete: {method: 'get', path: `/${this.componentName}/delete`, func: 'delete'}
 				},
 				defaultRoutesToAdd = []
