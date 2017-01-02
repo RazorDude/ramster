@@ -552,7 +552,7 @@ class Core {
 
 				//after every route - return handled errors and set up redirects
 				apiModule.app.use('*', function (req, res, next) {
-					if (!req.locals || (req.locals.error === null)) {
+					if (!req.locals || !req.locals.error) {
 						res.status(404).json({error: 'Not found.'})
 						return;
 					}
