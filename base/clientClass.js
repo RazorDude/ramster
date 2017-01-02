@@ -12,7 +12,7 @@ class Base {
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
 
-		this.routes = routes
+		this.routes = routes || []
 		if (addDefaultRoutes instanceof Array) {
 			let defaultRoutes = {
 					create: {method: 'post', path: `/${this.componentName}/create`, func: 'create'},
