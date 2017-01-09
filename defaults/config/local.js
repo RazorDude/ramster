@@ -14,6 +14,7 @@ let hostAddress = '127.0.0.1',
 
 module.exports = {
 	name: 'local',
+	dbType: 'postgresql',
 	postgres: {
 		user: 'postgres',
 		pass: 'ramster',

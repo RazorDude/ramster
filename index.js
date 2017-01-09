@@ -43,6 +43,15 @@ class Core {
 
 			// ####### ------------ LOAD THE DATABASE MODULE ---------- ####### \\
 			let moduleDir = fs.readdirSync(this.cfg.db.modulePath),
+				sequelize = null,
+				CORE = this
+
+			this.modules.db = {
+				components: {},
+				seedingOrder: this.cfg.db.seedingOrder
+			}
+
+			if ((this.cfg.dbType === 'postgres') || !this.cfg.dbType) {
 				sequelize = new Sequelize(this.cfg.postgres.database, this.cfg.postgres.user, this.cfg.postgres.pass, {
 					host: this.cfg.postgres.host,
 					port: this.cfg.postgres.port,
@@ -53,32 +62,30 @@ class Core {
 							console.log(pd.sql(sql))
 							console.log('================ \\SQL/ ==================')
 						} : false
-				}),
-				CORE = this
-
-			this.modules.db = {
-				components: {},
-				seedingOrder: this.cfg.db.seedingOrder
+				})
 			}
-			moduleDir.forEach((componentDir, index) => {
-				if (componentDir.indexOf('.') === -1) {
-					this.modules.db.components[componentDir] = new (require(path.join(this.cfg.db.modulePath, componentDir)))(sequelize, Sequelize, {
-						mailClient: this.mailClient,
-						cfg: this.cfg,
-						logger: this.logger
-					})
-				} else if (componentDir === 'fieldCaseMap.js') {
-					this.modules.db.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
+
+			if (sequelize) {
+				moduleDir.forEach((componentDir, index) => {
+					if (componentDir.indexOf('.') === -1) {
+						this.modules.db.components[componentDir] = new (require(path.join(this.cfg.db.modulePath, componentDir)))(sequelize, Sequelize, {
+							mailClient: this.mailClient,
+							cfg: this.cfg,
+							logger: this.logger
+						})
+					} else if (componentDir === 'fieldCaseMap.js') {
+						this.modules.db.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
+					}
+				})
+
+				// ----- create the database associations and update the modules -------- \\
+				for (let componentName in this.modules.db.components) {
+					let component = this.modules.db.components[componentName],
+						relKey = component.associate(this.modules.db.components)
 				}
-			})
-
-			// ----- create the database associations and update the modules -------- \\
-			for (let componentName in this.modules.db.components) {
-				let component = this.modules.db.components[componentName],
-					relKey = component.associate(this.modules.db.components)
+				this.modules.db.sequelize = sequelize
+				this.modules.db.Sequelize = Sequelize
 			}
-			this.modules.db.sequelize = sequelize
-			this.modules.db.Sequelize = Sequelize
 
 			if (this.cfg.emails.customModulePath) {
 				let customMailClient = require(this.cfg.emails.customModulePath)
@@ -92,7 +99,9 @@ class Core {
 				component.mailClient = this.mailClient
 			}
 
-			this.modules.db.sequelize.sync()
+			if (sequelize) {
+				this.modules.db.sequelize.sync()
+			}
 
 			if (!this.cfg.migrations) {
 				this.cfg.migrations = defaultConfig.migrations
@@ -105,124 +114,128 @@ class Core {
 			// ####### ------------ LOAD THE CLIENT SERVER MODULES ---------- ####### \\
 			this.modules.clients = {}
 
-			let modulesDirPath = this.cfg.clientModulesPath,
-				modulesDirData = fs.readdirSync(modulesDirPath),
-				settings = {passport}
-			modulesDirData.forEach((moduleDir, index) => {
-				if (moduleDir.indexOf('.') === -1) {
-					let moduleDirPath = path.join(modulesDirPath, moduleDir),
-						moduleDirData = fs.readdirSync(moduleDirPath),
-						moduleData = {},
-						moduleSettings = this.cfg[moduleDir],
-						currentSettings = merge(settings, moduleSettings)
+			if (this.cfg.clientModulesPath) {
+				let modulesDirPath = this.cfg.clientModulesPath,
+					modulesDirData = fs.readdirSync(modulesDirPath),
+					settings = {passport}
+				modulesDirData.forEach((moduleDir, index) => {
+					if (moduleDir.indexOf('.') === -1) {
+						let moduleDirPath = path.join(modulesDirPath, moduleDir),
+							moduleDirData = fs.readdirSync(moduleDirPath),
+							moduleData = {},
+							moduleSettings = this.cfg[moduleDir],
+							currentSettings = merge(settings, moduleSettings)
 
-					moduleDirData.forEach((componentDir, index) => {
-						if (componentDir.indexOf('.') === -1) {
-							moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(settings)
-						} else if (componentDir === 'fieldCaseMap.js') {
-							currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
-						}
-					})
+						moduleDirData.forEach((componentDir, index) => {
+							if (componentDir.indexOf('.') === -1) {
+								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(settings)
+							} else if (componentDir === 'fieldCaseMap.js') {
+								currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
+							}
+						})
 
-					// add nginx support - configuration generation
-					if (this.cfg.webserver === 'nginx') {
-						let configFilePath = path.join(this.cfg.wsConfigFolderPath, `${this.cfg.projectName}-${moduleDir}.conf`),
-							configFile = fs.openSync(configFilePath, 'w'),
-							newFileContents = '',
-							prependToServerCfg = '',
-							appendToServerCfg = '',
-							bundle = ''
+						// add nginx support - configuration generation
+						if (this.cfg.webserver === 'nginx') {
+							let configFilePath = path.join(this.cfg.wsConfigFolderPath, `${this.cfg.projectName}-${moduleDir}.conf`),
+								configFile = fs.openSync(configFilePath, 'w'),
+								newFileContents = '',
+								prependToServerCfg = '',
+								appendToServerCfg = '',
+								bundle = ''
 
-						if (moduleSettings.prependWSServerConfigFromFiles instanceof Array) {
-							moduleSettings.prependWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
-								prependToServerCfg += fs.readFileSync(cfgFilePath)
-							})
-						}
+							if (moduleSettings.prependWSServerConfigFromFiles instanceof Array) {
+								moduleSettings.prependWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
+									prependToServerCfg += fs.readFileSync(cfgFilePath)
+								})
+							}
 
-						if (moduleSettings.appendWSServerConfigFromFiles instanceof Array) {
-							moduleSettings.appendWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
-								appendToServerCfg += fs.readFileSync(cfgFilePath)
-							})
-						}
+							if (moduleSettings.appendWSServerConfigFromFiles instanceof Array) {
+								moduleSettings.appendWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
+									appendToServerCfg += fs.readFileSync(cfgFilePath)
+								})
+							}
 
-						if (moduleSettings.webpackHost) {
-							bundle = `
-		location ~ ^/bundle(.*)$ {
-			proxy_set_header Host $host;
-			proxy_set_header X-Real-IP $remote_addr;
-			proxy_pass ${moduleSettings.webpackHost}/dist$1;
-		}
+							if (moduleSettings.webpackHost) {
+								bundle = `
+									location ~ ^/bundle(.*)$ {
+										proxy_set_header Host $host;
+										proxy_set_header X-Real-IP $remote_addr;
+										proxy_pass ${moduleSettings.webpackHost}/dist$1;
+									}
+								`
+							} else {
+								bundle = ``
+							}
+
+							newFileContents += `
+								server {
+									listen       ${moduleSettings.wsPort};
+									server_name  ${this.cfg.hostAddress};
+
+									#charset koi8-r;
+
+									${prependToServerCfg}
+
+									${bundle}
+
+									location ~ ^/static(.*)$ {
+										root ${moduleSettings.publicPath};
+										try_files $1 =404;
+									}
+
+									location / {
+										proxy_set_header Host $host;
+										proxy_set_header X-Real-IP $remote_addr;
+										proxy_pass ${this.cfg.protocol}://127.0.0.1:${moduleSettings.serverPort};
+									}
+
+									${appendToServerCfg}
+
+									error_page   500 502 503 504  /50x.html;
+									location = /50x.html {
+										root   html;
+									}
+								}
 							`
-						} else {
-							bundle = ``
+
+							fs.writeFileSync(configFile, newFileContents)
+							fs.closeSync(configFile)
 						}
 
-						newFileContents += `
-	server {
-		listen       ${moduleSettings.wsPort};
-		server_name  ${this.cfg.hostAddress};
-
-		#charset koi8-r;
-
-		${prependToServerCfg}
-
-		${bundle}
-
-		location ~ ^/static(.*)$ {
-			root ${moduleSettings.publicPath};
-			try_files $1 =404;
-		}
-
-		location / {
-			proxy_set_header Host $host;
-			proxy_set_header X-Real-IP $remote_addr;
-			proxy_pass ${this.cfg.protocol}://127.0.0.1:${moduleSettings.serverPort};
-		}
-
-		${appendToServerCfg}
-
-		error_page   500 502 503 504  /50x.html;
-		location = /50x.html {
-			root   html;
-		}
-	}
-						`
-
-						fs.writeFileSync(configFile, newFileContents)
-						fs.closeSync(configFile)
+						this.modules.clients[moduleDir] = {moduleData, settings: currentSettings}
 					}
-
-					this.modules.clients[moduleDir] = {moduleData, settings: currentSettings}
-				}
-			})
+				})
+			}
 
 
 			// ####### ------------ LOAD THE API SERVER MODULES ---------- ####### \\
 			this.modules.apis = {}
 
-			modulesDirPath = this.cfg.apiModulesPath
-			modulesDirData = fs.readdirSync(modulesDirPath)
-			settings = {}
+			if (this.cfg.apiModulesPath) {
+				modulesDirPath = this.cfg.apiModulesPath
+				modulesDirData = fs.readdirSync(modulesDirPath)
+				settings = {}
 
-			modulesDirData.forEach((moduleDir, index) => {
-				if ((moduleDir !== 'migrations') && (moduleDir.indexOf('.') === -1)) {
-					let moduleDirPath = path.join(modulesDirPath, moduleDir),
-						moduleDirData = fs.readdirSync(moduleDirPath),
-						moduleData = {},
-						moduleSettings = this.cfg[moduleDir],
-						currentSettings = merge(settings, moduleSettings)
+				modulesDirData.forEach((moduleDir, index) => {
+					if ((moduleDir !== 'migrations') && (moduleDir.indexOf('.') === -1)) {
+						let moduleDirPath = path.join(modulesDirPath, moduleDir),
+							moduleDirData = fs.readdirSync(moduleDirPath),
+							moduleData = {},
+							moduleSettings = this.cfg[moduleDir],
+							currentSettings = merge(settings, moduleSettings)
 
-					moduleDirData.forEach((componentDir, index) => {
-						if (componentDir.indexOf('.') === -1) {
-							moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(settings)
-						} else if (componentDir === 'fieldCaseMap.js') {
-							currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
-						}
-					})
+						moduleDirData.forEach((componentDir, index) => {
+							if (componentDir.indexOf('.') === -1) {
+								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(settings)
+							} else if (componentDir === 'fieldCaseMap.js') {
+								currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
+							}
+						})
 
-					this.modules.apis[moduleDir] = {moduleData, settings: currentSettings}
-				}
-			})
+						this.modules.apis[moduleDir] = {moduleData, settings: currentSettings}
+					}
+				})
+			}
 
 			// ####### ------------ SCHEDULE THE CRON JOBS ---------- ####### \\
 			if (this.cfg.cronJobs) {
