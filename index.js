@@ -69,7 +69,6 @@ class Core {
 				moduleDir.forEach((componentDir, index) => {
 					if (componentDir.indexOf('.') === -1) {
 						this.modules.db.components[componentDir] = new (require(path.join(this.cfg.db.modulePath, componentDir)))(sequelize, Sequelize, {
-							mailClient: this.mailClient,
 							cfg: this.cfg,
 							logger: this.logger
 						})

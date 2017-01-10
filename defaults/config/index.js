@@ -35,7 +35,7 @@ let deepmerge = require('deepmerge'),
 				authenticated: '/'
 			}
 		},
-		samleApiModule: {
+		sampleApiModule: {
 			anonymousAccessRoutes: ['/', '/login']
 		},
 		migrations: {
