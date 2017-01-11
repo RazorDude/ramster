@@ -102,9 +102,6 @@ class Core {
 				this.modules.db.sequelize.sync()
 			}
 
-			if (!this.cfg.migrations) {
-				this.cfg.migrations = defaultConfig.migrations
-			}
 			if (this.cfg.migrations.startAPI) {
 				this.migrations = new migrations(this.cfg, this.modules.db)
 			}
