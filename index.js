@@ -102,7 +102,7 @@ class Core {
 				this.modules.db.sequelize.sync()
 			}
 
-			if (this.cfg.migrations.startAPI) {
+			if (this.cfg.migrations && this.cfg.migrations.startAPI) {
 				this.migrations = new migrations(this.cfg, this.modules.db)
 			}
 
