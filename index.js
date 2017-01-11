@@ -211,9 +211,9 @@ class Core {
 			this.modules.apis = {}
 
 			if (this.cfg.apiModulesPath) {
-				modulesDirPath = this.cfg.apiModulesPath
-				modulesDirData = fs.readdirSync(modulesDirPath)
-				settings = {}
+				let modulesDirPath = this.cfg.apiModulesPath,
+					modulesDirData = fs.readdirSync(modulesDirPath),
+					settings = {}
 
 				modulesDirData.forEach((moduleDir, index) => {
 					if ((moduleDir !== 'migrations') && (moduleDir.indexOf('.') === -1)) {
