@@ -27,12 +27,13 @@ let emails = class Emails {
 				receivers.push({email: to})
 			}
 
-			if (instance.cfg.emails.bcc instanceof Array) {
-				instance.cfg.emails.bcc.forEach((el, i) => {
+			let bccMails = instance.cfg.emails.bcc
+			if (bccMails instanceof Array) {
+				bccMails.forEach((el, i) => {
 					bccs.push({email: el})
 				})
-			} else {
-				bccs.push({email: instance.cfg.emails.bcc})
+			} else if (typeof bccMails === 'string'){
+				bccs.push({email: bccMails})
 			}
 
 			let personalizations = {
