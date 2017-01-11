@@ -591,7 +591,7 @@ class Core {
 				})
 			}
 
-			if (this.cfg.migrations.startAPI) {
+			if (this.cfg.migrations && this.cfg.migrations.startAPI) {
 				let migrationsApiServer = http.createServer(this.migrations.app)
 				migrationsApiServer.listen(this.cfg.migrations.serverPort, () => {
 					console.log(`[Migrations Module API] Server started.`)
