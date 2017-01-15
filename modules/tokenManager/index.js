@@ -102,7 +102,7 @@ class TokenManager{
 						let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${decoded.id}AccessToken`),
 							currentAccessTokenBlacklisted = yield instance.generalStore.getStoredEntry(`${moduleName}accessTokenBlacklist-${currentAccessToken}`)
 						if ((currentAccessToken !== tokens[1]) || currentAccessTokenBlacklisted) {
-							throw {customMessage: 'Invalid access token.'}
+							throw {customMessage: 'Invalid access token.', status: 401}
 						}
 
 						req.user = {id: decoded.id}
@@ -119,7 +119,7 @@ class TokenManager{
 
 							let decoded = yield instance.verifyToken({token: tokens[2], secret: config.jwt.secret})
 							if (!decoded.id) {
-								throw {customMessage: 'Invalid access token. Invalid refresh token.'}
+								throw {customMessage: 'Invalid access token. Invalid refresh token.', status: 401}
 							}
 
 							let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${decoded.id}AccessToken`),
@@ -127,7 +127,7 @@ class TokenManager{
 								currentRefreshTokenBlacklisted = yield instance.generalStore.getStoredEntry(`${moduleName}refreshTokenBlacklist-${currentAccessToken}`)
 							yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentAccessToken}`)
 							if ((currentRefreshToken !== tokens[2]) || currentRefreshTokenBlacklisted) {
-								throw {customMessage: 'Invalid access token. Invalid refresh token.'}
+								throw {customMessage: 'Invalid access token. Invalid refresh token.', status: 401}
 							}
 
 							let newAccessToken = yield req.locals.tokenManager.createToken({type: 'access', userId: user.id, secret: config.jwt.secret, expiresInMinutes: config.jwt.accessTokenExpiresInMinutes})
@@ -160,14 +160,15 @@ class TokenManager{
 			} catch(e) {
 				req.user = null
 				let response = {},
-					error = e.customMessage || 'An internal server error has occurred. Please try again.'
+					status = e.status || req.locals.errorStatus || 500,
+					message = e.customMessage || 'An internal server error has occurred.'
 				if (req.locals.settings.responseType === 'serviceName') {
-					response = {serviceName: req.locals.serviceName, data: null, message: error}
+					response = {serviceName: req.locals.serviceName, data: null, message}
 				} else {
-					response = {error}
+					response = {message}
 				}
 				req.locals.logger.error(e)
-				res.status(e.status || req.locals.errorStatus || 500).json(response)
+				res.status(status).json(response)
 			}
 		}
 	}
