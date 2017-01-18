@@ -4,7 +4,12 @@ let redis = require('redis')
 class GeneralStore {
 	constructor(settings) {
 		this.settings = settings
-		this.redisClient = redis.createClient(this.settings.redis.port, this.settings.redis.host)
+
+		let options = {}
+		if (this.settings.redis.password) {
+			options.password = this.settings.redis.password
+		}
+		this.redisClient = redis.createClient(this.settings.redis.port, this.settings.redis.host, options)
 	}
 
 	getStoredEntry(handle) {
