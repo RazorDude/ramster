@@ -124,7 +124,7 @@ class Core {
 
 						moduleDirData.forEach((componentDir, index) => {
 							if (componentDir.indexOf('.') === -1) {
-								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(settings)
+								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(merge({}, settings))
 							} else if (componentDir === 'fieldCaseMap.js') {
 								currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
 							}
@@ -222,7 +222,7 @@ class Core {
 
 						moduleDirData.forEach((componentDir, index) => {
 							if (componentDir.indexOf('.') === -1) {
-								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(settings)
+								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(merge({}, settings))
 							} else if (componentDir === 'fieldCaseMap.js') {
 								currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
 							}
