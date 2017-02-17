@@ -255,9 +255,9 @@ class Base {
 				totalPages = Math.ceil(totalCount / perPage)
 				if ((totalPages > 0) && (page > totalPages)) {
 					page = totalPages
-					options.offset = (page - 1) * perPage
-					options.limit = perPage + 1
 				}
+				options.offset = (page - 1) * perPage
+				options.limit = perPage + 1
 			}
 
 			let results = yield instance.model.findAll(options)
