@@ -65,7 +65,7 @@ class Base {
 									break
 								}
 							}
-						} else if (typeof fieldData.$not !== 'object') {
+						} else if ((typeof fieldData.$not !== 'undefined') && (typeof fieldData.$not !== 'object')) {
 							hasValue = true
 						} else {
 							hasValue = false
