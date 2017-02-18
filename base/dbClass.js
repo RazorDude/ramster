@@ -65,6 +65,8 @@ class Base {
 									break
 								}
 							}
+						} else if (typeof fieldData.$not !== 'object') {
+							hasValue = true
 						} else {
 							hasValue = false
 						}
