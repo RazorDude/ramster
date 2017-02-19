@@ -113,7 +113,7 @@ class Base {
 						query[decodeURIComponent(key)] = decodeURIComponent(req.query[key])
 					}
 				}
-				res.json(yield req.locals.db.components[instance.componentName].destroy(query))
+				res.json(yield req.locals.db.components[instance.componentName].delete(query))
 			} catch (e) {
 				req.locals.error = e
 				next()
