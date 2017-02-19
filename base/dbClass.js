@@ -67,6 +67,15 @@ class Base {
 							}
 						} else if ((typeof fieldData.$not !== 'undefined') && (typeof fieldData.$not !== 'object')) {
 							hasValue = true
+						} else if (fieldData.$not instanceof Array) {
+							let not = fieldData.$not
+							hasValue = true
+							for (let i in not) {
+								if (typeof not[i] === 'object') {
+									hasValue = false
+									break;
+								}
+							}
 						} else {
 							hasValue = false
 						}
