@@ -283,6 +283,9 @@ class Base {
 	update({dbObject, where, transaction}) {
 		let instance = this
 		return co(function*() {
+			if ((typeof where !== 'object') || (Object.keys(where).length === 0)) {
+				throw {customMessage: 'Cannot update without criteria.'}
+			}
 			let options = {
 				where,
 				returning: true
