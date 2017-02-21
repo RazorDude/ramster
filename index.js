@@ -167,7 +167,7 @@ class Core {
 								server {
 									listen       ${moduleSettings.wsPort};
 									server_name  ${this.cfg.hostAddress};
-									root ${/^win/.test(process.platform) ? moduleSettings.publicPath.replace('\\', '\\\\') : moduleSettings.publicPath};
+									root ${/^win/.test(process.platform) ? moduleSettings.publicPath.replace(/\\/g, '\\\\') : moduleSettings.publicPath};
 
 									#charset koi8-r;
 
