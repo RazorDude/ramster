@@ -167,6 +167,7 @@ class Core {
 								server {
 									listen       ${moduleSettings.wsPort};
 									server_name  ${this.cfg.hostAddress};
+									root ${/^win/.test(process.platform) ? moduleSettings.publicPath.replace('\\', '\\\\') : moduleSettings.publicPath};
 
 									#charset koi8-r;
 
@@ -175,7 +176,6 @@ class Core {
 									${bundle}
 
 									location ~ ^/static(.*)$ {
-										root ${moduleSettings.publicPath};
 										try_files $1 =404;
 									}
 
