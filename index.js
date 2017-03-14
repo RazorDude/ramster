@@ -406,7 +406,7 @@ class Core {
 					let component = clientModule.moduleData[i],
 						routes = component.getRoutes()
 					routes.forEach((routeData, index) => {
-						clientModule.router[routeData.method](routeData.path, wrap(component[routeData.func]()))
+						clientModule.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 					})
 				}
 				clientModule.app.use('/', clientModule.router)
@@ -552,10 +552,10 @@ class Core {
 						routes = component.getRoutes()
 					routes.forEach((routeData, index) => {
 						if(apiModule.settings.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
-							apiModule.router[routeData.method](routeData.path, this.tokenManager.validate(), wrap(component[routeData.func]()))
+							apiModule.router[routeData.method](routeData.path, this.tokenManager.validate(), wrap(component[routeData.func](routeData.options || {})))
 							return;
 						}
-						apiModule.router[routeData.method](routeData.path, wrap(component[routeData.func]()))
+						apiModule.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 					})
 				}
 				apiModule.app.use('/', apiModule.router)
