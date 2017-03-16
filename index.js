@@ -452,6 +452,20 @@ class Core {
 				apiModule.app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
 				apiModule.app.use(bodyParser.json())  // for 'application/json' request bodies
 
+				if (this.cfg[moduleName].session) {
+					apiModule.app.use(expressSession({
+						secret: this.cfg[moduleName].session.secret,
+						key: this.cfg[moduleName].session.key,
+						resave: true,
+						saveUninitialized: true,
+						cookie: {
+							httpOnly: false
+						},
+						store: sessionStore,
+						passport: {}
+					}))
+				}
+
 				//before every request - add the service name
 				if (apiModule.settings.responseType === 'serviceName') {
 					apiModule.app.use(function (req, res, next) {
