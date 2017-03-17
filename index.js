@@ -273,7 +273,7 @@ class Core {
 			let CORE = this
 
 			// ------------ LOAD THE CLIENTS' ROUTES ---------- \\
-			let redisClient = redis.createClient(this.cfg.redis.port, this.cfg.redis.host, {}),
+			let redisClient = redis.createClient(this.cfg.redis),
 				sessionStore = new RedisStore({
 					host: this.cfg.redis.host,
 					port: this.cfg.redis.port,
@@ -451,9 +451,9 @@ class Core {
 				//set up request logging and request body parsing
 				apiModule.app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
 				apiModule.app.use(bodyParser.json())  // for 'application/json' request bodies
+				apiModule.app.use(cookieParser())
 
 				if (this.cfg[moduleName].session) {
-					apiModule.app.use(cookieParser(this.cfg[moduleName].session.secret))
 					apiModule.app.use(expressSession({
 						secret: this.cfg[moduleName].session.secret,
 						key: this.cfg[moduleName].session.key,
