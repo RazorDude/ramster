@@ -451,9 +451,9 @@ class Core {
 				//set up request logging and request body parsing
 				apiModule.app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
 				apiModule.app.use(bodyParser.json())  // for 'application/json' request bodies
-				apiModule.app.use(cookieParser())
 
 				if (this.cfg[moduleName].session) {
+					apiModule.app.use(cookieParser(this.cfg[moduleName].session.secret))
 					apiModule.app.use(expressSession({
 						secret: this.cfg[moduleName].session.secret,
 						key: this.cfg[moduleName].session.key,
