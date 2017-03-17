@@ -210,7 +210,7 @@ class Core {
 			if (this.cfg.apiModulesPath) {
 				let modulesDirPath = this.cfg.apiModulesPath,
 					modulesDirData = fs.readdirSync(modulesDirPath),
-					settings = {cfg: this.cfg}
+					settings = {passport, cfg: this.cfg}
 
 				modulesDirData.forEach((moduleDir, index) => {
 					if ((moduleDir !== 'migrations') && (moduleDir.indexOf('.') === -1)) {
@@ -465,6 +465,8 @@ class Core {
 						store: sessionStore,
 						passport: {}
 					}))
+					apiModule.app.use(apiModule.settings.passport.initialize())
+					apiModule.app.use(apiModule.settings.passport.session())
 				}
 
 				//before every request - add the service name
