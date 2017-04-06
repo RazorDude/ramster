@@ -44,6 +44,52 @@ class Base {
 		return buf
 	}
 
+	checkQueryItem({fieldData}) {
+		if (typeof fieldData === 'undefined') {
+			return false
+		}
+		
+
+		if (typeof fieldData === 'object') {
+			if (fieldData instanceof Array) {
+				for (let i in fieldData) {
+					if (typeof fieldData[i] === 'object') {
+						return false
+					}
+				}
+				return true
+			}
+
+			if ((typeof fieldData.$not !== 'undefined') && (typeof fieldData.$not !== 'object')) {
+				return true
+			}
+			
+			if (fieldData.$not instanceof Array) {
+				let not = fieldData.$not
+				for (let i in not) {
+					if (typeof not[i] === 'object') {
+						return false
+					}
+				}
+				return true
+			}
+			
+			if (fieldData.$and instanceof Array) {
+				let and = fieldData.$and
+				for (let i in and) {
+					if ((typeof and[i] === 'object') && !this.checkQueryItem({fieldData: and[i]})) {
+						return false
+					}
+				}
+				return true
+			}
+
+			return false
+		}
+
+		return true
+	}
+
 	getWhereQuery({filters, relSearch, exactMatch}) {
 		let where = {}
 		if ((typeof filters === 'object') && Object.keys(filters).length > 0) {
@@ -51,45 +97,7 @@ class Base {
 				let fieldData = filters[element.field],
 					field = element.field,
 					searchHolder = where,
-					hasValue = true
-					// hasValue = (typeof fieldData !== 'undefined') && (typeof fieldData !== 'object')
-
-				if (typeof fieldData === 'undefined') {
-					hasValue = false
-				} else {
-					if (typeof fieldData === 'object') {
-						if (fieldData instanceof Array) {
-							for (let i in fieldData) {
-								if (typeof fieldData[i] === 'object') {
-									hasValue = false
-									break
-								}
-							}
-						} else if ((typeof fieldData.$not !== 'undefined') && (typeof fieldData.$not !== 'object')) {
-							hasValue = true
-						} else if (fieldData.$not instanceof Array) {
-							let not = fieldData.$not
-							hasValue = true
-							for (let i in not) {
-								if (typeof not[i] === 'object') {
-									hasValue = false
-									break;
-								}
-							}
-						} else if (fieldData.$and instanceof Array) {
-							let and = fieldData.$and
-							hasValue = true
-							for (let i in and) {
-								if (typeof and[i] === 'object') {
-									hasValue = false
-									break;
-								}
-							}
-						} else {
-							hasValue = false
-						}
-					}
-				}
+					hasValue = this.checkQueryItem({fieldData})
 
 				if (element.associatedModel && (hasValue || element.between)) {
 					searchHolder = relSearch[element.associatedModel]

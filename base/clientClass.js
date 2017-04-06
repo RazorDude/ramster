@@ -257,8 +257,8 @@ class Base {
 					if (qItem instanceof Array) {
 						let decodedItems = []
 						for (const i in qItem) {
-							if (typeof qItem !== 'object') {
-								decodedItems.push(decodeURIComponent(qItem))
+							if (typeof qItem[i] !== 'object') {
+								decodedItems.push(decodeURIComponent(qItem[i]))
 							}
 						}
 						query[decodeURIComponent(key)] = decodedItems
