@@ -244,13 +244,24 @@ class Base {
 	}
 
 	delete() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				let query = {}
-				for (let key in req.query) {
-					if (typeof req.query[key] !== 'object') {
-						query[decodeURIComponent(key)] = decodeURIComponent(req.query[key])
+				for (const key in req.query) {
+					let qItem = req.query[key]
+					if (typeof qItem !== 'object') {
+						query[decodeURIComponent(key)] = decodeURIComponent(qItem)
+						continue
+					}
+					if (qItem instanceof Array) {
+						let decodedItems = []
+						for (const i in qItem) {
+							if (typeof qItem !== 'object') {
+								decodedItems.push(decodeURIComponent(qItem))
+							}
+						}
+						query[decodeURIComponent(key)] = decodedItems
 					}
 				}
 				res.json(yield req.locals.db.components[instance.componentName].delete(query))

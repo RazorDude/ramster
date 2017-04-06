@@ -76,6 +76,15 @@ class Base {
 									break;
 								}
 							}
+						} else if (fieldData.$and instanceof Array) {
+							let and = fieldData.$and
+							hasValue = true
+							for (let i in and) {
+								if (typeof and[i] === 'object') {
+									hasValue = false
+									break;
+								}
+							}
 						} else {
 							hasValue = false
 						}
