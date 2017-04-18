@@ -151,6 +151,26 @@ class Core {
 								})
 							}
 
+							if (moduleSettings.storage && moduleSettings.storage.mount) {
+								let globalStoragePath = this.cfg.globalStoragePath.replace(/\\/g, '\\\\'),
+									htpasswdFile = fs.openSync(path.join(this.cfg.globalStoragePath, '.htpasswd'), 'w')
+								prependToServerCfg += `
+									location ~ ^/storage(.*)/\\\\.htpasswd {
+										return 404;
+									}
+									location ~ ^/storage(.*)$ {
+										root ${globalStoragePath}
+
+										auth_basic "Storage Access";
+										auth_basic_user_file ${globalStoragePath}/.htpasswd;
+
+										try_files $1 =404;
+									}
+								`
+								fs.writeFileSync(htpasswdFile, moduleSettings.storage.htpasswd)
+								fs.closeSync(htpasswdFile)
+							}
+
 							if (moduleSettings.webpackHost) {
 								bundle = `
 									location ~ ^/bundle(.*)$ {
