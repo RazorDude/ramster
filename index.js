@@ -30,8 +30,7 @@ let csvPromise = require('./modules/csvPromise'),
 	baseClientClass = require('./base/clientClass'),
 	baseApiClass = require('./base/apiClass'),
 	CronJob = require('cron').CronJob,
-	merge = require('deepmerge'),
-	bcrypt = require('bcryptjs')
+	merge = require('deepmerge')
 
 class Core {
 	constructor(cfg) {
@@ -152,24 +151,18 @@ class Core {
 								})
 							}
 
-							if (moduleSettings.storage && moduleSettings.storage.mount) {
-								let globalStoragePath = this.cfg.globalStoragePath.replace(/\\/g, '\\\\'),
-									htpasswdFile = fs.openSync(path.join(this.cfg.globalStoragePath, '.htpasswd'), 'w')
+							if (this.cfg.mountGlobalStorage) {
+								let globalStoragePath = this.cfg.globalStoragePath.replace(/\\/g, '\\\\')
 								prependToServerCfg += `
-									location ~ ^/storage(.*)/\\\\.htpasswd {
-										return 404;
-									}
 									location ~ ^/storage(.*)$ {
 										root ${globalStoragePath};
-
-										auth_basic "Storage Access";
-										auth_basic_user_file ${globalStoragePath}/.htpasswd;
+										
+										allow 127.0.0.1;
+										deny all;
 
 										try_files $1 =404;
 									}
 								`
-								fs.writeFileSync(htpasswdFile, `${moduleSettings.storage.user}:${bcrypt.hashSync(moduleSettings.storage.pass, bcrypt.genSaltSync(10))}`)
-								fs.closeSync(htpasswdFile)
 							}
 
 							if (moduleSettings.webpackHost) {
