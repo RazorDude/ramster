@@ -153,16 +153,17 @@ class Core {
 
 							if (moduleSettings.storage && moduleSettings.storage.mount) {
 								let globalStoragePath = this.cfg.globalStoragePath.replace(/\\/g, '\\\\'),
-									htpasswdFile = fs.openSync(path.join(this.cfg.globalStoragePath, '.htpasswd'), 'w')
+									htpasswdFileName = `${this.cfg.projectName}-${moduleDir}_storage_htpasswd`,
+									htpasswdFile = fs.openSync(path.join(this.cfg.wsConfigFolderPath, htpasswdFileName), 'w')
 								prependToServerCfg += `
 									location ~ ^/storage(.*)/\\\\.htpasswd {
 										return 404;
 									}
 									location ~ ^/storage(.*)$ {
-										root ${globalStoragePath}
+										root ${globalStoragePath};
 
 										auth_basic "Storage Access";
-										auth_basic_user_file ${globalStoragePath}/.htpasswd;
+										auth_basic_user_file ${htpasswdFileName};
 
 										try_files $1 =404;
 									}
