@@ -30,7 +30,8 @@ let csvPromise = require('./modules/csvPromise'),
 	baseClientClass = require('./base/clientClass'),
 	baseApiClass = require('./base/apiClass'),
 	CronJob = require('cron').CronJob,
-	merge = require('deepmerge')
+	merge = require('deepmerge'),
+	bcrypt = require('bcryptjs')
 
 class Core {
 	constructor(cfg) {
@@ -167,7 +168,7 @@ class Core {
 										try_files $1 =404;
 									}
 								`
-								fs.writeFileSync(htpasswdFile, moduleSettings.storage.htpasswd)
+								fs.writeFileSync(htpasswdFile, `${moduleSettings.storage.user}:${bcrypt.hashSync(moduleSettings.storage.pass, bcrypt.genSaltSync(10))}`)
 								fs.closeSync(htpasswdFile)
 							}
 
