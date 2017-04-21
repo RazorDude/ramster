@@ -370,6 +370,7 @@ class Core {
 				}
 
 				//load all route paths
+				let layoutRoutes = []
 				for (let i in clientModule.moduleData) {
 					let component = clientModule.moduleData[i],
 						routes = component.getRoutes()
@@ -377,9 +378,15 @@ class Core {
 						if (routeData.path instanceof Array) {
 							routeData.path.forEach((path, pIndex) => {
 								clientModule.paths.push(path)
+								if (routeData.isALayoutRoute) {
+									layoutRoutes.push(path)
+								}
 							})
 						} else {
 							clientModule.paths.push(routeData.path)
+							if (routeData.isALayoutRoute) {
+								layoutRoutes.push(routeData.path)
+							}
 						}
 					})
 				}
@@ -391,7 +398,9 @@ class Core {
 					console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
 					if (clientModule.settings.unathorizedRedirectRoute && !req.isAuthenticated() && (clientModule.settings.anonymousAccessRoutes.indexOf(originalUrl) === -1)) {
-						cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
+						if (layoutRoutes.indexOf(req.originalUrl)) {
+							cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
+						}
 						res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
 						return;
 					}
