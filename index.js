@@ -154,13 +154,13 @@ class Core {
 							if (this.cfg.mountGlobalStorage) {
 								let globalStoragePath = this.cfg.globalStoragePath.replace(/\\/g, '\\\\')
 								prependToServerCfg += `
-									location ~ ^/storage(.*)$ {
+									location ~ ^/storage/(.*)$ {
 										root ${globalStoragePath};
 										
 										allow 127.0.0.1;
 										deny all;
 
-										try_files $1 =404;
+										try_files /$1 =404;
 									}
 								`
 							}
