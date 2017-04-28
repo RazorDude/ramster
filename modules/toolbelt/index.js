@@ -23,14 +23,14 @@ let emptyToNull = (data, outputData) => {
 		return outputData
 	},
 	getNested = (parent, field) => {
-		if ((typeof parent !== 'object') || (typeof field !== 'string')) {
+		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string')) {
 			return null
 		}
 		let fieldData = field.split('.'),
 			currentElement = parent
 		for (let i in fieldData) {
 			let innerElement = fieldData[i]
-			if (!currentElement || !currentElement[innerElement]) {
+			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
 				return currentElement
 			}
 			currentElement = currentElement[innerElement]
