@@ -23,10 +23,13 @@ let csvPromise = class CSVPromise {
 		})
 	}
 
-	stringify({data}) {
+	stringify({data, options}) {
 		return new Promise((res, rej) => {
 			try {
-				csv.stringify(data, (err, result) => {
+				if (!options) {
+					options = {}
+				}
+				csv.stringify(data, options, (err, result) => {
 					if (err) {
 						rej(err)
 						return
