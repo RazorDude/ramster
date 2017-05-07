@@ -5,19 +5,20 @@ let fs = require('fs'),
 	co = require('co')
 
 class Base {
-	constructor({componentName, componentNameSingular, routes, addDefaultRoutes}) {
+	constructor({componentName, componentNameSingular, routes, addDefaultRoutes, routePrefix}) {
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
 
 		this.routes = routes
+		routePrefix = routePrefix || ''
 		if (addDefaultRoutes instanceof Array) {
 			let defaultRoutes = {
-					create: {method: 'post', path: `/${this.componentName}/create`, func: 'create'},
-					read: {method: 'get', path: `/${this.componentName}/read`, func: 'read'},
-					readAssociated: {method: 'post', path: `/${this.componentName}/readAssociated`, func: 'readAssociated'},
-					readList: {method: 'post', path: `/${this.componentName}/readList`, func: 'readList'},
-					update: {method: 'post', path: `/${this.componentName}/update`, func: 'update'},
-					delete: {method: 'get', path: `/${this.componentName}/delete`, func: 'delete'}
+					create: {method: 'post', path: `${routePrefix}/${this.componentName}/create`, func: 'create'},
+					read: {method: 'get', path: `${routePrefix}/${this.componentName}/read`, func: 'read'},
+					readAssociated: {method: 'post', path: `${routePrefix}/${this.componentName}/readAssociated`, func: 'readAssociated'},
+					readList: {method: 'post', path: `${routePrefix}/${this.componentName}/readList`, func: 'readList'},
+					update: {method: 'post', path: `${routePrefix}/${this.componentName}/update`, func: 'update'},
+					delete: {method: 'get', path: `${routePrefix}/${this.componentName}/delete`, func: 'delete'}
 				},
 				defaultRoutesToAdd = []
 			addDefaultRoutes.forEach((route, index) => {

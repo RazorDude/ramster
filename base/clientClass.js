@@ -8,20 +8,21 @@ let fs = require('fs'),
 	toolbelt = require('../modules/toolbelt')
 
 class Base {
-	constructor({componentName, componentNameSingular, routes, additionalDefaultRoutes, addDefaultRoutes}) {
+	constructor({componentName, componentNameSingular, routes, additionalDefaultRoutes, addDefaultRoutes, routePrefix}) {
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
 
 		this.routes = routes || []
+		routePrefix = routePrefix || ''
 		if (addDefaultRoutes instanceof Array) {
 			let defaultRoutes = {
-					create: {method: 'post', path: `/${this.componentName}/create`, func: 'create'},
-					read: {method: 'get', path: `/${this.componentName}/read`, func: 'read'},
-					readList: {method: 'post', path: `/${this.componentName}/readList`, func: 'readList'},
-					update: {method: 'post', path: `/${this.componentName}/update`, func: 'update'},
-					checkImportFile: {method: 'get', path: `/${this.componentName}/checkImportFile`, func: 'checkImportFile'},
-					importFile: {method: 'post', path: `/${this.componentName}/importFile`, func: 'importFile'},
-					delete: {method: 'get', path: `/${this.componentName}/delete`, func: 'delete'}
+					create: {method: 'post', path: `${routePrefix}/${this.componentName}/create`, func: 'create'},
+					read: {method: 'get', path: `${routePrefix}/${this.componentName}/read`, func: 'read'},
+					readList: {method: 'post', path: `${routePrefix}/${this.componentName}/readList`, func: 'readList'},
+					update: {method: 'post', path: `${routePrefix}/${this.componentName}/update`, func: 'update'},
+					checkImportFile: {method: 'get', path: `${routePrefix}/${this.componentName}/checkImportFile`, func: 'checkImportFile'},
+					importFile: {method: 'post', path: `${routePrefix}/${this.componentName}/importFile`, func: 'importFile'},
+					delete: {method: 'get', path: `${routePrefix}/${this.componentName}/delete`, func: 'delete'}
 				},
 				defaultRoutesToAdd = []
 			if (typeof additionalDefaultRoutes === 'object') {
