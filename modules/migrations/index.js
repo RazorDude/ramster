@@ -272,7 +272,6 @@ class Migrations {
 				bytesWritten = yield fs.write(fileDescriptor, JSON.stringify(data))
 			yield fs.close(fileDescriptor)
 			return {
-				bytesWritten,
 				success: yield instance.insertData(data)
 			}
 		})
