@@ -476,6 +476,18 @@ class Core {
 				apiModule.app.use(bodyParser.json())  // for 'application/json' request bodies
 				apiModule.app.use(cookieParser())
 
+				if (this.cfg[moduleName].allowOrigins) {
+					apiModule.app.use(function (req, res, next) {
+						if (app.options()) {
+							res.header('Access-Control-Allow-Origin', this.cfg[moduleName].allowOrigins)
+							res.header('Allow: OPTIONS, GET, POST, PUT, DELETE')
+							res.status(200).end()
+							return
+						}
+						next()
+					})
+				}
+
 				if (this.cfg[moduleName].session) {
 					apiModule.app.use(expressSession({
 						secret: this.cfg[moduleName].session.secret,
