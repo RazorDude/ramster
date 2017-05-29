@@ -479,7 +479,7 @@ class Core {
 				if (this.cfg[moduleName].allowOrigins) {
 					apiModule.app.use(function (req, res, next) {
 						if (req.method.toLowerCase() === 'options') {
-							res.header('Access-Control-Allow-Origin', this.cfg[moduleName].allowOrigins)
+							res.header('Access-Control-Allow-Origin', instance.cfg[moduleName].allowOrigins)
 							res.header('Allow: OPTIONS, GET, POST, PUT, DELETE')
 							res.status(200).end()
 							return
