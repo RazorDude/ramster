@@ -478,7 +478,7 @@ class Core {
 
 				if (this.cfg[moduleName].allowOrigins) {
 					apiModule.app.use(function (req, res, next) {
-						if (app.options()) {
+						if (req.options()) {
 							res.header('Access-Control-Allow-Origin', this.cfg[moduleName].allowOrigins)
 							res.header('Allow: OPTIONS, GET, POST, PUT, DELETE')
 							res.status(200).end()
