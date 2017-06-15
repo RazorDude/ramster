@@ -319,13 +319,13 @@ class Core {
 
 				if (this.cfg[moduleName].allowOrigins) {
 					apiModule.app.use(function (req, res, next) {
-						if (req.method.toLowerCase() === 'options') {
+						// if (req.method.toLowerCase() === 'options') {
 							res.header('Access-Control-Allow-Origin', CORE.cfg[moduleName].allowOrigins)
-							res.header('Access-Control-Allow-Headers', 'accept, accept-encoding, accept-language, connection, content-type, host, origin, referer, user-agent')
+							res.header('Access-Control-Allow-Headers', 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent')
 							res.header('Allow', 'OPTIONS, GET, POST, PUT, DELETE')
 							res.status(200).end()
 							return
-						}
+						// }
 						next()
 					})
 				}
@@ -491,13 +491,13 @@ class Core {
 
 				if (this.cfg[moduleName].allowOrigins) {
 					apiModule.app.use(function (req, res, next) {
-						if (req.method.toLowerCase() === 'options') {
+						// if (req.method.toLowerCase() === 'options') {
 							res.header('Access-Control-Allow-Origin', CORE.cfg[moduleName].allowOrigins)
-							res.header('Access-Control-Allow-Headers', 'accept, accept-encoding, accept-language, connection, content-type, host, origin, referer, user-agent')
+							res.header('Access-Control-Allow-Headers', 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent')
 							res.header('Allow', 'OPTIONS, GET, POST, PUT, DELETE')
 							res.status(200).end()
 							return
-						}
+						// }
 						next()
 					})
 				}
