@@ -493,6 +493,7 @@ class Core {
 					apiModule.app.use(function (req, res, next) {
 						if (req.method.toLowerCase() === 'options') {
 							res.header('Access-Control-Allow-Origin', CORE.cfg[moduleName].allowOrigins)
+							res.header('Access-Control-Allow-Headers', 'accept, accept-encoding, accept-language, connection, content-type, host, origin, referer, user-agent')
 							res.header('Allow', 'OPTIONS, GET, POST, PUT, DELETE')
 							res.status(200).end()
 							return
