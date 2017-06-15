@@ -317,6 +317,18 @@ class Core {
 				clientModule.app.use(multipart({uploadDir: this.cfg.globalUploadPath})) // for multipart bodies - file uploads etc.
 				clientModule.app.use(cookieParser())
 
+				if (this.cfg[moduleName].allowOrigins) {
+					apiModule.app.use(function (req, res, next) {
+						if (req.method.toLowerCase() === 'options') {
+							res.header('Access-Control-Allow-Origin', CORE.cfg[moduleName].allowOrigins)
+							res.header('Allow', 'OPTIONS, GET, POST, PUT, DELETE')
+							res.status(200).end()
+							return
+						}
+						next()
+					})
+				}
+
 				//set up the passport session
 				clientModule.app.use(expressSession({
 					secret: this.cfg[moduleName].session.secret,
@@ -480,7 +492,7 @@ class Core {
 					apiModule.app.use(function (req, res, next) {
 						if (req.method.toLowerCase() === 'options') {
 							res.header('Access-Control-Allow-Origin', CORE.cfg[moduleName].allowOrigins)
-							res.header('Allow: OPTIONS, GET, POST, PUT, DELETE')
+							res.header('Allow', 'OPTIONS, GET, POST, PUT, DELETE')
 							res.status(200).end()
 							return
 						}
