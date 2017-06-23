@@ -120,7 +120,7 @@ class Base {
 						if (element.like[1] === '%') {
 							suffix = '%'
 						}
-						searchHolder[field] = {$like: `${prefix}${fieldData}${suffix}`}
+						searchHolder[field] = {[element.caseSensitive ? '$like' : '$iLike']: `${prefix}${fieldData}${suffix}`}
 						return;
 					}
 					searchHolder[field] = fieldData
