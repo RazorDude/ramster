@@ -158,13 +158,18 @@ class Base {
 	}
 
 	getIncludeQuery({data, rel, relSearch}) {
-		let include = []
+		let include = [],
+			order = []
 		this.relReadKeys.forEach((key, index) => {
 			let relSearchLength = relSearch[key] && Object.keys(relSearch[key]).length || 0
 			if (data[key] || relSearchLength) {
 				let thisInclude = {},
 					relS = relSearch[key]
 				for (let iKey in rel[key].include) {
+					if (iKey === 'order') {
+						order = order.concat(rel[key].include[iKey])
+						continue
+					}
 					thisInclude[iKey] = rel[key].include[iKey]
 				}
 
@@ -194,7 +199,7 @@ class Base {
 				include.push(thisInclude)
 			}
 		})
-		return include
+		return {include, order}
 	}
 
 	create(data) {
@@ -227,10 +232,12 @@ class Base {
 			for (let key in rel) {
 				relSearch[key] = {}
 			}
-			let options = {
-				where: instance.getWhereQuery({filters: data, relSearch, exactMatch}),
-				include: instance.getIncludeQuery({data, rel, relSearch})
-			}
+			let includeQueryData = instance.getIncludeQuery({data, rel, relSearch}),
+				options = {
+					where: instance.getWhereQuery({filters: data, relSearch, exactMatch}),
+					include: includeQueryData.include,
+					order: includeQueryData.order
+				}
 
 			return yield instance.model.findOne(options)
 		})
@@ -255,11 +262,12 @@ class Base {
 				relSearch[key] = {}
 			}
 
-			let options = {
-				where: instance.getWhereQuery({filters, relSearch, exactMatch}),
-				include: instance.getIncludeQuery({data, rel, relSearch}),
-				order
-			}
+			let includeQueryData = instance.getIncludeQuery({data, rel, relSearch}),
+				options = {
+					where: instance.getWhereQuery({filters, relSearch, exactMatch}),
+					include: includeQueryData.include,
+					order: order.concat(includeQueryData.order)
+				}
 
 			if (data.fields) {
 				options.attributes = data.fields
