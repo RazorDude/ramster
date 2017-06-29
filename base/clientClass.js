@@ -58,7 +58,7 @@ class Base {
 				matchesTemplate = true,
 				columns = []
 			extName = extName && extName[0] || ''
-			template.data = yield csv.parse({data: template.fileData, options: {delimiter: ';'}})
+			template.data = yield csv.parse({data: template.fileData, options: {delimiter: locals.cfg.csvFileDelimiter || ';'}})
 			template.data[0].forEach((column, index) => {
 				template.columns.push(column)
 			})
