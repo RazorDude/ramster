@@ -232,9 +232,10 @@ class Base {
 			for (let key in rel) {
 				relSearch[key] = {}
 			}
-			let includeQueryData = instance.getIncludeQuery({data, rel, relSearch}),
+			let whereQueryData = instance.getWhereQuery({filters: data, relSearch, exactMatch}),
+				includeQueryData = instance.getIncludeQuery({data, rel, relSearch}),
 				options = {
-					where: instance.getWhereQuery({filters: data, relSearch, exactMatch}),
+					where: whereQueryData,
 					include: includeQueryData.include,
 					order: includeQueryData.order
 				}
@@ -262,9 +263,10 @@ class Base {
 				relSearch[key] = {}
 			}
 
-			let includeQueryData = instance.getIncludeQuery({data, rel, relSearch}),
+			let whereQueryData = instance.getWhereQuery({filters, relSearch, exactMatch}),
+				includeQueryData = instance.getIncludeQuery({data, rel, relSearch}),
 				options = {
-					where: instance.getWhereQuery({filters, relSearch, exactMatch}),
+					where: whereQueryData,
 					include: includeQueryData.include,
 					order: order.concat(includeQueryData.order)
 				}
