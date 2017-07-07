@@ -410,12 +410,16 @@ class Core {
 						cookies = new Cookies(req, res)
 					console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
-					if (clientModule.settings.unathorizedRedirectRoute && !req.isAuthenticated() && (clientModule.settings.anonymousAccessRoutes.indexOf(originalUrl) === -1)) {
-						if (layoutRoutes.indexOf(req.originalUrl)) {
+					if (!req.isAuthenticated() && (clientModule.settings.anonymousAccessRoutes.indexOf(originalUrl) === -1)) {
+						if (layoutRoutes.indexOf(req.originalUrl) !== -1) {
 							cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
+							if (clientModule.settings.unathorizedRedirectRoute) {
+								res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
+								return
+							}
 						}
-						res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
-						return;
+						res.status(401).end()
+						return
 					}
 
 
@@ -448,14 +452,15 @@ class Core {
 				clientModule.app.use('/', clientModule.router)
 
 				//after every route - return handled errors and set up redirects
+				let notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
 				clientModule.app.use('*', function (req, res) {
 					if (!req.locals || (req.locals.error === null)) {
-						if (req.isAuthenticated()) {
-							res.redirect(302, clientModule.settings.notFoundRedirectRoutes.authenticated)
-							return;
+						if ((layoutRoutes.indexOf(req.originalUrl) !== -1) && notFoundRedirectRoutes) {
+							res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
+							return
 						}
-						res.redirect(302, clientModule.settings.notFoundRedirectRoutes.default)
-						return;
+						res.status(404).end()
+						return
 					}
 					CORE.logger.error(req.locals.error)
 					const errMessage = req.locals.error.message
