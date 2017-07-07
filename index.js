@@ -413,10 +413,14 @@ class Core {
 					if (!req.isAuthenticated() && (clientModule.settings.anonymousAccessRoutes.indexOf(originalUrl) === -1)) {
 						if (layoutRoutes.indexOf(req.originalUrl) !== -1) {
 							cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
-							if (clientModule.settings.unathorizedRedirectRoute) {
-								res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
-								return
-							}
+							// if (clientModule.settings.unathorizedRedirectRoute) {
+							// 	res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
+							// 	return
+							// }
+						}
+						if (clientModule.settings.unathorizedRedirectRoute) {
+							res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
+							return
 						}
 						res.status(401).end()
 						return
@@ -455,7 +459,7 @@ class Core {
 				let notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
 				clientModule.app.use('*', function (req, res) {
 					if (!req.locals || (req.locals.error === null)) {
-						if ((layoutRoutes.indexOf(req.originalUrl) !== -1) && notFoundRedirectRoutes) {
+						if (/*(layoutRoutes.indexOf(req.originalUrl) !== -1) && */notFoundRedirectRoutes) {
 							res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
 							return
 						}
