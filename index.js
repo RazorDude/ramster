@@ -30,7 +30,32 @@ let csvPromise = require('./modules/csvPromise'),
 	baseClientClass = require('./base/clientClass'),
 	baseApiClass = require('./base/apiClass'),
 	CronJob = require('cron').CronJob,
-	merge = require('deepmerge')
+	merge = require('deepmerge'),
+	checkRoutes = (route, routes) => {
+		for (const i in routes) {
+			let thisRoute = routes[i],
+				splitThisRoute = thisRoute.split('/'),
+				splitRoute = route.split('/')
+			if (route === thisRoute) {
+				return true
+			}
+			if ((thisRoute.indexOf(':') !== -1) && (splitThisRoute.length === splitRoute.length)) {
+				let valid = true
+				for (const j in splitThisRoute) {
+					let thisRouteItem = splitThisRoute[j],
+						routeItem = splitRoute[j]
+					if ((routeItem !== thisRouteItem) && (thisRouteItem.indexOf(':') === -1)) {
+						valid = false
+						break
+					}
+				}
+				if (valid) {
+					return true
+				}
+			}
+		}
+		return false
+	}
 
 class Core {
 	constructor(cfg) {
@@ -410,19 +435,24 @@ class Core {
 						cookies = new Cookies(req, res)
 					console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
-					if (!req.isAuthenticated() && (clientModule.settings.anonymousAccessRoutes.indexOf(originalUrl) === -1)) {
-						if (layoutRoutes.indexOf(req.originalUrl) !== -1) {
+					if (!req.isAuthenticated() && !checkRoutes(originalUrl, clientModule.settings.anonymousAccessRoutes)) {
+						if (checkRoutes(originalUrl, layoutRoutes)) {
 							cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
-							// if (clientModule.settings.unathorizedRedirectRoute) {
-							// 	res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
-							// 	return
-							// }
-						}
-						if (clientModule.settings.unathorizedRedirectRoute) {
-							res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
-							return
+							if (clientModule.settings.unathorizedRedirectRoute) {
+								res.redirect(301, clientModule.settings.unathorizedRedirectRoute)
+								return
+							}
 						}
 						res.status(401).end()
+						return
+					}
+					if (!checkRoutes(originalUrl, clientModule.paths)) {
+						const notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
+						if (notFoundRedirectRoutes) {
+							res.redirect(301, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
+							return
+						}
+						res.status(404).end()
 						return
 					}
 
@@ -459,8 +489,8 @@ class Core {
 				let notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
 				clientModule.app.use('*', function (req, res) {
 					if (!req.locals || (req.locals.error === null)) {
-						if (/*(layoutRoutes.indexOf(req.originalUrl) !== -1) && */notFoundRedirectRoutes) {
-							res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
+						if (notFoundRedirectRoutes) {
+							res.redirect(301, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
 							return
 						}
 						res.status(404).end()
