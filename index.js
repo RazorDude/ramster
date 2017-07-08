@@ -443,6 +443,11 @@ class Core {
 								return
 							}
 						}
+						const notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
+						if (notFoundRedirectRoutes) {
+							res.redirect(301, notFoundRedirectRoutes.default)
+							return
+						}
 						res.status(401).end()
 						return
 					}
