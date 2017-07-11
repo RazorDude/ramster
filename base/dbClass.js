@@ -159,6 +159,7 @@ class Base {
 
 	getIncludeQuery({data, rel, relSearch}) {
 		let include = [],
+			countInclude = [],
 			order = []
 		this.relReadKeys.forEach((key, index) => {
 			let relSearchLength = relSearch[key] && Object.keys(relSearch[key]).length || 0
@@ -194,12 +195,13 @@ class Base {
 							}
 						}
 					}
+					countInclude.push(thisInclude)
 				}
 
 				include.push(thisInclude)
 			}
 		})
-		return {include, order}
+		return {include, countInclude, order}
 	}
 
 	create(data) {
@@ -283,7 +285,7 @@ class Base {
 				}
 			}
 
-			let totalCount = yield instance.model.count({where: options.where, include: options.include}),
+			let totalCount = yield instance.model.count({where: options.where, include: includeQueryData.countInclude}),
 				totalPages = 0
 			if (data.readAll) {
 				totalPages = 1
