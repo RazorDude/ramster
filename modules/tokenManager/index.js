@@ -81,9 +81,15 @@ class TokenManager{
 		return (req, res, next) => {
 			try {
 				let moduleName = req.locals.moduleName,
-					config = req.locals.cfg[moduleName]
+					originalModuleName = req.locals.moduleName,
+					config = req.locals.cfg[moduleName],
+					originalConfig = req.locals.cfg[moduleName]
 				if (!req.headers['authorization']) {
 					throw {customMessage: 'No access token provided.', status: 401}
+				}
+				if (config.useModuleConfigForAuthTokens) {
+					moduleName = config.useModuleConfigForAuthTokens
+					config = req.locals.cfg[config.useModuleConfigForAuthTokens]
 				}
 
 				let tokens = req.headers['authorization'].split(' '),
@@ -146,6 +152,10 @@ class TokenManager{
 								status = 401
 								message = 'Access token expired. Refresh token expired.'
 							}
+							if (config.passErrorToNext || (originalConfig && originalConfig.passErrorToNext)) {
+								next({status, message})
+								return false
+							}
 							res.status(status).json({error: message})
 							return false
 						}
@@ -166,6 +176,10 @@ class TokenManager{
 					response = {serviceName: req.locals.serviceName, data: null, message}
 				} else {
 					response = {message}
+				}
+				if (config.passErrorToNext || (originalConfig && originalConfig.passErrorToNext)) {
+					next({status, message})
+					return
 				}
 				req.locals.logger.error(e)
 				res.status(status).json(response)
