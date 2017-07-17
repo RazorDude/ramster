@@ -439,13 +439,13 @@ class Core {
 						if (checkRoutes(originalUrl, layoutRoutes)) {
 							cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
 							if (clientModule.settings.unathorizedRedirectRoute) {
-								res.redirect(301, clientModule.settings.unathorizedRedirectRoute)
+								res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
 								return
 							}
 						}
 						const notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
 						if (notFoundRedirectRoutes) {
-							res.redirect(301, notFoundRedirectRoutes.default)
+							res.redirect(302, notFoundRedirectRoutes.default)
 							return
 						}
 						res.status(401).end()
@@ -454,7 +454,7 @@ class Core {
 					if (!checkRoutes(originalUrl, clientModule.paths)) {
 						const notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
 						if (notFoundRedirectRoutes) {
-							res.redirect(301, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
+							res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
 							return
 						}
 						res.status(404).end()
@@ -495,7 +495,7 @@ class Core {
 				clientModule.app.use('*', function (req, res) {
 					if (!req.locals || (req.locals.error === null)) {
 						if (notFoundRedirectRoutes) {
-							res.redirect(301, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
+							res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
 							return
 						}
 						res.status(404).end()
