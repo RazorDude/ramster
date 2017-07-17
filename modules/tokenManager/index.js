@@ -79,11 +79,15 @@ class TokenManager{
 
 	validate() {
 		return (req, res, next) => {
+			let moduleName = '',
+				config = {},
+				originalModuleName = '',
+				originalConfig = ''
 			try {
-				let moduleName = req.locals.moduleName,
-					originalModuleName = req.locals.moduleName,
-					config = req.locals.cfg[moduleName],
-					originalConfig = req.locals.cfg[moduleName]
+				moduleName = req.locals.moduleName
+				originalModuleName = req.locals.moduleName
+				config = req.locals.cfg[moduleName]
+				originalConfig = req.locals.cfg[moduleName]
 				if (!req.headers['authorization']) {
 					throw {customMessage: 'No access token provided.', status: 401}
 				}
