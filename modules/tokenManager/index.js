@@ -48,10 +48,10 @@ class TokenManager{
 		return co(function* () {
 			if (type === 'access') {
 				let token = yield instance.signToken({userId, secret, expiresInMinutes}),
-					currentToken = instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
+					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
 				if (currentToken) {
 					yield instance.generalStore.removeEntry(`${moduleName}user${userId}AccessToken`)
-					yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentToken}`)
+					yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentToken}`, true)
 				}
 				yield instance.generalStore.storeEntry(`${moduleName}user${userId}AccessToken`, token)
 				return token
@@ -66,7 +66,7 @@ class TokenManager{
 				let	token = yield instance.signToken({userId, secret}),
 					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 				if (currentToken) {
-					yield instance.generalStore.storeEntry(`${moduleName}refreshTokenBlacklist-${currentToken}`)
+					yield instance.generalStore.storeEntry(`${moduleName}refreshTokenBlacklist-${currentToken}`, true)
 					yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 				}
 				yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`, token)
