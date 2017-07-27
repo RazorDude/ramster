@@ -436,10 +436,10 @@ class Core {
 					console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
 					if (!req.isAuthenticated() && !checkRoutes(originalUrl, clientModule.settings.anonymousAccessRoutes)) {
-						if (checkRoutes(originalUrl, layoutRoutes)) {
+						if (checkRoutes(originalUrl, layoutRoutes) || checkRoutes(originalUrl, clientModule.settings.nonLayoutDirectRoutes)) {
 							cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
-							if (clientModule.settings.unathorizedRedirectRoute) {
-								res.redirect(302, clientModule.settings.unathorizedRedirectRoute)
+							if (clientModule.settings.unauthorizedRedirectRoute) {
+								res.redirect(302, clientModule.settings.unauthorizedRedirectRoute)
 								return
 							}
 						}
