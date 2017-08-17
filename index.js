@@ -182,8 +182,8 @@ class Core {
 									location ~ ^/storage/(.*)$ {
 										root ${globalStoragePath};
 										
-										allow 127.0.0.1;
-										deny all;
+										#allow 127.0.0.1;
+										#deny all;
 
 										try_files /$1 =404;
 									}
