@@ -1,6 +1,6 @@
 'use strict'
 
-let co = require('co'),
+const co = require('co'),
 	fs = require('fs-promise'),
 	path = require('path'),
 	express = require('express'),
@@ -16,14 +16,14 @@ let co = require('co'),
 
 class Migrations {
 	constructor(config, db) {
-		let instance = this
+		const instance = this
 
 		this.config = config
 		this.db = db
 
 		this.app = express()
 		this.router = express.Router()
-		this.paths = ['/seed', '/sync', '/generateSeed', '/generateBackup']
+		this.paths = ['/seed', '/sync', '/generateSeed', '/generateBackup', '/insertStaticData']
 
 		this.app.use(requestLogger(`[Migrations Module API] :method request to :url; result: :status; completed in: :response-time; :date`))
 		this.app.use(bodyParser.json())
@@ -70,6 +70,15 @@ class Migrations {
 			}
 		}))
 
+		this.router.get('/insertStaticData', wrap(function* (req, res, next) {
+			try {
+				res.json({data: yield instance.insertStaticData()})
+			} catch (error) {
+				req.locals = {error}
+				next()
+			}
+		}))
+
 		this.app.use('/', this.router)
 		this.app.use(this.paths, (req, res) => {
 			if (req.locals && req.locals.error) {
@@ -82,7 +91,7 @@ class Migrations {
 
 	getFullTableData() {
 		try {
-			let instance = this
+			const instance = this
 			return co(function*() {
 				let data = {},
 					schemas = yield instance.db.sequelize.query('SELECT "t"."table_name" FROM "information_schema"."tables" AS "t" ' +
@@ -100,7 +109,7 @@ class Migrations {
 
 	getTableLayout(t) {
 		try {
-			let instance = this
+			const instance = this
 			return co(function*() {
 				let data = {},
 					schemas = yield instance.db.sequelize.query('SELECT "t"."table_name","c"."column_name" FROM "information_schema"."tables" AS "t" ' +
@@ -188,7 +197,7 @@ class Migrations {
 
 	insertData(data, options) {
 		try {
-			let instance = this
+			const instance = this
 			return instance.db.sequelize.transaction(function (t) {
 				return co(function*() {
 					let queryInterface = instance.db.sequelize.getQueryInterface(),
@@ -265,7 +274,7 @@ class Migrations {
 	}
 
 	sync() {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			let data = yield instance.getFullTableData(),
 				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `${(new Date()).getTime()}.json`), 'w'),
@@ -278,14 +287,14 @@ class Migrations {
 	}
 
 	seed({seedFolder, seedFile}) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			return yield instance.insertData(JSON.parse((yield fs.readFile(path.join(instance.config.migrations.baseMigrationsPath, seedFolder, `${seedFile}.json`))).toString()))
 		})
 	}
 
 	generateSeed({seedFile}) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			let seed = JSON.stringify(yield instance.getFullTableData()),
 				now = new Date().getTime(),
@@ -306,7 +315,7 @@ class Migrations {
 	}
 
 	generateBackup() {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			let seed = JSON.stringify(yield instance.getFullTableData()),
 				now = new Date().getTime(),
@@ -314,6 +323,30 @@ class Migrations {
 				result = yield fs.write(fileDescriptor, seed)
 			yield fs.close(fileDescriptor)
 			return result
+		})
+	}
+
+	insertStaticData() {
+		const instance = this,
+			sequelize = this.db.sequelize
+		return sequelize.transaction((t) => {
+			return co(function*() {
+				// write a backup of the current database data for safety reasons
+				let currentData = yield instance.getFullTableData(),
+					now = new Date().getTime(),
+					fileDescriptor = yield fs.open(path.join(instance.config.migrations.backupPath, `backup_${now}.json`), 'w')
+				yield fs.write(fileDescriptor, JSON.stringify(currentData))
+				yield fs.close(fileDescriptor)
+
+				// get the data from the file and merge it with the current data
+				let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, 'staticData.json'))).toString())
+				for (const tableName in staticData) {
+					currentData[tableName] = staticData[tableName]
+				}
+
+				// seed the merged data
+				return yield instance.insertData(currentData)
+			})
 		})
 	}
 }
