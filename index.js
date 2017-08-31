@@ -96,8 +96,8 @@ class Core {
 						this.modules.db.components[componentDir] = new (require(path.join(this.cfg.db.modulePath, componentDir)))(sequelize, Sequelize, {
 							cfg: this.cfg,
 							logger: this.logger,
-							generalStore,
-							tokenManager
+							generalStore: this.generalStore,
+							tokenManager: this.tokenManager
 						})
 					} else if (componentDir === 'fieldCaseMap.js') {
 						this.modules.db.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
