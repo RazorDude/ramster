@@ -7,6 +7,7 @@ const co = require('co'),
 	wrap = require('co-express'),
 	bodyParser = require('body-parser'),
 	requestLogger = require('morgan'),
+	_ = require('lodash'),
 	getAuthMiddleware = (passKey) => (req, res, next) => {
 		if (req.header('X-Auth-Passkey') !== passKey) {
 			return res.status(401).end()
@@ -341,7 +342,8 @@ class Migrations {
 				// get the data from the file and merge it with the current data
 				let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, 'staticData.json'))).toString())
 				for (const tableName in staticData) {
-					currentData[tableName] = staticData[tableName]
+					if(typeof currentData[tableName] == 'undefined') currentData[tableName] = []
+					currentData[tableName] = _.merge(currentData[tableName], staticData[tableName])
 				}
 
 				// seed the merged data
