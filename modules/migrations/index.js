@@ -335,7 +335,7 @@ class Migrations {
 				// write a backup of the current database data for safety reasons
 				let currentData = yield instance.getFullTableData(),
 					now = new Date().getTime(),
-					fileDescriptor = yield fs.open(path.join(instance.config.migrations.backupPath, `backup_${now}.json`), 'w')
+					fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `pre_static_data_insert_${now}.json`), 'w')
 				yield fs.write(fileDescriptor, JSON.stringify(currentData))
 				yield fs.close(fileDescriptor)
 
