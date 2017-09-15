@@ -342,8 +342,39 @@ class Migrations {
 				// get the data from the file and merge it with the current data
 				let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, 'staticData.json'))).toString())
 				for (const tableName in staticData) {
-					if (typeof currentData[tableName] === 'undefined') currentData[tableName] = []
-					currentData[tableName] = merge(currentData[tableName], staticData[tableName])
+					const tableStaticData = staticData[tableName],
+						primaryKeys = tableStaticData.primaryKeys
+					let currentTableData = currentData[tableName]
+					if (typeof currentTableData === 'undefined') {
+						currentTableData = []
+						currentData[tableName] = currentTableData
+					}
+					let currentTableDataPKIndexMap = {}
+					if (primaryKeys.length) {
+						currentTableData.forEach((row, index) => {
+							let currentKey = ''
+							primaryKeys.forEach((pk, pkIndex) => {
+								currentKey += `${row[pk]}-`
+							})
+							currentKey = currentKey.substr(0, currentKey.length - 1)
+							currentTableDataPKIndexMap[currentKey] = index
+						})
+						tableStaticData.data.forEach((row, index) => {
+							let currentKey = ''
+							primaryKeys.forEach((pk, pkIndex) => {
+								currentKey += `${row[pk]}-`
+							})
+							currentKey = currentKey.substr(0, currentKey.length - 1)
+							let cdIndex = currentTableDataPKIndexMap[currentKey]
+							if (typeof cdIndex === 'undefined') {
+								currentTableData.push(row)
+								return
+							}
+							currentTableData[cdIndex] = merge(currentTableData[cdIndex], row)
+						})
+						continue
+					}
+					currentTableData = currentTableData.concat(tableStaticData.data)
 				}
 
 				// seed the merged data
