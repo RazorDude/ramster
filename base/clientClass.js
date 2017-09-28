@@ -1,6 +1,6 @@
 'use strict'
 
-let fs = require('fs'),
+const fs = require('fs'),
 	path = require('path'),
 	co = require('co'),
 	csv = new (require('../modules/csvPromise'))(),

@@ -1,6 +1,6 @@
 'use strict'
 
-let fs = require('fs'),
+const fs = require('fs'),
 	path = require('path'),
 	co = require('co')
 
@@ -21,6 +21,11 @@ class Base {
 					delete: {method: 'get', path: `${routePrefix}/${this.componentName}/delete`, func: 'delete'}
 				},
 				defaultRoutesToAdd = []
+			if (typeof additionalDefaultRoutes === 'object') {
+				for (let key in additionalDefaultRoutes) {
+					defaultRoutes[key] = additionalDefaultRoutes[key]
+				}
+			}
 			addDefaultRoutes.forEach((route, index) => {
 				if (defaultRoutes[route]) {
 					defaultRoutesToAdd.push(defaultRoutes[route])
