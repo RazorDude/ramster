@@ -311,7 +311,7 @@ class Migrations {
 			let newFileDescriptor = yield fs.open(path.join(instance.config.migrations.seedFilesPath, `${seedFile}.json`), 'w'),
 			 	result = yield fs.write(newFileDescriptor, seed)
 			yield fs.close(newFileDescriptor)
-			return result
+			return {success: true}
 		})
 	}
 
