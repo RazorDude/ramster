@@ -1,6 +1,7 @@
 'use strict'
 
-let co = require('co')
+const co = require('co'),
+	moment = require('moment')
 
 class Base {
 	constructor({mailClient, cfg, logger}) {
@@ -42,6 +43,22 @@ class Base {
 			buf[i] = Math.floor(Math.random() * 256)
 		}
 		return buf
+	}
+
+	parseDate(date) {
+		if (typeof date === 'string') {
+			if (date.indexOf('/') !== -1) {
+				let tempDate = moment.utc(date, 'DD/MM/YYYY')
+				if (tempDate.isValid()) {
+					return tempDate
+				}
+			}
+			return moment.utc(date, 'YYYY-MM-DD')
+		}
+		if (date && (typeof date === 'object')) {
+			return moment.utc(date.getTime(), 'x')
+		}
+		return moment.utc('Invalid date', 'YYYY-MM-DD')
 	}
 
 	checkQueryItem({fieldData}) {
