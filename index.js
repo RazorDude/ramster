@@ -574,50 +574,14 @@ class Core {
 					})
 				}
 
-				//before every request - if query/body field case change is enabled
-				const fieldCaseChangeSettings = apiModule.settings.fieldCaseChange,
-					fieldCaseMap = apiModule.settings.fieldCaseMap || CORE.modules.db.fieldCaseMap || null
-				if (fieldCaseChangeSettings && fieldCaseMap) {
-					if (fieldCaseChangeSettings.query) {
-						apiModule.app.use(function (req, res, next) {
-							try {
-								if (req.query) {
-									req.query = toolBelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query)
-								}
-								next()
-							} catch (err) {
-								CORE.logger.error(err)
-								let response = {},
-									error = err.customMessage || 'An internal server error has occurred. Please try again.'
-								if (apiModule.settings.responseType === 'serviceName') {
-									response = {serviceName: req.locals.serviceName, data: null, message: error}
-								} else {
-									response = {error}
-								}
-								res.status(err.status || 500).json(response)
-							}
-						})
-					}
-					if (fieldCaseChangeSettings.body) {
-						apiModule.app.use(function (req, res, next) {
-							try {
-								if (req.body) {
-									req.body = JSON.parse(toolBelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body))
-								}
-								next()
-							} catch (err) {
-								CORE.logger.error(err)
-								let response = {},
-									error = err.customMessage || 'An internal server error has occurred. Please try again.'
-								if (apiModule.settings.responseType === 'serviceName') {
-									response = {serviceName: req.locals.serviceName, data: null, message: error}
-								} else {
-									response = {error}
-								}
-								res.status(err.status || 500).json(response)
-							}
-						})
-					}
+				//before every request - add any precursor methods defined in the module settings
+				const precursorMethods = apiModule.settings.precursorMethods
+				if (precursorMethods && (precursorMethods instanceof Array)) {
+					precursorMethods.forEach((methodName, index) => {
+						if (typeof component[methodName] === 'function') {
+							apiModule.app.use(wrap(component[methodName]()))
+						}
+					})
 				}
 
 				//load all route paths
