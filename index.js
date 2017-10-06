@@ -264,8 +264,8 @@ class Core {
 						moduleDirData.forEach((componentDir, index) => {
 							if (componentDir.indexOf('.') === -1) {
 								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(merge({}, settings))
-							} else if (componentDir === 'fieldCaseMap.js') {
-								currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
+							} else if (componentDir === 'precursorMethods.js') {
+								currentSettings.precursorMethods = require(path.join(this.cfg.db.modulePath, componentDir))
 							}
 						})
 
@@ -576,12 +576,12 @@ class Core {
 
 				//before every request - add any precursor methods defined in the module settings
 				const precursorMethods = apiModule.settings.precursorMethods
-				if (precursorMethods && (precursorMethods instanceof Array)) {
-					precursorMethods.forEach((methodName, index) => {
-						if (typeof component[methodName] === 'function') {
-							apiModule.app.use(wrap(component[methodName]()))
+				if (precursorMethods && (typeof precursorMethods === 'object')) {
+					for (const methodKey in precursorMethods) {
+						if (typeof precursorMethods[methodKey] === 'function') {
+							apiModule.app.use(wrap(precursorMethods[methodKey]()))
 						}
-					})
+					}
 				}
 
 				//load all route paths
