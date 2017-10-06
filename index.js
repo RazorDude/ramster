@@ -265,7 +265,7 @@ class Core {
 							if (componentDir.indexOf('.') === -1) {
 								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(merge({}, settings))
 							} else if (componentDir === 'precursorMethods.js') {
-								currentSettings.precursorMethods = require(path.join(this.cfg.db.modulePath, componentDir))
+								currentSettings.precursorMethods = require(path.join(moduleDirPath, componentDir))
 							}
 						})
 
