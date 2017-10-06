@@ -608,7 +608,6 @@ class Core {
 						moduleName,
 						cfg: CORE.cfg,
 						settings: apiModule.settings,
-						fieldCaseMap,
 						logger: CORE.logger,
 						mailClient: CORE.mailClient,
 						generalStore: CORE.generalStore,
