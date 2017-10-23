@@ -1,36 +1,39 @@
 'use strict'
 
-let csvPromise = require('./modules/csvPromise'),
+// external dependencies
+const
+	bodyParser = require('body-parser'),
+	cookieParser = require('cookie-parser'),
+	Cookies = require('cookies'),
+	CronJob = require('cron').CronJob,
+	express = require('express'),
+	expressSession = require('express-session'),
+	fs = require('fs'),
+	http = require('http'),
+	merge = require('deepmerge'),
+	moment = require('moment'),
+	multipart = require('connect-multiparty'),
+	passport = require('passport'),
+	path = require('path'),
+	pug = require('pug'),
+	redis = require('redis'),
+	redisStore = require('connect-redis')(expressSession),
+	requestLogger = require('morgan'),
+	wrap = require('co-express'),
+
+// ramster modules
+	csvPromise = require('./modules/csvPromise'),
+	{DBModule, BaseDBClass} = require('./modules/db'),
 	logger = require('./modules/errorLogger'),
 	emails = require('./modules/emails'),
 	generalStore = require('./modules/generalStore'),
 	tokenManager = require('./modules/tokenManager'),
 	migrations = require('./modules/migrations'),
 	toolBelt = require('./modules/toolbelt'),
-	Sequelize = require('sequelize'),
-	express = require('express'),
-	wrap = require('co-express'),
-	expressSession = require('express-session'),
-	passport = require('passport'),
-	redis = require('redis'),
-	RedisStore = require('connect-redis')(expressSession),
-	http = require('http'),
-	bodyParser = require('body-parser'),
-	multipart = require('connect-multiparty'),
-	cookieParser = require('cookie-parser'),
-	Cookies = require('cookies'),
-	requestLogger = require('morgan'),
-	path = require('path'),
-	pug = require('pug'),
-	fs = require('fs'),
-	moment = require('moment'),
-	pd = require('pretty-data').pd,
 	defaultConfig = require('./defaults/config'),
 	baseDBClass = require('./base/dbClass'),
 	baseClientClass = require('./base/clientClass'),
 	baseApiClass = require('./base/apiClass'),
-	CronJob = require('cron').CronJob,
-	merge = require('deepmerge'),
 	checkRoutes = (route, routes) => {
 		for (const i in routes) {
 			let thisRoute = routes[i],
@@ -58,79 +61,29 @@ let csvPromise = require('./modules/csvPromise'),
 	}
 
 class Core {
-	constructor(cfg) {
+	constructor(config) {
 		try {
-			this.cfg = cfg || defaultConfig
-			this.logger = new logger(this.cfg)
-			this.generalStore = new generalStore(this.cfg)
+			let CORE = this
+
+			this.cfg = config || defaultConfig
+			this.logger = new logger(config)
+			this.generalStore = new generalStore(config)
 			this.tokenManager = new tokenManager({generalStore: this.generalStore})
-			this.modules = {}
-
-			// ####### ------------ LOAD THE DATABASE MODULE ---------- ####### \\
-			let moduleDir = fs.readdirSync(this.cfg.db.modulePath),
-				sequelize = null,
-				CORE = this
-
-			this.modules.db = {
-				components: {},
-				seedingOrder: this.cfg.db.seedingOrder
+			this.modules = {
+				db: new DBModule(config, {logger: this.logger, generalStore: this.generalStore, tokenManager: this.tokenManager})
 			}
 
-			if ((this.cfg.dbType === 'postgres') || !this.cfg.dbType) {
-				sequelize = new Sequelize(this.cfg.postgres.database, this.cfg.postgres.user, this.cfg.postgres.pass, {
-					host: this.cfg.postgres.host,
-					port: this.cfg.postgres.port,
-					dialect: 'postgres',
-					logging: (this.cfg.postgres.logging === true) ?
-						(sql) => {
-							console.log('================ /SQL\\ ==================')
-							console.log(pd.sql(sql))
-							console.log('================ \\SQL/ ==================')
-						} : false
-				})
-			}
-
-			if (sequelize) {
-				moduleDir.forEach((componentDir, index) => {
-					if (componentDir.indexOf('.') === -1) {
-						this.modules.db.components[componentDir] = new (require(path.join(this.cfg.db.modulePath, componentDir)))(sequelize, Sequelize, {
-							cfg: this.cfg,
-							logger: this.logger,
-							generalStore: this.generalStore,
-							tokenManager: this.tokenManager
-						})
-					} else if (componentDir === 'fieldCaseMap.js') {
-						this.modules.db.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
-					}
-				})
-
-				// ----- create the database associations and update the modules -------- \\
-				for (let componentName in this.modules.db.components) {
-					let component = this.modules.db.components[componentName],
-						relKey = component.associate(this.modules.db.components)
-				}
-				this.modules.db.sequelize = sequelize
-				this.modules.db.Sequelize = Sequelize
-			}
-
-			if (this.cfg.emails.customModulePath) {
-				let customMailClient = require(this.cfg.emails.customModulePath)
-				this.mailClient = new customMailClient(this.cfg, this.modules.db)
+			if (config.emails.customModulePath) {
+				let customMailClient = require(config.emails.customModulePath)
+				this.mailClient = new customMailClient(config, this.modules.db)
 			} else {
-				this.mailClient = new emails(this.cfg, this.modules.db)
-			}
-			for (let componentName in this.modules.db.components) {
-				let component = this.modules.db.components[componentName]
-				component.setDb(this.modules.db)
-				component.mailClient = this.mailClient
+				this.mailClient = new emails(config, this.modules.db)
 			}
 
-			if (sequelize) {
-				this.modules.db.sequelize.sync()
-			}
+			this.modules.db.setComponentProperties({db: this.modules.db, mailClient: this.mailClient})
 
-			if (this.cfg.migrations && this.cfg.migrations.startAPI) {
-				this.migrations = new migrations(this.cfg, this.modules.db)
+			if (config.migrations && config.migrations.startAPI) {
+				this.modules.migrations = new migrations(config, this.modules.db)
 			}
 
 
@@ -315,7 +268,7 @@ class Core {
 
 			// ------------ LOAD THE CLIENTS' ROUTES ---------- \\
 			let redisClient = redis.createClient(this.cfg.redis),
-				sessionStore = new RedisStore({
+				sessionStore = new redisStore({
 					host: this.cfg.redis.host,
 					port: this.cfg.redis.port,
 					client: redisClient
@@ -666,7 +619,7 @@ class Core {
 			}
 
 			if (this.cfg.migrations && this.cfg.migrations.startAPI) {
-				let migrationsApiServer = http.createServer(this.migrations.app)
+				let migrationsApiServer = http.createServer(this.modules.migrations.app)
 				migrationsApiServer.listen(this.cfg.migrations.serverPort, () => {
 					console.log(`[Migrations Module API] Server started.`)
 					console.log(`[Migrations Module API] Port:`, this.cfg.migrations.serverPort)
@@ -680,10 +633,11 @@ class Core {
 }
 
 module.exports = {
-	Core,
-	baseDBClass,
+	baseDBClass: BaseDBClass,
+	BaseDBClass,
 	baseClientClass,
 	baseApiClass,
+	Core,
 	csvPromise: new csvPromise(),
 	toolBelt
 }

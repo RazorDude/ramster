@@ -3,7 +3,7 @@
 const co = require('co'),
 	moment = require('moment')
 
-class Base {
+class BaseDBClass {
 	constructor({mailClient, cfg, logger}) {
 		this.defaults = {
 			orderBy: 'id',
@@ -19,10 +19,6 @@ class Base {
 		let rel = this.model.associate(components)
 		this.relations = rel[rel.key]
 		return rel.key
-	}
-
-	setDb(db) {
-		this.db = db
 	}
 
 	generateHandle(name) {
@@ -222,14 +218,14 @@ class Base {
 	}
 
 	create(data) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			return yield instance.model.create(data)
 		})
 	}
 
 	bulkCreate({dbObjects, options}) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			let opt = {}
 			if (options.transaction) {
@@ -240,7 +236,7 @@ class Base {
 	}
 
 	read(data) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			let where = {},
 				include = [],
@@ -264,7 +260,7 @@ class Base {
 	}
 
 	readList(data) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			let order = [
 					[data.orderBy || instance.defaults.orderBy, data.orderDirection || instance.defaults.orderDirection]
@@ -327,7 +323,7 @@ class Base {
 	}
 
 	update({dbObject, where, transaction}) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			if ((typeof where !== 'object') || (Object.keys(where).length === 0)) {
 				throw {customMessage: 'Cannot update without criteria.'}
@@ -344,11 +340,11 @@ class Base {
 	}
 
 	delete(data) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			return {deleted: yield instance.model.destroy({where: {id: data.id}})}
 		})
 	}
 }
 
-module.exports = Base
+module.exports = BaseDBClass
