@@ -1,13 +1,14 @@
 'use strict'
 
-const fs = require('fs'),
-	path = require('path'),
+const
 	co = require('co'),
 	csv = new (require('../modules/csvPromise'))(),
-	xlsx = require('node-xlsx'),
-	toolbelt = require('../modules/toolbelt')
+	fs = require('fs-extra'),
+	path = require('path'),
+	toolbelt = require('../modules/toolbelt'),
+	xlsx = require('node-xlsx')
 
-class Base {
+class BaseClientComponent {
 	constructor({componentName, componentNameSingular, routes, additionalDefaultRoutes, addDefaultRoutes, routePrefix}) {
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
@@ -39,20 +40,16 @@ class Base {
 		}
 	}
 
-	getRoutes() {
-		return this.routes
-	}
-
 	importFileCheck({locals, inputFileName, delimiter}) {
-		let instance = this
+		const instance = this
 		return co(function*() {
 			let fileName = inputFileName,
 				extNameRegex = new RegExp(/\.[^/.]+$/),
 				extName = extNameRegex.exec(fileName),
-				inputFileData = fs.readFileSync(path.join(locals.cfg.globalUploadPath, inputFileName)),
+				inputFileData = yield fs.readFile(path.join(locals.cfg.globalUploadPath, inputFileName)),
 				parsedInputFileData = null,
 				template = {
-					fileData: fs.readFileSync(path.join(locals.cfg.globalStoragePath, `/importTemplates/${instance.componentName}.csv`)),
+					fileData: yield fs.readFile(path.join(locals.cfg.globalStoragePath, `/importTemplates/${instance.componentName}.csv`)),
 					columns: []
 				},
 				matchesTemplate = true,
@@ -84,7 +81,7 @@ class Base {
 	}
 
 	create() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				let response = {}
@@ -98,7 +95,7 @@ class Base {
 	}
 
 	read() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				let query = {},
@@ -118,7 +115,7 @@ class Base {
 	}
 
 	readList() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				res.json(yield req.locals.db.components[instance.componentName].readList(req.body))
@@ -130,7 +127,7 @@ class Base {
 	}
 
 	update() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				res.json(yield req.locals.db.components[instance.componentName].update(req.body))
@@ -142,7 +139,7 @@ class Base {
 	}
 
 	checkImportFile() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				res.json(yield instance.importFileCheck({
@@ -158,7 +155,7 @@ class Base {
 	}
 
 	importFile() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				let check = yield instance.importFileCheck({
@@ -274,4 +271,4 @@ class Base {
 	}
 }
 
-module.exports = Base
+module.exports = BaseClientComponent

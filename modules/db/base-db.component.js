@@ -1,9 +1,10 @@
 'use strict'
 
-const co = require('co'),
+const
+	co = require('co'),
 	moment = require('moment')
 
-class BaseDBClass {
+class BaseDBComponent {
 	constructor({mailClient, cfg, logger}) {
 		this.defaults = {
 			orderBy: 'id',
@@ -347,4 +348,4 @@ class BaseDBClass {
 	}
 }
 
-module.exports = BaseDBClass
+module.exports = BaseDBComponent

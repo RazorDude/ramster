@@ -1,10 +1,12 @@
 'use strict'
 
-const fs = require('fs'),
-	path = require('path'),
-	co = require('co')
+const
+	co = require('co'),
+	fs = require('fs'),
+	path = require('path')
+	
 
-class Base {
+class BaseAPIComponent {
 	constructor({componentName, componentNameSingular, routes, addDefaultRoutes, routePrefix}) {
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
@@ -35,12 +37,8 @@ class Base {
 		}
 	}
 
-	getRoutes() {
-		return this.routes
-	}
-
 	create() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				let response = {}
@@ -54,7 +52,7 @@ class Base {
 	}
 
 	read() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				let query = {},
@@ -74,7 +72,7 @@ class Base {
 	}
 
 	readAssociated() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				res.json(yield req.locals.db.components[instance.componentName].readAssociated(req.body))
@@ -86,7 +84,7 @@ class Base {
 	}
 
 	readList() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				res.json(yield req.locals.db.components[instance.componentName].readList(req.body))
@@ -98,7 +96,7 @@ class Base {
 	}
 
 	update() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				res.json(yield req.locals.db.components[instance.componentName].update(req.body))
@@ -110,7 +108,7 @@ class Base {
 	}
 
 	delete() {
-		let instance = this
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				let query = {}
@@ -128,4 +126,4 @@ class Base {
 	}
 }
 
-module.exports = Base
+module.exports = BaseAPIComponent

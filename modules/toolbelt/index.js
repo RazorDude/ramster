@@ -59,6 +59,31 @@ let emptyToNull = (data, outputData) => {
 			str = input
 		}
 		return str
+	},
+	checkRoutes = (route, routes) => {
+		for (const i in routes) {
+			let thisRoute = routes[i],
+				splitThisRoute = thisRoute.split('/'),
+				splitRoute = route.split('/')
+			if (route === thisRoute) {
+				return true
+			}
+			if ((thisRoute.indexOf(':') !== -1) && (splitThisRoute.length === splitRoute.length)) {
+				let valid = true
+				for (const j in splitThisRoute) {
+					let thisRouteItem = splitThisRoute[j],
+						routeItem = splitRoute[j]
+					if ((routeItem !== thisRouteItem) && (thisRouteItem.indexOf(':') === -1)) {
+						valid = false
+						break
+					}
+				}
+				if (valid) {
+					return true
+				}
+			}
+		}
+		return false
 	}
 
-module.exports = {emptyToNull, getNested, changeKeyCase}
+module.exports = {emptyToNull, getNested, changeKeyCase, checkRoutes}

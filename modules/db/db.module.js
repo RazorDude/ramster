@@ -2,7 +2,8 @@
 
 const
 	co = require('co'),
-	fs = require('fs'),
+	fs = require('fs-extra'),
+	path = require('path'),
 	pd = require('pretty-data').pd,
 	Sequelize = require('sequelize')
 
@@ -18,16 +19,14 @@ class DBModule {
 		this.fieldCaseMap = null
 		this.Sequelize = null
 		this.sequelize = null
-
-		this.loadComponents()
 	}
 
 	loadComponents() {
-		const instance = this,
-			{dbType, postgres} = this.config,
-			{modulePath} = this.moduleConfig
+		let instance = this
 		return co(function*() {
-			const moduleDir = yield fs.readdir(modulePath),
+			const {dbType, postgres} = instance.config,
+				{modulePath} = instance.moduleConfig,
+				moduleDir = yield fs.readdir(modulePath),
 				componentOptions = {
 					cfg: instance.config,
 					logger: instance.logger,
@@ -61,7 +60,7 @@ class DBModule {
 
 				// after all components have been loaded, create the database associations
 				for (const componentName in components) {
-					components[componentName].associate(this.modules.db.components)
+					components[componentName].associate(components)
 				}
 
 				sequelize.sync()

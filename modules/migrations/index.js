@@ -1,36 +1,36 @@
 'use strict'
 
-const co = require('co'),
-	fs = require('fs-promise'),
-	path = require('path'),
-	express = require('express'),
-	wrap = require('co-express'),
+const
 	bodyParser = require('body-parser'),
-	requestLogger = require('morgan'),
+	co = require('co'),
+	express = require('express'),
+	fs = require('fs-extra'),
 	merge = require('deepmerge'),
-	getAuthMiddleware = (passKey) => (req, res, next) => {
-		if (req.header('X-Auth-Passkey') !== passKey) {
-			return res.status(401).end()
-		}
-		next()
-	}
+	path = require('path'),
+	requestLogger = require('morgan'),
+	wrap = require('co-express')
 
 class Migrations {
 	constructor(config, db) {
-		const instance = this
-
 		this.config = config
+		this.moduleConfig = config.migrations
 		this.db = db
+	}
 
+	listen() {
 		this.app = express()
 		this.router = express.Router()
 		this.paths = ['/seed', '/sync', '/generateSeed', '/generateBackup', '/insertStaticData']
+		const {config, moduleConfig} = this
+		let instance = this,
+			app = this.app,
+			router = this.router
 
-		this.app.use(requestLogger(`[Migrations Module API] :method request to :url; result: :status; completed in: :response-time; :date`))
-		this.app.use(bodyParser.json())
+		app.use(requestLogger(`[Migrations Module API] :method request to :url; result: :status; completed in: :response-time; :date`))
+		app.use(bodyParser.json())
 
 
-		this.router.get('/seed', wrap(function* (req, res, next) {
+		router.get('/seed', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.seed({
 					seedFolder: req.query.seedFolder && decodeURIComponent(req.query.seedFolder) || instance.config.migrations.seedfilesFolder,
@@ -42,7 +42,7 @@ class Migrations {
 			}
 		}))
 
-		this.router.get('/sync', wrap(function* (req, res, next) {
+		router.get('/sync', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.sync()})
 			} catch (error) {
@@ -51,7 +51,7 @@ class Migrations {
 			}
 		}))
 
-		this.router.get('/generateSeed', wrap(function* (req, res, next) {
+		router.get('/generateSeed', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.generateSeed({
 					seedFile: req.query.seedFile && decodeURIComponent(req.query.seedFile) || instance.config.migrations.defaultSeedfileName
@@ -62,7 +62,7 @@ class Migrations {
 			}
 		}))
 
-		this.router.get('/generateBackup', wrap(function* (req, res, next) {
+		router.get('/generateBackup', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.generateBackup()})
 			} catch (error) {
@@ -71,7 +71,7 @@ class Migrations {
 			}
 		}))
 
-		this.router.get('/insertStaticData', wrap(function* (req, res, next) {
+		router.get('/insertStaticData', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.insertStaticData()})
 			} catch (error) {
@@ -80,13 +80,20 @@ class Migrations {
 			}
 		}))
 
-		this.app.use('/', this.router)
-		this.app.use(this.paths, (req, res) => {
+		app.use('/', router)
+		app.use(this.paths, (req, res) => {
 			if (req.locals && req.locals.error) {
 				console.log(req.locals.error)
 				return res.status(500).end()
 			}
 			res.status(200).end()
+		})
+
+		let migrationsApiServer = http.createServer(app)
+		migrationsApiServer.listen(moduleConfig.serverPort, () => {
+			console.log(`[Migrations Module API] Server started.`)
+			console.log(`[Migrations Module API] Port:`, moduleConfig.serverPort)
+			console.log(`[Migrations Module API] Configuration profile:`, config.name)
 		})
 	}
 

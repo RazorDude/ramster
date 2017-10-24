@@ -2,242 +2,114 @@
 
 // external dependencies
 const
-	bodyParser = require('body-parser'),
-	cookieParser = require('cookie-parser'),
-	Cookies = require('cookies'),
 	CronJob = require('cron').CronJob,
-	express = require('express'),
-	expressSession = require('express-session'),
-	fs = require('fs'),
+	fs = require('fs-extra'),
 	http = require('http'),
 	merge = require('deepmerge'),
 	moment = require('moment'),
-	multipart = require('connect-multiparty'),
-	passport = require('passport'),
 	path = require('path'),
-	pug = require('pug'),
 	redis = require('redis'),
-	redisStore = require('connect-redis')(expressSession),
-	requestLogger = require('morgan'),
-	wrap = require('co-express'),
+	RedisStore = require('connect-redis')(expressSession),
 
 // ramster modules
+	{APIModule, BaseAPIComponent} = require('./modules/api'),
 	csvPromise = require('./modules/csvPromise'),
-	{DBModule, BaseDBClass} = require('./modules/db'),
-	logger = require('./modules/errorLogger'),
-	emails = require('./modules/emails'),
-	generalStore = require('./modules/generalStore'),
-	tokenManager = require('./modules/tokenManager'),
-	migrations = require('./modules/migrations'),
-	toolBelt = require('./modules/toolbelt'),
+	{ClientModule, BaseClientComponent} = require('./modules/client'),
+	{DBModule, BaseDBComponent} = require('./modules/db'),
 	defaultConfig = require('./defaults/config'),
-	baseDBClass = require('./base/dbClass'),
-	baseClientClass = require('./base/clientClass'),
-	baseApiClass = require('./base/apiClass'),
-	checkRoutes = (route, routes) => {
-		for (const i in routes) {
-			let thisRoute = routes[i],
-				splitThisRoute = thisRoute.split('/'),
-				splitRoute = route.split('/')
-			if (route === thisRoute) {
-				return true
-			}
-			if ((thisRoute.indexOf(':') !== -1) && (splitThisRoute.length === splitRoute.length)) {
-				let valid = true
-				for (const j in splitThisRoute) {
-					let thisRouteItem = splitThisRoute[j],
-						routeItem = splitRoute[j]
-					if ((routeItem !== thisRouteItem) && (thisRouteItem.indexOf(':') === -1)) {
-						valid = false
-						break
-					}
-				}
-				if (valid) {
-					return true
-				}
-			}
-		}
-		return false
-	}
+	Emails = require('./modules/emails'),
+	GeneralStore = require('./modules/generalStore'),
+	Logger = require('./modules/errorLogger'),
+	Migrations = require('./modules/migrations'),
+	TokenManager = require('./modules/tokenManager'),
+	toolbelt = require('./modules/toolbelt')
 
 class Core {
 	constructor(config) {
 		try {
-			let CORE = this
+			this.cfg = config || defaultConfig // #refactorAtV1.0.0
+			this.config = this.cfg
+			this.logger = new Logger(config)
+			this.generalStore = new GeneralStore(config)
+			this.tokenManager = new TokenManager({generalStore: this.generalStore})
+		} catch (e) {
+			console.log(e)
+		}
+	}
 
-			this.cfg = config || defaultConfig
-			this.logger = new logger(config)
-			this.generalStore = new generalStore(config)
-			this.tokenManager = new tokenManager({generalStore: this.generalStore})
-			this.modules = {
-				db: new DBModule(config, {logger: this.logger, generalStore: this.generalStore, tokenManager: this.tokenManager})
+	loadModules() {
+		let instance = this
+		return co(function*() {
+			const {config, logger, generalStore, tokenManager} = instance
+			// load and set up the db module
+			instance.modules = {
+				db: new DBModule(config, {logger, generalStore, tokenManager}),
+				clients: {},
+				apis: {}
 			}
+			let db = instance.modules.db
+			yield db.loadComponents()
 
+			// load the db module
 			if (config.emails.customModulePath) {
-				let customMailClient = require(config.emails.customModulePath)
-				this.mailClient = new customMailClient(config, this.modules.db)
+				let CustomMailClient = require(config.emails.customModulePath)
+				instance.mailClient = new CustomMailClient(config, db)
 			} else {
-				this.mailClient = new emails(config, this.modules.db)
+				instance.mailClient = new Emails(config, db)
 			}
+			db.setComponentsProperties({db, mailClient: instance.mailClient})
 
-			this.modules.db.setComponentsProperties({db: this.modules.db, mailClient: this.mailClient})
-
+			// load the migrations module
 			if (config.migrations && config.migrations.startAPI) {
-				this.modules.migrations = new migrations(config, this.modules.db)
+				instance.modules.migrations = new Migrations(config, db)
 			}
 
-
-			// ####### ------------ LOAD THE CLIENT SERVER MODULES ---------- ####### \\
-			this.modules.clients = {}
-
-			if (this.cfg.clientModulesPath) {
-				let modulesDirPath = this.cfg.clientModulesPath,
-					modulesDirData = fs.readdirSync(modulesDirPath),
-					settings = {passport, cfg: this.cfg}
-				modulesDirData.forEach((moduleDir, index) => {
+			// load the client server modules
+			if (instance.config.clientModulesPath) {
+				let clientModules = instance.modules.clients
+					modulesDirPath = config.clientModulesPath,
+					modulesDirData = yield fs.readdir(modulesDirPath)
+				for (const index in moduleDirData) {
+					let moduleDir = moduleDirData[index]
 					if (moduleDir.indexOf('.') === -1) {
-						let moduleDirPath = path.join(modulesDirPath, moduleDir),
-							moduleDirData = fs.readdirSync(moduleDirPath),
-							moduleData = {},
-							moduleSettings = this.cfg[moduleDir],
-							currentSettings = merge(settings, moduleSettings)
-
-						moduleDirData.forEach((componentDir, index) => {
-							if (componentDir.indexOf('.') === -1) {
-								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(merge({}, settings))
-							} else if (componentDir === 'fieldCaseMap.js') {
-								currentSettings.fieldCaseMap = require(path.join(this.cfg.db.modulePath, componentDir))
-							}
-						})
-
-						// add nginx support - configuration generation
-						if (this.cfg.webserver === 'nginx') {
-							let configFilePath = path.join(this.cfg.wsConfigFolderPath, `${this.cfg.projectName}-${moduleDir}.conf`),
-								configFile = fs.openSync(configFilePath, 'w'),
-								newFileContents = '',
-								prependToServerCfg = '',
-								appendToServerCfg = '',
-								bundle = ''
-
-							if (moduleSettings.prependWSServerConfigFromFiles instanceof Array) {
-								moduleSettings.prependWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
-									prependToServerCfg += fs.readFileSync(cfgFilePath)
-								})
-							}
-
-							if (moduleSettings.appendWSServerConfigFromFiles instanceof Array) {
-								moduleSettings.appendWSServerConfigFromFiles.forEach((cfgFilePath, i) => {
-									appendToServerCfg += fs.readFileSync(cfgFilePath)
-								})
-							}
-
-							if (this.cfg.mountGlobalStorage) {
-								let globalStoragePath = this.cfg.globalStoragePath.replace(/\\/g, '\\\\')
-								prependToServerCfg += `
-									location ~ ^/storage/(.*)$ {
-										root ${globalStoragePath};
-										
-										#allow 127.0.0.1;
-										#deny all;
-
-										try_files /$1 =404;
-									}
-								`
-							}
-
-							if (moduleSettings.webpackHost) {
-								bundle = `
-									location ~ ^/bundle(.*)$ {
-										proxy_set_header Host $host;
-										proxy_set_header X-Real-IP $remote_addr;
-										proxy_pass ${moduleSettings.webpackHost}/dist$1;
-									}
-								`
-							} else {
-								bundle = ``
-							}
-
-							newFileContents += `
-								server {
-									listen       ${moduleSettings.wsPort};
-									server_name  ${this.cfg.hostAddress};
-									root ${/^win/.test(process.platform) ? moduleSettings.publicPath.replace(/\\/g, '\\\\') : moduleSettings.publicPath};
-
-									#charset koi8-r;
-
-									${prependToServerCfg}
-
-									${bundle}
-
-									location ~ ^/static(.*)$ {
-										try_files $1 =404;
-									}
-
-									location / {
-										proxy_set_header Host $host;
-										proxy_set_header X-Real-IP $remote_addr;
-										proxy_pass ${this.cfg.protocol}://${this.cfg.hostAddress}:${moduleSettings.serverPort};
-									}
-
-									${appendToServerCfg}
-
-									error_page   500 502 503 504  /50x.html;
-									location = /50x.html {
-										root   html;
-									}
-								}
-							`
-
-							fs.writeFileSync(configFile, newFileContents)
-							fs.closeSync(configFile)
+						// create the module itself and load its components
+						clients[moduleDir] = new ClientModule(config, moduleDir, {db, logger, generalStore, tokenManager})
+						let clientModule = clients[moduleDir]
+						yield clientModule.loadComponents()
+						// generate config for the used webserver (if any)
+						if (config.webserver === 'nginx') {
+							yield clientModule.generateNGINXConfig()
 						}
-
-						this.modules.clients[moduleDir] = {moduleData, settings: currentSettings}
 					}
-				})
+				}
 			}
 
-
-			// ####### ------------ LOAD THE API SERVER MODULES ---------- ####### \\
-			this.modules.apis = {}
-
-			if (this.cfg.apiModulesPath) {
-				let modulesDirPath = this.cfg.apiModulesPath,
-					modulesDirData = fs.readdirSync(modulesDirPath),
-					settings = {passport, cfg: this.cfg}
-
-				modulesDirData.forEach((moduleDir, index) => {
-					if ((moduleDir !== 'migrations') && (moduleDir.indexOf('.') === -1)) {
-						let moduleDirPath = path.join(modulesDirPath, moduleDir),
-							moduleDirData = fs.readdirSync(moduleDirPath),
-							moduleData = {},
-							moduleSettings = this.cfg[moduleDir],
-							currentSettings = merge(settings, moduleSettings)
-
-						moduleDirData.forEach((componentDir, index) => {
-							if (componentDir.indexOf('.') === -1) {
-								moduleData[componentDir] = new (require(path.join(moduleDirPath, componentDir)))(merge({}, settings))
-							} else if (componentDir === 'precursorMethods.js') {
-								currentSettings.precursorMethods = require(path.join(moduleDirPath, componentDir))
-							}
-						})
-
-						this.modules.apis[moduleDir] = {moduleData, settings: currentSettings}
+			// load the api server modules
+			if (instance.config.apiModulesPath) {
+				let apiModules = instance.modules.apis,
+					modulesDirPath = config.apiModulesPath,
+					modulesDirData = yield fs.readdir(modulesDirPath)
+				for (const index in moduleDirData) {
+					let moduleDir = moduleDirData[index]
+					if (moduleDir.indexOf('.') === -1) {
+						// create the module itself and load its components
+						apiModules[moduleDir] = new APIModule(config, moduleDir, {db, logger, generalStore, tokenManager})
+						yield apiModules[moduleDir].loadComponents()
 					}
-				})
+				}
 			}
 
-			// ####### ------------ SCHEDULE THE CRON JOBS ---------- ####### \\
-			if (this.cfg.cronJobs) {
+			// schedule the cron jobs
+			if (config.cronJobs) {
 				try {
-					let cronJobsModule = require(this.cfg.cronJobs.path),
+					let cronJobsModule = require(config.cronJobs.path),
 						jobs = cronJobsModule.getJobs({
-							cfg: CORE.cfg,
-							logger: CORE.logger,
-							mailClient: CORE.mailClient,
-							generalStore: CORE.generalStore,
-							tokenManager: CORE.tokenManager,
-							db: CORE.modules.db
+							cfg: config,
+							logger,
+							mailClient,
+							generalStore,
+							tokenManager,
+							db
 						})
 					if (jobs instanceof Array) {
 						jobs.forEach((jobData, index) => {
@@ -248,396 +120,64 @@ class Core {
 								new CronJob(jobData)
 							} catch (e) {
 								console.log('Error starting a cron job:')
-								CORE.logger.error(e)
+								logger.error(e)
 							}
 						})
 					}
 				} catch (e) {
 					console.log('Error loading the cron jobs module:')
-					CORE.logger.error(e)
+					logger.error(e)
 				}
 			}
-		} catch (e) {
-			console.log(e)
-		}
+
+			return true
+		})
 	}
 
 	listen() {
-		try {
-			let CORE = this
-
-			// ------------ LOAD THE CLIENTS' ROUTES ---------- \\
-			let redisClient = redis.createClient(this.cfg.redis),
-				sessionStore = new redisStore({
-					host: this.cfg.redis.host,
-					port: this.cfg.redis.port,
+		let instance = this
+		return co(function*() {
+			const {config} = instance
+			// create the redis client (session storage)
+			let redisClient = redis.createClient(config.redis),
+				sessionStore = new RedisStore({
+					host: config.redis.host,
+					port: config.redis.port,
 					client: redisClient
 				})
 
-			for (let moduleName in this.modules.clients) {
-				// build the layout.html file
-				let publicSourcesPath = path.join(this.cfg.clientModulesPublicSourcesPath, moduleName),
-					layoutData = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + this.cfg.name + '.pug'), {}))(),
-					layoutFilePath = path.join(this.cfg[moduleName].publicPath, 'layout.html'),
-					layoutFile = fs.openSync(layoutFilePath, 'w'),
-					clientModule = this.modules.clients[moduleName]
-
-				fs.writeFileSync(layoutFile, layoutData)
-				fs.closeSync(layoutFile)
-
-				clientModule.app = express()
-				clientModule.router = express.Router()
-				clientModule.paths = []
-
-
-				//set up request logging and request body parsing
-				clientModule.app.use(requestLogger(`[${moduleName} client] :method request to :url; result: :status; completed in: :response-time; :date`))
-				clientModule.app.use(bodyParser.json())  // for 'application/json' request bodies
-				clientModule.app.use(bodyParser.urlencoded({extended: false})) // 'x-www-form-urlencoded' request bodies
-				clientModule.app.use(multipart({uploadDir: this.cfg.globalUploadPath})) // for multipart bodies - file uploads etc.
-				clientModule.app.use(cookieParser())
-
-				if (this.cfg[moduleName].allowOrigins) {
-					apiModule.app.use(function (req, res, next) {
-						res.header('Access-Control-Allow-Origin', CORE.cfg[moduleName].allowOrigins)
-						res.header('Access-Control-Allow-Headers', 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent')
-						res.header('Allow', 'OPTIONS, GET, POST, PUT, DELETE')
-						if (req.method.toLowerCase() === 'options') {
-							res.status(200).end()
-							return
-						}
-						next()
-					})
-				}
-
-				//set up the passport session
-				clientModule.app.use(expressSession({
-					secret: this.cfg[moduleName].session.secret,
-					key: this.cfg[moduleName].session.key,
-					resave: true,
-					saveUninitialized: true,
-					cookie: {
-						httpOnly: false
-					},
-					store: sessionStore,
-					passport: {}
-				}))
-				clientModule.app.use(clientModule.settings.passport.initialize())
-				clientModule.app.use(clientModule.settings.passport.session())
-
- 				//serve static files - not recommended; preferrably use nginx or apache; ideally for SPAs, your server should serve only the layout.html (index) file
-				if (this.cfg[moduleName].serveStaticFiles) {
-					clientModule.app.use(express.static(this.cfg[moduleName].publicPath))
-				}
-
-				//before every request - if query/body field case change is enabled
-				const fieldCaseChangeSettings = clientModule.settings.fieldCaseChange,
-					fieldCaseMap = clientModule.settings.fieldCaseMap || CORE.modules.db.fieldCaseMap || null
-				if (fieldCaseChangeSettings && fieldCaseMap) {
-					if (fieldCaseChangeSettings.query) {
-						clientModule.app.use(function (req, res, next) {
-							try {
-								if (req.query) {
-									req.query = toolBelt.changeKeyCase(fieldCaseMap, req.query, fieldCaseChangeSettings.query)
-								}
-								next()
-							} catch (err) {
-								CORE.logger.error(err)
-								res.status(err.status || 500).json({error: err.customMessage || 'An internal server error has occurred. Please try again.'})
-							}
-						})
-					}
-					if (fieldCaseChangeSettings.body) {
-						clientModule.app.use(function (req, res, next) {
-							try {
-								if (req.body) {
-									req.body = JSON.parse(toolBelt.changeKeyCase(fieldCaseMap, req.body, fieldCaseChangeSettings.body))
-								}
-								next()
-							} catch (err) {
-								CORE.logger.error(err)
-								res.status(err.status || 500).json({error: err.customMessage || 'An internal server error has occurred. Please try again.'})
-							}
-						})
-					}
-				}
-
-				//load all route paths
-				let layoutRoutes = []
-				for (let i in clientModule.moduleData) {
-					let component = clientModule.moduleData[i],
-						routes = component.getRoutes()
-					routes.forEach((routeData, index) => {
-						if (routeData.path instanceof Array) {
-							routeData.path.forEach((path, pIndex) => {
-								clientModule.paths.push(path)
-								if (routeData.isALayoutRoute) {
-									layoutRoutes.push(path)
-								}
-							})
-						} else {
-							clientModule.paths.push(routeData.path)
-							if (routeData.isALayoutRoute) {
-								layoutRoutes.push(routeData.path)
-							}
-						}
-					})
-				}
-
-				//before every route - set up post params logging, redirects and locals
-				clientModule.app.use(clientModule.paths, wrap(function* (req, res, next) {
-					let originalUrl = req.originalUrl.split('?')[0],
-						cookies = new Cookies(req, res)
-					console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
-
-					if (!req.isAuthenticated() && !checkRoutes(originalUrl, clientModule.settings.anonymousAccessRoutes)) {
-						if (checkRoutes(originalUrl, layoutRoutes) || checkRoutes(originalUrl, clientModule.settings.nonLayoutDirectRoutes)) {
-							cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
-							if (clientModule.settings.unauthorizedRedirectRoute) {
-								res.redirect(302, clientModule.settings.unauthorizedRedirectRoute)
-								return
-							}
-						}
-						const notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
-						if (notFoundRedirectRoutes) {
-							res.redirect(302, notFoundRedirectRoutes.default)
-							return
-						}
-						res.status(401).end()
-						return
-					}
-					if (!checkRoutes(originalUrl, clientModule.paths)) {
-						const notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
-						if (notFoundRedirectRoutes) {
-							res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
-							return
-						}
-						res.status(404).end()
-						return
-					}
-
-
-					req.locals = {
-						moduleName,
-						cfg: CORE.cfg,
-						settings: clientModule.settings,
-						fieldCaseMap,
-						logger: CORE.logger,
-						mailClient: CORE.mailClient,
-						generalStore: CORE.generalStore,
-						tokenManager: CORE.tokenManager,
-						db: CORE.modules.db,
-						passport: clientModule.settings.passport,
-						error: null,
-						errorStatus: 500,
-						originalUrl
-					}
-					next()
-				}))
-
-				//mount all routes
-				for (let i in clientModule.moduleData) {
-					let component = clientModule.moduleData[i],
-						routes = component.getRoutes()
-					routes.forEach((routeData, index) => {
-						clientModule.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
-					})
-				}
-				clientModule.app.use('/', clientModule.router)
-
-				//after every route - return handled errors and set up redirects
-				let notFoundRedirectRoutes = clientModule.settings.notFoundRedirectRoutes
-				clientModule.app.use('*', function (req, res) {
-					if (!req.locals || (req.locals.error === null)) {
-						if (notFoundRedirectRoutes) {
-							res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
-							return
-						}
-						res.status(404).end()
-						return
-					}
-					CORE.logger.error(req.locals.error)
-					const errMessage = req.locals.error.message
-					if (errMessage && ((errMessage.indexOf('Validation error') !== -1) || (errMessage.indexOf('ValidationError') !== -1))) {
-						req.locals.error.customMessage = 'Validation error - please make sure all required fields are present and in the correct format.'
-					}
-					res.status(req.locals.errorStatus).json({error: req.locals.error.customMessage || 'An internal server error has occurred. Please try again.'})
-				})
-
-				clientModule.server = http.createServer(clientModule.app)
-				clientModule.server.listen(this.cfg[moduleName].serverPort, () => {
-					console.log(`[${moduleName} client] Server started.`)
-					console.log(`[${moduleName} client] Port:`, this.cfg[moduleName].serverPort)
-					console.log(`[${moduleName} client] Configuration profile:`, this.cfg.name)
-				})
+			// load the client module server routes and start the servers
+			let clientModules = instance.modules.clients
+			for (const moduleName in clientModules) {
+				let clientModule = clientModules[moduleName]
+				yield clientModule.buildLayoutFile()
+				yield clientModule.mountRoutes()
 			}
 
-
-
-			// ------------ LOAD THE APIS' ROUTES ---------- \\
-			for (let moduleName in this.modules.apis) {
-				let apiModule = this.modules.apis[moduleName]
-
-				apiModule.app = express()
-				apiModule.router = express.Router()
-				apiModule.paths = []
-
-
-				//set up request logging and request body parsing
-				apiModule.app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
-				apiModule.app.use(bodyParser.json())  // for 'application/json' request bodies
-				apiModule.app.use(cookieParser())
-
-				if (this.cfg[moduleName].allowOrigins) {
-					apiModule.app.use(function (req, res, next) {
-						res.header('Access-Control-Allow-Origin', CORE.cfg[moduleName].allowOrigins)
-						res.header('Access-Control-Allow-Headers', 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent')
-						res.header('Allow', 'OPTIONS, GET, POST, PUT, DELETE')
-						if (req.method.toLowerCase() === 'options') {
-							res.status(200).end()
-							return
-						}
-						next()
-					})
-				}
-
-				if (this.cfg[moduleName].session) {
-					apiModule.app.use(expressSession({
-						secret: this.cfg[moduleName].session.secret,
-						key: this.cfg[moduleName].session.key,
-						resave: true,
-						saveUninitialized: true,
-						cookie: {
-							httpOnly: false
-						},
-						store: sessionStore,
-						passport: {}
-					}))
-					apiModule.app.use(apiModule.settings.passport.initialize())
-					apiModule.app.use(apiModule.settings.passport.session())
-				}
-
-				//before every request - add the service name
-				if (apiModule.settings.responseType === 'serviceName') {
-					apiModule.app.use(function (req, res, next) {
-						let originalUrl = req.originalUrl.split('?')[0],
-							serviceNameData = originalUrl.split('/')
-						req.locals = {serviceName: serviceNameData[serviceNameData.length - 1]}
-						next()
-					})
-				}
-
-				//before every request - add any precursor methods defined in the module settings
-				const precursorMethods = apiModule.settings.precursorMethods
-				if (precursorMethods && (typeof precursorMethods === 'object')) {
-					for (const methodKey in precursorMethods) {
-						if (typeof precursorMethods[methodKey] === 'function') {
-							apiModule.app.use(wrap(precursorMethods[methodKey]()))
-						}
-					}
-				}
-
-				//load all route paths
-				for (let i in apiModule.moduleData) {
-					let component = apiModule.moduleData[i],
-						routes = component.getRoutes()
-					routes.forEach((routeData, index) => {
-						if (routeData.path instanceof Array) {
-							routeData.path.forEach((path, pIndex) => {
-								apiModule.paths.push(path)
-							})
-						} else {
-							apiModule.paths.push(routeData.path)
-						}
-					})
-				}
-
-				//before every route - set up post params logging, redirects and locals
-				apiModule.app.use(apiModule.paths, wrap(function* (req, res, next) {
-					let originalUrl = req.originalUrl.split('?')[0]
-					console.log(`[${moduleName} API]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
-
-					req.locals = {
-						moduleName,
-						cfg: CORE.cfg,
-						settings: apiModule.settings,
-						logger: CORE.logger,
-						mailClient: CORE.mailClient,
-						generalStore: CORE.generalStore,
-						tokenManager: CORE.tokenManager,
-						db: CORE.modules.db,
-						serviceName: req.locals && req.locals.serviceName || null,
-						error: null,
-						errorStatus: 500,
-						originalUrl
-					}
-					next()
-				}))
-
-				//mount all routes
-				for (let i in apiModule.moduleData) {
-					let component = apiModule.moduleData[i],
-						routes = component.getRoutes()
-					routes.forEach((routeData, index) => {
-						if(apiModule.settings.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
-							apiModule.router[routeData.method](routeData.path, this.tokenManager.validate(), wrap(component[routeData.func](routeData.options || {})))
-							return;
-						}
-						apiModule.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
-					})
-				}
-				apiModule.app.use('/', apiModule.router)
-
-				//after every route - return handled errors and set up redirects
-				apiModule.app.use('*', function (req, res, next) {
-					if (!req.locals || !req.locals.error) {
-						res.status(404).json({error: 'Not found.'})
-						return;
-					}
-					CORE.logger.error(req.locals.error)
-					const errMessage = req.locals.error.message
-					if (errMessage && ((errMessage.indexOf('Validation error') !== -1) || (errMessage.indexOf('ValidationError') !== -1))) {
-						req.locals.error.customMessage = 'Validation error - please make sure all required fields are present and in the correct format.'
-					}
-
-					let response = {},
-						error = req.locals.error.customMessage || 'An internal server error has occurred. Please try again.'
-					if (apiModule.settings.responseType === 'serviceName') {
-						response = {serviceName: req.locals.serviceName, data: null, message: error}
-					} else {
-						response = {error}
-					}
-					res.status(req.locals.errorStatus).json(response)
-				})
-
-				apiModule.server = http.createServer(apiModule.app)
-				apiModule.server.listen(this.cfg[moduleName].serverPort, () => {
-					console.log(`[${moduleName} API] Server started.`)
-					console.log(`[${moduleName} API] Port:`, this.cfg[moduleName].serverPort)
-					console.log(`[${moduleName} API] Configuration profile:`, this.cfg.name)
-				})
+			// load the api module server routes and start the servers
+			let apiModules = instance.modules.apis
+			for (const moduleName in apiModules) {
+				apiModules[moduleName].mountRoutes()
 			}
 
-			if (this.cfg.migrations && this.cfg.migrations.startAPI) {
-				let migrationsApiServer = http.createServer(this.modules.migrations.app)
-				migrationsApiServer.listen(this.cfg.migrations.serverPort, () => {
-					console.log(`[Migrations Module API] Server started.`)
-					console.log(`[Migrations Module API] Port:`, this.cfg.migrations.serverPort)
-					console.log(`[Migrations Module API] Configuration profile:`, this.cfg.name)
-				})
+			if (config.migrations && config.migrations.startAPI) {
+				instance.modules.migrations.listen()
 			}
-		} catch (e) {
-			this.logger.error(e)
-		}
+
+			return true
+		})
 	}
 }
 
 module.exports = {
-	baseDBClass: BaseDBClass,
-	BaseDBClass,
-	baseClientClass,
-	baseApiClass,
+	baseDBClass: BaseDBComponent, // #refactorAtV1.0.0
+	BaseDBComponent,
+	baseClientClass: BaseClientComponent, // #refactorAtV1.0.0
+	BaseClientComponent,
+	baseApiClass: BaseAPIComponent, // #refactorAtV1.0.0
+	BaseAPIComponent,
 	Core,
 	csvPromise: new csvPromise(),
-	toolBelt
+	toolBelt: toolbelt, // #refactorAtV1.0.0
+	toolbelt
 }
