@@ -1,11 +1,12 @@
 'use strict'
 
-let sendgrid = require('sendgrid'),
+const
+	co = require('co'),
 	pug = require('pug'),
 	path = require('path'),
-	co = require('co')
+	sendgrid = require('sendgrid')
 
-let emails = class Emails {
+class Emails {
 	constructor(cfg) {
 		this.cfg = cfg
 		this.sendgrid = sendgrid(this.cfg.emails.sendgridApiKey)
@@ -59,4 +60,4 @@ let emails = class Emails {
 		})
 	}
 }
-module.exports = emails
+module.exports = Emails

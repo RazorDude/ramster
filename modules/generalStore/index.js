@@ -1,5 +1,5 @@
 'use strict'
-let redis = require('redis')
+const redis = require('redis')
 
 class GeneralStore {
 	constructor(settings) {

@@ -1,4 +1,5 @@
-let co = require('co'),
+const
+	co = require('co'),
 	jwt = require('jsonwebtoken')
 
 class TokenManager{

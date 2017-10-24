@@ -1,8 +1,8 @@
 'use strict'
 
-let csv = require('csv')
+const csv = require('csv')
 
-let csvPromise = class CSVPromise {
+class CSVPromise {
 	constructor() {
 	}
 
@@ -42,4 +42,4 @@ let csvPromise = class CSVPromise {
 		})
 	}
 }
-module.exports = csvPromise
+module.exports = CSVPromise
