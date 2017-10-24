@@ -8,7 +8,6 @@ const
 	express = require('express'),
 	expressSession = require('express-session'),
 	http = require('http'),
-	passport = require('passport'),
 	path = require('path'),
 	requestLogger = require('morgan'),
 	wrap = require('co-express')

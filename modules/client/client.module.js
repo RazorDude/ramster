@@ -13,7 +13,6 @@ const
 	handlebars = require('handlebars'),
 	http = require('http'),
 	multipart = require('connect-multiparty'),
-	passport = require('passport'),
 	path = require('path'),
 	pug = require('pug'),
 	requestLogger = require('morgan'),

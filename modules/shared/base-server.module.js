@@ -3,6 +3,7 @@
 const
 	co = require('co'),
 	merge = require('deepmerge'),
+	passport = require('passport'),
 	path = require('path')
 
 class BaseServerModule {

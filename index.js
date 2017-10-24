@@ -68,15 +68,15 @@ class Core {
 
 			// load the client server modules
 			if (instance.config.clientModulesPath) {
-				let clientModules = instance.modules.clients
+				let clientModules = instance.modules.clients,
 					modulesDirPath = config.clientModulesPath,
 					modulesDirData = yield fs.readdir(modulesDirPath)
-				for (const index in moduleDirData) {
-					let moduleDir = moduleDirData[index]
+				for (const index in modulesDirData) {
+					let moduleDir = modulesDirData[index]
 					if (moduleDir.indexOf('.') === -1) {
 						// create the module itself and load its components
-						clients[moduleDir] = new ClientModule(config, moduleDir, {db, logger, generalStore, tokenManager})
-						let clientModule = clients[moduleDir]
+						clientModules[moduleDir] = new ClientModule(config, moduleDir, {db, logger, generalStore, tokenManager})
+						let clientModule = clientModules[moduleDir]
 						yield clientModule.loadComponents()
 						// generate config for the used webserver (if any)
 						if (config.webserver === 'nginx') {
@@ -91,8 +91,8 @@ class Core {
 				let apiModules = instance.modules.apis,
 					modulesDirPath = config.apiModulesPath,
 					modulesDirData = yield fs.readdir(modulesDirPath)
-				for (const index in moduleDirData) {
-					let moduleDir = moduleDirData[index]
+				for (const index in modulesDirData) {
+					let moduleDir = modulesDirData[index]
 					if (moduleDir.indexOf('.') === -1) {
 						// create the module itself and load its components
 						apiModules[moduleDir] = new APIModule(config, moduleDir, {db, logger, generalStore, tokenManager})
