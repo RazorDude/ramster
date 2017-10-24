@@ -2,10 +2,10 @@
 
 const
 	co = require('co'),
-	csv = new (require('../modules/csvPromise'))(),
+	csv = new (require('../csvPromise'))(),
 	fs = require('fs-extra'),
 	path = require('path'),
-	toolbelt = require('../modules/toolbelt'),
+	toolbelt = require('../toolbelt'),
 	xlsx = require('node-xlsx')
 
 class BaseClientComponent {

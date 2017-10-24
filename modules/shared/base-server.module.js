@@ -1,6 +1,7 @@
 'use strict'
 
 const
+	co = require('co'),
 	merge = require('deepmerge'),
 	path = require('path')
 

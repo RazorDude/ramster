@@ -3,6 +3,7 @@
 // external dependencies
 const
 	CronJob = require('cron').CronJob,
+	expressSession = require('express-session'),
 	fs = require('fs-extra'),
 	http = require('http'),
 	merge = require('deepmerge'),
