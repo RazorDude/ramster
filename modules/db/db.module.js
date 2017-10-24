@@ -71,7 +71,7 @@ class DBModule {
 		})
 	}
 
-	setComponentProperties(properties) {
+	setComponentsProperties(properties) {
 		let components = this.components
 		for (const key in components) {
 			let component = components[key]

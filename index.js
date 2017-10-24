@@ -80,7 +80,7 @@ class Core {
 				this.mailClient = new emails(config, this.modules.db)
 			}
 
-			this.modules.db.setComponentProperties({db: this.modules.db, mailClient: this.mailClient})
+			this.modules.db.setComponentsProperties({db: this.modules.db, mailClient: this.mailClient})
 
 			if (config.migrations && config.migrations.startAPI) {
 				this.modules.migrations = new migrations(config, this.modules.db)
