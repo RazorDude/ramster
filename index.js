@@ -2,6 +2,7 @@
 
 // external dependencies
 const
+	co = require('co'),
 	CronJob = require('cron').CronJob,
 	expressSession = require('express-session'),
 	fs = require('fs-extra'),
