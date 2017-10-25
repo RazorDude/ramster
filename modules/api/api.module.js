@@ -14,17 +14,18 @@ const
 
 class APIModule extends BaseServerModule {
 	constructor(config, moduleName, options) {
-		super(config, moduleName, options)
+		super(config, moduleName, 'api', options)
 	}
 
-	mountRoutes() {
+	mountRoutes({sessionStore}) {
 		let instance = this
 		return co(function*() {
-			const {config, moduleConfig, passport} = instance
-			app = express()
+			const {config, moduleName, moduleConfig, passport} = instance
+			instance.app = express()
 			instance.router = express.Router()
 			instance.paths = []
-			let app = app
+			let app = instance.app,
+				components = instance.components
 
 			// set up request logging and request body parsing
 			app.use(requestLogger(`[${moduleName} client] :method request to :url; result: :status; completed in: :response-time; :date`))
@@ -35,21 +36,6 @@ class APIModule extends BaseServerModule {
 			if (moduleConfig.allowOrigins) {
 				app.use(instance.accessControlOrigin())
 			}
-
-			// set up the passport session
-			app.use(expressSession({
-				secret: moduleConfig.session.secret,
-				key: moduleConfig.session.key,
-				resave: true,
-				saveUninitialized: true,
-				cookie: {
-					httpOnly: false
-				},
-				store: sessionStore,
-				passport: {}
-			}))
-			app.use(passport.initialize())
-			app.use(passport.session())
 
 			// before every request - add the service name
 			if (moduleConfig.responseType === 'serviceName') {
@@ -79,8 +65,8 @@ class APIModule extends BaseServerModule {
 			}
 
 			// load all route paths
-			instance.components.forEach((component, index) => {
-				component.routes.forEach((routeData, index) => {
+			for (const i in components) {
+				components[i].routes.forEach((routeData, index) => {
 					if (routeData.path instanceof Array) {
 						routeData.path.forEach((path, pIndex) => {
 							instance.paths.push(path)
@@ -89,20 +75,21 @@ class APIModule extends BaseServerModule {
 						instance.paths.push(routeData.path)
 					}
 				})
-			})
+			}
 
 			// before every route - set up post params logging, redirects and locals
 			app.use(instance.paths, wrap(instance.setDefaultsBeforeRequest()))
 
 			// mount all routes
-			instance.components.forEach((component, index) => {
+			for (const i in components) {
+				let component = components[i]
 				component.routes.forEach((routeData, index) => {
-					if (anonymousAccessRoutes.indexOf(routeData.path) === -1) {
+					if (moduleConfig.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
 						instance.router[routeData.method](routeData.path, instance.tokenManager.validate(), wrap(component[routeData.func](routeData.options || {})))
 					}
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 				})
-			})
+			}
 			app.use('/', instance.router)
 
 			//after every route - return handled errors and set up redirects
@@ -139,7 +126,7 @@ class APIModule extends BaseServerModule {
 				moduleName,
 				cfg: config, // #refactorAtV1.0.0
 				settings: instance.settings, // #refactorAtV1.0.0
-				fieldCaseMap,
+				fieldCaseMap: instance.fieldCaseMap,
 				logger: instance.logger,
 				mailClient: instance.mailClient,
 				generalStore: instance.generalStore,

@@ -20,7 +20,7 @@ const
 
 class ClientModule extends BaseServerModule {
 	constructor(config, moduleName, options) {
-		super(config, moduleName, options)
+		super(config, moduleName, 'client', options)
 	}
 
 	generateNGINXConfig() {
@@ -35,34 +35,34 @@ class ClientModule extends BaseServerModule {
 				bundleConfig = ''
 
 			if (prependWSServerConfigFromFiles instanceof Array) {
-				for (const i in prependToServerConfigFromFiles) {
-					prependToServerCfg += yield fs.readFile(prependToServerConfigFromFiles[i])
+				for (const i in prependWSServerConfigFromFiles) {
+					prependToServerConfig += (yield fs.readFile(prependWSServerConfigFromFiles[i])).toString()
 				}
 			}
 
 			if (appendWSServerConfigFromFiles instanceof Array) {
 				for (const i in appendWSServerConfigFromFiles) {
-					appendToServerCfg += yield fs.readFile(appendWSServerConfigFromFiles[i])
+					appendToServerConfig += (yield fs.readFile(appendWSServerConfigFromFiles[i])).toString()
 				}
 			}
 
 			if (mountGlobalStorage) {
-				let template = handlebars.compile(yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-global-storage.config.conf')))
+				let template = handlebars.compile((yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-global-storage.config.conf'))).toString())
 				prependToServerConfig += template({globalStoragePath: globalStoragePath.replace(/\\/g, '\\\\')})
 			}
 
 			if (webpackHost) {
-				let template = handlebars.compile(yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-bundle.config.conf')))
+				let template = handlebars.compile((yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-bundle.config.conf'))).toString())
 				bundleConfig += template({webpackHost, webpackFolder: webpackBuildFolderName || 'dist'})
 			}
 
-			let template = handlebars.compile(yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-main.config.conf')))
+			let template = handlebars.compile((yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-main.config.conf'))).toString())
 			yield fs.writeFile(configFile, template({
 				listeningPort: wsPort,
 				serverName: hostAddress,
 				serverRoot: /^win/.test(process.platform) ? publicPath.replace(/\\/g, '\\\\') : publicPath,
 				prependToServerConfig,
-				appendToServerCfg,
+				appendToServerConfig,
 				bundleConfig,
 				nodeProxyProtocol: protocol,
 				nodeProxyHostAddress: hostAddress,
@@ -77,8 +77,8 @@ class ClientModule extends BaseServerModule {
 	buildLayoutFile() {
 		let instance = this
 		return co(function*() {
-			const {config, moduleConfig} = instance
-			let publicSourcesPath = path.join(config.instancesPublicSourcesPath, moduleName),
+			const {config, moduleName, moduleConfig} = instance
+			let publicSourcesPath = path.join(config.clientModulesPublicSourcesPath, moduleName),
 				layoutData = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + config.name + '.pug'), {}))(),
 				layoutFilePath = path.join(moduleConfig.publicPath, 'layout.html'),
 				layoutFile = yield fs.open(layoutFilePath, 'w')
@@ -88,14 +88,15 @@ class ClientModule extends BaseServerModule {
 		})
 	}
 
-	mountRoutes() {
+	mountRoutes({sessionStore}) {
 		let instance = this
 		return co(function*() {
-			const {config, moduleConfig, passport} = instance
-			app = express()
+			const {config, moduleName, moduleConfig, passport} = instance
+			instance.app = express()
 			instance.router = express.Router()
 			instance.paths = []
-			let app = app
+			let app = instance.app,
+				components = instance.components
 
 			// set up request logging and request body parsing
 			app.use(requestLogger(`[${moduleName} client] :method request to :url; result: :status; completed in: :response-time; :date`))
@@ -153,8 +154,8 @@ class ClientModule extends BaseServerModule {
 
 			// load all route paths
 			let layoutRoutes = []
-			instance.components.forEach((component, index) => {
-				component.routes.forEach((routeData, index) => {
+			for (const i in components) {
+				components[i].routes.forEach((routeData, index) => {
 					if (routeData.path instanceof Array) {
 						routeData.path.forEach((path, pIndex) => {
 							instance.paths.push(path)
@@ -169,17 +170,18 @@ class ClientModule extends BaseServerModule {
 						}
 					}
 				})
-			})
+			}
 
 			// before every route - set up post params logging, redirects and locals
 			app.use(instance.paths, wrap(instance.setDefaultsBeforeRequest()))
 
 			// mount all routes
-			instance.components.forEach((component, index) => {
+			for (const i in components) {
+				let component = components[i]
 				component.routes.forEach((routeData, index) => {
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 				})
-			})
+			}
 			app.use('/', instance.router)
 
 			//after every route - return handled errors and set up redirects
@@ -235,7 +237,7 @@ class ClientModule extends BaseServerModule {
 				moduleName,
 				cfg: config, // #refactorAtV1.0.0
 				settings: instance.settings, // #refactorAtV1.0.0
-				fieldCaseMap,
+				fieldCaseMap: instance.fieldCaseMap,
 				logger: instance.logger,
 				mailClient: instance.mailClient,
 				generalStore: instance.generalStore,

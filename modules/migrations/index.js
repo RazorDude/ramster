@@ -5,6 +5,7 @@ const
 	co = require('co'),
 	express = require('express'),
 	fs = require('fs-extra'),
+	http = require('http'),
 	merge = require('deepmerge'),
 	path = require('path'),
 	requestLogger = require('morgan'),

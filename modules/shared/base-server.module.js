@@ -2,14 +2,16 @@
 
 const
 	co = require('co'),
+	fs = require('fs-extra'),
 	merge = require('deepmerge'),
 	passport = require('passport'),
 	path = require('path')
 
 class BaseServerModule {
-	constructor(config, moduleName, {db, logger, generalStore, tokenManager}) {
+	constructor(config, moduleName, moduleType, {db, logger, generalStore, tokenManager}) {
 		this.config = config
 		this.moduleName = moduleName
+		this.moduleType = moduleType
 		this.moduleConfig = config[moduleName]
 		this.components = {}
 		this.settings = merge(JSON.parse(JSON.stringify(this.moduleConfig)), {cfg: JSON.parse(JSON.stringify(config)), passport}) // it's ugly, but I have to keep it at least until v1.0.0 due to backwards compatibility #refactorAtV1.0.0
@@ -25,10 +27,10 @@ class BaseServerModule {
 	loadComponents() {
 		let instance = this
 		return co(function*() {
-			const {apiModulesPath} = this.config
+			const modulesPath = instance.config[`${instance.moduleType}ModulesPath`]
 			let components = instance.components,
 				settings = instance.settings,
-				moduleDir = path.join(apiModulesPath, instance.moduleName),
+				moduleDir = path.join(modulesPath, instance.moduleName),
 				moduleDirData = yield fs.readdir(moduleDir)
 
 			// load the module's components and the precursorMethods (if any)

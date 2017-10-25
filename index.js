@@ -108,7 +108,7 @@ class Core {
 						jobs = cronJobsModule.getJobs({
 							cfg: config,
 							logger,
-							mailClient,
+							mailClient: instance.mailClient,
 							generalStore,
 							tokenManager,
 							db
@@ -153,13 +153,13 @@ class Core {
 			for (const moduleName in clientModules) {
 				let clientModule = clientModules[moduleName]
 				yield clientModule.buildLayoutFile()
-				yield clientModule.mountRoutes()
+				yield clientModule.mountRoutes({sessionStore})
 			}
 
 			// load the api module server routes and start the servers
 			let apiModules = instance.modules.apis
 			for (const moduleName in apiModules) {
-				apiModules[moduleName].mountRoutes()
+				yield apiModules[moduleName].mountRoutes({sessionStore})
 			}
 
 			if (config.migrations && config.migrations.startAPI) {
