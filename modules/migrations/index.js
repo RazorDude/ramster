@@ -285,7 +285,12 @@ class Migrations {
 				actualData.push(dataRow)
 			}
 			// go through the dependencyGraph and prepare the data for query build (dependentSets)
-			instance.getColumnDataSetsFromDependencyGraph(instance.dependentSets, {values: []}, dependencyGraph)
+			let currentSet = {values: []}
+			instance.getColumnDataSetsFromDependencyGraph(inserts.dependentSets, currentSet, dependencyGraph)
+			// in case we've only got a single (huge) set - add it to the dependent sets
+			if (!inserts.dependentSets.length && currentSet.values.length) {
+				inserts.dependentSets.push(currentSet)
+			}
 		} else {
 			actualData = data
 		}
@@ -339,24 +344,23 @@ class Migrations {
 						for (let c in tableInserts) {
 							if (c !== 'dependentSets') {
 								yield instance.runQueryFromColumnData(instance, tableName, tableInserts[c], queryInterface, deleteTableContents, t)
-								continue
 							}
-							let dependentSets = tableInserts[c]
-							if (!(dependentSets instanceof Array)) {
-								continue
-							}
-							for (const i in dependentSets) {
-								yield instance.runQueryFromColumnData(instance, tableName, dependentSets[i], queryInterface, deleteTableContents, t)
-							}
+						}
+						let dependentSets = tableInserts.dependentSets
+						if (!(dependentSets instanceof Array)) {
+							continue
+						}
+						for (const i in dependentSets) {
+							yield instance.runQueryFromColumnData(instance, tableName, dependentSets[i], queryInterface, deleteTableContents, t)
 						}
 					}
 					inserts = {}
 
 					// seed the rest of the tables from instance.db
 					for (let i = 0; i < models.length; i++) {
+						let modelName = models[i]
 						const dbComponent = dbComponents[modelName]
-						let modelName = models[i],
-							tableName = dbComponent.model.getTableName()
+						let tableName = dbComponent.model.getTableName()
 						if (data[tableName]) {
 							if (typeof(inserts[tableName]) === 'undefined') {
 								inserts[tableName] = {}
@@ -370,15 +374,14 @@ class Migrations {
 						for (let c in tableInserts) {
 							if (c !== 'dependentSets') {
 								yield instance.runQueryFromColumnData(instance, tableName, tableInserts[c], queryInterface, deleteTableContents, t)
-								continue
 							}
-							let dependentSets = tableInserts[c]
-							if (!(dependentSets instanceof Array)) {
-								continue
-							}
-							for (const i in dependentSets) {
-								yield instance.runQueryFromColumnData(instance, tableName, dependentSets[i], queryInterface, deleteTableContents, t)
-							}
+						}
+						let dependentSets = tableInserts.dependentSets
+						if (!(dependentSets instanceof Array)) {
+							continue
+						}
+						for (const i in dependentSets) {
+							yield instance.runQueryFromColumnData(instance, tableName, dependentSets[i], queryInterface, deleteTableContents, t)
 						}
 					}
 					inserts = {}
