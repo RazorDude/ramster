@@ -36,7 +36,7 @@ class BaseServerModule {
 			// load the module's components and the precursorMethods (if any)
 			moduleDirData.forEach((componentDir, index) => {
 				if (componentDir.indexOf('.') === -1) {
-					components[componentDir] = new (require(path.join(moduleDir, componentDir)))(settings)
+					components[componentDir] = new (require(path.join(moduleDir, componentDir)))(JSON.parse(JSON.stringify(settings)))
 				} else if (componentDir === 'fieldCaseMap.js') {
 					settings.fieldCaseMap = require(path.join(moduleDir, componentDir)) // #refactorAtV1.0.0
 					instance.fieldCaseMap = settings.fieldCaseMap

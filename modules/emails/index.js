@@ -4,7 +4,7 @@ const
 	co = require('co'),
 	pug = require('pug'),
 	path = require('path'),
-	sendgrid = require('sendgrid')
+	sendgrid = require('@sendgrid/mail')
 
 class Emails {
 	constructor(cfg) {
@@ -37,26 +37,17 @@ class Emails {
 				bccs.push({email: bccMails})
 			}
 
-			let personalizations = {
+			let options = {
 				to: receivers,
-				subject: subject
+				from: instance.sender,
+				subject,
+				html: template
 			}
 			if (bccs.length > 0) {
-				personalizations.bcc = bccs
+				options.bcc = bccs
 			}
 
-			return yield instance.sendgrid.API(instance.sendgrid.emptyRequest({
-				method: 'POST',
-			  	path: '/v3/mail/send',
-				body: {
-					personalizations: [personalizations],
-					from: {email: instance.sender,},
-					content: [{
-						type: 'text/html',
-						value: template,
-					}]
-				}
-			}))
+			return yield instance.sendgrid.send(options)
 		})
 	}
 }
