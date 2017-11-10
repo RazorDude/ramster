@@ -171,6 +171,7 @@ class ClientModule extends BaseServerModule {
 					}
 				})
 			}
+			instance.layoutRoutes = layoutRoutes
 
 			// before every route - set up post params logging, redirects and locals
 			app.use(instance.paths, wrap(instance.setDefaultsBeforeRequest()))
@@ -207,7 +208,7 @@ class ClientModule extends BaseServerModule {
 			console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
 
 			if (!req.isAuthenticated() && !checkRoutes(originalUrl, moduleConfig.anonymousAccessRoutes)) {
-				if (checkRoutes(originalUrl, layoutRoutes) || checkRoutes(originalUrl, moduleConfig.nonLayoutDirectRoutes)) {
+				if (checkRoutes(originalUrl, instance.layoutRoutes) || checkRoutes(originalUrl, moduleConfig.nonLayoutDirectRoutes)) {
 					cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
 					if (moduleConfig.unauthorizedRedirectRoute) {
 						res.redirect(302, moduleConfig.unauthorizedRedirectRoute)
