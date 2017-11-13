@@ -1,5 +1,6 @@
 # 0.6.5
 - Minor fix in the setFilterValue value (base-db.component) - gte/gt & lte/lt now work correctly.
+- Upgraded the migrations module's insertStaticData functionality - it now inserts static data according to the seeding order first, then the rest of the data.
 
 # 0.6.4
 - Fixed to stupid errors caused by rushed release.

@@ -463,7 +463,8 @@ class Migrations {
 
 	insertStaticData() {
 		const instance = this,
-			sequelize = this.db.sequelize
+			sequelize = this.db.sequelize,
+			dbComponents = this.db.components
 		return sequelize.transaction((t) => {
 			return co(function*() {
 				// write a backup of the current database data for safety reasons
@@ -475,40 +476,83 @@ class Migrations {
 
 				// get the data from the file and merge it with the current data
 				let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, 'staticData.json'))).toString())
-				for (const tableName in staticData) {
-					const tableStaticData = staticData[tableName],
-						primaryKeys = tableStaticData.primaryKeys
-					let currentTableData = currentData[tableName]
-					if (typeof currentTableData === 'undefined') {
-						currentTableData = []
-						currentData[tableName] = currentTableData
-					}
-					let currentTableDataPKIndexMap = {}
-					if (primaryKeys.length) {
-						currentTableData.forEach((row, index) => {
-							let currentKey = ''
-							primaryKeys.forEach((pk, pkIndex) => {
-								currentKey += `${row[pk]}-`
+				// insert the staticData according to the seeding order
+				instance.config.db.seedingOrder.forEach((componentName, index) => {
+					const tableName = dbComponents[componentName].model.getTableName()
+					if (staticData[tableName]) {
+						const tableStaticData = JSON.parse(JSON.stringify(staticData[tableName])),
+							primaryKeys = tableStaticData.primaryKeys
+						delete staticData[tableName]
+						let currentTableData = currentData[tableName]
+						if (typeof currentTableData === 'undefined') {
+							currentTableData = []
+							currentData[tableName] = currentTableData
+						}
+						let currentTableDataPKIndexMap = {}
+						if (primaryKeys.length) {
+							currentTableData.forEach((row, index) => {
+								let currentKey = ''
+								primaryKeys.forEach((pk, pkIndex) => {
+									currentKey += `${row[pk]}-`
+								})
+								currentKey = currentKey.substr(0, currentKey.length - 1)
+								currentTableDataPKIndexMap[currentKey] = index
 							})
-							currentKey = currentKey.substr(0, currentKey.length - 1)
-							currentTableDataPKIndexMap[currentKey] = index
-						})
-						tableStaticData.data.forEach((row, index) => {
-							let currentKey = ''
-							primaryKeys.forEach((pk, pkIndex) => {
-								currentKey += `${row[pk]}-`
+							tableStaticData.data.forEach((row, index) => {
+								let currentKey = ''
+								primaryKeys.forEach((pk, pkIndex) => {
+									currentKey += `${row[pk]}-`
+								})
+								currentKey = currentKey.substr(0, currentKey.length - 1)
+								let cdIndex = currentTableDataPKIndexMap[currentKey]
+								if (typeof cdIndex === 'undefined') {
+									currentTableData.push(row)
+									return
+								}
+								currentTableData[cdIndex] = merge(currentTableData[cdIndex], row)
 							})
-							currentKey = currentKey.substr(0, currentKey.length - 1)
-							let cdIndex = currentTableDataPKIndexMap[currentKey]
-							if (typeof cdIndex === 'undefined') {
-								currentTableData.push(row)
-								return
-							}
-							currentTableData[cdIndex] = merge(currentTableData[cdIndex], row)
-						})
-						continue
+							return
+						}
+						currentTableData = currentTableData.concat(tableStaticData.data)
 					}
-					currentTableData = currentTableData.concat(tableStaticData.data)
+				})
+				// insert the rest of the staticData
+				if (Object.keys(staticData).length) {
+					for (const tableName in staticData) {
+						const tableStaticData = staticData[tableName],
+							primaryKeys = tableStaticData.primaryKeys
+						let currentTableData = currentData[tableName]
+						if (typeof currentTableData === 'undefined') {
+							currentTableData = []
+							currentData[tableName] = currentTableData
+						}
+						let currentTableDataPKIndexMap = {}
+						if (primaryKeys.length) {
+							currentTableData.forEach((row, index) => {
+								let currentKey = ''
+								primaryKeys.forEach((pk, pkIndex) => {
+									currentKey += `${row[pk]}-`
+								})
+								currentKey = currentKey.substr(0, currentKey.length - 1)
+								currentTableDataPKIndexMap[currentKey] = index
+							})
+							tableStaticData.data.forEach((row, index) => {
+								let currentKey = ''
+								primaryKeys.forEach((pk, pkIndex) => {
+									currentKey += `${row[pk]}-`
+								})
+								currentKey = currentKey.substr(0, currentKey.length - 1)
+								let cdIndex = currentTableDataPKIndexMap[currentKey]
+								if (typeof cdIndex === 'undefined') {
+									currentTableData.push(row)
+									return
+								}
+								currentTableData[cdIndex] = merge(currentTableData[cdIndex], row)
+							})
+							continue
+						}
+						currentTableData = currentTableData.concat(tableStaticData.data)
+					}
 				}
 
 				// seed the merged data
