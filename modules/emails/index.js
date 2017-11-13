@@ -23,19 +23,19 @@ class Emails {
 
 			if (to instanceof Array) {
 				to.forEach((el, i) => {
-					receivers.push({email: el})
+					receivers.push(el)
 				})
 			} else {
-				receivers.push({email: to})
+				receivers.push(to)
 			}
 
 			let bccMails = instance.cfg.emails.bcc
 			if (bccMails instanceof Array) {
 				bccMails.forEach((el, i) => {
-					bccs.push({email: el})
+					bccs.push(el)
 				})
 			} else if (typeof bccMails === 'string'){
-				bccs.push({email: bccMails})
+				bccs.push(bccMails)
 			}
 
 			let options = {

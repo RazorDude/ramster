@@ -1,3 +1,7 @@
+# 0.6.2
+- Additional fixes to the emails module.
+- Very important hotfix in the base server module - the passport property of the component settings object is now correctly passed as an instance at component initialization, instead of being serialized.
+
 # 0.6.1
 - Changes and improvements to the baseDBComponent's filter assembling methods:
 	- Renamed checkQueryItem to checkFilterValue, changed how it accepts arguments and added a brief description.

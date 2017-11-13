@@ -14,7 +14,8 @@ class BaseServerModule {
 		this.moduleType = moduleType
 		this.moduleConfig = config[moduleName]
 		this.components = {}
-		this.settings = merge(JSON.parse(JSON.stringify(this.moduleConfig)), {cfg: JSON.parse(JSON.stringify(config)), passport}) // it's ugly, but I have to keep it at least until v1.0.0 due to backwards compatibility #refactorAtV1.0.0
+		this.settings = JSON.parse(JSON.stringify(this.moduleConfig)) // it's ugly, but I have to keep it at least until v1.0.0 due to backwards compatibility #refactorAtV1.0.0
+		this.settings.cfg = JSON.parse(JSON.stringify(config))
 		this.passport = passport
 		this.db = db
 		this.logger = logger
@@ -36,7 +37,9 @@ class BaseServerModule {
 			// load the module's components and the precursorMethods (if any)
 			moduleDirData.forEach((componentDir, index) => {
 				if (componentDir.indexOf('.') === -1) {
-					components[componentDir] = new (require(path.join(moduleDir, componentDir)))(JSON.parse(JSON.stringify(settings)))
+					let componentSettings = JSON.parse(JSON.stringify(settings))
+					componentSettings.passport = instance.passport
+					components[componentDir] = new (require(path.join(moduleDir, componentDir)))(componentSettings)
 				} else if (componentDir === 'fieldCaseMap.js') {
 					settings.fieldCaseMap = require(path.join(moduleDir, componentDir)) // #refactorAtV1.0.0
 					instance.fieldCaseMap = settings.fieldCaseMap
