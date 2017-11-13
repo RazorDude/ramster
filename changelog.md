@@ -1,3 +1,7 @@
+# 0.6.3
+- Added a base server component and made the base client and api components inherit it.
+- Added a decodeQueryValues method to the base server component and rewrote the base client and api read methods to use it.
+
 # 0.6.2
 - Additional fixes to the emails module.
 - Very important hotfix in the base server module - the passport property of the component settings object is now correctly passed as an instance at component initialization, instead of being serialized.

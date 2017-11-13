@@ -1,12 +1,13 @@
 'use strict'
 
 const
+	BaseServerComponent = require('../shared/base-server.component'),
 	co = require('co'),
 	fs = require('fs'),
 	path = require('path')
 	
 
-class BaseAPIComponent {
+class BaseAPIComponent extends BaseServerComponent {
 	constructor({componentName, componentNameSingular, routes, addDefaultRoutes, routePrefix}) {
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
@@ -57,11 +58,7 @@ class BaseAPIComponent {
 			try {
 				let query = {},
 					response = {}
-				for (let key in req.query) {
-					if (typeof req.query[key] !== 'object') {
-						query[decodeURIComponent(key)] = decodeURIComponent(req.query[key])
-					}
-				}
+				instance.decodeQueryValues(req.query, query)
 				response[instance.componentNameSingular] = yield req.locals.db.components[instance.componentName].read(query)
 				res.json(response)
 			} catch (e) {

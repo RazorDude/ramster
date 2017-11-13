@@ -1,6 +1,7 @@
 'use strict'
 
 const
+	BaseServerComponent = require('../shared/base-server.component'),
 	co = require('co'),
 	csv = new (require('../csvPromise'))(),
 	fs = require('fs-extra'),
@@ -8,7 +9,7 @@ const
 	toolbelt = require('../toolbelt'),
 	xlsx = require('node-xlsx')
 
-class BaseClientComponent {
+class BaseClientComponent extends BaseServerComponent {
 	constructor({componentName, componentNameSingular, routes, additionalDefaultRoutes, addDefaultRoutes, routePrefix}) {
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
@@ -100,11 +101,7 @@ class BaseClientComponent {
 			try {
 				let query = {},
 					response = {}
-				for (let key in req.query) {
-					if (typeof req.query[key] !== 'object') {
-						query[decodeURIComponent(key)] = decodeURIComponent(req.query[key])
-					}
-				}
+				instance.decodeQueryValues(req.query, query)
 				response[instance.componentNameSingular] = yield req.locals.db.components[instance.componentName].read(query)
 				res.json(response)
 			} catch (e) {
