@@ -9,7 +9,8 @@ const
 class Emails {
 	constructor(cfg) {
 		this.cfg = cfg
-		this.sendgrid = sendgrid(this.cfg.emails.sendgridApiKey)
+		this.sendgrid = sendgrid
+		this.sendgrid.setApiKey(this.cfg.emails.sendgridApiKey)
 		this.sender = this.cfg.emails.emailSender
 	}
 

@@ -58,28 +58,29 @@ class BaseDBComponent {
 		return moment.utc('Invalid date', 'YYYY-MM-DD')
 	}
 
-	checkQueryItem({fieldData}) {
-		if (typeof fieldData === 'undefined') {
+	// this method enables the use of certain objects as filters, but protects against JSON injection
+	checkFilterValue(fieldValue) {
+		if (typeof fieldValue === 'undefined') {
 			return false
 		}
 		
 
-		if (typeof fieldData === 'object') {
-			if (fieldData instanceof Array) {
-				for (let i in fieldData) {
-					if (typeof fieldData[i] === 'object') {
+		if ((typeof fieldValue === 'object') && (fieldValue !== null)) {
+			if (fieldValue instanceof Array) {
+				for (let i in fieldValue) {
+					if (typeof fieldValue[i] === 'object') {
 						return false
 					}
 				}
 				return true
 			}
 
-			if ((typeof fieldData.$not !== 'undefined') && (typeof fieldData.$not !== 'object')) {
+			if ((typeof fieldValue.$not !== 'undefined') && (typeof fieldValue.$not !== 'object')) {
 				return true
 			}
 			
-			if (fieldData.$not instanceof Array) {
-				let not = fieldData.$not
+			if (fieldValue.$not instanceof Array) {
+				let not = fieldValue.$not
 				for (let i in not) {
 					if (typeof not[i] === 'object') {
 						return false
@@ -88,10 +89,10 @@ class BaseDBComponent {
 				return true
 			}
 			
-			if (fieldData.$and instanceof Array) {
-				let and = fieldData.$and
+			if (fieldValue.$and instanceof Array) {
+				let and = fieldValue.$and
 				for (let i in and) {
-					if ((typeof and[i] === 'object') && !this.checkQueryItem({fieldData: and[i]})) {
+					if ((typeof and[i] === 'object') && !this.checkFilterValue(and[i])) {
 						return false
 					}
 				}
@@ -104,68 +105,67 @@ class BaseDBComponent {
 		return true
 	}
 
+	setFilterValue(container, filter, field, value) {
+		// check if the filter has a value and if it's acceptable
+		if (!this.checkFilterValue(value)) {
+			return
+		}
+		// match filter
+		if (filter.like && (exactMatch.indexOf(field) === -1)) {
+			let prefix = '',
+				suffix = ''
+			if (filter.like[0] === '%') {
+				prefix = '%'
+			}
+			if (filter.like[1] === '%') {
+				suffix = '%'
+			}
+			container[field] = {[filter.caseSensitive ? '$like' : '$iLike']: `${prefix}${value}${suffix}`}
+			return
+		}
+		// range filter
+		if (filter.betweenFrom) {
+			let actualField = field.replace('From', '')
+			if (typeof container[actualField] === 'undefined') {
+				container[actualField] = {}
+			}
+			container[actualField][exactMatch.indexOf(actualField) === -1 ? '$gte' : '$gt'] = value
+			return
+		}
+		if (filter.betweenTo) {
+			let actualField = field.replace('To', '')
+			if (typeof container[actualField] === 'undefined') {
+				container[actualField] = {}
+			}
+			container[actualField][actualField, exactMatch.indexOf(actualField) === -1 ? '$lte' : '$lt'] = value
+			return
+		}
+		// equality filter
+		container[field] = value
+	}
+
 	getWhereQuery({filters, relSearch, exactMatch}) {
 		let where = {}
 		if ((typeof filters === 'object') && Object.keys(filters).length > 0) {
 			this.searchFields.forEach((element, index) => {
-				let fieldData = filters[element.field],
+				let fieldValue = filters[element.field],
 					field = element.field,
-					searchHolder = where,
-					hasValue = this.checkQueryItem({fieldData})
-
-				if (element.associatedModel && (hasValue || element.between)) {
-					searchHolder = relSearch[element.associatedModel]
+					searchContainer = where,
+					hasValue = this.checkFilterValue(fieldValue)
+				if (element.associatedModel) {
+					if (!this.checkFilterValue(fieldValue)) {
+						return
+					}
+					searchContainer = relSearch[element.associatedModel]
 					field = element.associatedModelField
 					if (element.nestedInclude) {
-						if (!searchHolder.nestedIncludeFields) {
-							searchHolder.nestedIncludeFields = {}
+						if (!searchContainer.nestedIncludeFields) {
+							searchContainer.nestedIncludeFields = {}
 						}
-						searchHolder = searchHolder.nestedIncludeFields
+						searchContainer = searchContainer.nestedIncludeFields
 					}
 				}
-
-				if (hasValue) {
-					if (element.like && (exactMatch.indexOf(element.field) === -1)) {
-						let prefix = '',
-							suffix = ''
-						if (element.like[0] === '%') {
-							prefix = '%'
-						}
-						if (element.like[1] === '%') {
-							suffix = '%'
-						}
-						searchHolder[field] = {[element.caseSensitive ? '$like' : '$iLike']: `${prefix}${fieldData}${suffix}`}
-						return;
-					}
-					searchHolder[field] = fieldData
-					return;
-				}
-
-				if (element.between) {
-					let from = {field: `${element.field}${element.between[0]}`, condition: '$gt'},
-						to = {field: `${element.field}${element.between[1]}`, condition: '$lt'},
-						clause = {}
-					if (exactMatch.indexOf(field) !== -1) {
-						from.condition = '$gte'
-						to.condition = '$lte'
-					} else {
-						if (exactMatch.indexOf(from.field) !== -1) {
-							from.condition = '$lte'
-						}
-						if (exactMatch.indexOf(to.field) !== -1) {
-							to.condition = '$lte'
-						}
-					}
-					if ((typeof filters[from.field] !== 'undefined') && (typeof filters[from.field] !== 'object')) {
-						clause[from.condition] = filters[from.field]
-					}
-					if ((typeof filters[to.field] !== 'undefined') && (typeof filters[to.field] !== 'object')) {
-						clause[to.condition] = filters[to.field]
-					}
-					if (Object.keys(clause).length > 0) {
-						searchHolder[field] = clause
-					}
-				}
+				this.setFilterValue(searchContainer, element, field, fieldValue)
 			})
 		}
 		return where
