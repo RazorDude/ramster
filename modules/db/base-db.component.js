@@ -105,7 +105,7 @@ class BaseDBComponent {
 		return true
 	}
 
-	setFilterValue(container, filter, field, value) {
+	setFilterValue(container, filter, field, value, exactMatch) {
 		// check if the filter has a value and if it's acceptable
 		if (!this.checkFilterValue(value)) {
 			return
@@ -165,7 +165,7 @@ class BaseDBComponent {
 						searchContainer = searchContainer.nestedIncludeFields
 					}
 				}
-				this.setFilterValue(searchContainer, element, field, fieldValue)
+				this.setFilterValue(searchContainer, element, field, fieldValue, exactMatch)
 			})
 		}
 		return where
