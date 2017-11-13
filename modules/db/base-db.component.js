@@ -129,7 +129,7 @@ class BaseDBComponent {
 			if (typeof container[actualField] === 'undefined') {
 				container[actualField] = {}
 			}
-			container[actualField][exactMatch.indexOf(actualField) === -1 ? '$gte' : '$gt'] = value
+			container[actualField][(exactMatch.indexOf(actualField) !== -1) || filter.exactMatch ? '$gte' : '$gt'] = value
 			return
 		}
 		if (filter.betweenTo) {
@@ -137,7 +137,7 @@ class BaseDBComponent {
 			if (typeof container[actualField] === 'undefined') {
 				container[actualField] = {}
 			}
-			container[actualField][actualField, exactMatch.indexOf(actualField) === -1 ? '$lte' : '$lt'] = value
+			container[actualField][actualField, (exactMatch.indexOf(actualField) !== -1) || filter.exactMatch ? '$lte' : '$lt'] = value
 			return
 		}
 		// equality filter

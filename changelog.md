@@ -1,3 +1,6 @@
+# 0.6.5
+- Minor fix in the setFilterValue value (base-db.component) - gte/gt & lte/lt now work correctly.
+
 # 0.6.4
 - Fixed to stupid errors caused by rushed release.
 
