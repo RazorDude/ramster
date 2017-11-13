@@ -1,3 +1,6 @@
+# 0.6.4
+- Fixed to stupid errors caused by rushed release.
+
 # 0.6.3
 - Added a base server component and made the base client and api components inherit it.
 - Added a decodeQueryValues method to the base server component and rewrote the base client and api read methods to use it.

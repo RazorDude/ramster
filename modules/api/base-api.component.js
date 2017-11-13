@@ -9,6 +9,7 @@ const
 
 class BaseAPIComponent extends BaseServerComponent {
 	constructor({componentName, componentNameSingular, routes, addDefaultRoutes, routePrefix}) {
+		super()
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
 

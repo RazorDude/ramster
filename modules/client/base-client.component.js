@@ -11,6 +11,7 @@ const
 
 class BaseClientComponent extends BaseServerComponent {
 	constructor({componentName, componentNameSingular, routes, additionalDefaultRoutes, addDefaultRoutes, routePrefix}) {
+		super()
 		this.componentName = componentName
 		this.componentNameSingular = componentNameSingular
 
