@@ -9,6 +9,7 @@ const
 			for (const i in orderBy) {
 				let sortingOptions = orderBy[i],
 					key = sortingOptions[0],
+					sortingType = sortingOptions[2],
 					a = item1[key],
 					b = item2[key]
 				if (!caseSensitive) {
@@ -20,18 +21,40 @@ const
 					}
 				}
 				if (sortingOptions[1].toLowerCase() === 'asc') {
-					if (a > b) {
-						return 1
-					}
-					if (a < b) {
-						return -1
+					if (sortingType === 'haveValuesOnly') {
+						let aIsDefined = (typeof a !== 'undefined') && (a !== null),
+							bIsDefined = (typeof b !== 'undefined') && (b !== null)
+						if (aIsDefined && !bIsDefined) {
+							return 1
+						}
+						if (!aIsDefined && bIsDefined) {
+							return -1
+						}
+					} else {
+						if (a > b) {
+							return 1
+						}
+						if (a < b) {
+							return -1
+						}
 					}
 				} else {
-					if (a > b) {
-						return -1
-					}
-					if (a < b) {
-						return 1
+					if (sortingType === 'haveValuesOnly') {
+						let aIsDefined = (typeof a !== 'undefined') && (a !== null),
+							bIsDefined = (typeof b !== 'undefined') && (b !== null)
+						if (aIsDefined && !bIsDefined) {
+							return -1
+						}
+						if (!aIsDefined && bIsDefined) {
+							return 1
+						}
+					} else {
+						if (a > b) {
+							return -1
+						}
+						if (a < b) {
+							return 1
+						}
 					}
 				}
 			}
