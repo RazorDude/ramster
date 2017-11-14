@@ -14,6 +14,7 @@ class BaseDBComponent {
 		}
 		this.cfg = cfg
 		this.logger = logger
+		this.allowedFilterKeywordOperators = ['$not', '$gt', '$gte', '$lt', '$lte']
 	}
 
 	associate(components) {
@@ -66,6 +67,7 @@ class BaseDBComponent {
 		
 
 		if ((typeof fieldValue === 'object') && (fieldValue !== null)) {
+			// protect against objects nested in arrays
 			if (fieldValue instanceof Array) {
 				for (let i in fieldValue) {
 					if (typeof fieldValue[i] === 'object') {
@@ -75,8 +77,14 @@ class BaseDBComponent {
 				return true
 			}
 
-			if ((typeof fieldValue.$not !== 'undefined') && (typeof fieldValue.$not !== 'object')) {
-				return true
+			// allow enabled keyword operators
+			const allowedFilterKeywordOperators = this.allowedFilterKeywordOperators
+			for (const i in allowedFilterKeywordOperators) {
+				const opName = allowedFilterKeywordOperators[i],
+					opValue = fieldValue[opName]
+				if ((typeof opValue !== 'undefined') && (typeof opValue !== 'object')) {
+					return true
+				}
 			}
 			
 			if (fieldValue.$not instanceof Array) {

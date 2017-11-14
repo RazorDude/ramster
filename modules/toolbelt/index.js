@@ -1,41 +1,42 @@
 'use strict'
 
-let emptyToNull = (data, outputData) => {
-		for (let key in data) {
-			let currentValue = null
-
-			if (data[key] instanceof Array) {
-				currentValue = emptyToNull(data[key], [])
-			} else if (typeof data[key] === 'object') {
-				currentValue = emptyToNull(data[key], {})
-			} else if (data[key] === '') {
-				currentValue = null
-			} else {
-				currentValue = data[key]
-			}
-
-			if (outputData instanceof Array) {
-				outputData.push(currentValue)
-				continue;
-			}
-			outputData[key] = currentValue
+const
+	arraySort = (array, orderBy, caseSensitive) => {
+		if (caseSensitive !== true) {
+			caseSensitive = false
 		}
-		return outputData
-	},
-	getNested = (parent, field) => {
-		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string')) {
-			return null
-		}
-		let fieldData = field.split('.'),
-			currentElement = parent
-		for (let i in fieldData) {
-			let innerElement = fieldData[i]
-			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
-				return currentElement
+		return array.sort((item1, item2) => {
+			for (const i in orderBy) {
+				let sortingOptions = orderBy[i],
+					key = sortingOptions[0],
+					a = item1[key],
+					b = item2[key]
+				if (!caseSensitive) {
+					if (typeof a === 'string') {
+						a = a.toLowerCase()
+					}
+					if (typeof b === 'string') {
+						b = b.toLowerCase()
+					}
+				}
+				if (sortingOptions[1].toLowerCase() === 'asc') {
+					if (a > b) {
+						return 1
+					}
+					if (a < b) {
+						return -1
+					}
+				} else {
+					if (a > b) {
+						return -1
+					}
+					if (a < b) {
+						return 1
+					}
+				}
 			}
-			currentElement = currentElement[innerElement]
-		}
-		return currentElement
+			return 0
+		})
 	},
 	changeKeyCase = (keyMap, input, outputType) => {
 		let str = '',
@@ -85,48 +86,42 @@ let emptyToNull = (data, outputData) => {
 		}
 		return false
 	},
-	objSort = function() {
-		let args = arguments,
-			array = args[0],
-			case_sensitive, keys_length, key, desc, a, b, i
+	emptyToNull = (data, outputData) => {
+		for (let key in data) {
+			let currentValue = null
 
-		if (typeof arguments[arguments.length - 1] === 'boolean') {
-			case_sensitive = arguments[arguments.length - 1]
-			keys_length = arguments.length - 1
-		} else {
-			case_sensitive = false
-			keys_length = arguments.length
-		}
-
-		return array.sort((obj1, obj2) => {
-			for (i = 1; i < keys_length; i++) {
-				key = args[i]
-				if (typeof key !== 'string') {
-					desc = key[1]
-					key = key[0]
-					a = obj1[args[i][0]]
-					b = obj2[args[i][0]]
-				} else {
-					desc = false
-					a = obj1[args[i]]
-					b = obj2[args[i]]
-				}
-
-				if (case_sensitive === false && typeof a === 'string') {
-					a = a.toLowerCase()
-					b = b.toLowerCase()
-				}
-
-				if (!desc) {
-					if (a < b) return -1
-					if (a > b) return 1
-				} else {
-					if (a > b) return -1
-					if (a < b) return 1
-				}
+			if (data[key] instanceof Array) {
+				currentValue = emptyToNull(data[key], [])
+			} else if (typeof data[key] === 'object') {
+				currentValue = emptyToNull(data[key], {})
+			} else if (data[key] === '') {
+				currentValue = null
+			} else {
+				currentValue = data[key]
 			}
-			return 0
-		})
+
+			if (outputData instanceof Array) {
+				outputData.push(currentValue)
+				continue;
+			}
+			outputData[key] = currentValue
+		}
+		return outputData
+	},
+	getNested = (parent, field) => {
+		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string')) {
+			return null
+		}
+		let fieldData = field.split('.'),
+			currentElement = parent
+		for (let i in fieldData) {
+			let innerElement = fieldData[i]
+			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
+				return currentElement
+			}
+			currentElement = currentElement[innerElement]
+		}
+		return currentElement
 	}
 
-module.exports = {emptyToNull, getNested, changeKeyCase, checkRoutes, objSort}
+module.exports = {arraySort, changeKeyCase, checkRoutes, emptyToNull, getNested}

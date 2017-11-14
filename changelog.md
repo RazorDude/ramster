@@ -1,7 +1,8 @@
 # 0.6.5
 - Minor fix in the setFilterValue value (base-db.component) - gte/gt & lte/lt now work correctly.
 - Upgraded the migrations module's insertStaticData functionality - it now inserts static data according to the seeding order first, then the rest of the data.
-- Added the "objSort" method to the toolbelt.
+- Added the "arraySort" method to the toolbelt and reworked it for better consistency.
+- Enabled filtering by "$gt", "$gte", "$lte" and "$lte" (base-db.component checkFilterValue method).
 
 # 0.6.4
 - Fixed to stupid errors caused by rushed release.
