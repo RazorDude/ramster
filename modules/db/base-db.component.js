@@ -118,8 +118,9 @@ class BaseDBComponent {
 		if (!this.checkFilterValue(value)) {
 			return
 		}
+		let exactMatchFields = exactMatch instanceof Array ? exactMatch : []
 		// match filter
-		if (filter.like && (exactMatch.indexOf(field) === -1)) {
+		if (filter.like && (exactMatchFields.indexOf(field) === -1)) {
 			let prefix = '',
 				suffix = ''
 			if (filter.like[0] === '%') {
@@ -137,7 +138,7 @@ class BaseDBComponent {
 			if (typeof container[actualField] === 'undefined') {
 				container[actualField] = {}
 			}
-			container[actualField][(exactMatch.indexOf(actualField) !== -1) || filter.exactMatch ? '$gte' : '$gt'] = value
+			container[actualField][(exactMatchFields.indexOf(actualField) !== -1) || filter.exactMatchFields ? '$gte' : '$gt'] = value
 			return
 		}
 		if (filter.betweenTo) {
@@ -145,7 +146,7 @@ class BaseDBComponent {
 			if (typeof container[actualField] === 'undefined') {
 				container[actualField] = {}
 			}
-			container[actualField][actualField, (exactMatch.indexOf(actualField) !== -1) || filter.exactMatch ? '$lte' : '$lt'] = value
+			container[actualField][actualField, (exactMatchFields.indexOf(actualField) !== -1) || filter.exactMatchFields ? '$lte' : '$lt'] = value
 			return
 		}
 		// equality filter
