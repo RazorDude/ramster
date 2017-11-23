@@ -64,7 +64,7 @@ class TokenManager{
 					throw {customMessage: 'No access token to create a refresh token for.'}
 				}
 
-				let	token = yield instance.signToken({userId, secret}),
+				let token = yield instance.signToken({userId, secret}),
 					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 				if (currentToken) {
 					yield instance.generalStore.storeEntry(`${moduleName}refreshTokenBlacklist-${currentToken}`, true)

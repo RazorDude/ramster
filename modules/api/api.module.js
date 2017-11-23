@@ -126,6 +126,7 @@ class APIModule extends BaseServerModule {
 				moduleName,
 				cfg: config, // #refactorAtV1.0.0
 				settings: instance.settings, // #refactorAtV1.0.0
+				serviceName: req.locals.serviceName,
 				fieldCaseMap: instance.fieldCaseMap,
 				logger: instance.logger,
 				mailClient: instance.mailClient,
