@@ -103,7 +103,7 @@ class BaseServerModule {
 			let response = {},
 				error = req.locals.error.customMessage || 'An internal server error has occurred. Please try again.'
 			if (moduleConfig.responseType === 'serviceName') {
-				response = {serviceName: `${req.locals.originalUrl.split('/')[0]}/${req.locals.serviceName}`, data: null, message: error}
+				response = {serviceName: `${req.locals.originalUrl.split('/')[0].replace('/', '')}/${req.locals.serviceName}`, data: null, message: error}
 			} else {
 				response = {error}
 			}
