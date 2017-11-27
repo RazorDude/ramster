@@ -1,6 +1,0 @@
-node_modules
-.eslintrc
-.jsbeautifyrc
-.pug-lintrc
-error.log
-npm-debug.log
