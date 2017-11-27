@@ -1,29 +1,40 @@
 {
-  "name": "ramster",
-  "version": "0.6.11",
-  "description": "A standalone NodeJS MVC boilerplate.",
-  "main": "index.js",
-  "scripts": {
-    "test-servers": "node test/servers.js",
-    "test-devservers": "node test/devservers.js",
-    "test-builds": "node test/builds.js"
+  "_from": "ramster@^0.6.1",
+  "_id": "ramster@0.6.11",
+  "_inBundle": false,
+  "_integrity": "sha1-SQoil6bNYoF52gpbb7WGCuGswG4=",
+  "_location": "/ramster",
+  "_phantomChildren": {
+    "graceful-fs": "4.1.11",
+    "passport-strategy": "1.0.0",
+    "pause": "0.0.1",
+    "universalify": "0.1.1"
   },
-  "repository": {
-    "type": "git",
-    "url": "git+https://github.com/RazorDude/ramster.git"
+  "_requested": {
+    "type": "range",
+    "registry": true,
+    "raw": "ramster@^0.6.1",
+    "name": "ramster",
+    "escapedName": "ramster",
+    "rawSpec": "^0.6.1",
+    "saveSpec": null,
+    "fetchSpec": "^0.6.1"
   },
-  "keywords": [
-    "nodejs",
-    "mvc",
-    "boilerplate",
-    "ramster"
+  "_requiredBy": [
+    "/"
   ],
-  "author": "Rumen Rumenov <mmetalonlyy@gmail.com>",
-  "license": "MIT",
+  "_resolved": "https://registry.npmjs.org/ramster/-/ramster-0.6.11.tgz",
+  "_shasum": "490a2297a6cd628179da0a5b6fb5860ae1acc06e",
+  "_spec": "ramster@^0.6.1",
+  "_where": "C:\\code\\stocked-nyetimber\\v3",
+  "author": {
+    "name": "Rumen Rumenov",
+    "email": "mmetalonlyy@gmail.com"
+  },
   "bugs": {
     "url": "https://github.com/RazorDude/ramster/issues"
   },
-  "homepage": "https://github.com/RazorDude/ramster#readme",
+  "bundleDependencies": false,
   "dependencies": {
     "@sendgrid/mail": "^6.1.4",
     "bcryptjs": "^2.4.3",
@@ -52,5 +63,27 @@
     "redis": "^2.6.2",
     "sequelize": "^3.24.3",
     "winston": "^2.2.0"
-  }
+  },
+  "deprecated": false,
+  "description": "A standalone NodeJS MVC boilerplate.",
+  "homepage": "https://github.com/RazorDude/ramster#readme",
+  "keywords": [
+    "nodejs",
+    "mvc",
+    "boilerplate",
+    "ramster"
+  ],
+  "license": "MIT",
+  "main": "index.js",
+  "name": "ramster",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RazorDude/ramster.git"
+  },
+  "scripts": {
+    "test-builds": "node test/builds.js",
+    "test-devservers": "node test/devservers.js",
+    "test-servers": "node test/servers.js"
+  },
+  "version": "0.6.11"
 }

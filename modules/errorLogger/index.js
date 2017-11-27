@@ -25,8 +25,8 @@ class Logger {
 	}
 
 	error(e) {
-		let stack = e.stack || e,
-			stackString = e.stack && e.stack.toString() || e.toString()
+		let stack = e && e.stack || e || '',
+			stackString = stack.toString()
 		console.log(stack)
 		this.logger.log('error', stackString)
 	}

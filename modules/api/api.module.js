@@ -28,7 +28,7 @@ class APIModule extends BaseServerModule {
 				components = instance.components
 
 			// set up request logging and request body parsing
-			app.use(requestLogger(`[${moduleName} client] :method request to :url; result: :status; completed in: :response-time; :date`))
+			app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
 			app.use(bodyParser.json()) // for 'application/json' request bodies
 			app.use(cookieParser())
 
@@ -86,13 +86,14 @@ class APIModule extends BaseServerModule {
 				component.routes.forEach((routeData, index) => {
 					if (moduleConfig.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
 						instance.router[routeData.method](routeData.path, instance.tokenManager.validate(), wrap(component[routeData.func](routeData.options || {})))
+						return
 					}
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 				})
 			}
 			app.use('/', instance.router)
 
-			//after every route - return handled errors and set up redirects
+			// after every route - return handled errors and set up redirects
 			app.use('*', instance.handleNextAfterRoutes())
 
 			instance.server = http.createServer(app)

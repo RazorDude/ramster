@@ -87,7 +87,7 @@ class BaseServerModule {
 			{moduleName, moduleConfig, config} = this,
 			notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
 		return function (req, res) {
-			if (!req.locals || (req.locals.error === null)) {
+			if (!req.locals || !req.locals.error) {
 				if (notFoundRedirectRoutes) {
 					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
 					return
