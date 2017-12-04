@@ -140,7 +140,7 @@ class Migrations {
 	runQueryFromColumnData(instance, tableName, inserts, queryInterface, deleteTableContents, t, dontSetIdSequence) {
 		return co(function*() {
 			if (inserts.values.length > 0) {
-				console.log('Query series starting, rows to execute:', inserts.values.length)
+				console.log('Query series starting, rows to execute:', inserts.values.length, ' for table ', tableName)
 				if (deleteTableContents.indexOf(tableName) !== -1) {
 					yield instance.db.sequelize.query('DELETE FROM "' + tableName + '";', {transaction: t})
 				}
@@ -184,6 +184,22 @@ class Migrations {
 		})
 	}
 
+	escapeRecursively(queryInterface, value) {
+		if (value instanceof Array) {
+			let escapedObject = []
+			value.forEach((item, index) => escapedObject.push(this.escapeRecursively(queryInterface, item)))
+			return escapedObject
+		}
+		if ((typeof value === 'object') && (value !== null)) {
+			let escapedObject = {}
+			for (const key in value) {
+				escapedObject[key] = this.escapeRecursively(queryInterface, value[key])
+			}
+			return escapedObject
+		}
+		return queryInterface.escape(value)
+	}
+
 	prepareDataObjectForQuery(dataObject, tableLayout, queryInterface) {
 		let columns = [],
 			values = []
@@ -191,8 +207,9 @@ class Migrations {
 			if (tableLayout.indexOf(column) !== -1) {
 				columns.push(column)
 				let columnValue = dataObject[column]
-				if ((typeof columnValue === 'object') && (columnValue !== null) && (typeof columnValue.length === 'undefined')) {
+				if ((typeof columnValue === 'object') && (columnValue !== null)) {
 					values.push(queryInterface.escape(JSON.stringify(columnValue)))
+					// values.push(JSON.stringify(this.escapeRecursively(queryInterface, columnValue)))
 					continue
 				}
 				values.push(queryInterface.escape(columnValue))
