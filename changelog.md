@@ -1,3 +1,12 @@
+# 0.6.14
+- Added custom node proxy settings support when generating a config file for nginx
+
+# 0.6.13
+- Very important hotfix for the migrations module - it couldn't escape Sequelize.ARRAY columns properly.
+
+# 0.6.12
+- Various server initialization hotfixes.
+
 # 0.6.6 - 0.6.11
 - Stupid small fix that I failed to test properly multiple times due to hurrying. (I promise not to do this anymore).
 

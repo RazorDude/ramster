@@ -26,7 +26,7 @@ class ClientModule extends BaseServerModule {
 	generateNGINXConfig() {
 		let instance = this
 		return co(function*() {
-			const {wsPort, serverPort, publicPath, prependWSServerConfigFromFiles, appendWSServerConfigFromFiles, webpackHost, webpackBuildFolderName} = instance.moduleConfig,
+			const {wsPort, serverPort, nodeProxyProtocol, nodeProxyHostAddress, nodeProxyServerPort, publicPath, prependWSServerConfigFromFiles, appendWSServerConfigFromFiles, webpackHost, webpackBuildFolderName} = instance.moduleConfig,
 				{projectName, wsConfigFolderPath, mountGlobalStorage, globalStoragePath, protocol, hostAddress} = instance.config
 			let configFilePath = path.join(wsConfigFolderPath, `${projectName}-${instance.moduleName}.conf`),
 				configFile = yield fs.open(configFilePath, 'w'),
@@ -64,9 +64,9 @@ class ClientModule extends BaseServerModule {
 				prependToServerConfig,
 				appendToServerConfig,
 				bundleConfig,
-				nodeProxyProtocol: protocol,
-				nodeProxyHostAddress: hostAddress,
-				nodeProxyServerPort: serverPort
+				nodeProxyProtocol: nodeProxyProtocol || protocol,
+				nodeProxyHostAddress: nodeProxyHostAddress || hostAddress,
+				nodeProxyServerPort: nodeProxyServerPort || serverPort
 			}))
 			yield fs.close(configFile)
 
