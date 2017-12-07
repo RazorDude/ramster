@@ -70,15 +70,30 @@ class BaseClientComponent extends BaseServerComponent {
 				parsedInputFileData = parsedInputFileData[0] && parsedInputFileData[0].data || null
 			}
 
-			if (parsedInputFileData && parsedInputFileData[0]) {
+			let actualFileData = []
+			if ((parsedInputFileData instanceof Array) && parsedInputFileData.length) {
 				parsedInputFileData[0].forEach((column, index) => {
 					if (matchesTemplate && (template.columns[index] !== column)) {
 						matchesTemplate = false
 					}
 					columns.push(column)
 				})
+				parsedInputFileData.forEach((row, index) => {
+					let isBlank = true
+					for (const i in row) {
+						let colValue = row[i]
+						if ((typeof colValue !== 'undefined') && (colValue !== null) && (colValue !== '')) {
+							isBlank = false
+							break
+						}
+					}
+					if (isBlank) {
+						return
+					}
+					actualFileData.push(row)
+				})
 			}
-			return {matchesTemplate, columns, templateColumns: template.columns, fileData: parsedInputFileData}
+			return {matchesTemplate, columns, templateColumns: template.columns, fileData: actualFileData}
 		})
 	}
 

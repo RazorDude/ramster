@@ -1,5 +1,8 @@
+# 0.6.15
+- The import file check in the base-client.component now skips lines that are blank.
+
 # 0.6.14
-- Added custom node proxy settings support when generating a config file for nginx
+- Added custom node proxy settings support when generating a config file for nginx.
 
 # 0.6.13
 - Very important hotfix for the migrations module - it couldn't escape Sequelize.ARRAY columns properly.
