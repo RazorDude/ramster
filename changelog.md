@@ -1,3 +1,6 @@
+# 0.6.16
+- Added the getFolderSize method to the toolbelt.
+
 # 0.6.15
 - The import file check in the base-client.component now skips lines that are blank.
 

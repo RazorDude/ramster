@@ -131,6 +131,23 @@ const
 		}
 		return outputData
 	},
+	getFolderSize = (folderPath, unit) => co(function*() {
+		let folderSize = 0,
+			folderData = yield fs.stat(folderPath)
+		if (folderData.isFile()) {
+			folderSize = folderData.size
+			// convert to KB/MB/GB/TB etc.
+			for (let i = 0; i < unit; i++) {
+				folderSize /= 1000000.0
+			}
+			return folderSize
+		}
+		folderData = yield fs.readdir(folderPath)
+		for (const i in folderData) {
+			folderSize += yield getFolderSize(path.join(folderPath, folderData[i]), unit)
+		}
+		return folderSize
+	}),
 	getNested = (parent, field) => {
 		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string')) {
 			return null
