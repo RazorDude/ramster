@@ -1,6 +1,9 @@
 'use strict'
 
 const
+	co = require('co'),
+	fs = require('fs-extra'),
+	path = require('path'),
 	arraySort = (array, orderBy, caseSensitive) => {
 		if (caseSensitive !== true) {
 			caseSensitive = false
