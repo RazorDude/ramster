@@ -1,3 +1,6 @@
+# 0.6.17
+- Toolbelt hotfix.
+
 # 0.6.16
 - Added the getFolderSize method to the toolbelt.
 

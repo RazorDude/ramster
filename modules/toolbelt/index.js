@@ -164,4 +164,4 @@ const
 		return currentElement
 	}
 
-module.exports = {arraySort, changeKeyCase, checkRoutes, emptyToNull, getNested}
+module.exports = {arraySort, changeKeyCase, checkRoutes, emptyToNull, getFolderSize, getNested}
