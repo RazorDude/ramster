@@ -85,5 +85,5 @@
     "test-devservers": "node test/devservers.js",
     "test-servers": "node test/servers.js"
   },
-  "version": "0.6.15"
+  "version": "0.6.16"
 }
