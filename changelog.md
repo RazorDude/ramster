@@ -1,3 +1,8 @@
+# 1.0.0
+- Added a fury.io npm version badge.
+- Added a base .travis.yml file.
+- Removed inconsistencies that were left in up till now for the sake of backwards compatibility.
+
 # 0.6.17 - 0.6.18
 - Toolbelt hotfix.
 

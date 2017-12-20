@@ -6,7 +6,6 @@ const
 	CronJob = require('cron').CronJob,
 	expressSession = require('express-session'),
 	fs = require('fs-extra'),
-	http = require('http'),
 	merge = require('deepmerge'),
 	moment = require('moment'),
 	path = require('path'),
@@ -29,8 +28,7 @@ const
 class Core {
 	constructor(config) {
 		try {
-			this.cfg = config || defaultConfig // #refactorAtV1.0.0
-			this.config = this.cfg
+			this.config = config || defaultConfig
 			this.logger = new Logger(config)
 			this.generalStore = new GeneralStore(config)
 			this.tokenManager = new TokenManager({generalStore: this.generalStore})
@@ -172,14 +170,10 @@ class Core {
 }
 
 module.exports = {
-	baseDBClass: BaseDBComponent, // #refactorAtV1.0.0
 	BaseDBComponent,
-	baseClientClass: BaseClientComponent, // #refactorAtV1.0.0
 	BaseClientComponent,
-	baseApiClass: BaseAPIComponent, // #refactorAtV1.0.0
 	BaseAPIComponent,
 	Core,
 	csvPromise: new csvPromise(),
-	toolBelt: toolbelt, // #refactorAtV1.0.0
 	toolbelt
 }
