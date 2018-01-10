@@ -7,6 +7,15 @@
 - *BREAKING* - renamed moduleList to webpackDevserverModuleList.
 - *BREAKING* - renamed protocol to hostProtocol.
 
+# 0.6.21
+- In the tokenManager, added more data to req.user - the full decoded object from the token.
+
+# 0.6.20
+- Fixed the tokenManager.
+
+# 0.6.19
+- Added the ability to encode user data in the jwt (tokenManager).
+
 # 0.6.17 - 0.6.18
 - Toolbelt hotfix.
 

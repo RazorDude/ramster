@@ -7,10 +7,16 @@ class TokenManager{
 		this.generalStore = generalStore
 	}
 
-	signToken({userId, secret, expiresInMinutes}) {
+	signToken({userId, userData, secret, expiresInMinutes}) {
 		return new Promise((resolve, reject) => {
+			let tokenData = {}
+			if ((typeof userData === 'object') && (userData !== null)) {
+				tokenData = userData
+			} else {
+				tokenData.id = userId
+			}
 			if (expiresInMinutes) {
-				jwt.sign({id: userId}, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
+				jwt.sign(tokenData, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
 					if (err) {
 						reject({customMessage: 'Failed to sign token.', status: 401})
 						return;
@@ -18,7 +24,7 @@ class TokenManager{
 					resolve(token)
 				})
 			}
-			jwt.sign({id: userId}, secret, null, (err, token) => {
+			jwt.sign(tokenData, secret, null, (err, token) => {
 				if (err) {
 					reject({customMessage: 'Failed to sign token.', status: 401})
 					return;
@@ -44,33 +50,34 @@ class TokenManager{
 		})
 	}
 
-	createToken({type, userId, secret, moduleName, expiresInMinutes}) {
+	createToken({type, userId, userData, secret, moduleName, expiresInMinutes}) {
 		let instance = this
 		return co(function* () {
+			let actualUserId = userData && userData.id || userId
 			if (type === 'access') {
-				let token = yield instance.signToken({userId, secret, expiresInMinutes}),
-					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
+				let token = yield instance.signToken({userId, userData, secret, expiresInMinutes}),
+					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}AccessToken`)
 				if (currentToken) {
-					yield instance.generalStore.removeEntry(`${moduleName}user${userId}AccessToken`)
+					yield instance.generalStore.removeEntry(`${moduleName}user${actualUserId}AccessToken`)
 					yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentToken}`, true)
 				}
-				yield instance.generalStore.storeEntry(`${moduleName}user${userId}AccessToken`, token)
+				yield instance.generalStore.storeEntry(`${moduleName}user${actualUserId}AccessToken`, token)
 				return token
 			}
 
 			if (type === 'refresh') {
-				let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
+				let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}AccessToken`)
 				if (!currentAccessToken) {
 					throw {customMessage: 'No access token to create a refresh token for.'}
 				}
 
-				let token = yield instance.signToken({userId, secret}),
-					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
+				let token = yield instance.signToken({userId, userData, secret}),
+					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`)
 				if (currentToken) {
 					yield instance.generalStore.storeEntry(`${moduleName}refreshTokenBlacklist-${currentToken}`, true)
-					yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
+					yield instance.generalStore.removeEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`)
 				}
-				yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`, token)
+				yield instance.generalStore.storeEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`, token)
 				return token
 			}
 
@@ -116,7 +123,7 @@ class TokenManager{
 							throw {customMessage: 'Invalid access token.', status: 401}
 						}
 
-						req.user = {id: decoded.id}
+						req.user = decoded
 						return true
 					} catch(e) {
 						try {
@@ -145,7 +152,7 @@ class TokenManager{
 							yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 							yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${newAccessToken}`, currentRefreshToken)
 
-							req.user = {id: decoded.id}
+							req.user = decoded
 							res.set('authorization-newaccesstoken', newAccessToken)
 							return true
 						} catch (innerError) {

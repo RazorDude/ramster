@@ -85,5 +85,5 @@
     "test-devservers": "mocha test/devservers.js",
     "test": "mocha test/test.js"
   },
-  "version": "0.6.18"
+  "version": "0.6.21"
 }
