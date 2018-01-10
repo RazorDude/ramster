@@ -27,7 +27,7 @@ class ClientModule extends BaseServerModule {
 		let instance = this
 		return co(function*() {
 			const {wsPort, serverPort, nodeProxyProtocol, nodeProxyHostAddress, nodeProxyServerPort, publicPath, prependWSServerConfigFromFiles, appendWSServerConfigFromFiles, webpackHost, webpackBuildFolderName} = instance.moduleConfig,
-				{projectName, wsConfigFolderPath, mountGlobalStorage, globalStoragePath, protocol, hostAddress} = instance.config
+				{projectName, wsConfigFolderPath, mountGlobalStorageInWebserver, globalStoragePath, hostProtocol, hostAddress} = instance.config
 			let configFilePath = path.join(wsConfigFolderPath, `${projectName}-${instance.moduleName}.conf`),
 				configFile = yield fs.open(configFilePath, 'w'),
 				prependToServerConfig = '',
@@ -46,7 +46,7 @@ class ClientModule extends BaseServerModule {
 				}
 			}
 
-			if (mountGlobalStorage) {
+			if (mountGlobalStorageInWebserver) {
 				let template = handlebars.compile((yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-global-storage.config.conf'))).toString())
 				prependToServerConfig += template({globalStoragePath: globalStoragePath.replace(/\\/g, '\\\\')})
 			}
@@ -64,7 +64,7 @@ class ClientModule extends BaseServerModule {
 				prependToServerConfig,
 				appendToServerConfig,
 				bundleConfig,
-				nodeProxyProtocol: nodeProxyProtocol || protocol,
+				nodeProxyProtocol: nodeProxyProtocol || hostProtocol,
 				nodeProxyHostAddress: nodeProxyHostAddress || hostAddress,
 				nodeProxyServerPort: nodeProxyServerPort || serverPort
 			}))

@@ -14,8 +14,9 @@ const
 
 // ramster modules
 	{APIModule, BaseAPIComponent} = require('./modules/api'),
-	csvPromise = require('./modules/csvPromise'),
 	{ClientModule, BaseClientComponent} = require('./modules/client'),
+	coreTests = require('./index.spec'),
+	csvPromise = require('./modules/csvPromise'),
 	{DBModule, BaseDBComponent} = require('./modules/db'),
 	defaultConfig = require('./defaults/config'),
 	Emails = require('./modules/emails'),
@@ -29,12 +30,18 @@ class Core {
 	constructor(config) {
 		try {
 			this.config = config || defaultConfig
-			this.logger = new Logger(config)
-			this.generalStore = new GeneralStore(config)
-			this.tokenManager = new TokenManager({generalStore: this.generalStore})
+			for (const testName in coreTests) {
+				this[testName] = coreTests[testName]
+			}
 		} catch (e) {
 			console.log(e)
 		}
+	}
+
+	loadDependencies() {
+		this.logger = new Logger(this.config)
+		this.generalStore = new GeneralStore(this.config)
+		this.tokenManager = new TokenManager({generalStore: this.generalStore})
 	}
 
 	loadModules() {

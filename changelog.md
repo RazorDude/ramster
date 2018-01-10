@@ -2,6 +2,10 @@
 - Added a fury.io npm version badge.
 - Added a base .travis.yml file.
 - Removed inconsistencies that were left in up till now for the sake of backwards compatibility.
+- *BREAKING* - renamed globalPublicPath to clientModulesPath.
+- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.
+- *BREAKING* - renamed moduleList to webpackDevserverModuleList.
+- *BREAKING* - renamed protocol to hostProtocol.
 
 # 0.6.17 - 0.6.18
 - Toolbelt hotfix.

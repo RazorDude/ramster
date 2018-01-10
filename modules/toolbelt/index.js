@@ -165,6 +165,13 @@ const
 			currentElement = currentElement[innerElement]
 		}
 		return currentElement
+	},
+	runTestConditionally = (condition, testText, testMethod) => {
+		if (condition) {
+			it(testText, testMethod)
+		} else {
+			it.skip(testText, testMethod)
+		}
 	}
 
-module.exports = {arraySort, changeKeyCase, checkRoutes, emptyToNull, getFolderSize, getNested}
+module.exports = {arraySort, changeKeyCase, checkRoutes, emptyToNull, getFolderSize, getNested, runTestConditionally}
