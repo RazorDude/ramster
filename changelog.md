@@ -1,3 +1,6 @@
+# 0.6.19
+- Added the ability to encode user data in the jwt (tokenManager).
+
 # 0.6.17 - 0.6.18
 - Toolbelt hotfix.
 

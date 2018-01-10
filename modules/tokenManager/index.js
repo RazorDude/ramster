@@ -7,10 +7,16 @@ class TokenManager{
 		this.generalStore = generalStore
 	}
 
-	signToken({userId, secret, expiresInMinutes}) {
+	signToken({userId, userData, secret, expiresInMinutes}) {
 		return new Promise((resolve, reject) => {
+			let tokenData = {}
+			if ((typeof userData === 'object') && (userData !== null)) {
+				tokenData = userData
+			} else {
+				tokenData.id = userId
+			}
 			if (expiresInMinutes) {
-				jwt.sign({id: userId}, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
+				jwt.sign(tokenData, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
 					if (err) {
 						reject({customMessage: 'Failed to sign token.', status: 401})
 						return;
@@ -18,7 +24,7 @@ class TokenManager{
 					resolve(token)
 				})
 			}
-			jwt.sign({id: userId}, secret, null, (err, token) => {
+			jwt.sign(tokenData, secret, null, (err, token) => {
 				if (err) {
 					reject({customMessage: 'Failed to sign token.', status: 401})
 					return;
@@ -44,11 +50,11 @@ class TokenManager{
 		})
 	}
 
-	createToken({type, userId, secret, moduleName, expiresInMinutes}) {
+	createToken({type, userId, userData, secret, moduleName, expiresInMinutes}) {
 		let instance = this
 		return co(function* () {
 			if (type === 'access') {
-				let token = yield instance.signToken({userId, secret, expiresInMinutes}),
+				let token = yield instance.signToken({userId, userData, secret, expiresInMinutes}),
 					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
 				if (currentToken) {
 					yield instance.generalStore.removeEntry(`${moduleName}user${userId}AccessToken`)
