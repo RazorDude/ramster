@@ -123,7 +123,7 @@ class TokenManager{
 							throw {customMessage: 'Invalid access token.', status: 401}
 						}
 
-						req.user = {id: decoded.id}
+						req.user = decoded
 						return true
 					} catch(e) {
 						try {
@@ -152,7 +152,7 @@ class TokenManager{
 							yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 							yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${newAccessToken}`, currentRefreshToken)
 
-							req.user = {id: decoded.id}
+							req.user = decoded
 							res.set('authorization-newaccesstoken', newAccessToken)
 							return true
 						} catch (innerError) {

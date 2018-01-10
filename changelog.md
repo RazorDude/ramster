@@ -1,3 +1,6 @@
+# 0.6.21
+- In the tokenManager, added more data to req.user - the full decoded object from the token.
+
 # 0.6.20
 - Fixed the tokenManager.
 
