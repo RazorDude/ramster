@@ -53,30 +53,31 @@ class TokenManager{
 	createToken({type, userId, userData, secret, moduleName, expiresInMinutes}) {
 		let instance = this
 		return co(function* () {
+			let actualUserId = userData && userData.id || userId
 			if (type === 'access') {
 				let token = yield instance.signToken({userId, userData, secret, expiresInMinutes}),
-					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
+					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}AccessToken`)
 				if (currentToken) {
-					yield instance.generalStore.removeEntry(`${moduleName}user${userId}AccessToken`)
+					yield instance.generalStore.removeEntry(`${moduleName}user${actualUserId}AccessToken`)
 					yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentToken}`, true)
 				}
-				yield instance.generalStore.storeEntry(`${moduleName}user${userId}AccessToken`, token)
+				yield instance.generalStore.storeEntry(`${moduleName}user${actualUserId}AccessToken`, token)
 				return token
 			}
 
 			if (type === 'refresh') {
-				let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
+				let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}AccessToken`)
 				if (!currentAccessToken) {
 					throw {customMessage: 'No access token to create a refresh token for.'}
 				}
 
-				let token = yield instance.signToken({userId, secret}),
-					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
+				let token = yield instance.signToken({userId, userData, secret}),
+					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`)
 				if (currentToken) {
 					yield instance.generalStore.storeEntry(`${moduleName}refreshTokenBlacklist-${currentToken}`, true)
-					yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
+					yield instance.generalStore.removeEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`)
 				}
-				yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`, token)
+				yield instance.generalStore.storeEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`, token)
 				return token
 			}
 
