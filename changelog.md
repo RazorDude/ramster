@@ -1,3 +1,7 @@
+# 0.6.22
+- Updated the v1.0.0 roadmap with an additional feature.
+- Added a brief migration guide for a smooth v0.5 to v0.6 transition.
+
 # 0.6.21
 - In the tokenManager, added more data to req.user - the full decoded object from the token.
 

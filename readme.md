@@ -1,4 +1,4 @@
-ramster
+ramster [![npm version](https://badge.fury.io/js/ramster.svg)](https://badge.fury.io/js/ramster)
 ==
 Ramster is a standalone NodeJS MVC boilerplate, based on the <a href="https://github.com/expressjs/express">express</a> framework and <a href="https://github.com/tj/co">co</a>.<br/> It runs on node 6+.<br/>
 The goal of this module is to speed up development as much as possible, by providing a fast, reliable, customizable and secure standalone boilerplate, that can cover a lot of use cases with the proper configuration. By using ramster, you get to focus on developing your business logic and the actual specifics of your project, instead of worrying about the wireframe and the architecture.<br><br>
@@ -46,6 +46,31 @@ The DB module, as mentioned briefly above, is the very heart of your project. It
 
 
 ___
+Migrating from 0.5 to 0.6
+==
+Version 0.6 improves the overall code quality and structure a lot, but it's still a minor version, so it's mostly backwards compatible. There is only one change to be made, the project's index.js file should now look (approximately) like, or at lest be based on this:<br/>
+```javascript
+'use strict'
+const
+	argv = require('optimist').argv,
+	co = require('co'),
+	config = require('./config/profiles/' + (argv.configProfile || 'local')),
+	{Core} = require('ramster'),
+	ramster = new Core(config)
+
+co(function*() {
+	yield ramster.loadModules()
+	yield ramster.listen()
+}).then((res) => true, (err) => console.log(err))
+
+module.exports = ramster
+
+```
+The notable change here is that the initialization, module loading and listening code has been moved to the `loadModules` and `listen` methods. They are asynchronous and return promises. `listen` requires `loadModules` to have completed in order to execute successfully, so you must wait for the `loadModules` promise to resolve successfully before invoking `listen`.<br/>
+With that, you're all set and done to use ramster 0.6!
+
+
+___
 Roadmap
 ==
 The main goal at this time is to get Ramster stable and feature-rich enough for a v1.0.0 release. To do that, it must include:
@@ -58,3 +83,4 @@ The main goal at this time is to get Ramster stable and feature-rich enough for 
 - Try and reduce the number of dependencies as much as possible.
 - A lot of good an informative badges on top of this readme, all of which must shine in bright green :)
 - Loads and loads of docs and a website that hosts them, not just .md files in the repo.
+- In the migrations module, auto-restore the DB state for failed sync and seed.
