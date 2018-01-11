@@ -2,10 +2,11 @@
 - Added a fury.io npm version badge.
 - Added a base .travis.yml file.
 - Removed inconsistencies that were left in up till now for the sake of backwards compatibility.
-- *BREAKING* - renamed globalPublicPath to clientModulesPath.
-- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.
-- *BREAKING* - renamed moduleList to webpackDevserverModuleList.
-- *BREAKING* - renamed protocol to hostProtocol.
+- Config changes:
+	- *BREAKING* - renamed globalPublicPath to clientModulesPath.
+	- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.
+	- *BREAKING* - renamed moduleList to webpackDevserverModuleList.
+	- *BREAKING* - renamed protocol to hostProtocol.
 
 # 0.6.21
 - In the tokenManager, added more data to req.user - the full decoded object from the token.
