@@ -169,9 +169,10 @@ const
 	runTestConditionally = (condition, testText, testMethod) => {
 		if (condition) {
 			it(testText, testMethod)
-		} else {
-			it.skip(testText, testMethod)
+			return 1
 		}
+		it.skip(testText, testMethod)
+		return -1
 	}
 
 module.exports = {arraySort, changeKeyCase, checkRoutes, emptyToNull, getFolderSize, getNested, runTestConditionally}

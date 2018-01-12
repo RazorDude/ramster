@@ -35,16 +35,16 @@ let commonConfig = {
 		templatesPath: path.join(__dirname, '../modules/emails/templates'),
 		useClientModule: 'site'
 	},
-	cronJobs: {
+	// cronJobs: {
 		// path: path.join(__dirname, '../modules/cronJobs')
-	},
+	// },
 	migrations: {
 		startAPI: true,
-		baseMigrationsPath: path.join(__dirname, '../modules/migrations'),
-		seedFilesPath: path.join(__dirname, '../modules/migrations/seedFiles'),
-		syncHistoryPath: path.join(__dirname, '../modules/migrations/syncHistory'),
-		backupPath: path.join(__dirname, '../modules/migrations/backup'),
-		staticDataPath: path.join(__dirname, '../modules/migrations/staticData')
+		baseMigrationsPath: path.join(__dirname, './modules/migrations'),
+		seedFilesPath: path.join(__dirname, './modules/migrations/seedFiles'),
+		syncHistoryPath: path.join(__dirname, './modules/migrations/syncHistory'),
+		backupPath: path.join(__dirname, './modules/migrations/backup'),
+		staticDataPath: path.join(__dirname, './modules/migrations/staticData')
 	},
 	db: {
 		modulePath: path.join(__dirname, '../modules/db'),
