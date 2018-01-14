@@ -26,8 +26,8 @@ class ClientModule extends BaseServerModule {
 	generateNGINXConfig() {
 		let instance = this
 		return co(function*() {
-			const {wsPort, serverPort, nodeProxyProtocol, nodeProxyHostAddress, nodeProxyServerPort, publicPath, prependWSServerConfigFromFiles, appendWSServerConfigFromFiles, webpackHost, webpackBuildFolderName} = instance.moduleConfig,
-				{projectName, wsConfigFolderPath, mountGlobalStorageInWebserver, globalStoragePath, hostProtocol, hostAddress} = instance.config
+			const {serverPort, nodeProxyProtocol, nodeProxyHostAddress, nodeProxyServerPort, publicPath, prependWSServerConfigFromFiles, appendWSServerConfigFromFiles, webpackHost, webpackBuildFolderName} = instance.moduleConfig,
+				{projectName, wsPort, wsConfigFolderPath, mountGlobalStorageInWebserver, globalStoragePath, hostProtocol, hostAddress} = instance.config
 			let configFilePath = path.join(wsConfigFolderPath, `${projectName}-${instance.moduleName}.conf`),
 				configFile = yield fs.open(configFilePath, 'w'),
 				prependToServerConfig = '',
@@ -210,15 +210,14 @@ class ClientModule extends BaseServerModule {
 			if (!req.isAuthenticated() && !checkRoutes(originalUrl, moduleConfig.anonymousAccessRoutes)) {
 				if (checkRoutes(originalUrl, instance.layoutRoutes) || checkRoutes(originalUrl, moduleConfig.nonLayoutDirectRoutes)) {
 					cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
-					if (moduleConfig.unauthorizedRedirectRoute) {
-						res.redirect(302, moduleConfig.unauthorizedRedirectRoute)
+					if (moduleConfig.unauthorizedPageRedirectRoute) {
+						res.redirect(302, moduleConfig.unauthorizedPageRedirectRoute)
 						return
 					}
-				}
-				const notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
-				if (notFoundRedirectRoutes) {
-					res.redirect(302, notFoundRedirectRoutes.default)
-					return
+					if (moduleConfig.redirectUnauthorizedPagesToNotFound) {
+						res.redirect(302, moduleConfig.notFoundRedirectRoutes.default)
+						return
+					}
 				}
 				res.status(401).end()
 				return

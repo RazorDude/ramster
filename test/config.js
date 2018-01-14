@@ -48,80 +48,88 @@ let commonConfig = {
 	},
 	db: {
 		modulePath: path.join(__dirname, '../modules/db'),
+		dbType: 'postgres',
 		seedingOrder: [
 			'modules', 'roles', 'keyAccessPoints', 'users' //TODO: test if the seeding order is correct
-		],
-		schema: 'public'
+		]
 	},
-	site: {
-		clientPath: path.resolve(__dirname, '../clients/site'),
-		publicPath: path.resolve(__dirname, '../public/site'),
-		uploadPath: path.resolve(__dirname, '../public/site/assets/uploads'),
-		anonymousAccessRoutes: ['/', '/four-oh-four', '/login', '/tokenLogin', '/users/resetPassword', '/users/loadLoggedInUserData', '/globalConfig/readList'],
-		nonLayoutDirectRoutes: ['/salesOrders/changeStatus/:orderId/:statusId'],
-		unauthorizedRedirectRoute: '/login',
-		notFoundRedirectRoutes: {
-			default: '/four-oh-four',
-			authenticated: '/four-oh-four'
-		},
-		prependWSServerConfigFromFiles: [
-			path.join(__dirname, './nginx/siteAPIRedirect.conf'),
-			path.join(__dirname, './nginx/swaggerUI.conf'),
-			path.join(__dirname, './nginx/images.conf'),
-			path.join(__dirname, './nginx/distToStatic.conf')
-		],
-		useModuleConfigForAuthTokens: 'mobile',
-		passErrorToNext: true
+	clients: {
+		site: {
+			uploadPath: path.resolve(__dirname, '../public/site/assets/uploads'),
+			anonymousAccessRoutes: ['/', '/four-oh-four', '/login', '/tokenLogin', '/users/resetPassword', '/users/loadLoggedInUserData', '/globalConfig/readList'],
+			nonLayoutDirectRoutes: ['/salesOrders/changeStatus/:orderId/:statusId'],
+			unauthorizedPageRedirectRoute: '/login',
+			notFoundRedirectRoutes: {
+				default: '/four-oh-four',
+				authenticated: '/four-oh-four'
+			},
+			redirectUnauthorizedPagesToNotFound: true,
+			prependWSServerConfigFromFiles: [
+				path.join(__dirname, './nginx/siteAPIRedirect.conf'),
+				path.join(__dirname, './nginx/swaggerUI.conf'),
+				path.join(__dirname, './nginx/images.conf'),
+				path.join(__dirname, './nginx/distToStatic.conf')
+			],
+			useApiModuleConfigForAuthTokens: 'mobile',
+			passErrorToNext: true,
+			startWebpackDevserver: true
+		}
 	},
-	mobile: {
-		anonymousAccessRoutes: ['/users/getCredentials', '/users/create', '/users/forgotPassword'],
-		responseType: 'serviceName',
-		jwt: {
-			accessTokenExpiresInMinutes: 1440
-		},
-		allowOrigins: '*'
-	},
-	webpackDevserverModuleList: ['site']
+	apis: {
+		mobile: {
+			anonymousAccessRoutes: ['/users/getCredentials', '/users/create', '/users/forgotPassword'],
+			responseType: 'serviceName',
+			jwt: {
+				accessTokenExpiresInMinutes: 1440
+			},
+			allowOrigins: '*'
+		}
+	}
 }
 
 let profileConfig = {
-	name: 'local',
+	name: 'test',
 	hostProtocol,
 	hostAddress,
+	wsPort: site.wsPort,
 	wsConfigFolderPath: 'c:\\programs\\nginx\\conf',
 	postgres: {
 		user: 'postgres',
-		pass: 'postgres',
+		password: 'postgres',
 		host: '127.0.0.1',
-		port: '5432',
+		port: 5432,
 		database: 'ramster_v1',
+		schema: 'public',
 		logging: true
 	},
 	redis: {
 		host: '127.0.0.1',
-		port: '6379'
+		port: 6379
 	},
 	migrations: {
 		serverPort: 7377
 	},
-	site: {
-		serverPort: site.port,
-		wsPort: site.wsPort,
-		hostAddress,
-		host: `${hostProtocol}://${hostAddress}:${site.wsPort || site.port}`,
-		webpackDevserverPort: site.webpackDevserverPort,
-		webpackHost: `http://${hostAddress}:${site.webpackDevserverPort}`,
-		session: {
-			key: 'sessionKey',
-			secret: 'sessionSecret'
+	clients: {
+		site: {
+			serverPort: site.port,
+			hostAddress,
+			host: `${hostProtocol}://${hostAddress}:${site.wsPort || site.port}`,
+			webpackDevserverPort: site.webpackDevserverPort,
+			webpackHost: `http://${hostAddress}:${site.webpackDevserverPort}`,
+			session: {
+				key: 'sessionKey',
+				secret: 'sessionSecret'
+			}
 		}
 	},
-	mobile: {
-		serverPort: mobile.port,
-		hostAddress,
-		host: `${hostProtocol}://${hostAddress}:${mobile.port}`,
-		jwt: {
-			secret: 'jwtSecret'
+	apis: {
+		mobile: {
+			serverPort: mobile.port,
+			hostAddress,
+			host: `${hostProtocol}://${hostAddress}:${mobile.port}`,
+			jwt: {
+				secret: 'jwtSecret'
+			}
 		}
 	}
 }

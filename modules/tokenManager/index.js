@@ -99,9 +99,9 @@ class TokenManager{
 				if (!req.headers['authorization']) {
 					throw {customMessage: 'No access token provided.', status: 401}
 				}
-				if (config.useModuleConfigForAuthTokens) {
-					moduleName = config.useModuleConfigForAuthTokens
-					config = req.locals.cfg[config.useModuleConfigForAuthTokens]
+				if (config.useApiModuleConfigForAuthTokens) {
+					moduleName = config.useApiModuleConfigForAuthTokens
+					config = req.locals.cfg.apis[config.useApiModuleConfigForAuthTokens]
 				}
 
 				let tokens = req.headers['authorization'].split(' '),

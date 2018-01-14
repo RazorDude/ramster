@@ -7,6 +7,15 @@
 	- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.
 	- *BREAKING* - renamed moduleList to webpackDevserverModuleList.
 	- *BREAKING* - renamed protocol to hostProtocol.
+	- *BREAKING* - in the db config, it is now mandatory to specify "dbType"; it no longer defaults to 'postgres'.
+	- *BREAKING* - all client configs must be grouped in a "clients" object.
+	- *BREAKING* - all api configs must be grouped in an "apis" object.
+	- *BREAKING* - removed the "webpackDevserverModuleList" array; added a startWebpackDevserver variable to each client module config that does the same thing as the removed array.
+	- *BREAKING* - changed "pass" to "password" in the postgres config.
+	- *BREAKING* - changed "unauthorizedRedirectRoute" to "unauthorizedPageRedirectRoute" in the client modules config.
+	- *BREAKING* - added "redirectUnauthorizedPagesToNotFound" to the client modules config, which is required to be set to true if you want to redirect unauthorized layout and non-layout direct routes to the not found route. Previously this was the default behavior.
+	- *BREAKING* - renamed "useModuleConfigForAuthTokens" to "useApiModuleConfigForAuthTokens" in the client modules config.
+	- *BREAKING* - moved "wsPort" from the client modules config to the root config object.
 
 # 0.6.22
 - Updated the v1.0.0 roadmap with an additional feature.

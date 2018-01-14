@@ -36,8 +36,8 @@ class DBModule {
 			let components = instance.components
 
 			// load the database components (pg database)
-			if ((dbType === 'postgres') || !dbType) {
-				const sequelize = new Sequelize(postgres.database, postgres.user, postgres.pass, {
+			if (dbType === 'postgres') {
+				const sequelize = new Sequelize(postgres.database, postgres.user, postgres.password, {
 					host: postgres.host,
 					port: postgres.port,
 					dialect: 'postgres',

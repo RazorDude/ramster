@@ -112,6 +112,14 @@ const
 		}
 		return false
 	},
+	describeSuiteConditionally = (condition, suiteTest, suiteMethod) => {
+		if (condition) {
+			describe(suiteTest, suiteMethod)
+			return 1
+		}
+		describe.skip(suiteTest, suiteMethod)
+		return -1
+	},
 	emptyToNull = (data, outputData) => {
 		for (let key in data) {
 			let currentValue = null
@@ -175,4 +183,4 @@ const
 		return -1
 	}
 
-module.exports = {arraySort, changeKeyCase, checkRoutes, emptyToNull, getFolderSize, getNested, runTestConditionally}
+module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, getFolderSize, getNested, runTestConditionally}
