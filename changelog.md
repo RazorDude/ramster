@@ -16,6 +16,10 @@
 	- *BREAKING* - added "redirectUnauthorizedPagesToNotFound" to the client modules config, which is required to be set to true if you want to redirect unauthorized layout and non-layout direct routes to the not found route. Previously this was the default behavior.
 	- *BREAKING* - renamed "useModuleConfigForAuthTokens" to "useApiModuleConfigForAuthTokens" in the client modules config.
 	- *BREAKING* - moved "wsPort" from the client modules config to the root config object.
+	- *BREAKING* - removed the defaultConfig. From now on, ramster will blow up if you don't give it a config.
+- Added config templates.
+- Added templates for the users db module.
+- Added a codeGenerator module, which generates config files.
 
 # 0.6.22
 - Updated the v1.0.0 roadmap with an additional feature.

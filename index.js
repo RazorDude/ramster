@@ -15,10 +15,11 @@ const
 // ramster modules
 	{APIModule, BaseAPIComponent} = require('./modules/api'),
 	{ClientModule, BaseClientComponent} = require('./modules/client'),
+	CodeGenerator = require('./modules/codeGenerator'),
+	codeGenerator = new CodeGenerator(),
 	coreTests = require('./index.spec'),
 	csvPromise = require('./modules/csvPromise'),
 	{DBModule, BaseDBComponent} = require('./modules/db'),
-	defaultConfig = require('./defaults/config'),
 	Emails = require('./modules/emails'),
 	GeneralStore = require('./modules/generalStore'),
 	Logger = require('./modules/errorLogger'),
@@ -29,7 +30,7 @@ const
 class Core {
 	constructor(config) {
 		try {
-			this.config = config || defaultConfig
+			this.config = config
 			for (const testName in coreTests) {
 				this[testName] = coreTests[testName]
 			}
@@ -39,9 +40,10 @@ class Core {
 	}
 
 	loadDependencies() {
-		this.logger = new Logger(this.config)
-		this.generalStore = new GeneralStore(this.config)
-		this.tokenManager = new TokenManager({generalStore: this.generalStore})
+		// this.logger = new Logger(this.config)
+		// this.generalStore = new GeneralStore(this.config)
+		// this.tokenManager = new TokenManager({generalStore: this.generalStore})
+		this.codeGenerator = new CodeGenerator()
 	}
 
 	loadModules() {
@@ -56,8 +58,6 @@ class Core {
 			}
 			let db = instance.modules.db
 			yield db.loadComponents()
-
-			// load the db module
 			if (config.emails.customModulePath) {
 				let CustomMailClient = require(config.emails.customModulePath)
 				instance.mailClient = new CustomMailClient(config, db)
@@ -181,6 +181,8 @@ module.exports = {
 	BaseClientComponent,
 	BaseAPIComponent,
 	Core,
+	CodeGenerator,
+	codeGenerator,
 	csvPromise: new csvPromise(),
 	toolbelt
 }

@@ -63,6 +63,7 @@ class DBModule {
 					components[componentName].associate(components)
 				}
 
+				 //TODO: test if the seeding order is correct
 				sequelize.sync()
 			}
 
