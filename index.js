@@ -40,10 +40,10 @@ class Core {
 	}
 
 	loadDependencies() {
-		// this.logger = new Logger(this.config)
-		// this.generalStore = new GeneralStore(this.config)
-		// this.tokenManager = new TokenManager({generalStore: this.generalStore})
-		this.codeGenerator = new CodeGenerator()
+		this.logger = new Logger(this.config)
+		this.generalStore = new GeneralStore(this.config)
+		this.tokenManager = new TokenManager({generalStore: this.generalStore})
+		this.codeGenerator = new CodeGenerator(this.config)
 	}
 
 	loadModules() {

@@ -9,21 +9,82 @@ module.exports = {
 	testMe: function() {
 		const instance = this
 		describe('codeGenerator', function() {
-			it('testGenerateConfigFile should execute successfully', function() {
+			it('should execute testCheckConfig successfully', function() {
+				instance.testCheckConfig()
+				assert(true)
+			})
+			it('should execute testGenerateConfigFile successfully', function() {
 				instance.testGenerateConfigFile()
 				assert(true)
 			})
-			it('testGenerateIndexConfigFile should execute successfully', function() {
+			it('should execute testGenerateIndexConfigFile successfully', function() {
 				instance.testGenerateIndexConfigFile()
 				assert(true)
 			})
-			it('testGenerateCommonConfigFile should execute successfully', function() {
+			it('should execute testGenerateCommonConfigFile successfully', function() {
 				instance.testGenerateCommonConfigFile()
 				assert(true)
 			})
-			it('testGenerateProfileConfigFile should execute successfully', function() {
+			it('should execute testGenerateProfileConfigFile successfully', function() {
 				instance.testGenerateProfileConfigFile()
 				assert(true)
+			})
+			it('should execute testGenerateProfileConfigFile successfully', function() {
+				instance.testGenerateProfileConfigFile()
+				assert(true)
+			})
+			it('should execute testBuildLayoutFile successfully', function() {
+				instance.testBuildLayoutFile()
+				assert(true)
+			})
+			it('should execute testGenerateImagesRedirectNGINXConfig successfully', function() {
+				instance.testGenerateImagesRedirectNGINXConfig()
+				assert(true)
+			})
+			it('should execute testGenerateNGINXConfig successfully', function() {
+				instance.testGenerateNGINXConfig()
+				assert(true)
+			})
+		})
+	},
+	testCheckConfig: function() {
+		const instance = this
+		describe('checkConfig', function() {
+			it('should return true if the config is an object and is not null', function() {
+				assert(instance.checkConfig({}))
+			})
+			it('should throw an error if the config is null or not an object', function() {
+				let threwAnError = false
+				try {
+					instance.checkConfig()
+				} catch (e) {
+					threwAnError = true
+				}
+				assert(threwAnError)
+			})
+			it('should return true if the sub-config for the provided client module is an object and is not null', function() {
+				assert(instance.checkConfig({clients: {test: {}}}, {clientModuleName: 'test'}))
+			})
+			it('should throw an error if the config does not have sub-config for the provided client module', function() {
+				let threwAnError = false
+				try {
+					instance.checkConfig({}, {clientModuleName: 'test'})
+				} catch (e) {
+					threwAnError = true
+				}
+				assert(threwAnError)
+			})
+			it('should return true if the sub-config for the provided api module is an object and is not null', function() {
+				assert(instance.checkConfig({apis: {test: {}}}, {apiModuleName: 'test'}))
+			})
+			it('should throw an error if the config does not have sub-config for the provided api module', function() {
+				let threwAnError = false
+				try {
+					instance.checkConfig({}, {apiModuleName: 'test'})
+				} catch (e) {
+					threwAnError = true
+				}
+				assert(threwAnError)
 			})
 		})
 	},
@@ -147,7 +208,19 @@ module.exports = {
 	testGenerateProfileConfigFile: function() {
 		const instance = this
 		describe('generateProfileConfigFile', function() {
-			it('should execute successfully', function() {
+			it('should throw an error when the profileName argument is not a string or is empty', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.generateProfileConfigFile(path.join(__dirname, './test', 'local'))
+					} catch(e) {
+						didThrowAnError = true
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully, if all parameters are correct', function() {
 				return co(function*() {
 					let outputPath = path.join(__dirname, './test', 'local')
 					yield instance.generateProfileConfigFile(outputPath, 'local')
@@ -161,6 +234,113 @@ module.exports = {
 						return false
 					}
 					yield fs.remove(path.join(__dirname, './test'))
+					assert(true)
+					return true
+				})
+			})
+		})
+	},
+	testBuildLayoutFile: function() {
+		const instance = this
+		describe('buildLayoutFile', function() {
+			it('should throw an error when the clientModuleName argument is not a string or is empty', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.buildLayoutFile()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully, if all parameters are correct', function() {
+				return co(function*() {
+					let outputPath = path.join(__dirname, '../../test/public/site/layout.html')
+					yield instance.buildLayoutFile('site')
+					let fileData = yield fs.lstat(outputPath)
+					if (!fileData.isFile()) {
+						try {
+							yield fs.remove(outputPath)
+						} catch (e) {
+						}
+						assert(false)
+						return false
+					}
+					yield fs.remove(outputPath)
+					assert(true)
+					return true
+				})
+			})
+		})
+	},
+	testGenerateImagesRedirectNGINXConfig: function() {
+		const instance = this
+		describe('generateImagesRedirectNGINXConfig', function() {
+			it('should throw an error when the outputPath argument is not a string or is empty', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.generateImagesRedirectNGINXConfig()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error when the outputPath argument points to a file, rather than a directory', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.generateImagesRedirectNGINXConfig(path.join(__dirname, './index.js'))
+					} catch(e) {
+						didThrowAnError = true
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully, if all parameters are correct', function() {
+				return co(function*() {
+					let outputPath = path.join(__dirname, './test'),
+						outputFilePath = path.join(outputPath, './images.conf')
+					yield instance.generateImagesRedirectNGINXConfig(outputPath)
+					let fileData = yield fs.lstat(outputFilePath)
+					if (!fileData.isFile()) {
+						try {
+							yield fs.remove(outputFilePath)
+						} catch (e) {
+						}
+						assert(false)
+						return false
+					}
+					yield fs.remove(outputFilePath)
+					assert(true)
+					return true
+				})
+			})
+		})
+	},
+	testGenerateNGINXConfig: function() {
+		const instance = this
+		describe('generateNGINXConfig', function() {
+			it('should throw an error when the clientModuleName argument is not a string or is empty', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.generateNGINXConfig()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully, if all parameters are correct', function() {
+				return co(function*() {
+					yield instance.generateNGINXConfig('site')
 					assert(true)
 					return true
 				})

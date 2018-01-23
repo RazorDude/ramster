@@ -18,8 +18,10 @@
 	- *BREAKING* - moved "wsPort" from the client modules config to the root config object.
 	- *BREAKING* - removed the defaultConfig. From now on, ramster will blow up if you don't give it a config.
 - Added config templates.
-- Added templates for the users db module.
-- Added a codeGenerator module, which generates config files.
+- Added templates for the following db modules: users.
+- Added a codeGenerator module, which generates config files, client server layout files and nginx config. Added tests for it.
+- Added an .npmignore file, that keeps the "test" folder out of the final package (it's for testing ramster and you don't need it in the build). It's still in the repo, though.
+- Removed the buildLayoutFile and generateNGINXConfig methods from the client module, as the codeGenerator now covers this functionality.
 
 # 0.6.22
 - Updated the v1.0.0 roadmap with an additional feature.

@@ -10,82 +10,15 @@ const
 	express = require('express'),
 	expressSession = require('express-session'),
 	fs = require('fs-extra'),
-	handlebars = require('handlebars'),
 	http = require('http'),
 	multipart = require('connect-multiparty'),
 	path = require('path'),
-	pug = require('pug'),
 	requestLogger = require('morgan'),
 	wrap = require('co-express')
 
 class ClientModule extends BaseServerModule {
 	constructor(config, moduleName, options) {
 		super(config, moduleName, 'client', options)
-	}
-
-	generateNGINXConfig() {
-		let instance = this
-		return co(function*() {
-			const {serverPort, nodeProxyProtocol, nodeProxyHostAddress, nodeProxyServerPort, publicPath, prependWSServerConfigFromFiles, appendWSServerConfigFromFiles, webpackHost, webpackBuildFolderName} = instance.moduleConfig,
-				{projectName, wsPort, wsConfigFolderPath, mountGlobalStorageInWebserver, globalStoragePath, hostProtocol, hostAddress} = instance.config
-			let configFilePath = path.join(wsConfigFolderPath, `${projectName}-${instance.moduleName}.conf`),
-				configFile = yield fs.open(configFilePath, 'w'),
-				prependToServerConfig = '',
-				appendToServerConfig = '',
-				bundleConfig = ''
-
-			if (prependWSServerConfigFromFiles instanceof Array) {
-				for (const i in prependWSServerConfigFromFiles) {
-					prependToServerConfig += (yield fs.readFile(prependWSServerConfigFromFiles[i])).toString()
-				}
-			}
-
-			if (appendWSServerConfigFromFiles instanceof Array) {
-				for (const i in appendWSServerConfigFromFiles) {
-					appendToServerConfig += (yield fs.readFile(appendWSServerConfigFromFiles[i])).toString()
-				}
-			}
-
-			if (mountGlobalStorageInWebserver) {
-				let template = handlebars.compile((yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-global-storage.config.conf'))).toString())
-				prependToServerConfig += template({globalStoragePath: globalStoragePath.replace(/\\/g, '\\\\')})
-			}
-
-			if (webpackHost) {
-				let template = handlebars.compile((yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-bundle.config.conf'))).toString())
-				bundleConfig += template({webpackHost, webpackFolder: webpackBuildFolderName || 'dist'})
-			}
-
-			let template = handlebars.compile((yield fs.readFile(path.join(__dirname, './nginxConfig/nginx-main.config.conf'))).toString())
-			yield fs.writeFile(configFile, template({
-				listeningPort: wsPort,
-				serverName: hostAddress,
-				serverRoot: /^win/.test(process.platform) ? publicPath.replace(/\\/g, '\\\\') : publicPath,
-				prependToServerConfig,
-				appendToServerConfig,
-				bundleConfig,
-				nodeProxyProtocol: nodeProxyProtocol || hostProtocol,
-				nodeProxyHostAddress: nodeProxyHostAddress || hostAddress,
-				nodeProxyServerPort: nodeProxyServerPort || serverPort
-			}))
-			yield fs.close(configFile)
-
-			return true
-		})
-	}
-
-	buildLayoutFile() {
-		let instance = this
-		return co(function*() {
-			const {config, moduleName, moduleConfig} = instance
-			let publicSourcesPath = path.join(config.clientModulesPublicSourcesPath, moduleName),
-				layoutData = (pug.compileFile(path.join(publicSourcesPath, 'layout_' + config.name + '.pug'), {}))(),
-				layoutFilePath = path.join(moduleConfig.publicPath, 'layout.html'),
-				layoutFile = yield fs.open(layoutFilePath, 'w')
-			yield fs.writeFile(layoutFile, layoutData)
-			yield fs.close(layoutFile)
-			return true
-		})
 	}
 
 	mountRoutes({sessionStore}) {

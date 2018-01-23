@@ -11,19 +11,19 @@ module.exports = {
 	testMe: function() {
 		const instance = this
 		describe('core', function() {
-			it.skip('testConfig should execute successfully', function() {
+			it('should execute testConfig successfully', function() {
 				instance.testConfig()
 				assert(true)
 			})
-			it('testLoadDependencies should execute successfully', function() {
+			it('should execute testLoadDependencies successfully', function() {
 				instance.testLoadDependencies()
 				assert(true)
 			})
-			it.skip('testLoadModules should execute successfully', function() {
+			it.skip('should execute testLoadModules successfully', function() {
 				instance.testLoadModules()
 				assert(true)
 			})
-			it.skip('testListen should execute successfully', function() {
+			it.skip('should execute testListen successfully', function() {
 				instance.testListen()
 				assert(true)
 			})
@@ -137,9 +137,11 @@ module.exports = {
 						const clientConfig = clientsConfig[clientModuleName],
 							notFoundRedirectRoutesConfig = clientConfig.notFoundRedirectRoutes,
 							prependWSServerConfigFromFilesConfig = clientConfig.prependWSServerConfigFromFiles,
+							appendWSServerConfigFromFilesConfig = clientConfig.appendWSServerConfigFromFiles,
 							sessionConfig = clientConfig.session
 						let hasNotFoundRedirectRoutesConfig = (typeof notFoundRedirectRoutesConfig === 'object') && (notFoundRedirectRoutesConfig !== null),
-							hasPrependWSServerConfigFromFiles = typeof prependWSServerConfigFromFilesConfig !== 'undefined'
+							hasPrependWSServerConfigFromFiles = typeof prependWSServerConfigFromFilesConfig !== 'undefined',
+							hasAppendWSServerConfigFromFiles = typeof appendWSServerConfigFromFilesConfig !== 'undefined'
 						describe(`${clientModuleName} config`, function() {
 							it('should have a valid directory inside the clientModulesPath', function() {
 								return co(function*() {
@@ -216,6 +218,31 @@ module.exports = {
 										let allAreFiles = true
 										for (const i in prependWSServerConfigFromFilesConfig) {
 											let fileStats = yield fs.lstat(prependWSServerConfigFromFilesConfig[i])
+											if (!fileStats.isFile()) {
+												allAreFiles = false
+												break
+											}
+										}
+										assert(allAreFiles)
+										return true
+									})
+								}
+							)
+							runTestConditionally(
+								hasAppendWSServerConfigFromFiles,
+								'should have an array at appendWSServerConfigFromFiles, if specified',
+								function() {
+									assert(appendWSServerConfigFromFilesConfig instanceof Array)
+								}
+							)
+							runTestConditionally(
+								hasAppendWSServerConfigFromFiles,
+								'should have an existing file at every appendWSServerConfigFromFiles path, if appendWSServerConfigFromFiles is specified',
+								function() {
+									return co(function*() {
+										let allAreFiles = true
+										for (const i in appendWSServerConfigFromFilesConfig) {
+											let fileStats = yield fs.lstat(appendWSServerConfigFromFilesConfig[i])
 											if (!fileStats.isFile()) {
 												allAreFiles = false
 												break
@@ -404,17 +431,6 @@ module.exports = {
 						assert((typeof csvFileDelimiter === 'string') && (csvFileDelimiter.length > 0))
 					}
 				)
-				runTestConditionally(
-					config.cronJobs && (typeof config.cronJobs.path !== 'undefined'),
-					'should have a valid directory at the cronJobs path, if specified',
-						function() {
-						return co(function*() {
-							let dirStats = yield fs.lstat(config.cronJobs.path)
-							assert(dirStats.isDirectory())
-							return true
-						})
-					}
-				)
 			})
 
 
@@ -506,7 +522,7 @@ module.exports = {
 						return true
 					})
 				})
-				it('should have a valid index.js file in the directory at the cronJobs path, if cronJobs config is provided', function() {
+				it('should have an index.js file in the directory at the cronJobs path, if cronJobs config is provided', function() {
 					return co(function*() {
 						let dirContents = yield fs.readdir(cronJobsConfig.path),
 							hasIndexJsFile = false
@@ -573,11 +589,11 @@ module.exports = {
 	testLoadDependencies: function() {
 		const instance = this
 		describe('dependencies', function() {
-			it('loadDependencies should execute successfully', function() {
+			it('should execute loadDependencies successfully', function() {
 				instance.loadDependencies()
 				assert(true)
 			})
-			it('codeGenerator.testMe should execute successfully', function() {
+			it('codeGenerator.should execute testMe successfully', function() {
 				instance.codeGenerator.testMe()
 				assert(true)
 			})
