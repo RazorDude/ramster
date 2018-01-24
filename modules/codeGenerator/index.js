@@ -141,19 +141,19 @@ class CodeGenerator {
 					nodeProxyProtocol,
 					nodeProxyHostAddress,
 					nodeProxyServerPort,
-					publicPath,
 					prependWSServerConfigFromFiles,
 					appendWSServerConfigFromFiles,
 					webpackHost,
 					webpackBuildFolderName
 				} = moduleConfig,
-				{projectName, wsPort, wsConfigFolderPath, mountGlobalStorageInWebserver, globalStoragePath, addDistToStaticConfigInWebserver, hostProtocol, hostAddress} = config
+				{projectName, clientModulesPublicPath, wsPort, wsConfigFolderPath, mountGlobalStorageInWebserver, globalStoragePath, addDistToStaticConfigInWebserver, hostProtocol, hostAddress} = config
 			let configFilePath = path.join(wsConfigFolderPath, `${projectName}-${clientModuleName}.conf`),
 				configFile = yield fs.open(configFilePath, 'w'),
 				prependToServerConfig = '',
 				appendToServerConfig = '',
 				bundleConfig = '',
-				distToStaticConfig = ''
+				distToStaticConfig = '',
+				publicPath = path.join(clientModulesPublicPath, clientModuleName)
 
 			if (prependWSServerConfigFromFiles instanceof Array) {
 				for (const i in prependWSServerConfigFromFiles) {

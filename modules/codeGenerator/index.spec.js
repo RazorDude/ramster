@@ -324,7 +324,8 @@ module.exports = {
 		})
 	},
 	testGenerateNGINXConfig: function() {
-		const instance = this
+		const instance = this,
+			{config} = this
 		describe('generateNGINXConfig', function() {
 			it('should throw an error when the clientModuleName argument is not a string or is empty', function() {
 				return co(function*() {
@@ -340,8 +341,16 @@ module.exports = {
 			})
 			it('should execute successfully, if all parameters are correct', function() {
 				return co(function*() {
+					let isAFile = false
 					yield instance.generateNGINXConfig('site')
-					assert(true)
+					let configFilePath = path.join(config.wsConfigFolderPath, `${config.projectName}-site.conf`),
+						fileStats = yield fs.lstat(configFilePath)
+					isAFile = fileStats.isFile()
+					try {
+						yield fs.remove(configFilePath)
+					} catch (e) {
+					}
+					assert(isAFile)
 					return true
 				})
 			})
