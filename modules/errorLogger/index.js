@@ -1,16 +1,20 @@
 'use strict'
 const
 	path = require('path'),
+	spec = require('./index.spec'),
 	winston = require('winston')
 
 class Logger {
-	constructor(cfg) {
-		this.cfg = cfg
+	constructor(config) {
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
+		this.config = config
 		this.logger = new winston.Logger({
 			transports: [
 				new winston.transports.File({
 					level: 'error',
-					filename: path.join(this.cfg.logsPath, 'error.log'),
+					filename: path.join(this.config.logsPath, 'error.log'),
 					handleExceptions: true,
 					json: true,
 					maxsize: 5242880, //5MB

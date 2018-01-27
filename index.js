@@ -50,6 +50,7 @@ class Core {
 		let instance = this
 		return co(function*() {
 			const {config, logger, generalStore, tokenManager} = instance
+			yield generalStore.createClient()
 			// load and set up the db module
 			instance.modules = {
 				db: new DBModule(config, {logger, generalStore, tokenManager}),

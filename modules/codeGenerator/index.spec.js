@@ -49,7 +49,7 @@ module.exports = {
 	},
 	testCheckConfig: function() {
 		const instance = this
-		describe('checkConfig', function() {
+		describe('codeGenerator.checkConfig', function() {
 			it('should return true if the config is an object and is not null', function() {
 				assert(instance.checkConfig({}))
 			})
@@ -90,7 +90,7 @@ module.exports = {
 	},
 	testGenerateConfigFile: function() {
 		const instance = this
-		describe('generateConfigFile', function() {
+		describe('codeGenerator.generateConfigFile', function() {
 			it('should throw an error if the provided outputPath already exists by is not a directory', function() {
 				return co(function*() {
 					let threwAnError = false
@@ -161,7 +161,7 @@ module.exports = {
 	},
 	testGenerateIndexConfigFile: function() {
 		const instance = this
-		describe('generateIndexConfigFile', function() {
+		describe('codeGenerator.generateIndexConfigFile', function() {
 			it('should execute successfully', function() {
 				return co(function*() {
 					let outputPath = path.join(__dirname, './test')
@@ -184,7 +184,7 @@ module.exports = {
 	},
 	testGenerateCommonConfigFile: function() {
 		const instance = this
-		describe('generateCommonConfigFile', function() {
+		describe('codeGenerator.generateCommonConfigFile', function() {
 			it('should execute successfully', function() {
 				return co(function*() {
 					let outputPath = path.join(__dirname, './test')
@@ -207,7 +207,7 @@ module.exports = {
 	},
 	testGenerateProfileConfigFile: function() {
 		const instance = this
-		describe('generateProfileConfigFile', function() {
+		describe('codeGenerator.generateProfileConfigFile', function() {
 			it('should throw an error when the profileName argument is not a string or is empty', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -242,7 +242,7 @@ module.exports = {
 	},
 	testBuildLayoutFile: function() {
 		const instance = this
-		describe('buildLayoutFile', function() {
+		describe('codeGenerator.buildLayoutFile', function() {
 			it('should throw an error when the clientModuleName argument is not a string or is empty', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -277,7 +277,7 @@ module.exports = {
 	},
 	testGenerateImagesRedirectNGINXConfig: function() {
 		const instance = this
-		describe('generateImagesRedirectNGINXConfig', function() {
+		describe('codeGenerator.generateImagesRedirectNGINXConfig', function() {
 			it('should throw an error when the outputPath argument is not a string or is empty', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -326,7 +326,7 @@ module.exports = {
 	testGenerateNGINXConfig: function() {
 		const instance = this,
 			{config} = this
-		describe('generateNGINXConfig', function() {
+		describe('codeGenerator.generateNGINXConfig', function() {
 			it('should throw an error when the clientModuleName argument is not a string or is empty', function() {
 				return co(function*() {
 					let didThrowAnError = false

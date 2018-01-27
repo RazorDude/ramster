@@ -19,6 +19,22 @@ module.exports = {
 				instance.testLoadDependencies()
 				assert(true)
 			})
+			it('should execute testErrorLogger successfully', function() {
+				instance.testErrorLogger()
+				assert(true)
+			})
+			it('should execute testGeneralStore successfully', function() {
+				instance.testGeneralStore()
+				assert(true)
+			})
+			it('should execute testTokenManager successfully', function() {
+				instance.testTokenManager()
+				assert(true)
+			})
+			it('should execute testCodeGenerator successfully', function() {
+				instance.testCodeGenerator()
+				assert(true)
+			})
 			it.skip('should execute testLoadModules successfully', function() {
 				instance.testLoadModules()
 				assert(true)
@@ -32,7 +48,7 @@ module.exports = {
 	testConfig: function() {
 		const instance = this,
 			config = this.config
-		describe('config', function() {
+		describe('core.config', function() {
 			describe('general items', function() {
 				it('should have a non-empty projectName string', function() {
 					const projectName = config.projectName
@@ -588,12 +604,44 @@ module.exports = {
 	},
 	testLoadDependencies: function() {
 		const instance = this
-		describe('dependencies', function() {
+		describe('core.dependencies', function() {
 			it('should execute loadDependencies successfully', function() {
 				instance.loadDependencies()
 				assert(true)
 			})
-			it('codeGenerator.should execute testMe successfully', function() {
+		})
+	},
+	testErrorLogger: function() {
+		const instance = this
+		describe('core.errorLogger', function() {
+			it('should execute testMe successfully', function() {
+				instance.logger.testMe()
+				assert(true)
+			})
+		})
+	},
+	testGeneralStore: function() {
+		const instance = this
+		describe('core.generalStore', function() {
+			it('should execute testMe successfully', function() {
+				instance.generalStore.testMe()
+				assert(true)
+			})
+		})
+	},
+	testTokenManager: function() {
+		const instance = this
+		describe('core.tokenManager', function() {
+			it('should execute testMe successfully', function() {
+				instance.tokenManager.testMe()
+				assert(true)
+			})
+		})
+	},
+	testCodeGenerator: function() {
+		const instance = this
+		describe('core.codeGenerator', function() {
+			it('should execute testMe successfully', function() {
 				instance.codeGenerator.testMe()
 				assert(true)
 			})
@@ -601,7 +649,7 @@ module.exports = {
 	},
 	testLoadModules: function() {
 		const instance = this
-		describe('loadModules', function() {
+		describe('core.loadModules', function() {
 			it('should execute successfully', function() {
 				return co(function*() {
 					yield instance.loadModules()

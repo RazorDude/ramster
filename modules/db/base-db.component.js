@@ -5,14 +5,14 @@ const
 	moment = require('moment')
 
 class BaseDBComponent {
-	constructor({mailClient, cfg, logger}) {
+	constructor({mailClient, config, logger}) {
 		this.defaults = {
 			orderBy: 'id',
 			orderDirection: 'DESC',
 			page: 1,
 			perPage: 10
 		}
-		this.cfg = cfg
+		this.config = config
 		this.logger = logger
 		this.allowedFilterKeywordOperators = ['$not', '$gt', '$gte', '$lt', '$lte']
 	}

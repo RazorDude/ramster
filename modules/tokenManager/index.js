@@ -1,87 +1,110 @@
 const
 	co = require('co'),
-	jwt = require('jsonwebtoken')
+	jwt = require('jsonwebtoken'),
+	spec = require('./index.spec')
 
 class TokenManager{
 	constructor({generalStore}) {
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
 		this.generalStore = generalStore
 	}
 
-	signToken({userId, userData, secret, expiresInMinutes}) {
+	signToken(userData, secret, expiresInMinutes) {
 		return new Promise((resolve, reject) => {
-			let tokenData = {}
-			if ((typeof userData === 'object') && (userData !== null)) {
-				tokenData = userData
-			} else {
-				tokenData.id = userId
+			if ((typeof userData !== 'object') || (userData === null) || !Object.keys(userData).length) {
+				throw {customMessage: 'Invalid userData object provided.'}
+			}
+			if ((typeof secret !== 'string') || !secret.length) {
+				throw {customMessage: 'Invalid secret string provided.'}
 			}
 			if (expiresInMinutes) {
-				jwt.sign(tokenData, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
+				let expiresInMinutesFloat = parseFloat(expiresInMinutes)
+				if (expiresInMinutesFloat <= 0) {
+					throw {customMessage: 'The token expiry time must be greater than 0.'}
+				}
+				jwt.sign(userData, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
 					if (err) {
 						reject({customMessage: 'Failed to sign token.', status: 401})
-						return;
+						return
 					}
 					resolve(token)
 				})
 			}
-			jwt.sign(tokenData, secret, null, (err, token) => {
+			jwt.sign(userData, secret, null, (err, token) => {
 				if (err) {
 					reject({customMessage: 'Failed to sign token.', status: 401})
-					return;
+					return
 				}
 				resolve(token)
 			})
 		})
 	}
 
-	verifyToken({token, secret}) {
+	verifyToken(token, secret) {
 		return new Promise((resolve, reject) => {
+			if ((typeof token !== 'string') || !token.length) {
+				reject({customMessage: 'Invalid token provided.'})
+			}
+			if ((typeof secret !== 'string') || !secret.length) {
+				reject({customMessage: 'Invalid secret string provided.'})
+			}
 			jwt.verify(token, secret, (err, decoded) => {
 				if (err) {
 					if (err.name === 'TokenExpiredError') {
 						reject({tokenExpired: true})
-						return;
+						return
 					}
 					reject({customMessage: 'Failed to verify token.', status: 401})
-					return;
+					return
 				}
 				resolve(decoded)
 			})
 		})
 	}
 
-	createToken({type, userId, userData, secret, moduleName, expiresInMinutes}) {
-		let instance = this
+	createToken(type, userData, secret, moduleName, expiresInMinutes) {
+		const instance = this
 		return co(function* () {
-			let actualUserId = userData && userData.id || userId
+			if ((typeof userData !== 'object') || (userData === null) || !Object.keys(userData).length || !userData.id) {
+				throw {customMessage: 'Invalid userData object provided.'}
+			}
+			if ((typeof secret !== 'string') || !secret.length) {
+				throw {customMessage: 'Invalid secret string provided.'}
+			}
+			if ((typeof moduleName !== 'string') || !moduleName.length) {
+				throw {customMessage: 'Invalid moduleName string provided.'}
+			}
+			let userId = userData.id
 			if (type === 'access') {
-				let token = yield instance.signToken({userId, userData, secret, expiresInMinutes}),
-					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}AccessToken`)
+				let token = yield instance.signToken(userData, secret, expiresInMinutes),
+					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
 				if (currentToken) {
-					yield instance.generalStore.removeEntry(`${moduleName}user${actualUserId}AccessToken`)
+					yield instance.generalStore.removeEntry(`${moduleName}user${userId}AccessToken`)
 					yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentToken}`, true)
 				}
-				yield instance.generalStore.storeEntry(`${moduleName}user${actualUserId}AccessToken`, token)
+				yield instance.generalStore.storeEntry(`${moduleName}user${userId}AccessToken`, token)
 				return token
 			}
 
 			if (type === 'refresh') {
-				let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}AccessToken`)
+				let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`)
 				if (!currentAccessToken) {
 					throw {customMessage: 'No access token to create a refresh token for.'}
 				}
 
-				let token = yield instance.signToken({userId, userData, secret}),
-					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`)
+				let token = yield instance.signToken(userData, secret),
+					currentToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 				if (currentToken) {
 					yield instance.generalStore.storeEntry(`${moduleName}refreshTokenBlacklist-${currentToken}`, true)
-					yield instance.generalStore.removeEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`)
+					yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 				}
-				yield instance.generalStore.storeEntry(`${moduleName}user${actualUserId}RefreshTokenForAccessToken${currentAccessToken}`, token)
+				yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`, token)
 				return token
 			}
 
-			return null
+			throw {customMessage: 'Invalid token type provided.'}
 		})
 	}
 
@@ -112,7 +135,7 @@ class TokenManager{
 
 				co(function* () {
 					try {
-						let decoded = yield instance.verifyToken({token: tokens[1], secret: config.jwt.secret})
+						let decoded = yield instance.verifyToken(tokens[1], config.jwt.secret)
 						if (!decoded.id) {
 							throw {customMessage: 'Invalid access token.', status: 401}
 						}
@@ -135,7 +158,7 @@ class TokenManager{
 								throw {customMessage: `Access token expired.${config.jwt.useRefreshTokens ? 'No refresh token provided.' : ''}`, status: 401}
 							}
 
-							let decoded = yield instance.verifyToken({token: tokens[2], secret: config.jwt.secret})
+							let decoded = yield instance.verifyToken(tokens[2], config.jwt.secret)
 							if (!decoded.id) {
 								throw {customMessage: 'Invalid access token. Invalid refresh token.', status: 401}
 							}
@@ -148,7 +171,7 @@ class TokenManager{
 								throw {customMessage: 'Invalid access token. Invalid refresh token.', status: 401}
 							}
 
-							let newAccessToken = yield req.locals.tokenManager.createToken({type: 'access', userId: user.id, secret: config.jwt.secret, expiresInMinutes: config.jwt.accessTokenExpiresInMinutes})
+							let newAccessToken = yield req.locals.tokenManager.createToken('access', user.id, config.jwt.secret, config.jwt.accessTokenExpiresInMinutes)
 							yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 							yield instance.generalStore.storeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${newAccessToken}`, currentRefreshToken)
 
@@ -199,15 +222,21 @@ class TokenManager{
 		}
 	}
 
-	deleteTokens({userId, moduleName}) {
-		let instance = this
+	deleteTokens(userId, moduleName) {
+		const instance = this
 		return co(function* () {
+			if (!parseInt(userId, 10)) {
+				throw {customMessage: 'Invalid userId.'}
+			}
+			if ((typeof moduleName !== 'string') || !moduleName.length) {
+				throw {customMessage: 'Invalid moduleName string provided.'}
+			}
 			let currentAccessToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}AccessToken`),
 				currentRefreshToken = yield instance.generalStore.getStoredEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
 			yield instance.generalStore.removeEntry(`${moduleName}user${userId}AccessToken`)
 			yield instance.generalStore.removeEntry(`${moduleName}user${userId}RefreshTokenForAccessToken${currentAccessToken}`)
-			yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentAccessToken}`)
-			yield instance.generalStore.storeEntry(`${moduleName}refreshTokenBlacklist-${currentRefreshToken}`)
+			yield instance.generalStore.storeEntry(`${moduleName}accessTokenBlacklist-${currentAccessToken}`, true)
+			yield instance.generalStore.storeEntry(`${moduleName}refreshTokenBlacklist-${currentRefreshToken}`, true)
 			return true
 		})
 	}
