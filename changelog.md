@@ -23,8 +23,10 @@
 - Added an .npmignore file, that keeps the "test" folder out of the final package (it's for testing ramster and you don't need it in the build). It's still in the repo, though.
 - Removed the buildLayoutFile and generateNGINXConfig methods from the client module, as the codeGenerator now covers this functionality.
 - *BREAKING* - Renamed cfg to config in db modules.
+- *BREAKING* - Renamed cfg and settings to config in client modules.
 - Added tests and validations to the generalStore and errorLogger modules.
 - A number of changes in the tokenManager, many of them *BREAKING*:
+	- *BREAKING* - the constructor is now in the format (config, generalStore, errorLogger), rather than ({generalStore}).
 	- *BREAKING* - signToken is now in the format signToken(userData, secret[, expiresInMinutes]), rather than signToken({userId, userData, secret, expiresInMinutes}).
 	- *BREAKING* - userId removed from signToken options; userData is now required, must be an object and must contain at least one key.
 	- *BREAKING* - verifyToken is now in the format verifyToken(token, secret), rather than verifyToken({token, secret}).
@@ -32,6 +34,8 @@
 	- *BREAKING* - deleteToken is now in the format deleteTokens(userId, moduleName), rather than deleteTokens({userId, moduleName}).
 	- Added extra validations for the input parameters in all methods.
 	- Made some consistency and deprecation fixes.
+	- Fixed numerous errors in the refresh token functionality (validate method).
+- Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis).
 
 # 0.6.22
 - Updated the v1.0.0 roadmap with an additional feature.
