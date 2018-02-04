@@ -38,7 +38,7 @@ module.exports = {
 	},
 	db: {
 		modulePath: path.join(__dirname, '../modules/db'),
-		dbType: 'postgres',
+		dbType: 'postgreSQL',
 		seedingOrder: [
 			'modules', 'roles', 'keyAccessPoints', 'users'
 		]

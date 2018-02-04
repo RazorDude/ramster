@@ -19,11 +19,11 @@ module.exports = {
 	hostAddress,
 	wsPort: site.wsPort,
 	wsConfigFolderPath: 'c:\\programs\\nginx\\conf',
-	postgres: {
-		user: 'postgres',
-		password: 'postgres',
+	postgreSQL: {
 		host: '127.0.0.1',
 		port: 5432,
+		user: 'postgres',
+		password: 'postgres',
 		database: 'ramster_v1',
 		schema: 'public',
 		logging: true

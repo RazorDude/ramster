@@ -11,7 +11,7 @@
 	- *BREAKING* - all client configs must be grouped in a "clients" object.
 	- *BREAKING* - all api configs must be grouped in an "apis" object.
 	- *BREAKING* - removed the "webpackDevserverModuleList" array; added a startWebpackDevserver variable to each client module config that does the same thing as the removed array.
-	- *BREAKING* - changed "pass" to "password" in the postgres config.
+	- *BREAKING* - changed "pass" to "password" in the postgreSQL config.
 	- *BREAKING* - changed "unauthorizedRedirectRoute" to "unauthorizedPageRedirectRoute" in the client modules config.
 	- *BREAKING* - added "redirectUnauthorizedPagesToNotFound" to the client modules config, which is required to be set to true if you want to redirect unauthorized layout and non-layout direct routes to the not found route. Previously this was the default behavior.
 	- *BREAKING* - renamed "useModuleConfigForAuthTokens" to "useApiModuleConfigForAuthTokens" in the client modules config.
@@ -22,10 +22,11 @@
 - Added a codeGenerator module, which generates config files, client server layout files and nginx config files. Added tests for it.
 - Added an .npmignore file, that keeps the "test" folder out of the final package (it's for testing ramster and you don't need it in the build). It's still in the repo, though.
 - Removed the buildLayoutFile and generateNGINXConfig methods from the client module, as the codeGenerator now covers this functionality.
-- *BREAKING* - Renamed cfg to config in db modules.
+- *BREAKING* - loadDependencies now returns a promise that must be handled. This was done so that generalStore.createClient() can be called before the modules that depend on the generalStore and loaded.
+- *BREAKING* - removed the loadModules method and broke it down into four separate ones - loadDB, loadMailClient, loadClients and loadAPIs. This way it's easier to debug and test the ramster initialization process.
 - *BREAKING* - Renamed cfg and settings to config in client modules.
 - Added tests and validations to the generalStore and errorLogger modules.
-- A number of changes in the tokenManager, many of them *BREAKING*:
+- tokenManager:
 	- *BREAKING* - the constructor is now in the format (config, generalStore, errorLogger), rather than ({generalStore}).
 	- *BREAKING* - signToken is now in the format signToken(userData, secret[, expiresInMinutes]), rather than signToken({userId, userData, secret, expiresInMinutes}).
 	- *BREAKING* - userId removed from signToken options; userData is now required, must be an object and must contain at least one key.
@@ -36,6 +37,16 @@
 	- Made some consistency and deprecation fixes.
 	- Fixed numerous errors in the refresh token functionality (validate method).
 - Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis).
+- DB module and components:
+	- *BREAKING* - the constructor is now in the format constructor(config, logger, generalStore, tokenManager), rather than constructor(config, {logger, generalStore, tokenManager}).
+	- *BREAKING* - migrated to sequelize v4. See their migration guide for further info.
+	- *BREAKING* - renamed cfg to config.
+	- *BREAKING* - renamed all occurences of "postgres" (except for the default root user & pass for postgreSQL) to "postgreSQL".
+	- *BREAKING* - renamed the component.associate method to component.rawAssociate. It still uses model.associate, though.
+	- *BREAKING* - the base-db.component contructor is now in the format constructor(), rather than constructor({logger, config, mailClient}).
+	- *BREAKING* - removed logger, config and mailClient from the base-db.component (and all db componennts, subsequentially), as they're all accessible as properties in each dbComponent's db property.
+	- Added a lot of tests, complete code coverage.
+- The db module is no longer required to successfully run and use the emails module.
 
 # 0.6.22
 - Updated the v1.0.0 roadmap with an additional feature.

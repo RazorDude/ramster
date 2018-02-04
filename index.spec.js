@@ -27,7 +27,7 @@ module.exports = {
 				instance.testGeneralStore()
 				assert(true)
 			})
-			it('should execute testTokenManager successfully', function() {
+			it.skip('should execute testTokenManager successfully', function() {
 				instance.testTokenManager()
 				assert(true)
 			})
@@ -35,8 +35,12 @@ module.exports = {
 				instance.testCodeGenerator()
 				assert(true)
 			})
-			it.skip('should execute testLoadModules successfully', function() {
-				instance.testLoadModules()
+			it('should execute testLoadDB successfully', function() {
+				instance.testLoadDB()
+				assert(true)
+			})
+			it('should execute testDBModule successfully', function() {
+				instance.testDBModule()
 				assert(true)
 			})
 			it.skip('should execute testListen successfully', function() {
@@ -81,29 +85,29 @@ module.exports = {
 					})
 				})
 				it('should have a valid dbType string, if db config is provided', function() {
-					assert(['postgres'].indexOf(dbConfig.dbType) !== -1)
+					assert(['postgreSQL'].indexOf(dbConfig.dbType) !== -1)
 				})
-				it('should have a "postgres" configuration object, if db config is provided and "dbType" is postgres', function() {
-					assert((typeof config.postgres === 'object') && (config.postgres !== null))
+				it('should have a "postgreSQL" configuration object, if db config is provided and "dbType" is postgreSQL', function() {
+					assert((typeof config.postgreSQL === 'object') && (config.postgreSQL !== null))
 				})
 			})
 
 
-			const postgresConfig = config.postgres
-			describeSuiteConditionally((typeof postgresConfig === 'object') && (postgresConfig !== null), 'postgres', function() {
-				it('should have a valid, non-empty user string, if db config is provided and dbType is postgres', function() {
+			const postgresConfig = config.postgreSQL
+			describeSuiteConditionally((typeof postgresConfig === 'object') && (postgresConfig !== null), 'postgreSQL', function() {
+				it('should have a valid, non-empty user string, if db config is provided and dbType is postgreSQL', function() {
 					assert((typeof postgresConfig.user === 'string') && postgresConfig.user.length)
 				})
-				it('should have a valid, non-empty password string, if db config is provided and dbType is postgres', function() {
+				it('should have a valid, non-empty password string, if db config is provided and dbType is postgreSQL', function() {
 					assert((typeof postgresConfig.password === 'string') && postgresConfig.password.length)
 				})
-				it('should have a valid, non-empty host string, if db config is provided and dbType is postgres', function() {
+				it('should have a valid, non-empty host string, if db config is provided and dbType is postgreSQL', function() {
 					assert((typeof postgresConfig.host === 'string') && postgresConfig.host.length)
 				})
-				it('should have a valid, non-empty port, if db config is provided and dbType is postgres', function() {
+				it('should have a valid, non-empty port, if db config is provided and dbType is postgreSQL', function() {
 					assert((typeof postgresConfig.port === 'number') && (postgresConfig.port > 0) && (postgresConfig.port < 100000))
 				})
-				it('should have a valid, non-empty database string, if db config is provided and dbType is postgres', function() {
+				it('should have a valid, non-empty database string, if db config is provided and dbType is postgreSQL', function() {
 					assert((typeof postgresConfig.database === 'string') && postgresConfig.database.length)
 				})
 				runTestConditionally(
@@ -113,7 +117,7 @@ module.exports = {
 						assert((typeof postgresConfig.mock_database === 'string') && postgresConfig.mock_database.length)
 					}
 				)
-				it('should have a valid, non-empty schema name string, if db config is provided and dbType is postgres', function() {
+				it('should have a valid, non-empty schema name string, if db config is provided and dbType is postgreSQL', function() {
 					assert((typeof postgresConfig.schema === 'string') && postgresConfig.schema.length)
 				})
 			})
@@ -606,8 +610,11 @@ module.exports = {
 		const instance = this
 		describe('core.dependencies', function() {
 			it('should execute loadDependencies successfully', function() {
-				instance.loadDependencies()
-				assert(true)
+				return co(function*() {
+					instance.loadDependencies()
+					assert(true)
+					return true
+				})
 			})
 		})
 	},
@@ -647,15 +654,23 @@ module.exports = {
 			})
 		})
 	},
-	testLoadModules: function() {
+	testLoadDB: function() {
 		const instance = this
-		describe('core.loadModules', function() {
-			it('should execute successfully', function() {
+		describe('core.loadDB', function() {
+			it('should execute successfully if all parameters and configuration variables are correct', function() {
 				return co(function*() {
-					yield instance.loadModules()
+					yield instance.loadDB()
 					assert(true)
 					return true
 				})
+			})
+		})
+	},
+	testDBModule: function() {
+		const instance = this
+		describe('core.modules.db', function() {
+			it('should execute testMe successfully', function() {
+				instance.modules.db.testMe()
 			})
 		})
 	}

@@ -38,7 +38,7 @@ module.exports = {
 	},
 	db: {
 		modulePath: path.join(__dirname, '../modules/db'),
-		dbType: 'postgres',
+		dbType: 'postgreSQL',
 		seedingOrder: [
 			'modules', 'roles', 'keyAccessPoints', 'users'
 		]
@@ -64,7 +64,8 @@ module.exports = {
 			anonymousAccessRoutes: ['/users/getCredentials', '/users/create', '/users/forgotPassword'],
 			responseType: 'serviceName',
 			jwt: {
-				accessTokenExpiresInMinutes: 1440
+				accessTokenExpiresInMinutes: 1440,
+				// useRefreshTokens: true
 			},
 			allowOrigins: '*'
 		}

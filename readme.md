@@ -42,7 +42,7 @@ Core modules
 
 The DB
 --
-The DB module, as mentioned briefly above, is the very heart of your project. Its components contain the models for your database tables and the business logic related to them. Currently, only PostgreSQL is supported, but support for MySQL and possibly MongoDB will be added in future versions.<br><br>
+The DB module, as mentioned briefly above, is the very heart of your project. Its components contain the models for your database tables and the business logic related to them. Currently, only postgreSQL is supported, but support for MySQL and possibly MongoDB will be added in future versions.<br><br>
 
 
 ___

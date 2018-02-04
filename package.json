@@ -61,7 +61,7 @@
     "pretty-data": "^0.40.0",
     "pug": "^2.0.0-beta6",
     "redis": "^2.6.2",
-    "sequelize": "^3.24.3",
+    "sequelize": "^4.32.5",
     "winston": "^2.2.0"
   },
   "deprecated": false,

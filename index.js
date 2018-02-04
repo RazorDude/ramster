@@ -34,112 +34,122 @@ class Core {
 			for (const testName in coreTests) {
 				this[testName] = coreTests[testName]
 			}
+			this.modules = {}
 		} catch (e) {
 			console.log(e)
 		}
 	}
 
 	loadDependencies() {
-		this.logger = new Logger(this.config)
-		this.generalStore = new GeneralStore(this.config)
-		this.tokenManager = new TokenManager(this.config, this.generalStore, this.logger)
-		this.codeGenerator = new CodeGenerator(this.config)
+		let instance = this
+		return co(function*() {
+			instance.logger = new Logger(instance.config)
+			instance.generalStore = new GeneralStore(instance.config)
+			yield instance.generalStore.createClient()
+			instance.tokenManager = new TokenManager(instance.config, instance.generalStore, instance.logger)
+			instance.codeGenerator = new CodeGenerator(instance.config)
+			return true
+		})
 	}
 
-	loadModules() {
+	loadDB() {
 		let instance = this
 		return co(function*() {
 			const {config, logger, generalStore, tokenManager} = instance
-			yield generalStore.createClient()
-			// load and set up the db module
-			instance.modules = {
-				db: new DBModule(config, {logger, generalStore, tokenManager}),
-				clients: {},
-				apis: {}
-			}
-			let db = instance.modules.db
+			let db = new DBModule(config, logger, generalStore, tokenManager)
 			yield db.loadComponents()
-			if (config.emails.customModulePath) {
-				let CustomMailClient = require(config.emails.customModulePath)
-				instance.mailClient = new CustomMailClient(config, db)
-			} else {
-				instance.mailClient = new Emails(config, db)
-			}
-			db.setComponentsProperties({db, mailClient: instance.mailClient})
-
-			// load the migrations module
-			if (config.migrations && config.migrations.startAPI) {
-				instance.modules.migrations = new Migrations(config, db)
-			}
-
-			// load the client server modules
-			if (instance.config.clientModulesPath) {
-				let clientModules = instance.modules.clients,
-					modulesDirPath = config.clientModulesPath,
-					modulesDirData = yield fs.readdir(modulesDirPath)
-				for (const index in modulesDirData) {
-					let moduleDir = modulesDirData[index]
-					if (moduleDir.indexOf('.') === -1) {
-						// create the module itself and load its components
-						clientModules[moduleDir] = new ClientModule(config, moduleDir, {db, logger, generalStore, tokenManager})
-						let clientModule = clientModules[moduleDir]
-						yield clientModule.loadComponents()
-						// generate config for the used webserver (if any)
-						if (config.webserver === 'nginx') {
-							yield clientModule.generateNGINXConfig()
-						}
-					}
-				}
-			}
-
-			// load the api server modules
-			if (instance.config.apiModulesPath) {
-				let apiModules = instance.modules.apis,
-					modulesDirPath = config.apiModulesPath,
-					modulesDirData = yield fs.readdir(modulesDirPath)
-				for (const index in modulesDirData) {
-					let moduleDir = modulesDirData[index]
-					if (moduleDir.indexOf('.') === -1) {
-						// create the module itself and load its components
-						apiModules[moduleDir] = new APIModule(config, moduleDir, {db, logger, generalStore, tokenManager})
-						yield apiModules[moduleDir].loadComponents()
-					}
-				}
-			}
-
-			// schedule the cron jobs
-			if (config.cronJobs) {
-				try {
-					let cronJobsModule = require(config.cronJobs.path),
-						jobs = cronJobsModule.getJobs({
-							cfg: config,
-							logger,
-							mailClient: instance.mailClient,
-							generalStore,
-							tokenManager,
-							db
-						})
-					if (jobs instanceof Array) {
-						jobs.forEach((jobData, index) => {
-							try {
-								if (!jobData.start) {
-									jobData.start = true
-								}
-								new CronJob(jobData)
-							} catch (e) {
-								console.log('Error starting a cron job:')
-								logger.error(e)
-							}
-						})
-					}
-				} catch (e) {
-					console.log('Error loading the cron jobs module:')
-					logger.error(e)
-				}
-			}
-
+			instance.modules.db = db
 			return true
 		})
+	}
+
+	loadMailClient() {
+		let instance = this
+		return co(function*() {
+			const {config, logger} = instance
+			let db = instance.modules.db
+			if (config.emails.customModulePath) {
+				let CustomMailClient = require(config.emails.customModulePath)
+				instance.mailClient = new CustomMailClient(config, logger, db)
+			} else {
+				instance.mailClient = new Emails(config, logger)
+			}
+			if (db) {
+				db.mailClient = mailClient
+				db.setComponentsProperties({db})
+			}
+			return true
+		})
+	}
+
+	loadMigrations() {
+		this.modules.migrations = new Migrations(this.config, this.db)
+	}
+
+	loadClients() {
+		let instance = this
+		return co(function*() {
+			const {config, logger, generalStore, tokenManager} = instance
+			let db = instance.db,
+				clientModules = instance.modules.clients,
+				modulesDirPath = config.clientModulesPath,
+				modulesDirData = yield fs.readdir(modulesDirPath)
+			for (const index in modulesDirData) {
+				let moduleDir = modulesDirData[index]
+				if (moduleDir.indexOf('.') === -1) {
+					// create the module itself and load its components
+					clientModules[moduleDir] = new ClientModule(config, moduleDir, {db, logger, generalStore, tokenManager})
+					let clientModule = clientModules[moduleDir]
+					yield clientModule.loadComponents()
+				}
+			}
+			return true
+		})
+	}
+
+	loadAPIs() {
+		let instance = this
+		return co(function*() {
+			const {config, logger, generalStore, tokenManager} = instance
+			let db = instance.db,
+				apiModules = instance.modules.apis,
+				modulesDirPath = config.apiModulesPath,
+				modulesDirData = yield fs.readdir(modulesDirPath)
+			for (const index in modulesDirData) {
+				let moduleDir = modulesDirData[index]
+				if (moduleDir.indexOf('.') === -1) {
+					// create the module itself and load its components
+					apiModules[moduleDir] = new APIModule(config, moduleDir, {db, logger, generalStore, tokenManager})
+					yield apiModules[moduleDir].loadComponents()
+				}
+			}
+			return true
+		})
+	}
+
+	loadCRONJobs() {
+		let cronJobsModule = require(config.cronJobs.path),
+			jobs = cronJobsModule.getJobs({
+				cfg: config,
+				logger,
+				mailClient: instance.mailClient,
+				generalStore,
+				tokenManager,
+				db
+			})
+		if (jobs instanceof Array) {
+			jobs.forEach((jobData, index) => {
+				try {
+					if (!jobData.start) {
+						jobData.start = true
+					}
+					new CronJob(jobData)
+				} catch (e) {
+					console.log('Error starting a cron job:')
+					logger.error(e)
+				}
+			})
+		}
 	}
 
 	listen() {

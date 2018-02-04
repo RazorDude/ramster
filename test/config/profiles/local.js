@@ -19,7 +19,7 @@ module.exports = {
 	hostAddress,
 	wsPort: site.wsPort,
 	wsConfigFolderPath: 'c:\\programs\\nginx\\conf',
-	postgres: {
+	postgreSQL: {
 		user: 'postgres',
 		password: 'postgres',
 		host: '127.0.0.1',

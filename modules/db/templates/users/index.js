@@ -8,8 +8,8 @@ const
 	moment = require('moment')
 
 class Component extends Base {
-	constructor(sequelize, Sequelize, settings) {
-		super(settings)
+	constructor(sequelize, Sequelize) {
+		super()
 
 		const instance = this
 
@@ -62,18 +62,6 @@ class Component extends Base {
 				resetPasswordToken: function (value) {
 				},
 				resetPasswordExpires: function (value) {
-				}
-			},
-			classMethods: {
-				associate: function ({roles}) {
-					this.belongsTo(roles.model, {as: 'role', foreignKey: 'roleId'})
-
-					return {
-						key: 'User',
-						User: {
-							role: {include: {model: roles.model, as: 'role'}}
-						}
-					}
 				}
 			},
 			scopes: {

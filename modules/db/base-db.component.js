@@ -5,22 +5,26 @@ const
 	moment = require('moment')
 
 class BaseDBComponent {
-	constructor({mailClient, config, logger}) {
+	constructor() {
 		this.defaults = {
 			orderBy: 'id',
 			orderDirection: 'DESC',
 			page: 1,
 			perPage: 10
 		}
-		this.config = config
-		this.logger = logger
 		this.allowedFilterKeywordOperators = ['$not', '$gt', '$gte', '$lt', '$lte']
 	}
 
 	associate(components) {
-		let rel = this.model.associate(components)
-		this.relations = rel[rel.key]
-		return rel.key
+	}
+
+	rawAssociate(components) {
+		if (typeof this.model.associate === 'function') {
+			let rel = this.model.associate(components)
+			this.relations = rel[rel.key]
+			return rel.key
+		}
+		return null
 	}
 
 	generateHandle(name) {

@@ -5,10 +5,14 @@ const
 	fs = require('fs-extra'),
 	path = require('path'),
 	pd = require('pretty-data').pd,
-	Sequelize = require('sequelize')
+	Sequelize = require('sequelize'),
+	spec = require('./db.module.spec')
 
 class DBModule {
-	constructor(config, {logger, generalStore, tokenManager}) {
+	constructor(config, logger, generalStore, tokenManager) {
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
 		this.config = config
 		this.moduleConfig = config.db
 		this.seedingOrder = config.db.seedingOrder
@@ -21,38 +25,34 @@ class DBModule {
 		this.sequelize = null
 	}
 
+	// TODO: generate the seeding order object
 	loadComponents() {
 		let instance = this
 		return co(function*() {
-			const {dbType, postgres} = instance.config,
-				{modulePath} = instance.moduleConfig,
-				moduleDir = yield fs.readdir(modulePath),
-				componentOptions = {
-					cfg: instance.config,
-					logger: instance.logger,
-					generalStore: instance.generalStore,
-					tokenManager: instance.tokenManager
-				}
+			const {postgreSQL} = instance.config,
+				{dbType, modulePath} = instance.moduleConfig,
+				moduleDir = yield fs.readdir(modulePath)
 			let components = instance.components
 
 			// load the database components (pg database)
-			if (dbType === 'postgres') {
-				const sequelize = new Sequelize(postgres.database, postgres.user, postgres.password, {
-					host: postgres.host,
-					port: postgres.port,
+			if (dbType === 'postgreSQL') {
+				const sequelize = new Sequelize(postgreSQL.database, postgreSQL.user, postgreSQL.password, {
+					host: postgreSQL.host,
+					port: postgreSQL.port,
 					dialect: 'postgres',
-					logging: (postgres.logging === true) ?
+					logging: (postgreSQL.logging === true) ?
 						(sql) => {
 							console.log('================ /SQL\\ ==================')
 							console.log(pd.sql(sql))
 							console.log('================ \\SQL/ ==================')
 						} : false
 				})
+				yield sequelize.authenticate()
 				instance.Sequelize = Sequelize
 				instance.sequelize = sequelize
 				moduleDir.forEach((componentDir, index) => {
 					if (componentDir.indexOf('.') === -1) {
-						components[componentDir] = new (require(path.join(modulePath, componentDir)))(sequelize, Sequelize, componentOptions)
+						components[componentDir] = new (require(path.join(modulePath, componentDir)))(sequelize, Sequelize)
 					} else if (componentDir === 'fieldCaseMap.js') {
 						instance.fieldCaseMap = require(path.join(modulePath, componentDir))
 					}
@@ -60,14 +60,18 @@ class DBModule {
 
 				// after all components have been loaded, create the database associations
 				for (const componentName in components) {
-					components[componentName].associate(components)
+					let component = components[componentName]
+					component.associate(components)
+					component.rawAssociate(components)
 				}
 
-				 //TODO: test if the seeding order is correct
+				instance.setComponentsProperties({db: instance})
 				sequelize.sync()
+
+				return true
 			}
 
-			return true
+			throw {customMessage: 'Invalid dbType.'}
 		})
 	}
 
