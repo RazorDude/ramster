@@ -39,6 +39,10 @@ module.exports = {
 				instance.testLoadDB()
 				assert(true)
 			})
+			it('should execute testLoadMigrations successfully', function() {
+				instance.testLoadMigrations()
+				assert(true)
+			})
 			it('should execute testDBModule successfully', function() {
 				instance.testDBModule()
 				assert(true)
@@ -663,6 +667,15 @@ module.exports = {
 					assert(true)
 					return true
 				})
+			})
+		})
+	},
+	testLoadMigrations: function() {
+		const instance = this
+		describe('core.migrations', function() {
+			it('should execute successfully if all parameters and configuration variables are correct', function() {
+				instance.loadMigrations()
+				assert(true)
 			})
 		})
 	},

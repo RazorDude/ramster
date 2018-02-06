@@ -1,7 +1,7 @@
 'use strict'
 
 const
-	Base = require('ramster').BaseDBComponent,
+	Base = require('../../../../index.js').BaseDBComponent,
 	bcryptjs = require('bcryptjs'),
 	co = require('co'),
 	merge = require('deepmerge'),
@@ -13,11 +13,8 @@ class Component extends Base {
 
 		const instance = this
 
-		this.componentName = 'users'
-		this.relReadKeys = []
-
-		this.model = sequelize.define('User', {
-			roleId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
+		this.model = sequelize.define('user', {
+			typeId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
 			firstName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 			lastName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 			email: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
@@ -77,7 +74,20 @@ class Component extends Base {
 
 		this.model = this.model.scope('default')
 		this.associationsConfig = {
-			roles: {type: 'belongsTo', modelName: 'roles', foreignKey: 'roleId'}
+			type: {type: 'belongsTo', componentName: 'userTypes', foreignKey: 'typeId'}
+		}
+		this.relationsConfig = {
+			typeWithAccessData: {
+				associationName: 'type',
+				attributes: ['id', 'name'],
+				required: true,
+				include: [{
+					associationName: 'accessPoints',
+					attributes: ['id', 'name', 'description'],
+					required: true,
+					include: [{associationName: 'module', required: true, include: [{associationName: 'category', attributes: ['id', 'name', 'icon']}]}]
+				}]
+			}
 		}
 
 		this.profileUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']

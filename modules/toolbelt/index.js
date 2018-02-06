@@ -142,6 +142,28 @@ const
 		}
 		return outputData
 	},
+	findVertexByIdDFS = (vertexId, graph, action) => {
+		if (!graph || (typeof graph !== 'object')) {
+			return null
+		}
+		if (graph[vertexId]) {
+			if (action === 'get') {
+				return graph[vertexId]
+			}
+			if (action === 'delete') {
+				delete graph[vertexId]
+				return true
+			}
+			return true
+		}
+		for (const id in graph) {
+			let targetVertex = findVertexByIdDFS(vertexId, graph[id].vertices, 'get')
+			if (targetVertex) {
+				return targetVertex
+			}
+		}
+		return null
+	},
 	getFolderSize = (folderPath, unit) => co(function*() {
 		let folderSize = 0,
 			folderData = yield fs.stat(folderPath)
@@ -183,4 +205,4 @@ const
 		return -1
 	}
 
-module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, getFolderSize, getNested, runTestConditionally}
+module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, findVertexByIdDFS, getFolderSize, getNested, runTestConditionally}

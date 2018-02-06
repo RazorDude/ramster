@@ -17,15 +17,17 @@
 	- *BREAKING* - renamed "useModuleConfigForAuthTokens" to "useApiModuleConfigForAuthTokens" in the client modules config.
 	- *BREAKING* - moved "wsPort" from the client modules config to the root config object.
 	- *BREAKING* - removed the defaultConfig. From now on, ramster will blow up if you don't give it a config.
+	- Added a lot of tests, complete code coverage.
 - Added config templates.
-- Added templates for the following db modules: users.
-- Added a codeGenerator module, which generates config files, client server layout files and nginx config files. Added tests for it.
+- Added templates for the following db modules: users, userTypes, moduleCategories, modules, moduleAccessPoints.
+- Added a codeGenerator module, which generates config files, db modules, client server layout files, nginx config files, webpack config files and utility scripts. Added tests for it.
 - Added an .npmignore file, that keeps the "test" folder out of the final package (it's for testing ramster and you don't need it in the build). It's still in the repo, though.
 - Removed the buildLayoutFile and generateNGINXConfig methods from the client module, as the codeGenerator now covers this functionality.
 - *BREAKING* - loadDependencies now returns a promise that must be handled. This was done so that generalStore.createClient() can be called before the modules that depend on the generalStore and loaded.
 - *BREAKING* - removed the loadModules method and broke it down into four separate ones - loadDB, loadMailClient, loadClients and loadAPIs. This way it's easier to debug and test the ramster initialization process.
 - *BREAKING* - Renamed cfg and settings to config in client modules.
 - Added tests and validations to the generalStore and errorLogger modules.
+- Moved the findVertexById method from the migrations module to the toolbelt and renamed it to findVertexByIdDFS.
 - tokenManager:
 	- *BREAKING* - the constructor is now in the format (config, generalStore, errorLogger), rather than ({generalStore}).
 	- *BREAKING* - signToken is now in the format signToken(userData, secret[, expiresInMinutes]), rather than signToken({userId, userData, secret, expiresInMinutes}).
@@ -36,17 +38,36 @@
 	- Added extra validations for the input parameters in all methods.
 	- Made some consistency and deprecation fixes.
 	- Fixed numerous errors in the refresh token functionality (validate method).
-- Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis).
+	- Added a lot of tests, complete code coverage.
+- emails module:
+	- Reworked to no longer rely on the db module.
+	- Added a lot of tests, complete code coverage.
+- migrations modules:
+	- Constructor is now in the form constructor(config, sequelize, dbComponents), rather than (config, db).
+	- Reworked to no longer rely on the db module. This way we can add it to the db module and avoid circularization.
+	- Added a removeAllTables method.
 - DB module and components:
 	- *BREAKING* - the constructor is now in the format constructor(config, logger, generalStore, tokenManager), rather than constructor(config, {logger, generalStore, tokenManager}).
 	- *BREAKING* - migrated to sequelize v4. See their migration guide for further info.
 	- *BREAKING* - renamed cfg to config.
 	- *BREAKING* - renamed all occurences of "postgres" (except for the default root user & pass for postgreSQL) to "postgreSQL".
-	- *BREAKING* - renamed the component.associate method to component.rawAssociate. It still uses model.associate, though.
+	- *BREAKING* - split loadComponents into three methods for better testing and debugging - connectToDB, loadComponents and createAssociations.
+	- loadComponents:
+		- It now loads index.spec.js files from each component's directory. It must be a valid js file, whose exports are a json with test methods for mochajs. See ramster's own index.spec.js in the root folder for reference.
+		- It now does various checks to ensure the basic validity of the loaded components and throws errors accordingly.
+		- It now sets the componentName property automatically.
+	- (new) createAssociations:
+		- Runs each component's associate and mapRelations methods.
+		- Generates the module-wide the seedingOrder.
 	- *BREAKING* - the base-db.component contructor is now in the format constructor(), rather than constructor({logger, config, mailClient}).
 	- *BREAKING* - removed logger, config and mailClient from the base-db.component (and all db componennts, subsequentially), as they're all accessible as properties in each dbComponent's db property.
+	- *BREAKING* - component.model.associate is no longer supported.
+	- *BREAKING* - component.associate reworked completely - it now takes a configurtion object from component.associationsConfig and generates the seeding order and a dependencyMap property for each component.
+	- *BREAKING* - removed the component.generateHandle method.
+	- Added a component.mapRelations method, which generates the relations object and the relReadKeys for each component.
+	- Added a setDBInComponents method, which is used to set the db property of components instead of setComponentProperties. The major difference is that it creates a shallow copy of the db object for each component and removes the component in question from the copied object's component list to avoid circularization.
 	- Added a lot of tests, complete code coverage.
-- The db module is no longer required to successfully run and use the emails module.
+- Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis).
 
 # 0.6.22
 - Updated the v1.0.0 roadmap with an additional feature.

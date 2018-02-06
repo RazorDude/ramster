@@ -4,6 +4,7 @@ const
 	bodyParser = require('body-parser'),
 	co = require('co'),
 	express = require('express'),
+	{findVertexByIdDFS} = require('../toolbelt'),
 	fs = require('fs-extra'),
 	http = require('http'),
 	merge = require('deepmerge'),
@@ -12,10 +13,11 @@ const
 	wrap = require('co-express')
 
 class Migrations {
-	constructor(config, db) {
+	constructor(config, sequelize, dbComponents) {
 		this.config = config
 		this.moduleConfig = config.migrations
-		this.db = db
+		this.sequelize = sequelize
+		this.dbComponents = dbComponents
 	}
 
 	listen() {
@@ -103,10 +105,10 @@ class Migrations {
 			const instance = this
 			return co(function*() {
 				let data = {},
-					schemas = yield instance.db.sequelize.query('SELECT "t"."table_name" FROM "information_schema"."tables" AS "t" ' +
+					schemas = yield instance.sequelize.query('SELECT "t"."table_name" FROM "information_schema"."tables" AS "t" ' +
 						'WHERE "t"."table_schema"=\'' + instance.config.db.schema + '\'')
 				for (let i = 0; i < schemas[0].length; i++) {
-					data[schemas[0][i].table_name] = (yield instance.db.sequelize.query('SELECT * FROM "' +
+					data[schemas[0][i].table_name] = (yield instance.sequelize.query('SELECT * FROM "' +
 						instance.config.db.schema + '"."' + schemas[0][i].table_name + '"'))[0]
 				}
 				return data
@@ -121,7 +123,7 @@ class Migrations {
 			const instance = this
 			return co(function*() {
 				let data = {},
-					schemas = yield instance.db.sequelize.query('SELECT "t"."table_name","c"."column_name" FROM "information_schema"."tables" AS "t" ' +
+					schemas = yield instance.sequelize.query('SELECT "t"."table_name","c"."column_name" FROM "information_schema"."tables" AS "t" ' +
 						'INNER JOIN "information_schema"."columns" AS "c" ON "t"."table_name"="c"."table_name"' +
 						'WHERE "t"."table_schema"=\'' + instance.config.db.schema + '\'', {transaction: t})
 				for (let i = 0; i < schemas[0].length; i++) {
@@ -137,12 +139,32 @@ class Migrations {
 		}
 	}
 
+	removeAllTables(t) {
+		try {
+			if (!t) {
+				return this.sequelize.transaction((t) => this.removeAllTables(t))
+			}
+			const instance = this
+			return co(function*() {
+				let tables = (yield instance.sequelize.query(`select "t"."table_name" FROM "information_schema"."tables" AS "t" where "t"."table_schema"='${instance.config.db.schema}';`))[0],
+					dropQuery = ''
+				tables.forEach((row, index) => {
+					dropQuery += `drop table "${row.table_name}" cascade;`
+				})
+				yield instance.sequelize.query(dropQuery, {transaction: t})
+				return true
+			})
+		} catch (e) {
+			console.log(e)
+		}
+	}
+
 	runQueryFromColumnData(instance, tableName, inserts, queryInterface, deleteTableContents, t, dontSetIdSequence) {
 		return co(function*() {
 			if (inserts.values.length > 0) {
 				console.log('Query series starting, rows to execute:', inserts.values.length, ' for table ', tableName)
 				if (deleteTableContents.indexOf(tableName) !== -1) {
-					yield instance.db.sequelize.query('DELETE FROM "' + tableName + '";', {transaction: t})
+					yield instance.sequelize.query('DELETE FROM "' + tableName + '";', {transaction: t})
 				}
 
 				let queryTemplate = 'INSERT INTO "' + tableName + '" (',
@@ -164,7 +186,7 @@ class Migrations {
 					query += ')'
 					if (parseInt(i, 10) % 100 === 0) {
 						query += ';'
-						yield instance.db.sequelize.query(query, {transaction: t})
+						yield instance.sequelize.query(query, {transaction: t})
 						query = '' + queryTemplate
 						continue;
 					}
@@ -173,12 +195,12 @@ class Migrations {
 				if (query[query.length - 1] === ',') {
 					query = query.substr(0, query.length - 1)
 					query += ';'
-					yield instance.db.sequelize.query(query, {transaction: t})
+					yield instance.sequelize.query(query, {transaction: t})
 				}
 				console.log('All queries executed successfully.')
 
 				if (!dontSetIdSequence) {
-					yield instance.db.sequelize.query('SELECT setval(\'"' + tableName + '_id_seq"\'::regclass, (SELECT "id" FROM "' + tableName + '" ORDER BY "id" DESC LIMIT 1))', {transaction: t})
+					yield instance.sequelize.query('SELECT setval(\'"' + tableName + '_id_seq"\'::regclass, (SELECT "id" FROM "' + tableName + '" ORDER BY "id" DESC LIMIT 1))', {transaction: t})
 				}
 			}
 		})
@@ -218,30 +240,6 @@ class Migrations {
 		return {columns, values}
 	}
 
-	// simple DFS; using BFS here will beat the shit out of the server's ram and blow us up
-	findVertexById(vertexId, dependencyGraph, action) {
-		if (!dependencyGraph || (typeof dependencyGraph !== 'object')) {
-			return null
-		}
-		if (dependencyGraph[vertexId]) {
-			if (action === 'get') {
-				return dependencyGraph[vertexId]
-			}
-			if (action === 'delete') {
-				delete dependencyGraph[vertexId]
-				return true
-			}
-			return true
-		}
-		for (const id in dependencyGraph) {
-			let targetVertex = this.findVertexById(vertexId, dependencyGraph[id].vertices, 'get')
-			if (targetVertex) {
-				return targetVertex
-			}
-		}
-		return null
-	}
-
 	// DFS again - we want to keep it very strict here, so that the dependencies are followed and the data is inserted in the correct order
 	getColumnDataSetsFromDependencyGraph(sets, currentSet, dependencyGraph) {
 		for (const id in dependencyGraph) {
@@ -276,19 +274,19 @@ class Migrations {
 					parentKeyValue = dataRow[sameTablePrimaryKey],
 					thisVertex = null
 				if (parentKeyValue) {
-					let parentVertex = instance.findVertexById(parentKeyValue, dependencyGraph, 'get')
+					let parentVertex = instance.findVertexByIdDFS(parentKeyValue, dependencyGraph, 'get')
 					if (!parentVertex) {
 						dependencyGraph[parentKeyValue] = {vertices: {}}
 						parentVertex = dependencyGraph[parentKeyValue]
 					}
 					thisVertex = parentVertex.vertices[dataRow.id]
 					if (!thisVertex) {
-						thisVertex = instance.findVertexById(dataRow.id, dependencyGraph, 'get')
+						thisVertex = instance.findVertexByIdDFS(dataRow.id, dependencyGraph, 'get')
 						// delete the vertex if it exists outside of its parent and add it to the parent
 						if (thisVertex) {
 							parentVertex.vertices[dataRow.id] = JSON.parse(JSON.stringify(thisVertex))
 							thisVertex = parentVertex.vertices[dataRow.id]
-							instance.findVertexById(dataRow.id, dependencyGraph, 'delete')
+							instance.findVertexByIdDFS(dataRow.id, dependencyGraph, 'delete')
 						} else {
 							parentVertex.vertices[dataRow.id] = {vertices: {}}
 							thisVertex = parentVertex.vertices[dataRow.id]
@@ -326,10 +324,10 @@ class Migrations {
 	insertData(data, options) {
 		try {
 			const instance = this
-			return instance.db.sequelize.transaction(function (t) {
+			return instance.sequelize.transaction(function (t) {
 				return co(function*() {
-					const queryInterface = instance.db.sequelize.getQueryInterface(),
-						dbComponents = instance.db.components,
+					const queryInterface = instance.sequelize.getQueryInterface(),
+						dbComponents = instance.dbComponents,
 						seedingOrder = instance.db.seedingOrder
 					let models = Object.keys(dbComponents),
 						inserts = {},
@@ -337,7 +335,7 @@ class Migrations {
 						deleteTableContents = options && options.deleteTableContents || []
 
 					if (!noSync) {
-						yield instance.db.sequelize.sync({force: true}, {transaction: t})
+						yield instance.sequelize.sync({force: true}, {transaction: t})
 					}
 
 					let tableLayout = yield instance.getTableLayout(t)
@@ -480,8 +478,8 @@ class Migrations {
 
 	insertStaticData() {
 		const instance = this,
-			sequelize = this.db.sequelize,
-			dbComponents = this.db.components
+			sequelize = this.sequelize,
+			dbComponents = this.dbComponents
 		return sequelize.transaction((t) => {
 			return co(function*() {
 				// write a backup of the current database data for safety reasons

@@ -57,7 +57,9 @@ class Core {
 		return co(function*() {
 			const {config, logger, generalStore, tokenManager} = instance
 			let db = new DBModule(config, logger, generalStore, tokenManager)
+			yield db.connectToDB()
 			yield db.loadComponents()
+			yield db.createAssociations()
 			instance.modules.db = db
 			return true
 		})
@@ -83,7 +85,10 @@ class Core {
 	}
 
 	loadMigrations() {
-		this.modules.migrations = new Migrations(this.config, this.db)
+		let db = this.modules.db
+		this.modules.migrations = new Migrations(this.config, db.sequelize, db.components)
+		db.migrations = this.modules.migrations
+		db.setComponentsProperties({db})
 	}
 
 	loadClients() {
