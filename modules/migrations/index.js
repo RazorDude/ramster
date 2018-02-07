@@ -108,7 +108,7 @@ class Migrations {
 	getFullTableData(t) {
 		try {
 			if (!t) {
-				return this.sequelize.transaction((t) => this.removeAllTables(t))
+				return this.sequelize.transaction((t) => this.getFullTableData(t))
 			}
 			const instance = this
 			return co(function*() {
@@ -131,18 +131,18 @@ class Migrations {
 	getTableLayout(t) {
 		try {
 			if (!t) {
-				return this.sequelize.transaction((t) => this.removeAllTables(t))
+				return this.sequelize.transaction((t) => this.getTableLayout(t))
 			}
 			const instance = this
 			return co(function*() {
 				let data = {},
-					schemas = (yield instance.sequelize.query(`
+					schema = (yield instance.sequelize.query(`
 						select "t"."table_name", "c"."column_name" from "information_schema"."tables" AS "t"
 						inner join "information_schema"."columns" AS "c" on "t"."table_name"="c"."table_name"
 						where "t"."table_schema"='${instance.schema}';`,
 						{transaction: t}
 					))[0]
-				if (!schemas) {
+				if (!schema) {
 					return data
 				}
 				for (let i = 0; i < schema.length; i++) {
@@ -182,7 +182,7 @@ class Migrations {
 
 	runQueryFromColumnData(tableName, inserts, t, options) {
 		const instance = this,
-			{sequelize} = this,
+			{config, sequelize} = this,
 			queryInterface = sequelize.getQueryInterface()
 		return co(function*() {
 			if ((typeof tableName !== 'string') || !tableName.length) {
@@ -200,8 +200,13 @@ class Migrations {
 			}
 			const actualOptions = options || {},
 				{deleteTableContents, dontSetIdSequence} = actualOptions
+			if ((typeof deleteTableContents !== 'undefined') && !(deleteTableContents instanceof Array)) {
+				throw {customMessage: `At table "${tableName}": if provided, deleteTableContents must be an array.`}
+			}
 			if (values.length > 0) {
-				console.log(`Query series starting, rows to execute: ${values.length} for table ${tableName}...`)
+				if (config.postgreSQL.logging) {
+					console.log(`Query series starting, rows to execute: ${values.length} for table ${tableName}...`)
+				}
 				if (deleteTableContents && deleteTableContents.indexOf(tableName) !== -1) {
 					yield sequelize.query(`delete from "${tableName}";`, {transaction: t})
 				}
@@ -210,8 +215,8 @@ class Migrations {
 				let queryTemplate = `insert into "${tableName}" (`,
 					query = ''
 				for (let i in columns) {
-					// queryTemplate += `"${(queryInterface.escape(columns[i])).replace(/'/g, '')}",`
-					queryTemplate += `"${columns[i]}",`
+					queryTemplate += `"${(queryInterface.escape(columns[i])).replace(/'/g, '')}",`
+					// queryTemplate += `"${columns[i]}",`
 				}
 				queryTemplate = queryTemplate.substr(0, queryTemplate.length - 1)
 				queryTemplate += ') values '
@@ -227,11 +232,11 @@ class Migrations {
 					}
 					query += ' ('
 					for (let j in valuesItem) {
-						query += `'${valuesItem[j]}',`
+						query += `${queryInterface.escape(valuesItem[j])},`
 					}
 					query = query.substr(0, query.length - 1)
 					query += ')'
-					if (parseInt(i, 10) % 100 === 0) {
+					if ((i > 0) && (parseInt(i, 10) % 100 === 0)) {
 						query += ';'
 						yield sequelize.query(query, {transaction: t})
 						query = '' + queryTemplate
@@ -244,10 +249,12 @@ class Migrations {
 					query += ';'
 					yield sequelize.query(query, {transaction: t})
 				}
-				console.log('All queries executed successfully.')
+				if (config.postgreSQL.logging) {
+					console.log('All queries executed successfully.')
+				}
 
 				if (!dontSetIdSequence) {
-					yield sequelize.query(`select setval('"${tableName}_id_seq"'::regclass, (select "id" from "${tableName}" order by "id" desc limit 1 1));`, {transaction: t})
+					yield sequelize.query(`select setval('"${tableName}_id_seq"'::regclass, (select "id" from "${tableName}" order by "id" desc limit 1));`, {transaction: t})
 				}
 			}
 		})

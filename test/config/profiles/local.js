@@ -27,7 +27,7 @@ module.exports = {
 		database: 'ramster_v1',
 		mockDatabase: 'ramster_v1',
 		schema: 'public',
-		logging: true
+		logging: false
 	},
 	redis: {
 		host: '127.0.0.1',

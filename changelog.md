@@ -51,6 +51,7 @@
 	- Changes to runQueryFromColumnData:
 		- *BREAKING* - the method is now in the following format: runQueryFromColumnData(tableName, inserts, t, options), where options is in the format {deleteTableContents, dontSetIdSequence}.
 		- Added a load of validations.
+		- Made logging optional for ramster logs, based on the already existing config.postgreSQL.logging variable.
 - DB module and components:
 	- *BREAKING* - the constructor is now in the format constructor(config, logger, generalStore, tokenManager), rather than constructor(config, {logger, generalStore, tokenManager}).
 	- *BREAKING* - migrated to sequelize v4. See their migration guide for further info.

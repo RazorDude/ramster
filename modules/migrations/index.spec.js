@@ -153,6 +153,18 @@ module.exports = {
 					return true
 				})
 			})
+			it('should throw an error with the correct message if deleteTableContents is provided, but is not an array', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.runQueryFromColumnData('userTypes', {columns: ['id'], values: []}, 'dummyTransaction', {deleteTableContents: 'blabla'})
+					} catch(e) {
+						didThrowAnError = e && (e.customMessage === 'At table "userTypes": if provided, deleteTableContents must be an array.')
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
 			it('should throw an error with the correct message if an inserts.values item is not an array', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -203,7 +215,7 @@ module.exports = {
 									},
 									t
 								)
-								data = yield instance.query(`select * from "users" where "id"=1500;`)
+								data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
 								throw {customMessage: 'fakeError'}
 							})
 						})
@@ -212,8 +224,91 @@ module.exports = {
 							throw e
 						}
 					}
-					console.log(data)
-					assert(data && data.length)
+					assert(data && (data.length > 0))
+					return true
+				})
+			})
+			it('should execute successfully if all parameters are correct, deleteTableContents is a valid array containing the table name and dontSetIdSequence is not set to true', function() {
+				return co(function*() {
+					let now = moment.utc().valueOf(),
+						data = null
+					try {
+						yield instance.sequelize.transaction((t) => {
+							return co(function*() {
+								yield instance.runQueryFromColumnData(
+									'userTypes', {
+										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
+									},
+									t,
+									{deleteTableContents: ['userTypes']}
+								)
+								data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
+								throw {customMessage: 'fakeError'}
+							})
+						})
+					} catch(e) {
+						if (!e || (e.customMessage !== 'fakeError')) {
+							throw e
+						}
+					}
+					assert(data && (data.length > 0))
+					return true
+				})
+			})
+			it('should execute successfully if all parameters are correct, deleteTableContents is not provided and dontSetIdSequence is set to true', function() {
+				return co(function*() {
+					let now = moment.utc().valueOf(),
+						data = null
+					try {
+						yield instance.sequelize.transaction((t) => {
+							return co(function*() {
+								yield instance.runQueryFromColumnData(
+									'userTypes', {
+										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
+									},
+									t,
+									{dontSetIdSequence: true}
+								)
+								data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
+								throw {customMessage: 'fakeError'}
+							})
+						})
+					} catch(e) {
+						if (!e || (e.customMessage !== 'fakeError')) {
+							throw e
+						}
+					}
+					assert(data && (data.length > 0))
+					return true
+				})
+			})
+			it('should execute successfully if all parameters are correct, deleteTableContents is a valid array containing the table name and dontSetIdSequence is set to true', function() {
+				return co(function*() {
+					let now = moment.utc().valueOf(),
+						data = null
+					try {
+						yield instance.sequelize.transaction((t) => {
+							return co(function*() {
+								yield instance.runQueryFromColumnData(
+									'userTypes', {
+										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
+									},
+									t,
+									{deleteTableContents: ['userTypes'], dontSetIdSequence: true}
+								)
+								data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
+								throw {customMessage: 'fakeError'}
+							})
+						})
+					} catch(e) {
+						if (!e || (e.customMessage !== 'fakeError')) {
+							throw e
+						}
+					}
+					assert(data && (data.length > 0))
 					return true
 				})
 			})
