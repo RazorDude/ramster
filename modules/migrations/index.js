@@ -10,11 +10,16 @@ const
 	merge = require('deepmerge'),
 	path = require('path'),
 	requestLogger = require('morgan'),
+	spec = require('./index.spec'),
 	wrap = require('co-express')
 
 class Migrations {
 	constructor(config, sequelize, dbComponents) {
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
 		this.config = config
+		this.schema = config.db.schema
 		this.moduleConfig = config.migrations
 		this.sequelize = sequelize
 		this.dbComponents = dbComponents
@@ -100,16 +105,21 @@ class Migrations {
 		})
 	}
 
-	getFullTableData() {
+	getFullTableData(t) {
 		try {
+			if (!t) {
+				return this.sequelize.transaction((t) => this.removeAllTables(t))
+			}
 			const instance = this
 			return co(function*() {
 				let data = {},
-					schemas = yield instance.sequelize.query('SELECT "t"."table_name" FROM "information_schema"."tables" AS "t" ' +
-						'WHERE "t"."table_schema"=\'' + instance.config.db.schema + '\'')
-				for (let i = 0; i < schemas[0].length; i++) {
-					data[schemas[0][i].table_name] = (yield instance.sequelize.query('SELECT * FROM "' +
-						instance.config.db.schema + '"."' + schemas[0][i].table_name + '"'))[0]
+					schema = (yield instance.sequelize.query(`select "t"."table_name" from "information_schema"."tables" as "t" where "t"."table_schema"='${instance.schema}';`, {transaction: t}))[0]
+				if (!schema) {
+					return data
+				}
+				for (let i = 0; i < schema.length; i++) {
+					let tableName = schema[i].table_name
+					data[tableName] = (yield instance.sequelize.query(`select * from "${instance.schema}"."${tableName}"`, {transaction: t}))[0]
 				}
 				return data
 			})
@@ -120,17 +130,28 @@ class Migrations {
 
 	getTableLayout(t) {
 		try {
+			if (!t) {
+				return this.sequelize.transaction((t) => this.removeAllTables(t))
+			}
 			const instance = this
 			return co(function*() {
 				let data = {},
-					schemas = yield instance.sequelize.query('SELECT "t"."table_name","c"."column_name" FROM "information_schema"."tables" AS "t" ' +
-						'INNER JOIN "information_schema"."columns" AS "c" ON "t"."table_name"="c"."table_name"' +
-						'WHERE "t"."table_schema"=\'' + instance.config.db.schema + '\'', {transaction: t})
-				for (let i = 0; i < schemas[0].length; i++) {
-					if (typeof(data[schemas[0][i].table_name]) === 'undefined') {
-						data[schemas[0][i].table_name] = []
+					schemas = (yield instance.sequelize.query(`
+						select "t"."table_name", "c"."column_name" from "information_schema"."tables" AS "t"
+						inner join "information_schema"."columns" AS "c" on "t"."table_name"="c"."table_name"
+						where "t"."table_schema"='${instance.schema}';`,
+						{transaction: t}
+					))[0]
+				if (!schemas) {
+					return data
+				}
+				for (let i = 0; i < schema.length; i++) {
+					let tableName = schema[i].table_name
+					data[tableName] = (yield instance.sequelize.query(`select * from "${instance.schema}"."${tableName}"`, {transaction: t}))[0]
+					if (typeof data[tableName] === 'undefined') {
+						data[tableName] = []
 					}
-					data[schemas[0][i].table_name].push(schemas[0][i].column_name)
+					data[tableName].push(schema[i].column_name)
 				}
 				return data
 			})
@@ -146,7 +167,7 @@ class Migrations {
 			}
 			const instance = this
 			return co(function*() {
-				let tables = (yield instance.sequelize.query(`select "t"."table_name" FROM "information_schema"."tables" AS "t" where "t"."table_schema"='${instance.config.db.schema}';`))[0],
+				let tables = (yield instance.sequelize.query(`select "t"."table_name" FROM "information_schema"."tables" AS "t" where "t"."table_schema"='${instance.config.db.schema}';`, {transaction: t}))[0],
 					dropQuery = ''
 				tables.forEach((row, index) => {
 					dropQuery += `drop table "${row.table_name}" cascade;`
@@ -159,34 +180,60 @@ class Migrations {
 		}
 	}
 
-	runQueryFromColumnData(instance, tableName, inserts, queryInterface, deleteTableContents, t, dontSetIdSequence) {
+	runQueryFromColumnData(tableName, inserts, t, options) {
+		const instance = this,
+			{sequelize} = this,
+			queryInterface = sequelize.getQueryInterface()
 		return co(function*() {
-			if (inserts.values.length > 0) {
-				console.log('Query series starting, rows to execute:', inserts.values.length, ' for table ', tableName)
-				if (deleteTableContents.indexOf(tableName) !== -1) {
-					yield instance.sequelize.query('DELETE FROM "' + tableName + '";', {transaction: t})
+			if ((typeof tableName !== 'string') || !tableName.length) {
+				throw {customMessage: 'Invalid tableName string provided.'}
+			}
+			if (!inserts || (typeof inserts !== 'object')) {
+				throw {customMessage: `At table "${tableName}": invalid inserts object provided.`}
+			}
+			const {columns, values} = inserts
+			if (!(columns instanceof Array) || !columns.length) {
+				throw {customMessage: `At table "${tableName}": inserts.columns must be a non-empty array.`}
+			}
+			if (!(values instanceof Array)) {
+				throw {customMessage: `At table "${tableName}": inserts.values must be an array.`}
+			}
+			const actualOptions = options || {},
+				{deleteTableContents, dontSetIdSequence} = actualOptions
+			if (values.length > 0) {
+				console.log(`Query series starting, rows to execute: ${values.length} for table ${tableName}...`)
+				if (deleteTableContents && deleteTableContents.indexOf(tableName) !== -1) {
+					yield sequelize.query(`delete from "${tableName}";`, {transaction: t})
 				}
 
-				let queryTemplate = 'INSERT INTO "' + tableName + '" (',
+				const columnCount = columns.length
+				let queryTemplate = `insert into "${tableName}" (`,
 					query = ''
-				for (let i in inserts.columns) {
-					queryTemplate += '"' + (queryInterface.escape(inserts.columns[i])).replace(/'/g, '') + '",'
+				for (let i in columns) {
+					// queryTemplate += `"${(queryInterface.escape(columns[i])).replace(/'/g, '')}",`
+					queryTemplate += `"${columns[i]}",`
 				}
 				queryTemplate = queryTemplate.substr(0, queryTemplate.length - 1)
-				queryTemplate += ') VALUES '
+				queryTemplate += ') values '
 				query += queryTemplate
 
-				for (let i in inserts.values) {
-					let valuesItem = inserts.values[i]
+				for (let i in values) {
+					let valuesItem = values[i]
+					if (!(valuesItem instanceof Array)) {
+						throw {customMessage: `At table "${tableName}", item no. ${i}: inserts.values items must be arrays.`}
+					}
+					if (valuesItem.length !== columnCount) {
+						throw {customMessage: `At table "${tableName}", item no. ${i}: the number of fields in this item does not match the number of columns in inserts.columns.`}
+					}
 					query += ' ('
 					for (let j in valuesItem) {
-						query += valuesItem[j] + ','
+						query += `'${valuesItem[j]}',`
 					}
 					query = query.substr(0, query.length - 1)
 					query += ')'
 					if (parseInt(i, 10) % 100 === 0) {
 						query += ';'
-						yield instance.sequelize.query(query, {transaction: t})
+						yield sequelize.query(query, {transaction: t})
 						query = '' + queryTemplate
 						continue;
 					}
@@ -195,12 +242,12 @@ class Migrations {
 				if (query[query.length - 1] === ',') {
 					query = query.substr(0, query.length - 1)
 					query += ';'
-					yield instance.sequelize.query(query, {transaction: t})
+					yield sequelize.query(query, {transaction: t})
 				}
 				console.log('All queries executed successfully.')
 
 				if (!dontSetIdSequence) {
-					yield instance.sequelize.query('SELECT setval(\'"' + tableName + '_id_seq"\'::regclass, (SELECT "id" FROM "' + tableName + '" ORDER BY "id" DESC LIMIT 1))', {transaction: t})
+					yield sequelize.query(`select setval('"${tableName}_id_seq"'::regclass, (select "id" from "${tableName}" order by "id" desc limit 1 1));`, {transaction: t})
 				}
 			}
 		})
@@ -240,7 +287,7 @@ class Migrations {
 		return {columns, values}
 	}
 
-	// DFS again - we want to keep it very strict here, so that the dependencies are followed and the data is inserted in the correct order
+	// DFS search; we want to keep it very strict here, so that the dependencies are followed and the data is inserted in the correct order
 	getColumnDataSetsFromDependencyGraph(sets, currentSet, dependencyGraph) {
 		for (const id in dependencyGraph) {
 			let vertex = dependencyGraph[id],
@@ -358,7 +405,7 @@ class Migrations {
 						let tableInserts = inserts[tableName]
 						for (let c in tableInserts) {
 							if (c !== 'dependentSets') {
-								yield instance.runQueryFromColumnData(instance, tableName, tableInserts[c], queryInterface, deleteTableContents, t)
+								yield instance.runQueryFromColumnData(tableName, tableInserts[c], t, {deleteTableContents})
 							}
 						}
 						let dependentSets = tableInserts.dependentSets
@@ -366,7 +413,7 @@ class Migrations {
 							continue
 						}
 						for (const i in dependentSets) {
-							yield instance.runQueryFromColumnData(instance, tableName, dependentSets[i], queryInterface, deleteTableContents, t)
+							yield instance.runQueryFromColumnData(tableName, dependentSets[i], t, {deleteTableContents})
 						}
 					}
 					inserts = {}
@@ -388,7 +435,7 @@ class Migrations {
 						let tableInserts = inserts[tableName]
 						for (let c in tableInserts) {
 							if (c !== 'dependentSets') {
-								yield instance.runQueryFromColumnData(instance, tableName, tableInserts[c], queryInterface, deleteTableContents, t)
+								yield instance.runQueryFromColumnData(tableName, tableInserts[c], t, {deleteTableContents})
 							}
 						}
 						let dependentSets = tableInserts.dependentSets
@@ -396,7 +443,7 @@ class Migrations {
 							continue
 						}
 						for (const i in dependentSets) {
-							yield instance.runQueryFromColumnData(instance, tableName, dependentSets[i], queryInterface, deleteTableContents, t)
+							yield instance.runQueryFromColumnData(tableName, dependentSets[i], t, {deleteTableContents})
 						}
 					}
 					inserts = {}
@@ -411,7 +458,7 @@ class Migrations {
 					for (let tableName in inserts) {
 						let tableInserts = inserts[tableName]
 						for (let c in tableInserts) {
-							yield instance.runQueryFromColumnData(instance, tableName, tableInserts[c], queryInterface, deleteTableContents, t, true)
+							yield instance.runQueryFromColumnData(tableName, tableInserts[c], t, {deleteTableContents, dontSetIdSequence: true})
 						}
 					}
 
@@ -483,7 +530,7 @@ class Migrations {
 		return sequelize.transaction((t) => {
 			return co(function*() {
 				// write a backup of the current database data for safety reasons
-				let currentData = yield instance.getFullTableData(),
+				let currentData = yield instance.getFullTableData(t),
 					now = new Date().getTime(),
 					fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `pre_static_data_insert_${now}.json`), 'w')
 				yield fs.write(fileDescriptor, JSON.stringify(currentData))

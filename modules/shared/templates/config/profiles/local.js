@@ -20,11 +20,12 @@ module.exports = {
 	wsPort: site.wsPort,
 	wsConfigFolderPath: 'c:\\programs\\nginx\\conf',
 	postgreSQL: {
-		host: '127.0.0.1',
-		port: 5432,
 		user: 'postgres',
 		password: 'postgres',
+		host: '127.0.0.1',
+		port: 5432,
 		database: 'ramster_v1',
+		mockDatabase: 'ramster_v1',
 		schema: 'public',
 		logging: true
 	},

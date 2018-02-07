@@ -8,6 +8,7 @@
 	- *BREAKING* - renamed moduleList to webpackDevserverModuleList.
 	- *BREAKING* - renamed protocol to hostProtocol.
 	- *BREAKING* - in the db config, it is now mandatory to specify "dbType"; it no longer defaults to 'postgres'.
+	- *BREAKING* - in the db config, it is now mandatory to specify "schema"; it no longer defaults to 'public'.
 	- *BREAKING* - all client configs must be grouped in a "clients" object.
 	- *BREAKING* - all api configs must be grouped in an "apis" object.
 	- *BREAKING* - removed the "webpackDevserverModuleList" array; added a startWebpackDevserver variable to each client module config that does the same thing as the removed array.
@@ -45,7 +46,11 @@
 - migrations modules:
 	- Constructor is now in the form constructor(config, sequelize, dbComponents), rather than (config, db).
 	- Reworked to no longer rely on the db module. This way we can add it to the db module and avoid circularization.
+	- Improved the queries and made the code more consistent. Refactored a lot of things, beacuase this was the oldest untouched part of ramster - since the first release.
 	- Added a removeAllTables method.
+	- Changes to runQueryFromColumnData:
+		- *BREAKING* - the method is now in the following format: runQueryFromColumnData(tableName, inserts, t, options), where options is in the format {deleteTableContents, dontSetIdSequence}.
+		- Added a load of validations.
 - DB module and components:
 	- *BREAKING* - the constructor is now in the format constructor(config, logger, generalStore, tokenManager), rather than constructor(config, {logger, generalStore, tokenManager}).
 	- *BREAKING* - migrated to sequelize v4. See their migration guide for further info.
@@ -66,6 +71,7 @@
 	- *BREAKING* - removed the component.generateHandle method.
 	- Added a component.mapRelations method, which generates the relations object and the relReadKeys for each component.
 	- Added a setDBInComponents method, which is used to set the db property of components instead of setComponentProperties. The major difference is that it creates a shallow copy of the db object for each component and removes the component in question from the copied object's component list to avoid circularization.
+	- Added a specMethodNames object to all db components, which will be used to execute tests from the user-defined spec for each component automatically.
 	- Added a lot of tests, complete code coverage.
 - Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis).
 

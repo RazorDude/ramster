@@ -14,7 +14,7 @@ class Emails {
 		this.sender = this.cfg.emails.emailSender
 	}
 
-	sendEmail({to, subject, templateName, fields}) {
+	sendEmail(templateName, to, subject, {fields}) {
 		let instance = this
 		return co(function*(){
 			let template = (pug.compileFile(path.join(instance.cfg.emails.templatesPath, `${templateName}.pug`), {}))(fields || {}),

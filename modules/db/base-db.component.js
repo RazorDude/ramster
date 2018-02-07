@@ -20,6 +20,7 @@ class BaseDBComponent {
 			hasMany: {requiredKeys: ['foreignKey'], dependencyCategory: 'masterOf'},
 			belongsToMany: {requiredKeys: ['through', 'foreignKey', 'otherKey'], dependencyCategory: 'equalWith'}
 		}
+		this.specMethodNames = []
 	}
 
 	associate(components) {

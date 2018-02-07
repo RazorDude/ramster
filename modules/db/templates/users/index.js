@@ -13,11 +13,8 @@ class Component extends Base {
 
 		const instance = this
 
-		this.componentName = 'users'
-		this.relReadKeys = []
-
-		this.model = sequelize.define('User', {
-			roleId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
+		this.model = sequelize.define('user', {
+			typeId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
 			firstName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 			lastName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 			email: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
@@ -77,7 +74,20 @@ class Component extends Base {
 
 		this.model = this.model.scope('default')
 		this.associationsConfig = {
-			roles: {type: 'belongsTo', modelName: 'roles', foreignKey: 'roleId'}
+			type: {type: 'belongsTo', componentName: 'userTypes', foreignKey: 'typeId'}
+		}
+		this.relationsConfig = {
+			typeWithAccessData: {
+				associationName: 'type',
+				attributes: ['id', 'name'],
+				required: true,
+				include: [{
+					associationName: 'accessPoints',
+					attributes: ['id', 'name', 'description'],
+					required: true,
+					include: [{associationName: 'module', required: true, include: [{associationName: 'category', attributes: ['id', 'name', 'icon']}]}]
+				}]
+			}
 		}
 
 		this.profileUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
@@ -199,8 +209,8 @@ class Component extends Base {
 
 			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
 				host = clientModuleConfig ? clientModuleConfig.host : ''
-			let mailSendResult = yield instance.mailClient.sendEmail('resetPassword', user.email, {
-				dynamicFields: {
+			let mailSendResult = yield instance.mailClient.sendEmail('resetPassword', user.email, 'Reset Password Request', {
+				fields: {
 					userFirstName: user.firstName,
 					resetPasswordLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/users/me')}`
 				}
@@ -261,8 +271,8 @@ class Component extends Base {
 			user = user[1][0]
 			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
 				host = clientModuleConfig ? clientModuleConfig.host : ''
-			yield instance.mailClient.sendEmail('updateEmail', user.email, {
-				dynamicFields: {
+			yield instance.mailClient.sendEmail('updateEmail', user.email, 'Email Update Request', {
+				fields: {
 					userFirstName: user.firstName,
 					updateEmailLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/users/me')}&tokenKeyName=emailToken`
 				}
@@ -286,8 +296,8 @@ class Component extends Base {
 			user = user[1][0]
 			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
 				host = clientModuleConfig ? clientModuleConfig.host : ''
-			yield instance.mailClient.sendEmail('emailUpdatedSuccessfully', user.email, {
-				dynamicFields: {
+			yield instance.mailClient.sendEmail('emailUpdatedSuccessfully', user.email, 'Email Updated', {
+				fields: {
 					userFirstName: user.firstName,
 					userEmail: user.email
 				}

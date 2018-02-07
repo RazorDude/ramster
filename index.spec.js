@@ -39,8 +39,8 @@ module.exports = {
 				instance.testLoadDB()
 				assert(true)
 			})
-			it('should execute testLoadMigrations successfully', function() {
-				instance.testLoadMigrations()
+			it('should execute testMigrations successfully', function() {
+				instance.testMigrations()
 				assert(true)
 			})
 			it('should execute testDBModule successfully', function() {
@@ -114,11 +114,14 @@ module.exports = {
 				it('should have a valid, non-empty database string, if db config is provided and dbType is postgreSQL', function() {
 					assert((typeof postgresConfig.database === 'string') && postgresConfig.database.length)
 				})
+				it('should have a valid, non-empty config.db.schema string, if db config is provided and dbType is postgreSQL', function() {
+					assert((typeof dbConfig.schema === 'string') && dbConfig.schema.length)
+				})
 				runTestConditionally(
-					typeof postgresConfig.mock_database !== 'undefined',
-					'should have a valid, non-empty mock_database string, if db config is provided and mock_database is provided',
+					typeof postgresConfig.mockDatabase !== 'undefined',
+					'should have a valid, non-empty mockDatabase string, if db config is provided and mockDatabase is provided',
 					function() {
-						assert((typeof postgresConfig.mock_database === 'string') && postgresConfig.mock_database.length)
+						assert((typeof postgresConfig.mockDatabase === 'string') && postgresConfig.mockDatabase.length)
 					}
 				)
 				it('should have a valid, non-empty schema name string, if db config is provided and dbType is postgreSQL', function() {
@@ -658,6 +661,19 @@ module.exports = {
 			})
 		})
 	},
+	testMigrations: function() {
+		const instance = this
+		describe('core.migrations', function() {
+			it('should execute loadMigrations successfully if all parameters and configuration variables are correct', function() {
+				instance.loadMigrations()
+				assert(true)
+			})
+			it('should execute testMe successfully', function() {
+				instance.migrations.testMe()
+				assert(true)
+			})
+		})
+	},
 	testLoadDB: function() {
 		const instance = this
 		describe('core.loadDB', function() {
@@ -667,15 +683,6 @@ module.exports = {
 					assert(true)
 					return true
 				})
-			})
-		})
-	},
-	testLoadMigrations: function() {
-		const instance = this
-		describe('core.migrations', function() {
-			it('should execute successfully if all parameters and configuration variables are correct', function() {
-				instance.loadMigrations()
-				assert(true)
 			})
 		})
 	},

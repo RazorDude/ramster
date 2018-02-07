@@ -209,8 +209,8 @@ class Component extends Base {
 
 			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
 				host = clientModuleConfig ? clientModuleConfig.host : ''
-			let mailSendResult = yield instance.mailClient.sendEmail('resetPassword', user.email, {
-				dynamicFields: {
+			let mailSendResult = yield instance.mailClient.sendEmail('resetPassword', user.email, 'Reset Password Request', {
+				fields: {
 					userFirstName: user.firstName,
 					resetPasswordLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/users/me')}`
 				}
@@ -271,8 +271,8 @@ class Component extends Base {
 			user = user[1][0]
 			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
 				host = clientModuleConfig ? clientModuleConfig.host : ''
-			yield instance.mailClient.sendEmail('updateEmail', user.email, {
-				dynamicFields: {
+			yield instance.mailClient.sendEmail('updateEmail', user.email, 'Email Update Request', {
+				fields: {
 					userFirstName: user.firstName,
 					updateEmailLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/users/me')}&tokenKeyName=emailToken`
 				}
@@ -296,8 +296,8 @@ class Component extends Base {
 			user = user[1][0]
 			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
 				host = clientModuleConfig ? clientModuleConfig.host : ''
-			yield instance.mailClient.sendEmail('emailUpdatedSuccessfully', user.email, {
-				dynamicFields: {
+			yield instance.mailClient.sendEmail('emailUpdatedSuccessfully', user.email, 'Email Updated', {
+				fields: {
 					userFirstName: user.firstName,
 					userEmail: user.email
 				}

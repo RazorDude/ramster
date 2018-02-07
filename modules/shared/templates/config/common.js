@@ -1,5 +1,4 @@
 'use strict'
-'use strict'
 
 const
 	path = require('path')
@@ -39,9 +38,7 @@ module.exports = {
 	db: {
 		modulePath: path.join(__dirname, '../modules/db'),
 		dbType: 'postgreSQL',
-		seedingOrder: [
-			'modules', 'roles', 'keyAccessPoints', 'users'
-		]
+		schema: 'public'
 	},
 	clients: {
 		site: {
@@ -64,8 +61,7 @@ module.exports = {
 			anonymousAccessRoutes: ['/users/getCredentials', '/users/create', '/users/forgotPassword'],
 			responseType: 'serviceName',
 			jwt: {
-				accessTokenExpiresInMinutes: 1440,
-				// useRefreshTokens: true
+				accessTokenExpiresInMinutes: 1440
 			},
 			allowOrigins: '*'
 		}

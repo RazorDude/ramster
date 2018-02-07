@@ -25,6 +25,7 @@ module.exports = {
 		host: '127.0.0.1',
 		port: 5432,
 		database: 'ramster_v1',
+		mockDatabase: 'ramster_v1',
 		schema: 'public',
 		logging: true
 	},

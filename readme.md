@@ -75,14 +75,21 @@ Roadmap
 ==
 The main goal at this time is to get Ramster stable and feature-rich enough for a v1.0.0 release. To do that, it must include:
 - Extensive tests of all modules and components that can cover as much cases as possible.
-- The ability to generate Swagger documentation out of endpoints based on what they return.
+- The ability to generate Swagger documentation out of db models, as well as endpoints based on their route params and possibly what they return. Ramster should be able to validate the request object and the response data.
 - The ability to execute tests for each db, client and api module's components, based on a .spec file inside the component folder. This will greatly aid the user with continuous integration.
 - The ability to generate certain files (like the bootstrapping index.js file of the whole project, user model, permissions system models) and configs.
 - Complete removal of all not-so-good practices that exist at the moment for the sake of backwards compatibility with v0.4.x and v0.5.x (at the time of writing this they have several thousand downloads each).
+- The ability to generate project templates, such as: blank, basic (users and permissions system), blog (TBD), cms (TBD).
 - In the migrations module, auto-restore the DB state for failed sync and seed.
 - Create a separate ramster-cli package, that will be used to run commands from the console - migrations, config and file generation, testing, etc.
-- Automate a buildAssociation method to the db models, that automates the current associate method
+- Create a buildAssociation method for the db models, that automates the current associate method.
 - Webpack build tools; base and default configurations for React and Angular.
 - Try and reduce the number of dependencies as much as possible.
 - A lot of good an informative badges on top of this readme, all of which must shine in bright green :)
 - Loads and loads of docs and a website that hosts them, not just .md files in the repo.
+
+
+___
+Security issues
+==
+Please report any security issues privately at mmetalonlyy@gmail.com.

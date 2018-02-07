@@ -66,7 +66,8 @@ class DBModule {
 				if (componentName.indexOf('.') === -1) {
 					let componentPath = path.join(modulePath, componentName),
 						componentDirData = yield fs.readdir(componentPath),
-						component = new (require(componentPath))(sequelize, Sequelize)
+						component = new (require(componentPath))(sequelize, Sequelize),
+						specMethodNames = []
 					// check the validity of the components
 					// here we have 'function' instead of 'object', beacuse that's how Sequelize creates the models
 					if (!component.model || (typeof component.model !== 'function')) {
@@ -85,8 +86,10 @@ class DBModule {
 									let specMethod = spec[key]
 									if (typeof specMethod === 'function') {
 										component[key] = specMethod
+										specMethodNames.push(key)
 									}
 								}
+								component.specMethodNames = specMethodNames
 							} catch (e) {
 								throw {customMessage: `Invalid spec file for DB module component "${componentName}".`}
 							}
@@ -104,7 +107,7 @@ class DBModule {
 		})
 	}
 
-	createAssociations(doSync) {
+	createAssociations() {
 		let instance = this
 		return co(function*() {
 			const {sequelize} = instance
@@ -140,9 +143,7 @@ class DBModule {
 			} while(!seedingOrderIsCorrect)
 			instance.seedingOrder = seedingOrder
 			instance.setDBInComponents()
-			if (doSync) {
-				yield sequelize.sync()
-			}
+			yield sequelize.sync()
 			return true
 		})
 	}

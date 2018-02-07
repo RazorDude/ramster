@@ -78,7 +78,7 @@ class Core {
 			}
 			if (db) {
 				db.mailClient = mailClient
-				db.setComponentsProperties({db})
+				db.setDBInComponents()
 			}
 			return true
 		})
@@ -86,9 +86,9 @@ class Core {
 
 	loadMigrations() {
 		let db = this.modules.db
-		this.modules.migrations = new Migrations(this.config, db.sequelize, db.components)
-		db.migrations = this.modules.migrations
-		db.setComponentsProperties({db})
+		this.migrations = new Migrations(this.config, db.sequelize, db.components)
+		db.migrations = this.migrations
+		db.setDBInComponents()
 	}
 
 	loadClients() {

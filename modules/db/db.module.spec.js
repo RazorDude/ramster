@@ -290,24 +290,26 @@ module.exports = {
 	},
 	testCreateAssociations: function() {
 		const instance = this,
-			{config, moduleConfig} = this,
+			{config, moduleConfig, seedingOrder} = this,
 			originalConfig = JSON.parse(JSON.stringify(config))
 		let changeableInstance = this
 		describe('core.modules.db.createAssociations', function() {
-			it.skip('should execute successfully if all paramters are correct and doSync isn\'t enabled', function() {
+			it('should execute successfully if all paramters are correct and doSync is enabled', function() {
 				return co(function*() {
 					yield instance.createAssociations()
 					assert(true)
 					return true
 				})
 			})
-			it('should execute successfully if all paramters are correct and doSync is enabled', function() {
-				return co(function*() {
-					// yield instance.migrations.removeAllTables()
-					yield instance.createAssociations(true)
-					assert(true)
-					return true
-				})
+			it('should have generated the correct seeding order', function() {
+				let correctSeedingOrder = ['moduleCategories', 'modules', 'moduleAccessPoints', 'userTypes', 'users']
+				for (const i in correctSeedingOrder) {
+					if (correctSeedingOrder[i] !== seedingOrder[i]) {
+						assert(false)
+						return
+					}
+				}
+				assert(true)
 			})
 		})
 	},
