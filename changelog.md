@@ -52,6 +52,11 @@
 		- *BREAKING* - the method is now in the following format: runQueryFromColumnData(queryInterface, tableName, inserts, t, options), where options is in the format {deleteTableContents, dontSetIdSequence}.
 		- Added a load of validations.
 		- Made logging optional for ramster logs, based on the already existing config.postgreSQL.logging variable.
+	- Actually made escapeRecursively it work, by returning the proper escaped value for non-objects based on the value's data type.
+	- Changes in prepareDataObjectForQuery:
+		- It's now in the format prepareDataObjectForQuery(tableLayout, dataObject).
+		- Added validations.
+		- Removed escaping from the method - data is now escaped in the runQueryFromColumnData method.
 - DB module and components:
 	- *BREAKING* - the constructor is now in the format constructor(config, logger, generalStore, tokenManager), rather than constructor(config, {logger, generalStore, tokenManager}).
 	- *BREAKING* - migrated to sequelize v4. See their migration guide for further info.

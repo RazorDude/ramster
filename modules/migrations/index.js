@@ -217,7 +217,7 @@ class Migrations {
 				let queryTemplate = `insert into "${tableName}" (`,
 					query = ''
 				for (let i in columns) {
-					queryTemplate += `"${(queryInterface.escape(columns[i])).replace(/'/g, '')}",`
+					queryTemplate += `"${(queryInterface.escape(columns[i])).replace(/^'|'$/g, '')}",`
 					// queryTemplate += `"${columns[i]}",`
 				}
 				queryTemplate = queryTemplate.substr(0, queryTemplate.length - 1)
@@ -263,34 +263,45 @@ class Migrations {
 	}
 
 	escapeRecursively(queryInterface, value) {
+		if ((typeof value === 'undefined') || (value === null)) {
+			return value
+		}
 		if (value instanceof Array) {
 			let escapedObject = []
 			value.forEach((item, index) => escapedObject.push(this.escapeRecursively(queryInterface, item)))
 			return escapedObject
 		}
-		if ((typeof value === 'object') && (value !== null)) {
+		if (typeof value === 'object') {
 			let escapedObject = {}
 			for (const key in value) {
 				escapedObject[key] = this.escapeRecursively(queryInterface, value[key])
 			}
 			return escapedObject
 		}
-		return queryInterface.escape(value)
+		if (typeof value !== 'string') {
+			return value
+		}
+		return queryInterface.escape(value).replace(/^'|'$/g, '')
 	}
 
-	prepareDataObjectForQuery(dataObject, tableLayout, queryInterface) {
+	prepareDataObjectForQuery(tableLayout, dataObject) {
 		let columns = [],
 			values = []
+		if (!tableLayout || !(tableLayout instanceof Array)) {
+			throw {customMessage: 'Invalid tableLayout array provided.'}
+		}
+		if (!dataObject || (typeof dataObject !== 'object')) {
+			throw {customMessage: 'Invalid dataObject provided.'}
+		}
 		for (let column in dataObject) {
 			if (tableLayout.indexOf(column) !== -1) {
 				columns.push(column)
 				let columnValue = dataObject[column]
 				if ((typeof columnValue === 'object') && (columnValue !== null)) {
-					values.push(queryInterface.escape(JSON.stringify(columnValue)))
-					// values.push(JSON.stringify(this.escapeRecursively(queryInterface, columnValue)))
+					values.push(JSON.stringify(columnValue))
 					continue
 				}
-				values.push(queryInterface.escape(columnValue))
+				values.push(columnValue)
 			}
 		}
 		return {columns, values}
@@ -348,7 +359,7 @@ class Migrations {
 							thisVertex = parentVertex.vertices[dataRow.id]
 						}
 					}
-					let {columns, values} = instance.prepareDataObjectForQuery(dataRow, tableLayout, queryInterface)
+					let {columns, values} = instance.prepareDataObjectForQuery(tableLayout, dataRow)
 					thisVertex.columns = columns
 					thisVertex.values = values
 					continue
@@ -368,7 +379,7 @@ class Migrations {
 		// prepare the rest of the data (non-dependent on parents) for query build
 		let actualDataLength = actualData.length
 		for (let index = 0; index < actualDataLength; index++) {
-			let {columns, values} = instance.prepareDataObjectForQuery(actualData[index], tableLayout, queryInterface),
+			let {columns, values} = instance.prepareDataObjectForQuery(tableLayout, actualData[index]),
 				stringifiedColumns = JSON.stringify(columns)
 			if (typeof(inserts[stringifiedColumns]) === 'undefined') {
 				inserts[stringifiedColumns] = {columns, values: []}

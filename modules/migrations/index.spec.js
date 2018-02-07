@@ -26,6 +26,14 @@ module.exports = {
 				instance.testRunQueryFromColumnData()
 				assert(true)
 			})
+			it('should execute testEscapeRecursively successfully', function() {
+				instance.testEscapeRecursively()
+				assert(true)
+			})
+			it('should execute testPrepareDataObjectForQuery successfully', function() {
+				instance.testPrepareDataObjectForQuery()
+				assert(true)
+			})
 		})
 	},
 	testGetFullTableData: function() {
@@ -324,6 +332,127 @@ module.exports = {
 					assert(data && (data.length > 0))
 					return true
 				})
+			})
+		})
+	},
+	testEscapeRecursively: function() {
+		const instance = this,
+			{sequelize} = this,
+			queryInterface = sequelize.getQueryInterface()
+		describe('migrations.escapeRecursively', function() {
+			it('should throw an error if queryInterface is not sequelize.queryInterface', function() {
+				let didThrowAnError = false
+				try {
+					instance.escapeRecursively(null, 'testString')
+				} catch(e) {
+					didThrowAnError = true
+				}
+				assert(didThrowAnError)
+			})
+			it('should execute successfully if all parameters are correct', function() {
+				let escapedObject = instance.escapeRecursively(queryInterface, {
+					testProperty: [
+						'someString',
+						'otherString"', {
+							innerObject: {stringy: 'test', misterArray: [true, false, 1, 'yay', null, undefined, 'foo']}
+						}
+					],
+					bar: {q: 'test'},
+					test: null
+				})
+				assert(
+					(escapedObject.testProperty instanceof Array) &&
+					(escapedObject.testProperty[0] === 'someString') &&
+					(escapedObject.testProperty[1] === 'otherString"') &&
+					(escapedObject.testProperty[2].innerObject.stringy === 'test') &&
+					(escapedObject.testProperty[2].innerObject.misterArray instanceof Array) &&
+					(escapedObject.testProperty[2].innerObject.misterArray[0] === true) &&
+					(escapedObject.testProperty[2].innerObject.misterArray[1] === false) &&
+					(escapedObject.testProperty[2].innerObject.misterArray[2] === 1) &&
+					(escapedObject.testProperty[2].innerObject.misterArray[3] === 'yay') &&
+					(escapedObject.testProperty[2].innerObject.misterArray[4] === null) &&
+					(escapedObject.testProperty[2].innerObject.misterArray[5] === undefined) &&
+					(escapedObject.testProperty[2].innerObject.misterArray[6] === 'foo') &&
+					(escapedObject.bar.q === 'test') &&
+					(escapedObject.test === null)
+				)
+			})
+		})
+	},
+	testPrepareDataObjectForQuery: function() {
+		const instance = this,
+			{sequelize} = this
+		describe('migrations.prepareDataObjectForQuery', function() {
+			it('should throw an error with the correct message if tableLayout is not an array', function() {
+				let didThrowAnError = false
+				try {
+					instance.prepareDataObjectForQuery()
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid tableLayout array provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should throw an error with the correct message if dataObject is not an object', function() {
+				let didThrowAnError = false
+				try {
+					instance.prepareDataObjectForQuery(['testColumn'])
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid dataObject provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should execute successfully if all parameters are correct', function() {
+				let {columns, values} = instance.prepareDataObjectForQuery(['testProperty', 'bar', 'test', 'doesNotExistInTheObjectProperty'], {
+						testProperty: [
+							'someString',
+							'otherString"', {
+								innerObject: {stringy: 'test', misterArray: [true, false, 1, 'yay', null, undefined, 'foo']}
+							}
+						],
+						bar: {q: 'test'},
+						test: null,
+						doesNotExistInTheTableColumn: 'definitelyYes'
+					}),
+					parsedTestProperty = JSON.parse(values[0])
+				// console.log(columns.length === 3)
+				// console.log(values.length === 3)
+				// console.log(columns[0] === 'testProperty')
+				// console.log(columns[1] === 'bar')
+				// console.log(columns[2] === 'test')
+				// console.log(parsedTestProperty instanceof Array)
+				// console.log(parsedTestProperty[0] === 'someString')
+				// console.log(parsedTestProperty[1] === 'otherString"')
+				// console.log(parsedTestProperty[2].innerObject.stringy === 'test')
+				// console.log(parsedTestProperty[2].innerObject.misterArray instanceof Array)
+				// console.log(parsedTestProperty[2].innerObject.misterArray[0] === true)
+				// console.log(parsedTestProperty[2].innerObject.misterArray[2] === 1)
+				// console.log(parsedTestProperty[2].innerObject.misterArray[3] === 'yay')
+				// console.log(parsedTestProperty[2].innerObject.misterArray[4] === null)
+				// console.log(parsedTestProperty[2].innerObject.misterArray[5] === null)
+				// console.log(parsedTestProperty[2].innerObject.misterArray[6] === 'foo')
+				// console.log(JSON.parse(values[1]).q === 'test')
+				// console.log(values[2] === null)
+				assert(
+					(columns.length === 3) &&
+					(values.length === 3) &&
+					(columns[0] === 'testProperty') &&
+					(columns[1] === 'bar') &&
+					(columns[2] === 'test') &&
+					(parsedTestProperty instanceof Array) &&
+					(parsedTestProperty[0] === 'someString') &&
+					(parsedTestProperty[1] === 'otherString"') &&
+					(parsedTestProperty[2].innerObject.stringy === 'test') &&
+					(parsedTestProperty[2].innerObject.misterArray instanceof Array) &&
+					(parsedTestProperty[2].innerObject.misterArray[0] === true) &&
+					(parsedTestProperty[2].innerObject.misterArray[1] === false) &&
+					(parsedTestProperty[2].innerObject.misterArray[2] === 1) &&
+					(parsedTestProperty[2].innerObject.misterArray[3] === 'yay') &&
+					(parsedTestProperty[2].innerObject.misterArray[4] === null) &&
+					(parsedTestProperty[2].innerObject.misterArray[5] === null) && // yes, json.stringfy transforms undefined to null in array objects
+					(parsedTestProperty[2].innerObject.misterArray[6] === 'foo') &&
+					(JSON.parse(values[1]).q === 'test') &&
+					(values[2] === null)
+				)
 			})
 		})
 	}
