@@ -79,13 +79,26 @@ module.exports = {
 	},
 	testRunQueryFromColumnData: function() {
 		const instance = this,
-			{sequelize} = this
+			{sequelize} = this,
+			queryInterface = sequelize.getQueryInterface()
 		describe('migrations.runQueryFromColumnData', function() {
-			it('should throw an error with the correct message if tableName is not a string', function() {
+			it('should throw an error with the correct message if queryInterface is not sequelize.queryInterface', function() {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
 						yield instance.runQueryFromColumnData()
+					} catch(e) {
+						didThrowAnError = e && (e.customMessage === 'Invalid queryInterface object provided.')
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if tableName is not a string', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.runQueryFromColumnData(queryInterface)
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'Invalid tableName string provided.')
 					}
@@ -97,7 +110,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('')
+						yield instance.runQueryFromColumnData(queryInterface, '')
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'Invalid tableName string provided.')
 					}
@@ -109,7 +122,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('userTypes')
+						yield instance.runQueryFromColumnData(queryInterface, 'userTypes')
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'At table "userTypes": invalid inserts object provided.')
 					}
@@ -121,7 +134,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('userTypes', {})
+						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {})
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'At table "userTypes": inserts.columns must be a non-empty array.')
 					}
@@ -133,7 +146,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('userTypes', {columns: []})
+						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: []})
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'At table "userTypes": inserts.columns must be a non-empty array.')
 					}
@@ -145,7 +158,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('userTypes', {columns: ['id']})
+						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id']})
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'At table "userTypes": inserts.values must be an array.')
 					}
@@ -157,7 +170,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('userTypes', {columns: ['id'], values: []}, 'dummyTransaction', {deleteTableContents: 'blabla'})
+						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id'], values: []}, 'dummyTransaction', {deleteTableContents: 'blabla'})
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'At table "userTypes": if provided, deleteTableContents must be an array.')
 					}
@@ -169,7 +182,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('userTypes', {columns: ['id'], values: ['wrongItem']})
+						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id'], values: ['wrongItem']})
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'At table "userTypes", item no. 0: inserts.values items must be arrays.')
 					}
@@ -181,7 +194,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('userTypes', {columns: ['id'], values: [[1, 2]]})
+						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id'], values: [[1, 2]]})
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'At table "userTypes", item no. 0: the number of fields in this item does not match the number of columns in inserts.columns.')
 					}
@@ -193,7 +206,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.runQueryFromColumnData('userTypes', {columns: ['id'], values: [[]]})
+						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id'], values: [[]]})
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'At table "userTypes", item no. 0: the number of fields in this item does not match the number of columns in inserts.columns.')
 					}
@@ -208,7 +221,7 @@ module.exports = {
 					try {
 						yield instance.sequelize.transaction((t) => {
 							return co(function*() {
-								yield instance.runQueryFromColumnData(
+								yield instance.runQueryFromColumnData(queryInterface, 
 									'userTypes', {
 										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
 										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
@@ -235,7 +248,7 @@ module.exports = {
 					try {
 						yield instance.sequelize.transaction((t) => {
 							return co(function*() {
-								yield instance.runQueryFromColumnData(
+								yield instance.runQueryFromColumnData(queryInterface, 
 									'userTypes', {
 										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
 										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
@@ -263,7 +276,7 @@ module.exports = {
 					try {
 						yield instance.sequelize.transaction((t) => {
 							return co(function*() {
-								yield instance.runQueryFromColumnData(
+								yield instance.runQueryFromColumnData(queryInterface, 
 									'userTypes', {
 										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
 										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
@@ -291,7 +304,7 @@ module.exports = {
 					try {
 						yield instance.sequelize.transaction((t) => {
 							return co(function*() {
-								yield instance.runQueryFromColumnData(
+								yield instance.runQueryFromColumnData(queryInterface, 
 									'userTypes', {
 										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
 										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]

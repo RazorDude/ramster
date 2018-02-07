@@ -180,11 +180,13 @@ class Migrations {
 		}
 	}
 
-	runQueryFromColumnData(tableName, inserts, t, options) {
+	runQueryFromColumnData(queryInterface, tableName, inserts, t, options) {
 		const instance = this,
-			{config, sequelize} = this,
-			queryInterface = sequelize.getQueryInterface()
+			{config, sequelize} = this
 		return co(function*() {
+			if (!queryInterface || (typeof queryInterface !== 'object') || (typeof queryInterface.escape !== 'function')) {
+				throw {customMessage: `Invalid queryInterface object provided.`}
+			}
 			if ((typeof tableName !== 'string') || !tableName.length) {
 				throw {customMessage: 'Invalid tableName string provided.'}
 			}
@@ -412,7 +414,7 @@ class Migrations {
 						let tableInserts = inserts[tableName]
 						for (let c in tableInserts) {
 							if (c !== 'dependentSets') {
-								yield instance.runQueryFromColumnData(tableName, tableInserts[c], t, {deleteTableContents})
+								yield instance.runQueryFromColumnData(queryInterface, tableName, tableInserts[c], t, {deleteTableContents})
 							}
 						}
 						let dependentSets = tableInserts.dependentSets
@@ -420,7 +422,7 @@ class Migrations {
 							continue
 						}
 						for (const i in dependentSets) {
-							yield instance.runQueryFromColumnData(tableName, dependentSets[i], t, {deleteTableContents})
+							yield instance.runQueryFromColumnData(queryInterface, tableName, dependentSets[i], t, {deleteTableContents})
 						}
 					}
 					inserts = {}
@@ -442,7 +444,7 @@ class Migrations {
 						let tableInserts = inserts[tableName]
 						for (let c in tableInserts) {
 							if (c !== 'dependentSets') {
-								yield instance.runQueryFromColumnData(tableName, tableInserts[c], t, {deleteTableContents})
+								yield instance.runQueryFromColumnData(queryInterface, tableName, tableInserts[c], t, {deleteTableContents})
 							}
 						}
 						let dependentSets = tableInserts.dependentSets
@@ -450,7 +452,7 @@ class Migrations {
 							continue
 						}
 						for (const i in dependentSets) {
-							yield instance.runQueryFromColumnData(tableName, dependentSets[i], t, {deleteTableContents})
+							yield instance.runQueryFromColumnData(queryInterface, tableName, dependentSets[i], t, {deleteTableContents})
 						}
 					}
 					inserts = {}
@@ -465,7 +467,7 @@ class Migrations {
 					for (let tableName in inserts) {
 						let tableInserts = inserts[tableName]
 						for (let c in tableInserts) {
-							yield instance.runQueryFromColumnData(tableName, tableInserts[c], t, {deleteTableContents, dontSetIdSequence: true})
+							yield instance.runQueryFromColumnData(queryInterface, tableName, tableInserts[c], t, {deleteTableContents, dontSetIdSequence: true})
 						}
 					}
 

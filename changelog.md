@@ -49,7 +49,7 @@
 	- Improved the queries and made the code more consistent. Refactored a lot of things, beacuase this was the oldest untouched part of ramster - since the first release.
 	- Added a removeAllTables method.
 	- Changes to runQueryFromColumnData:
-		- *BREAKING* - the method is now in the following format: runQueryFromColumnData(tableName, inserts, t, options), where options is in the format {deleteTableContents, dontSetIdSequence}.
+		- *BREAKING* - the method is now in the following format: runQueryFromColumnData(queryInterface, tableName, inserts, t, options), where options is in the format {deleteTableContents, dontSetIdSequence}.
 		- Added a load of validations.
 		- Made logging optional for ramster logs, based on the already existing config.postgreSQL.logging variable.
 - DB module and components:
