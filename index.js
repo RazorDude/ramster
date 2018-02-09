@@ -86,7 +86,7 @@ class Core {
 
 	loadMigrations() {
 		let db = this.modules.db
-		this.migrations = new Migrations(this.config, db.sequelize, db.components)
+		this.migrations = new Migrations(this.config, db.sequelize, db.components, db.seedingOrder)
 		db.migrations = this.migrations
 		db.setDBInComponents()
 	}

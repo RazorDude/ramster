@@ -20,7 +20,7 @@
 	- *BREAKING* - removed the defaultConfig. From now on, ramster will blow up if you don't give it a config.
 	- Added a lot of tests, complete code coverage.
 - Added config templates.
-- Added templates for the following db modules: users, userTypes, moduleCategories, modules, moduleAccessPoints.
+- Added templates for the following db modules: users, userTypes, moduleCategories, modules, moduleAccessPoints, globalConfig.
 - Added a codeGenerator module, which generates config files, db modules, client server layout files, nginx config files, webpack config files and utility scripts. Added tests for it.
 - Added an .npmignore file, that keeps the "test" folder out of the final package (it's for testing ramster and you don't need it in the build). It's still in the repo, though.
 - Removed the buildLayoutFile and generateNGINXConfig methods from the client module, as the codeGenerator now covers this functionality.
@@ -44,9 +44,10 @@
 	- Reworked to no longer rely on the db module.
 	- Added a lot of tests, complete code coverage.
 - migrations modules:
-	- Constructor is now in the form constructor(config, sequelize, dbComponents), rather than (config, db).
+	- *BREAKING* Constructor is now in the form constructor(config, sequelize, dbComponents, seedingOrder), rather than (config, db).
 	- Reworked to no longer rely on the db module. This way we can add it to the db module and avoid circularization.
-	- Improved the queries and made the code more consistent. Refactored a lot of things, beacuase this was the oldest untouched part of ramster - since the first release.
+	- Improved the queries and made the code more consistent. Refactored a lot of things, beacuase some parts were untouched since the first releases of ramster.
+	- Removed the dependentSets property from the module.
 	- Added a removeAllTables method.
 	- Changes to runQueryFromColumnData:
 		- *BREAKING* - the method is now in the following format: runQueryFromColumnData(queryInterface, tableName, inserts, t, options), where options is in the format {deleteTableContents, dontSetIdSequence}.
@@ -54,9 +55,18 @@
 		- Made logging optional for ramster logs, based on the already existing config.postgreSQL.logging variable.
 	- Actually made escapeRecursively it work, by returning the proper escaped value for non-objects based on the value's data type.
 	- Changes in prepareDataObjectForQuery:
-		- It's now in the format prepareDataObjectForQuery(tableLayout, dataObject).
+		- *BREAKING* It's now in the format prepareDataObjectForQuery(tableLayout, dataObject).
 		- Added validations.
 		- Removed escaping from the method - data is now escaped in the runQueryFromColumnData method.
+	- *BREAKING* removed the getColumnDataSetsFromDependencyGraph method.
+	- Added a new method - getLinearArrayFromDependencyGraph. It partially replaces getColumnDataSetsFromDependencyGraph by transforming the dependencyGraph into a linear array, based on the dependency order.
+	- Changes in prepareColumnData:
+		- *BREAKING* - it's now in the format prepareColumnData(data, tableLayout, sameTablePrimaryKey), rather than prepareColumnData(inserts, data, tableLayout, sameTablePrimaryKey, queryInterface).
+		- *BREAKING* - it now returns the inserts object, rather than setting the values into the provided argument.
+		- The dependencyGraph it creates now contains the row data for each item.
+		- Using getLinearArrayFromDependencyGraph, the graph is transformed into an ordered array of rows for insertion and added in a separate dependentDataSets array.
+		- *BREAKING* - it now returns an inserts object if sameTablePrimaryKey is not provided, or a depentDataSets array if it is.
+	- Improved the code quality in insertData, added validations and adapted it to use the updated methods from above.
 - DB module and components:
 	- *BREAKING* - the constructor is now in the format constructor(config, logger, generalStore, tokenManager), rather than constructor(config, {logger, generalStore, tokenManager}).
 	- *BREAKING* - migrated to sequelize v4. See their migration guide for further info.

@@ -34,6 +34,18 @@ module.exports = {
 				instance.testPrepareDataObjectForQuery()
 				assert(true)
 			})
+			it('should execute testGetLinearArrayFromDependencyGraph successfully', function() {
+				instance.testGetLinearArrayFromDependencyGraph()
+				assert(true)
+			})
+			it('should execute testPrepareColumnData successfully', function() {
+				instance.testPrepareColumnData()
+				assert(true)
+			})
+			it('should execute testInsertData successfully', function() {
+				instance.testInsertData()
+				assert(true)
+			})
 		})
 	},
 	testGetFullTableData: function() {
@@ -453,6 +465,374 @@ module.exports = {
 					(JSON.parse(values[1]).q === 'test') &&
 					(values[2] === null)
 				)
+			})
+		})
+	},
+	testGetLinearArrayFromDependencyGraph: function() {
+		const instance = this,
+			{sequelize} = this
+		describe('migrations.getLinearArrayFromDependencyGraph', function() {
+			it('should throw an error with the correct message if dependencyGraph is not an object', function() {
+				let didThrowAnError = false
+				try {
+					instance.getLinearArrayFromDependencyGraph()
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid dependencyGraph object provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should throw an error with the correct message if a dependencyGraph vertex does not contain a data object', function() {
+				let didThrowAnError = false
+				try {
+					instance.getLinearArrayFromDependencyGraph({1: {}})
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'At vertex id 1: invalid data object.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should execute successfully if all parameters are correct', function() {
+				let dependencyGraph = {
+						1: {
+							data: {id: 1, name: 'name1', description: 'desc1'},
+							vertices: {
+								2: {data: {id: 2, name: 'name2', description: 'desc2'}},
+								3: {
+									data: {id: 3, name: 'name3', description: 'desc3'},
+									vertices: {
+										4: {
+											data: {id: 4, name: 'name4', description: 'desc4'},
+											vertices: {
+												5: {data: {id: 5, name: 'name5', description: 'desc5'}},
+												6: {data: {id: 6, name: 'name6', description: 'desc6'}}
+											}
+										}
+									}
+								},
+								7: {
+									data: {id: 7, name: 'name7', description: 'desc7'},
+									vertices: {
+										8: {data: {id: 8, name: 'name8', description: 'desc8'}}
+									}
+								},
+								9: {data: {id: 9, name: 'name9', description: 'desc9'}}
+							}
+						}
+					},
+					linearArray = instance.getLinearArrayFromDependencyGraph(dependencyGraph),
+					dataIsGood = true
+				if (linearArray.length < 9) {
+					assert(false)
+					return true
+				}
+				for (const i in linearArray) {
+					if (linearArray[i].id !== (parseInt(i, 10)) + 1) {
+						dataIsGood = false
+						break
+					}
+				}
+				assert(dataIsGood)
+			})
+		})
+	},
+	testPrepareColumnData: function() {
+		const instance = this,
+			{sequelize} = this
+		describe('migrations.prepareColumnData', function() {
+			it('should throw an error with the correct message if data is not an array', function() {
+				let didThrowAnError = false
+				try {
+					instance.prepareColumnData()
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid data array provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should throw an error with the correct message if tableLayout is not an array', function() {
+				let didThrowAnError = false
+				try {
+					instance.prepareColumnData([])
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid tableLayout array provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should throw an error with the correct message if sameTablePrimaryKey is not a string', function() {
+				let didThrowAnError = false
+				try {
+					instance.prepareColumnData([], [], null)
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid sameTablePrimaryKey string provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should throw an error with the correct message if sameTablePrimaryKey an empty string', function() {
+				let didThrowAnError = false
+				try {
+					instance.prepareColumnData([], [], '')
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid sameTablePrimaryKey string provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should execute successfully if all parameters are correct and sameTablePimaryKey is undefined', function() {
+				let preparedData = instance.prepareColumnData(
+						[
+							{id: 1, name: 'name1', description: 'description1'},
+							{id: 2, name: 'name1', description: 'description1'},
+							{id: 3, name: 'name1', description: 'description1'},
+							{id: 4, name: 'name1'},
+							{id: 5, name: 'name1', description: 'description1'},
+							{id: 6, name: 'name1'},
+							{id: 7, name: 'name1', description: 'description1'},
+							{id: 8, name: 'name1'},
+							{id: 9, name: 'name1', description: 'description1', createdAt: 'now()'}
+						],
+						['id', 'name', 'description', 'createdAt']
+					),
+					keys = Object.keys(preparedData),
+					stringifiedColumnsShouldEqual = ['["id","name","description"]', '["id","name"]', '["id","name","description","createdAt"]'],
+					valuesLengthShouldBe = [5, 3, 1],
+					idColumnShouldBe = [[1, 2, 3, 5, 7], [4, 6, 8], [9]]
+				for (const i in keys) {
+					const stringifiedColumns = keys[i],
+						{columns, values} = preparedData[stringifiedColumns]
+					if (stringifiedColumns !== stringifiedColumnsShouldEqual[i]) {
+						assert(false)
+						return true
+					}
+					for (const j in columns) {
+						if (columns[j] !== columns[j]) {
+							console.log('====> fails here 1')
+							assert(false)
+							return true
+						}
+					}
+					if (values.length !== valuesLengthShouldBe[i]) {
+						assert(false)
+						return true
+					}
+					for (const j in values) {
+						const item = values[j]
+						if (item.length !== columns.length) {
+							assert(false)
+							return true
+						}
+						if (item[0] !== idColumnShouldBe[i][j]) {
+							assert(false)
+							return true
+						}
+					}
+				}
+				assert(true)
+			})
+			it('should execute successfully if all parameters are correct and sameTablePimaryKey is set', function() {
+				let preparedData = instance.prepareColumnData(
+						[
+							{id: 1, name: 'name1', description: 'description1'},
+							{id: 2, parentId: 1, name: 'name2', description: 'description2'},
+							{id: 3, parentId: 1, name: 'name3', description: 'description3'},
+							{id: 4, parentId: 3, name: 'name4'},
+							{id: 5, parentId: 4, name: 'name5', description: 'description5'},
+							{id: 6, parentId: 4, name: 'name6'},
+							{id: 7, parentId: 1, name: 'name7', description: 'description7'},
+							{id: 8, parentId: 7, name: 'name8'},
+							{id: 9, parentId: 1, name: 'name9', description: 'description9', createdAt: 'now()'}
+						],
+						['id', 'name', 'description', 'createdAt'],
+						'parentId'
+					),
+					stringifiedColumnsShouldEqual = [
+						'["id","name","description"]',
+						'["id","name"]',
+						'["id","name","description"]',
+						'["id","name"]',
+						'["id","name","description"]',
+						'["id","name"]',
+						'["id","name","description","createdAt"]'
+					],
+					valuesLengthShouldBe = [3, 1, 1, 1, 1, 1, 1],
+					idColumnShouldBe = [[1, 2, 3], [4], [5], [6], [7], [8], [9]]
+				if (!(preparedData instanceof Array)) {
+					assert(false)
+					return true
+				}
+				for (const i in preparedData) {
+					const {columns, stringifiedColumns, values} = preparedData[i]
+					if (stringifiedColumns !== stringifiedColumnsShouldEqual[i]) {
+						assert(false)
+						return true
+					}
+					for (const j in columns) {
+						if (columns[j] !== columns[j]) {
+							assert(false)
+							return true
+						}
+					}
+					if (values.length !== valuesLengthShouldBe[i]) {
+						assert(false)
+						return true
+					}
+					for (const j in values) {
+						const item = values[j]
+						if (item.length !== columns.length) {
+							assert(false)
+							return true
+						}
+						if (item[0] !== idColumnShouldBe[i][j]) {
+							assert(false)
+							return true
+						}
+					}
+				}
+				assert(true)
+			})
+		})
+	},
+	testInsertData: function() {
+		const instance = this,
+			{config, sequelize} = this
+		let changeableInstance = this
+		describe('migrations.insertData', function() {
+			it('should throw an error with the correct message if data is not an object', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.insertData()
+					} catch(e) {
+						didThrowAnError = e && (e.customMessage === 'Invalid data object provided.')
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully if all parameters are correct, noSync and deleteTableContents are not set to true', function() {
+				return co(function*() {
+					let fileData = JSON.parse(yield fs.readFile(path.join(config.migrations.staticDataPath, 'staticData.json'))),
+						data = {},
+						resultsAreGood = true,
+						originalSeedingOrder = JSON.parse(JSON.stringify(instance.seedingOrder)),
+						newSeedingOrder = [],
+						didThrowAnError = false
+					instance.seedingOrder.forEach((item, index) => {
+						if (item !== 'users') {
+							newSeedingOrder.push(item)
+						}
+					})
+					changeableInstance.seedingOrder = newSeedingOrder
+					for (const tableName in fileData) {
+						data[tableName] = fileData[tableName].data
+					}
+					try {
+						yield instance.insertData(data, {
+								userTypes: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+								users: ['id', 'typeId', 'firstName', 'lastName', 'email', 'password', 'status', 'createdAt', 'updatedAt']
+							}
+						)
+					} catch(e) {
+						didThrowAnError = e
+					}
+					changeableInstance.seedingOrder = originalSeedingOrder
+					if (didThrowAnError) {
+						throw didThrowAnError
+					}
+					let userList = (yield sequelize.query('select * from "users" where "id" in (1,2,3,4);'))[0],
+						userIdIndexMap = {},
+						userTypeList = (yield sequelize.query('select * from "userTypes" where "id" in (1,2,3);'))[0],
+						userTypeIdIndexMap = {}
+					for (const i in userList) {
+						userIdIndexMap[userList[i].id] = i
+					}
+					for (const i in userTypeList) {
+						userTypeIdIndexMap[userTypeList[i].id] = i
+					}
+					for (const i in data.users) {
+						const user = data.users[i],
+							userFromDB = userList[userIdIndexMap[user.id]]
+						for (const fieldName in user) {
+							if (userFromDB[fieldName] !== user[fieldName]) {
+								assert(false)
+								return true
+							}
+						}
+					}
+					for (const i in data.userTypes) {
+						const userType = data.userTypes[i],
+							userTypeFromDB = userTypeList[userTypeIdIndexMap[userType.id]]
+						for (const fieldName in userType) {
+							if (userTypeFromDB[fieldName] !== userType[fieldName]) {
+								assert(false)
+								return true
+							}
+						}
+					}
+					assert(true)
+					return true
+				})
+			})
+			it('should execute successfully if all parameters are correct, noSync and deleteTableContents are set to true', function() {
+				return co(function*() {
+					let fileData = JSON.parse(yield fs.readFile(path.join(config.migrations.staticDataPath, 'staticData.json'))),
+						data = {},
+						resultsAreGood = true,
+						originalSeedingOrder = JSON.parse(JSON.stringify(instance.seedingOrder)),
+						newSeedingOrder = [],
+						didThrowAnError = false
+					instance.seedingOrder.forEach((item, index) => {
+						if (item !== 'users') {
+							newSeedingOrder.push(item)
+						}
+					})
+					changeableInstance.seedingOrder = newSeedingOrder
+					for (const tableName in fileData) {
+						data[tableName] = fileData[tableName].data
+					}
+					try {
+						yield instance.insertData(data, {
+								userTypes: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+								users: ['id', 'typeId', 'firstName', 'lastName', 'email', 'password', 'status', 'createdAt', 'updatedAt']
+							},
+							{noSync: true, deleteTableContents: true}
+						)
+					} catch(e) {
+						didThrowAnError = e
+					}
+					changeableInstance.seedingOrder = originalSeedingOrder
+					if (didThrowAnError) {
+						throw didThrowAnError
+					}
+					let userList = (yield sequelize.query('select * from "users" where "id" in (1,2,3,4);'))[0],
+						userIdIndexMap = {},
+						userTypeList = (yield sequelize.query('select * from "userTypes" where "id" in (1,2,3);'))[0],
+						userTypeIdIndexMap = {}
+					for (const i in userList) {
+						userIdIndexMap[userList[i].id] = i
+					}
+					for (const i in userTypeList) {
+						userTypeIdIndexMap[userTypeList[i].id] = i
+					}
+					for (const i in data.users) {
+						const user = data.users[i],
+							userFromDB = userList[userIdIndexMap[user.id]]
+						for (const fieldName in user) {
+							if (userFromDB[fieldName] !== user[fieldName]) {
+								assert(false)
+								return true
+							}
+						}
+					}
+					for (const i in data.userTypes) {
+						const userType = data.userTypes[i],
+							userTypeFromDB = userTypeList[userTypeIdIndexMap[userType.id]]
+						for (const fieldName in userType) {
+							if (userTypeFromDB[fieldName] !== userType[fieldName]) {
+								assert(false)
+								return true
+							}
+						}
+					}
+					assert(true)
+					return true
+				})
 			})
 		})
 	}

@@ -14,7 +14,7 @@ const
 	wrap = require('co-express')
 
 class Migrations {
-	constructor(config, sequelize, dbComponents) {
+	constructor(config, sequelize, dbComponents, seedingOrder) {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
@@ -23,6 +23,7 @@ class Migrations {
 		this.moduleConfig = config.migrations
 		this.sequelize = sequelize
 		this.dbComponents = dbComponents
+		this.seedingOrder = seedingOrder
 	}
 
 	listen() {
@@ -106,78 +107,65 @@ class Migrations {
 	}
 
 	getFullTableData(t) {
-		try {
-			if (!t) {
-				return this.sequelize.transaction((t) => this.getFullTableData(t))
-			}
-			const instance = this
-			return co(function*() {
-				let data = {},
-					schema = (yield instance.sequelize.query(`select "t"."table_name" from "information_schema"."tables" as "t" where "t"."table_schema"='${instance.schema}';`, {transaction: t}))[0]
-				if (!schema) {
-					return data
-				}
-				for (let i = 0; i < schema.length; i++) {
-					let tableName = schema[i].table_name
-					data[tableName] = (yield instance.sequelize.query(`select * from "${instance.schema}"."${tableName}"`, {transaction: t}))[0]
-				}
-				return data
-			})
-		} catch (e) {
-			console.log(e)
+		if (!t) {
+			return this.sequelize.transaction((t) => this.getFullTableData(t))
 		}
+		const instance = this
+		return co(function*() {
+			let data = {},
+				schema = (yield instance.sequelize.query(`select "t"."table_name" from "information_schema"."tables" as "t" where "t"."table_schema"='${instance.schema}';`, {transaction: t}))[0]
+			if (!schema) {
+				return data
+			}
+			for (let i = 0; i < schema.length; i++) {
+				let tableName = schema[i].table_name
+				data[tableName] = (yield instance.sequelize.query(`select * from "${instance.schema}"."${tableName}"`, {transaction: t}))[0]
+			}
+			return data
+		})
 	}
 
 	getTableLayout(t) {
-		try {
-			if (!t) {
-				return this.sequelize.transaction((t) => this.getTableLayout(t))
-			}
-			const instance = this
-			return co(function*() {
-				let data = {},
-					schema = (yield instance.sequelize.query(`
-						select "t"."table_name", "c"."column_name" from "information_schema"."tables" AS "t"
-						inner join "information_schema"."columns" AS "c" on "t"."table_name"="c"."table_name"
-						where "t"."table_schema"='${instance.schema}';`,
-						{transaction: t}
-					))[0]
-				if (!schema) {
-					return data
-				}
-				for (let i = 0; i < schema.length; i++) {
-					let tableName = schema[i].table_name
-					data[tableName] = (yield instance.sequelize.query(`select * from "${instance.schema}"."${tableName}"`, {transaction: t}))[0]
-					if (typeof data[tableName] === 'undefined') {
-						data[tableName] = []
-					}
-					data[tableName].push(schema[i].column_name)
-				}
-				return data
-			})
-		} catch (e) {
-			console.log(e)
+		if (!t) {
+			return this.sequelize.transaction((t) => this.getTableLayout(t))
 		}
+		const instance = this
+		return co(function*() {
+			let data = {},
+				schema = (yield instance.sequelize.query(`
+					select "t"."table_name", "c"."column_name" from "information_schema"."tables" AS "t"
+					inner join "information_schema"."columns" AS "c" on "t"."table_name"="c"."table_name"
+					where "t"."table_schema"='${instance.schema}';`,
+					{transaction: t}
+				))[0]
+			if (!schema) {
+				return data
+			}
+			for (let i = 0; i < schema.length; i++) {
+				let tableName = schema[i].table_name
+				if (typeof data[tableName] === 'undefined') {
+					data[tableName] = []
+				}
+				data[tableName].push(schema[i].column_name)
+			}
+			return data
+		})
 	}
 
 	removeAllTables(t) {
-		try {
-			if (!t) {
-				return this.sequelize.transaction((t) => this.removeAllTables(t))
-			}
-			const instance = this
-			return co(function*() {
-				let tables = (yield instance.sequelize.query(`select "t"."table_name" FROM "information_schema"."tables" AS "t" where "t"."table_schema"='${instance.config.db.schema}';`, {transaction: t}))[0],
-					dropQuery = ''
-				tables.forEach((row, index) => {
-					dropQuery += `drop table "${row.table_name}" cascade;`
-				})
-				yield instance.sequelize.query(dropQuery, {transaction: t})
-				return true
-			})
-		} catch (e) {
-			console.log(e)
+		if (!t) {
+			return this.sequelize.transaction((t) => this.removeAllTables(t))
 		}
+		const instance = this
+		return co(function*() {
+			let tables = (yield instance.sequelize.query(`select "t"."table_name" FROM "information_schema"."tables" AS "t" where "t"."table_schema"='${instance.config.db.schema}';`, {transaction: t}))[0],
+				dropQuery = ''
+			tables.forEach((row, index) => {
+				dropQuery += `drop table "${row.table_name}" cascade;`
+			})
+			yield instance.sequelize.query(dropQuery, {transaction: t})
+			return true
+		})
 	}
 
 	runQueryFromColumnData(queryInterface, tableName, inserts, t, options) {
@@ -255,7 +243,7 @@ class Migrations {
 					console.log('All queries executed successfully.')
 				}
 
-				if (!dontSetIdSequence) {
+				if (dontSetIdSequence !== true) {
 					yield sequelize.query(`select setval('"${tableName}_id_seq"'::regclass, (select "id" from "${tableName}" order by "id" desc limit 1));`, {transaction: t})
 				}
 			}
@@ -307,187 +295,163 @@ class Migrations {
 		return {columns, values}
 	}
 
-	// DFS search; we want to keep it very strict here, so that the dependencies are followed and the data is inserted in the correct order
-	getColumnDataSetsFromDependencyGraph(sets, currentSet, dependencyGraph) {
-		for (const id in dependencyGraph) {
-			let vertex = dependencyGraph[id],
-				stringifiedColumns = JSON.stringify(vertex.columns)
-			// we need this if because the root-level vertices won't have columns and values
-			if (vertex.values && vertex.columns) {
-				if (!currentSet.stringifiedColumns) {
-					currentSet.stringifiedColumns = stringifiedColumns
-					currentSet.columns = vertex.columns
-				} else if (currentSet.stringifiedColumns !== stringifiedColumns) {
-					sets.push(currentSet)
-					currentSet = {values: []}
-				}
-				currentSet.values.push(vertex.values)
-			}
-			this.getColumnDataSetsFromDependencyGraph(sets, currentSet, vertex.vertices)
+	getLinearArrayFromDependencyGraph(dependencyGraph) {
+		if (!dependencyGraph || (typeof dependencyGraph !== 'object')) {
+			throw {customMessage: 'Invalid dependencyGraph object provided.'}
 		}
+		let arr = []
+		for (const id in dependencyGraph) {
+			let vertex = dependencyGraph[id]
+			if (!vertex.data || (typeof vertex.data !== 'object')) {
+				throw {customMessage: `At vertex id ${id}: invalid data object.`}
+			}
+			arr.push(vertex.data)
+			if (vertex.vertices && (typeof vertex.vertices === 'object')) {
+				arr = arr.concat(this.getLinearArrayFromDependencyGraph(vertex.vertices))
+			}
+		}
+		return arr
 	}
 
-	prepareColumnData(inserts, data, tableLayout, sameTablePrimaryKey, queryInterface) {
-		const instance = this
-		let actualData = []
+	prepareColumnData(data, tableLayout, sameTablePrimaryKey) {
+		if (!(data instanceof Array)) {
+			throw {customMessage: 'Invalid data array provided.'}
+		}
+		if (!(tableLayout instanceof Array)) {
+			throw {customMessage: 'Invalid tableLayout array provided.'}
+		}
+		if ((typeof sameTablePrimaryKey !== 'undefined') && ((typeof sameTablePrimaryKey !== 'string') || !sameTablePrimaryKey.length)) {
+			throw {customMessage: 'Invalid sameTablePrimaryKey string provided.'}
+		}
+		const instance = this,
+			dataLength = data.length
 		// if we've got a self dependency for this table, make a graph of which records should be inserted first and in what order
 		if (sameTablePrimaryKey) {
-			let dependencyGraph = {}
-			inserts.dependentSets = []
-			// create the dependency graph and the queries for the dependent objects
-			let dataLength = data.length
+			let dependentDataSets = [],
+				dependencyGraph = {}
+			// create the dependency graph, containing the data to be inserted for each row
 			for (let index = 0; index < dataLength; index++) {
 				let dataRow = data[index],
 					parentKeyValue = dataRow[sameTablePrimaryKey],
 					thisVertex = null
+				// if the row is dependent on another row from the same table, add it to the dependency graph
 				if (parentKeyValue) {
-					let parentVertex = instance.findVertexByIdDFS(parentKeyValue, dependencyGraph, 'get')
+					let parentVertex = findVertexByIdDFS(parentKeyValue, dependencyGraph, 'get')
 					if (!parentVertex) {
 						dependencyGraph[parentKeyValue] = {vertices: {}}
 						parentVertex = dependencyGraph[parentKeyValue]
 					}
 					thisVertex = parentVertex.vertices[dataRow.id]
 					if (!thisVertex) {
-						thisVertex = instance.findVertexByIdDFS(dataRow.id, dependencyGraph, 'get')
+						thisVertex = findVertexByIdDFS(dataRow.id, dependencyGraph, 'get')
 						// delete the vertex if it exists outside of its parent and add it to the parent
 						if (thisVertex) {
 							parentVertex.vertices[dataRow.id] = JSON.parse(JSON.stringify(thisVertex))
 							thisVertex = parentVertex.vertices[dataRow.id]
-							instance.findVertexByIdDFS(dataRow.id, dependencyGraph, 'delete')
+							findVertexByIdDFS(dataRow.id, dependencyGraph, 'delete')
 						} else {
 							parentVertex.vertices[dataRow.id] = {vertices: {}}
 							thisVertex = parentVertex.vertices[dataRow.id]
 						}
 					}
-					let {columns, values} = instance.prepareDataObjectForQuery(tableLayout, dataRow)
-					thisVertex.columns = columns
-					thisVertex.values = values
+					thisVertex.data = dataRow
 					continue
 				}
-				actualData.push(dataRow)
+				// otherwise, add a top-level vertex
+				dependencyGraph[dataRow.id] = {data: dataRow, vertices: {}}
 			}
-			// go through the dependencyGraph and prepare the data for query build (dependentSets)
-			let currentSet = {values: []}
-			instance.getColumnDataSetsFromDependencyGraph(inserts.dependentSets, currentSet, dependencyGraph)
-			// in case we've only got a single (huge) set - add it to the dependent sets
-			if (!inserts.dependentSets.length && currentSet.values.length) {
-				inserts.dependentSets.push(currentSet)
-			}
-		} else {
-			actualData = data
+			// go through the dependencyGraph and transform it into a linear array
+			let currentSet = {values: []},
+				linearArray = instance.getLinearArrayFromDependencyGraph(dependencyGraph)
+			// compile the sequential items with identical column lists into data sets
+			linearArray.forEach((item, iIndex) => {
+				let {columns, values} = instance.prepareDataObjectForQuery(tableLayout, item),
+					stringifiedColumns = JSON.stringify(columns)
+				if (!currentSet.stringifiedColumns) {
+					currentSet.stringifiedColumns = JSON.stringify(columns)
+					currentSet.columns = columns
+				} else if (currentSet.stringifiedColumns !== stringifiedColumns) {
+					dependentDataSets.push(currentSet)
+					currentSet = {values: [], stringifiedColumns, columns}
+				}
+				currentSet.values.push(values)
+			})
+			dependentDataSets.push(currentSet)
+			return dependentDataSets
 		}
-		// prepare the rest of the data (non-dependent on parents) for query build
-		let actualDataLength = actualData.length
-		for (let index = 0; index < actualDataLength; index++) {
-			let {columns, values} = instance.prepareDataObjectForQuery(tableLayout, actualData[index]),
+		// prepare the data for query build by mapping the inserts by column list
+		let inserts = {}
+		for (let index = 0; index < dataLength; index++) {
+			let {columns, values} = instance.prepareDataObjectForQuery(tableLayout, data[index]),
 				stringifiedColumns = JSON.stringify(columns)
 			if (typeof(inserts[stringifiedColumns]) === 'undefined') {
 				inserts[stringifiedColumns] = {columns, values: []}
 			}
 			inserts[stringifiedColumns].values.push(values)
 		}
+		return inserts
 	}
 
 	insertData(data, options) {
-		try {
-			const instance = this
-			return instance.sequelize.transaction(function (t) {
-				return co(function*() {
-					const queryInterface = instance.sequelize.getQueryInterface(),
-						dbComponents = instance.dbComponents,
-						seedingOrder = instance.db.seedingOrder
-					let models = Object.keys(dbComponents),
-						inserts = {},
-						noSync = options && options.noSync || false,
-						deleteTableContents = options && options.deleteTableContents || []
+		const instance = this,
+			{sequelize, dbComponents, seedingOrder} = this
+		return instance.sequelize.transaction(function (t) {
+			return co(function*() {
+				if (!data || (typeof data !== 'object')) {
+					throw {customMessage: 'Invalid data object provided.'}
+				}
+				const queryInterface = sequelize.getQueryInterface()
+				let models = Object.keys(dbComponents),
+					noSync = options && options.noSync || false,
+					deleteTableContents = options && options.deleteTableContents || []
 
-					if (!noSync) {
-						yield instance.sequelize.sync({force: true}, {transaction: t})
-					}
+				if (noSync !== true) {
+					yield sequelize.sync({force: true}, {transaction: t})
+				}
 
-					let tableLayout = yield instance.getTableLayout(t)
+				let tableLayout = yield instance.getTableLayout(t)
 
-					// seed the main tables first
-					for (let i = 0; i < seedingOrder.length; i++) {
-						let modelName = seedingOrder[i]
-						const dbComponent = dbComponents[modelName]
-						let tableName = dbComponent.model.getTableName()
-						if (data[tableName]) {
-							if (!inserts[tableName]) {
-								inserts[tableName] = {}
-							}
-							instance.prepareColumnData(inserts[tableName], data[tableName], tableLayout[tableName], dbComponent.sameTablePrimaryKey, queryInterface)
-							delete data[tableName]
-							delete models[modelName]
-						}
+				// seed the tables for the components from seedingOrder
+				for (const i in seedingOrder) {
+					let componentName = seedingOrder[i]
+					const dbComponent = dbComponents[componentName]
+					let tableName = dbComponent.model.getTableName()
+					if (!data[tableName]) {
+						continue
 					}
-					for (let tableName in inserts) {
-						let tableInserts = inserts[tableName]
-						for (let c in tableInserts) {
-							if (c !== 'dependentSets') {
-								yield instance.runQueryFromColumnData(queryInterface, tableName, tableInserts[c], t, {deleteTableContents})
-							}
-						}
-						let dependentSets = tableInserts.dependentSets
-						if (!(dependentSets instanceof Array)) {
-							continue
-						}
-						for (const i in dependentSets) {
-							yield instance.runQueryFromColumnData(queryInterface, tableName, dependentSets[i], t, {deleteTableContents})
-						}
+					let preparedData = instance.prepareColumnData(data[tableName], tableLayout[tableName], dbComponent.sameTablePrimaryKey)
+					for (const j in preparedData) {
+						yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents})
 					}
-					inserts = {}
+					delete data[tableName]
+					delete models[componentName]
+				}
 
-					// seed the rest of the tables from instance.db
-					for (let i = 0; i < models.length; i++) {
-						let modelName = models[i]
-						const dbComponent = dbComponents[modelName]
-						let tableName = dbComponent.model.getTableName()
-						if (data[tableName]) {
-							if (typeof(inserts[tableName]) === 'undefined') {
-								inserts[tableName] = {}
-							}
-							instance.prepareColumnData(inserts[tableName], data[tableName], tableLayout[tableName], dbComponent.sameTablePrimaryKey, queryInterface)
-							delete data[tableName]
+				// seed the tables for the rest of the components
+				for (const i in models) {
+					let componentName = models[i]
+					const dbComponent = dbComponents[componentName]
+					let tableName = dbComponent.model.getTableName()
+					if (data[tableName]) {
+						let preparedData = instance.prepareColumnData(data[tableName], tableLayout[tableName], dbComponent.sameTablePrimaryKey)
+						for (const j in preparedData) {
+							yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents})
 						}
+						delete data[tableName]
 					}
-					for (let tableName in inserts) {
-						let tableInserts = inserts[tableName]
-						for (let c in tableInserts) {
-							if (c !== 'dependentSets') {
-								yield instance.runQueryFromColumnData(queryInterface, tableName, tableInserts[c], t, {deleteTableContents})
-							}
-						}
-						let dependentSets = tableInserts.dependentSets
-						if (!(dependentSets instanceof Array)) {
-							continue
-						}
-						for (const i in dependentSets) {
-							yield instance.runQueryFromColumnData(queryInterface, tableName, dependentSets[i], t, {deleteTableContents})
-						}
-					}
-					inserts = {}
+				}
 
-					// seed the remaining data (junction tables and other tables without sequelize models)
-					for (let tableName in data) {
-						if (typeof(inserts[tableName]) === 'undefined') {
-							inserts[tableName] = {}
-						}
-						instance.prepareColumnData(inserts[tableName], data[tableName], tableLayout[tableName], null, queryInterface)
+				// seed the remaining data (junction tables and other tables without sequelize models)
+				for (let tableName in data) {
+					let preparedData = instance.prepareColumnData(data[tableName], tableLayout[tableName])
+					for (const j in preparedData) {
+						yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents, dontSetIdSequence: true})
 					}
-					for (let tableName in inserts) {
-						let tableInserts = inserts[tableName]
-						for (let c in tableInserts) {
-							yield instance.runQueryFromColumnData(queryInterface, tableName, tableInserts[c], t, {deleteTableContents, dontSetIdSequence: true})
-						}
-					}
+				}
 
-					return true
-				})
+				return true
 			})
-		} catch (e) {
-			console.log(e)
-		}
+		})
 	}
 
 	sync() {
@@ -495,11 +459,11 @@ class Migrations {
 		return co(function*() {
 			let data = yield instance.getFullTableData(),
 				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `${(new Date()).getTime()}.json`), 'w'),
-				bytesWritten = yield fs.write(fileDescriptor, JSON.stringify(data))
+				bytesWritten = yield fs.write(fileDescriptor, JSON.stringify(data)),
+				success = true
 			yield fs.close(fileDescriptor)
-			return {
-				success: yield instance.insertData(data)
-			}
+			yield instance.insertData(data)
+			return {success}
 		})
 	}
 

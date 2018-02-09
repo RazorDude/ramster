@@ -1,0 +1,37 @@
+{
+	"users": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"id": 1, "typeId": 1, "firstName": "Test1", "lastName": "User1", "email": "testuser1@ramster.com", "password": "testPassword1", "status": true, "createdAt": "now()", "updatedAt": "now()"},
+			{"id": 2, "typeId": 2, "firstName": "Test2", "lastName": "User2", "email": "testuser2@ramster.com", "password": "testPassword2", "status": true, "createdAt": "now()", "updatedAt": "now()"},
+			{"id": 3, "typeId": 3, "firstName": "Test3", "lastName": "User3", "email": "testuser3@ramster.com", "password": "testPassword3", "status": true, "createdAt": "now()", "updatedAt": "now()"},
+			{"id": 4, "typeId": 2, "firstName": "Test4", "lastName": "User4", "email": "testuser4@ramster.com", "password": "testPassword4", "status": true, "createdAt": "now()", "updatedAt": "now()"}
+		]
+	},
+	"userTypes": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"id": 1, "name": "Test type 1", "description": "TT1", "status": true, "createdAt": "now()", "updatedAt": "now()"},
+			{"id": 2, "name": "Test type 2", "description": "TT2", "status": false, "createdAt": "now()", "updatedAt": "now()"},
+			{"id": 3, "name": "Test type 3", "description": "TT3", "status": true, "createdAt": "now()", "updatedAt": "now()"}
+		]
+	},
+	"modules": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"id": 1, "name": "test", "route": "/test", "description": "Test module", "order": 1, "alwaysAccessible": false, "status": true, "createdAt": "now()", "updatedAt": "now()"}
+		]
+	},
+	"moduleAccessPoints": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"id": 1, "moduleId": 1, "name": "Test1", "description": "Test 1", "status": true, "createdAt": "now()", "updatedAt": "now()"}
+		]
+	},
+	"userTypeModuleAccessPoints": {
+		"primaryKeys": ["moduleAccessPointId", "userTypeId"],
+		"data": [
+			{"moduleAccessPointId": 1, "userTypeId": 1, "createdAt": "now()", "updatedAt": "now()"}
+		]
+	}
+}
