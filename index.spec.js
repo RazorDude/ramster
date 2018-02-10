@@ -39,6 +39,10 @@ module.exports = {
 				instance.testLoadDB()
 				assert(true)
 			})
+			it('should execute testMailClient successfully', function() {
+				instance.testMailClient()
+				assert(true)
+			})
 			it('should execute testMigrations successfully', function() {
 				instance.testMigrations()
 				assert(true)
@@ -657,6 +661,29 @@ module.exports = {
 		describe('core.codeGenerator', function() {
 			it('should execute testMe successfully', function() {
 				instance.codeGenerator.testMe()
+				assert(true)
+			})
+		})
+	},
+	testMailClient: function() {
+		const instance = this
+		describe('core.mailClient', function() {
+			it.skip('should execute loadMailClient successfully if all parameters and a custom emails module is used', function() {
+				return co(function*() {
+					yield instance.loadMailClient()
+					assert(true)
+					return true
+				})
+			})
+			it('should execute loadMailClient successfully if all parameters and a custom emails module is not used', function() {
+				return co(function*() {
+					yield instance.loadMailClient()
+					assert(true)
+					return true
+				})
+			})
+			it('should execute testMe successfully', function() {
+				instance.mailClient.testMe()
 				assert(true)
 			})
 		})

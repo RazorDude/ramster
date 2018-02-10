@@ -42,6 +42,7 @@
 	- Added a lot of tests, complete code coverage.
 - emails module:
 	- Reworked to no longer rely on the db module.
+	- Added the bcc array to the optional list of arguments
 	- Added a lot of tests, complete code coverage.
 - migrations modules:
 	- *BREAKING* Constructor is now in the form constructor(config, sequelize, dbComponents, seedingOrder), rather than (config, db).
@@ -76,6 +77,7 @@
 		- *BREAKING* - it's now in the format seed(seedFolderName, seedFileName), instead of seed({seedFolder, seedFile}).
 		- It throws an error if attempting to seed without a seedFolder or seedFile.
 		- It no longer rediculously returns all the data it has successfully seeded.
+	- Added a lot of tests, complete code coverage.
 - DB module and components:
 	- *BREAKING* - the constructor is now in the format constructor(config, logger, generalStore, tokenManager), rather than constructor(config, {logger, generalStore, tokenManager}).
 	- *BREAKING* - migrated to sequelize v4. See their migration guide for further info.

@@ -77,7 +77,7 @@ class Core {
 				instance.mailClient = new Emails(config, logger)
 			}
 			if (db) {
-				db.mailClient = mailClient
+				db.mailClient = instance.mailClient
 				db.setDBInComponents()
 			}
 			return true

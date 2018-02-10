@@ -4,20 +4,37 @@ const
 	co = require('co'),
 	pug = require('pug'),
 	path = require('path'),
-	sendgrid = require('@sendgrid/mail')
+	sendgrid = require('@sendgrid/mail'),
+	spec = require('./index.spec')
 
 class Emails {
-	constructor(cfg) {
-		this.cfg = cfg
+	constructor(config) {
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
+		this.config = config
+		this.emailsConfig = config.emails
 		this.sendgrid = sendgrid
-		this.sendgrid.setApiKey(this.cfg.emails.sendgridApiKey)
-		this.sender = this.cfg.emails.emailSender
+		this.sendgrid.setApiKey(config.emails.sendgridApiKey)
+		this.sender = config.emails.emailSender
 	}
 
-	sendEmail(templateName, to, subject, {fields}) {
-		let instance = this
+	sendEmail(templateName, to, subject, options) {
+		const instance = this,
+			{sender, emailsConfig} = this
 		return co(function*(){
-			let template = (pug.compileFile(path.join(instance.cfg.emails.templatesPath, `${templateName}.pug`), {}))(fields || {}),
+			if ((typeof templateName !== 'string') || !templateName.length) {
+				throw {customMessage: 'Invalid templateName string provided.'}
+			}
+			if ((typeof to !== 'string') || !to.length) {
+				throw {customMessage: 'Invalid "to" email string provided.'}
+			}
+			if ((typeof subject !== 'string') || !subject.length) {
+				throw {customMessage: 'Invalid subject string provided.'}
+			}
+			const actualOptions = options || {},
+				{fields, bcc} = actualOptions
+			let template = (pug.compileFile(path.join(emailsConfig.templatesPath, `${templateName}.pug`), {}))(fields || {}),
 				receivers = [],
 				bccs = []
 
@@ -29,7 +46,7 @@ class Emails {
 				receivers.push(to)
 			}
 
-			let bccMails = instance.cfg.emails.bcc
+			let bccMails = emailsConfig.bcc
 			if (bccMails instanceof Array) {
 				bccMails.forEach((el, i) => {
 					bccs.push(el)
@@ -37,18 +54,25 @@ class Emails {
 			} else if (typeof bccMails === 'string'){
 				bccs.push(bccMails)
 			}
+			if (bcc instanceof Array) {
+				bcc.forEach((email, index) => {
+					if (bccs.indexOf(email) === -1) {
+						bccs.push(email)
+					}
+				})
+			}
 
-			let options = {
+			let rq = {
 				to: receivers,
 				from: instance.sender,
 				subject,
 				html: template
 			}
 			if (bccs.length > 0) {
-				options.bcc = bccs
+				rq.bcc = bccs
 			}
 
-			return yield instance.sendgrid.send(options)
+			return yield instance.sendgrid.send(rq)
 		})
 	}
 }
