@@ -41,10 +41,10 @@ class Migrations {
 
 		router.get('/seed', wrap(function* (req, res, next) {
 			try {
-				res.json({data: yield instance.seed({
-					seedFolder: req.query.seedFolder && decodeURIComponent(req.query.seedFolder) || instance.config.migrations.seedfilesFolder,
-					seedFile: req.query.seedFile && decodeURIComponent(req.query.seedFile) || instance.config.migrations.defaultSeedfileName
-				})})
+				res.json({data: yield instance.seed(
+					req.query.seedFolder && decodeURIComponent(req.query.seedFolder),
+					req.query.seedFile && decodeURIComponent(req.query.seedFile)
+				)})
 			} catch (error) {
 				req.locals = {error}
 				next()
@@ -62,9 +62,9 @@ class Migrations {
 
 		router.get('/generateSeed', wrap(function* (req, res, next) {
 			try {
-				res.json({data: yield instance.generateSeed({
-					seedFile: req.query.seedFile && decodeURIComponent(req.query.seedFile) || instance.config.migrations.defaultSeedfileName
-				})})
+				res.json({data: yield instance.generateSeed(
+					req.query.seedFile && decodeURIComponent(req.query.seedFile)
+				)})
 			} catch (error) {
 				req.locals = {error}
 				next()
@@ -406,7 +406,7 @@ class Migrations {
 					deleteTableContents = options && options.deleteTableContents || []
 
 				if (noSync !== true) {
-					yield sequelize.sync({force: true}, {transaction: t})
+					yield sequelize.sync({force: true, transaction: t})
 				}
 
 				let tableLayout = yield instance.getTableLayout(t)
@@ -458,39 +458,53 @@ class Migrations {
 		const instance = this
 		return co(function*() {
 			let data = yield instance.getFullTableData(),
-				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `${(new Date()).getTime()}.json`), 'w'),
-				bytesWritten = yield fs.write(fileDescriptor, JSON.stringify(data)),
-				success = true
+				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `preSync_${(new Date()).getTime()}.json`), 'w')
+			yield fs.write(fileDescriptor, JSON.stringify(data))
 			yield fs.close(fileDescriptor)
 			yield instance.insertData(data)
-			return {success}
+			return {success: true}
 		})
 	}
 
-	seed({seedFolder, seedFile}) {
+	generateSeed(seedFileName) {
 		const instance = this
 		return co(function*() {
-			return yield instance.insertData(JSON.parse((yield fs.readFile(path.join(instance.config.migrations.baseMigrationsPath, seedFolder, `${seedFile}.json`))).toString()))
-		})
-	}
-
-	generateSeed({seedFile}) {
-		const instance = this
-		return co(function*() {
+			if ((typeof seedFileName !== 'string') || !seedFileName.length) {
+				throw {customMessage: 'Invalid seedFileName string provided.'}
+			}
 			let seed = JSON.stringify(yield instance.getFullTableData()),
 				now = new Date().getTime(),
-				oldFilePath = path.join(instance.config.migrations.seedFilesPath, `${seedFile}_${now}.json`)
+				oldFilePath = path.join(instance.config.migrations.seedFilesPath, `${seedFileName}_${now}.json`)
 			try {
-				//write a backup copy to preserve the old seed as history, then to the file that will be used for seeding
+				// write a backup copy to preserve the old seed as history, then to the file that will be used for seeding
 				let fileDescriptor = yield fs.open(oldFilePath, 'w')
-				yield fs.write(fileDescriptor, (yield fs.readFile(path.join(instance.config.migrations.seedFilesPath, `${seedFile}.json`))).toString())
+				yield fs.write(fileDescriptor, (yield fs.readFile(path.join(instance.config.migrations.seedFilesPath, `${seedFileName}.json`))).toString())
 				yield fs.close(fileDescriptor)
 			} catch (e) {
 				yield fs.unlink(oldFilePath)
 			}
-			let newFileDescriptor = yield fs.open(path.join(instance.config.migrations.seedFilesPath, `${seedFile}.json`), 'w'),
-			 	result = yield fs.write(newFileDescriptor, seed)
+			let newFileDescriptor = yield fs.open(path.join(instance.config.migrations.seedFilesPath, `${seedFileName}.json`), 'w'),
+				result = yield fs.write(newFileDescriptor, seed)
 			yield fs.close(newFileDescriptor)
+			return {success: true}
+		})
+	}
+
+	seed(seedFolderName, seedFileName) {
+		const instance = this
+		return co(function*() {
+			if ((typeof seedFolderName !== 'string') || !seedFolderName.length) {
+				throw {customMessage: 'Invalid seedFolderName string provided.'}
+			}
+			if ((typeof seedFileName !== 'string') || !seedFileName.length) {
+				throw {customMessage: 'Invalid seedFileName string provided.'}
+			}
+			let oldData = yield instance.getFullTableData(),
+				newData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.baseMigrationsPath, seedFolderName, `${seedFileName}.json`))).toString()),
+				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `preSeed_${(new Date()).getTime()}.json`), 'w')
+			yield fs.write(fileDescriptor, JSON.stringify(oldData))
+			yield fs.close(fileDescriptor)
+			yield instance.insertData(newData)
 			return {success: true}
 		})
 	}
@@ -511,99 +525,98 @@ class Migrations {
 		const instance = this,
 			sequelize = this.sequelize,
 			dbComponents = this.dbComponents
-		return sequelize.transaction((t) => {
-			return co(function*() {
-				// write a backup of the current database data for safety reasons
-				let currentData = yield instance.getFullTableData(t),
-					now = new Date().getTime(),
-					fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `pre_static_data_insert_${now}.json`), 'w')
-				yield fs.write(fileDescriptor, JSON.stringify(currentData))
-				yield fs.close(fileDescriptor)
+		return co(function*() {
+			// write a backup of the current database data for safety reasons
+			let currentData = yield instance.getFullTableData(),
+				now = new Date().getTime(),
+				fileDescriptor = yield fs.open(path.join(instance.config.migrations.syncHistoryPath, `preStaticDataInsert_${now}.json`), 'w')
+			yield fs.write(fileDescriptor, JSON.stringify(currentData))
+			yield fs.close(fileDescriptor)
 
-				// get the data from the file and merge it with the current data
-				let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, 'staticData.json'))).toString())
-				// insert the staticData according to the seeding order
-				instance.config.db.seedingOrder.forEach((componentName, index) => {
-					const tableName = dbComponents[componentName].model.getTableName()
-					if (staticData[tableName]) {
-						const tableStaticData = JSON.parse(JSON.stringify(staticData[tableName])),
-							primaryKeys = tableStaticData.primaryKeys
-						delete staticData[tableName]
-						let currentTableData = currentData[tableName]
-						if (typeof currentTableData === 'undefined') {
-							currentTableData = []
-							currentData[tableName] = currentTableData
-						}
-						let currentTableDataPKIndexMap = {}
-						if (primaryKeys.length) {
-							currentTableData.forEach((row, index) => {
-								let currentKey = ''
-								primaryKeys.forEach((pk, pkIndex) => {
-									currentKey += `${row[pk]}-`
-								})
-								currentKey = currentKey.substr(0, currentKey.length - 1)
-								currentTableDataPKIndexMap[currentKey] = index
-							})
-							tableStaticData.data.forEach((row, index) => {
-								let currentKey = ''
-								primaryKeys.forEach((pk, pkIndex) => {
-									currentKey += `${row[pk]}-`
-								})
-								currentKey = currentKey.substr(0, currentKey.length - 1)
-								let cdIndex = currentTableDataPKIndexMap[currentKey]
-								if (typeof cdIndex === 'undefined') {
-									currentTableData.push(row)
-									return
-								}
-								currentTableData[cdIndex] = merge(currentTableData[cdIndex], row)
-							})
-							return
-						}
-						currentTableData = currentTableData.concat(tableStaticData.data)
+			// get the data from the file and merge it with the current data
+			let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, 'staticData.json'))).toString())
+			// insert the staticData according to the seeding order
+			instance.seedingOrder.forEach((componentName, index) => {
+				const tableName = dbComponents[componentName].model.getTableName()
+				if (staticData[tableName]) {
+					const tableStaticData = JSON.parse(JSON.stringify(staticData[tableName])),
+						primaryKeys = tableStaticData.primaryKeys
+					delete staticData[tableName]
+					let currentTableData = currentData[tableName]
+					if (typeof currentTableData === 'undefined') {
+						currentTableData = []
+						currentData[tableName] = currentTableData
 					}
-				})
-				// insert the rest of the staticData
-				if (Object.keys(staticData).length) {
-					for (const tableName in staticData) {
-						const tableStaticData = staticData[tableName],
-							primaryKeys = tableStaticData.primaryKeys
-						let currentTableData = currentData[tableName]
-						if (typeof currentTableData === 'undefined') {
-							currentTableData = []
-							currentData[tableName] = currentTableData
-						}
-						let currentTableDataPKIndexMap = {}
-						if (primaryKeys.length) {
-							currentTableData.forEach((row, index) => {
-								let currentKey = ''
-								primaryKeys.forEach((pk, pkIndex) => {
-									currentKey += `${row[pk]}-`
-								})
-								currentKey = currentKey.substr(0, currentKey.length - 1)
-								currentTableDataPKIndexMap[currentKey] = index
+					let currentTableDataPKIndexMap = {}
+					if (primaryKeys.length) {
+						currentTableData.forEach((row, index) => {
+							let currentKey = ''
+							primaryKeys.forEach((pk, pkIndex) => {
+								currentKey += `${row[pk]}-`
 							})
-							tableStaticData.data.forEach((row, index) => {
-								let currentKey = ''
-								primaryKeys.forEach((pk, pkIndex) => {
-									currentKey += `${row[pk]}-`
-								})
-								currentKey = currentKey.substr(0, currentKey.length - 1)
-								let cdIndex = currentTableDataPKIndexMap[currentKey]
-								if (typeof cdIndex === 'undefined') {
-									currentTableData.push(row)
-									return
-								}
-								currentTableData[cdIndex] = merge(currentTableData[cdIndex], row)
+							currentKey = currentKey.substr(0, currentKey.length - 1)
+							currentTableDataPKIndexMap[currentKey] = index
+						})
+						tableStaticData.data.forEach((row, index) => {
+							let currentKey = ''
+							primaryKeys.forEach((pk, pkIndex) => {
+								currentKey += `${row[pk]}-`
 							})
-							continue
-						}
-						currentTableData = currentTableData.concat(tableStaticData.data)
+							currentKey = currentKey.substr(0, currentKey.length - 1)
+							let cdIndex = currentTableDataPKIndexMap[currentKey]
+							if (typeof cdIndex === 'undefined') {
+								currentTableData.push(row)
+								return
+							}
+							currentTableData[cdIndex] = merge(currentTableData[cdIndex], row)
+						})
+						return
 					}
+					currentTableData = currentTableData.concat(tableStaticData.data)
 				}
-
-				// seed the merged data
-				return yield instance.insertData(currentData)
 			})
+			// insert the rest of the staticData
+			if (Object.keys(staticData).length) {
+				for (const tableName in staticData) {
+					const tableStaticData = staticData[tableName],
+						primaryKeys = tableStaticData.primaryKeys
+					let currentTableData = currentData[tableName]
+					if (typeof currentTableData === 'undefined') {
+						currentTableData = []
+						currentData[tableName] = currentTableData
+					}
+					let currentTableDataPKIndexMap = {}
+					if (primaryKeys.length) {
+						currentTableData.forEach((row, index) => {
+							let currentKey = ''
+							primaryKeys.forEach((pk, pkIndex) => {
+								currentKey += `${row[pk]}-`
+							})
+							currentKey = currentKey.substr(0, currentKey.length - 1)
+							currentTableDataPKIndexMap[currentKey] = index
+						})
+						tableStaticData.data.forEach((row, index) => {
+							let currentKey = ''
+							primaryKeys.forEach((pk, pkIndex) => {
+								currentKey += `${row[pk]}-`
+							})
+							currentKey = currentKey.substr(0, currentKey.length - 1)
+							let cdIndex = currentTableDataPKIndexMap[currentKey]
+							if (typeof cdIndex === 'undefined') {
+								currentTableData.push(row)
+								return
+							}
+							currentTableData[cdIndex] = merge(currentTableData[cdIndex], row)
+						})
+						continue
+					}
+					currentTableData = currentTableData.concat(tableStaticData.data)
+				}
+			}
+
+			// seed the merged data
+			yield instance.insertData(currentData)
+			return {success: true}
 		})
 	}
 }

@@ -67,6 +67,15 @@
 		- Using getLinearArrayFromDependencyGraph, the graph is transformed into an ordered array of rows for insertion and added in a separate dependentDataSets array.
 		- *BREAKING* - it now returns an inserts object if sameTablePrimaryKey is not provided, or a depentDataSets array if it is.
 	- Improved the code quality in insertData, added validations and adapted it to use the updated methods from above.
+	- Changes in the gnerateSeed method:
+		- *BREAKING* - it's now in the format generateSeed(seedFileName), instead of seed({seedFolder, seedFile}).
+		- It throws an error if attempting to seed without a seedFolder or seedFile.
+		- It no longer rediculously returns all the data it has successfully seeded.
+	- The sync, seed and insertStaticData now all generate syncHistory files prior to attempting the data insert. It the latter fails, they attempt to restore the previous state as well.
+	- Changes in the seed method:
+		- *BREAKING* - it's now in the format seed(seedFolderName, seedFileName), instead of seed({seedFolder, seedFile}).
+		- It throws an error if attempting to seed without a seedFolder or seedFile.
+		- It no longer rediculously returns all the data it has successfully seeded.
 - DB module and components:
 	- *BREAKING* - the constructor is now in the format constructor(config, logger, generalStore, tokenManager), rather than constructor(config, {logger, generalStore, tokenManager}).
 	- *BREAKING* - migrated to sequelize v4. See their migration guide for further info.

@@ -10,6 +10,10 @@ module.exports = {
 	testMe: function() {
 		const instance = this
 		describe('migrations', function() {
+			it('should execute testListen successfully', function() {
+				instance.testListen()
+				assert(true)
+			})
 			it('should execute testGetFullTableData successfully', function() {
 				instance.testGetFullTableData()
 				assert(true)
@@ -45,6 +49,34 @@ module.exports = {
 			it('should execute testInsertData successfully', function() {
 				instance.testInsertData()
 				assert(true)
+			})
+			it('should execute testSync successfully', function() {
+				instance.testSync()
+				assert(true)
+			})
+			it('should execute testGenerateSeed successfully', function() {
+				instance.testGenerateSeed()
+				assert(true)
+			})
+			it('should execute testSeed successfully', function() {
+				instance.testSeed()
+				assert(true)
+			})
+			it('should execute testGenerateBackup successfully', function() {
+				instance.testGenerateBackup()
+				assert(true)
+			})
+			it('should execute testInsertStaticData successfully', function() {
+				instance.testInsertStaticData()
+				assert(true)
+			})
+		})
+	},
+	testListen: function() {
+		const instance = this
+		describe('migrations.listen', function() {
+			it('should execute successfully', function() {
+				instance.listen()
 			})
 		})
 	},
@@ -831,6 +863,234 @@ module.exports = {
 						}
 					}
 					assert(true)
+					return true
+				})
+			})
+		})
+	},
+	testSync: function() {
+		const instance = this,
+			{config} = this
+		let changeableInstance = this
+		describe('migrations.sync', function() {
+			it('should throw an error if the syncHistoryPath does not exist or is not a valid directory', function() {
+				return co(function*() {
+					const originalPath = config.migrations.syncHistoryPath
+					let didThrowAnError = false
+					changeableInstance.config.migrations.syncHistoryPath = 'fakePath'
+					try {
+						yield instance.sync()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					changeableInstance.config.migrations.syncHistoryPath = originalPath
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully and generate a preSync file if all parameters are correct', function() {
+				return co(function*() {
+					let currentDirData = yield fs.readdir(config.migrations.syncHistoryPath),
+						wasSuccessful = false
+					yield instance.sync()
+					wasSuccessful = currentDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					try {
+						yield fs.emptyDir(config.migrations.syncHistoryPath)
+					} catch(e) {
+					}
+					assert(wasSuccessful)
+					return true
+				})
+			})
+		})
+	},
+	testGenerateSeed: function() {
+		const instance = this,
+			{config} = this
+		let changeableInstance = this
+		describe('migrations.generateSeed', function() {
+			it('should throw an error with the correct message if the provided seedFileName is not a non-empty string', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.generateSeed()
+					} catch(e) {
+						didThrowAnError = e && (e.customMessage === 'Invalid seedFileName string provided.')
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error if the seedFilesPath does not exist or is not a valid directory', function() {
+				return co(function*() {
+					const originalPath = config.migrations.seedFilesPath
+					let didThrowAnError = false
+					changeableInstance.config.migrations.seedFilesPath = 'fakePath'
+					try {
+						yield instance.generateSeed()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					changeableInstance.config.migrations.seedFilesPath = originalPath
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully and generate a preSync file if all parameters are correct', function() {
+				return co(function*() {
+					let currentSeedFilesDirData = yield fs.readdir(config.migrations.seedFilesPath),
+						wasSuccessful = false
+					yield instance.generateSeed('ramsterTestSeedFile')
+					wasSuccessful = currentSeedFilesDirData.length !== (yield fs.readdir(config.migrations.seedFilesPath)).length
+					try {
+						yield fs.emptyDir(config.migrations.syncHistoryPath)
+					} catch(e) {
+					}
+					assert(wasSuccessful)
+					return true
+				})
+			})
+		})
+	},
+	testSeed: function() {
+		const instance = this,
+			{config} = this
+		describe('migrations.seed', function() {
+			it('should throw an error with the correct message if the provided seedFolderName is not a non-empty string', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.seed()
+					} catch(e) {
+						didThrowAnError = e && (e.customMessage === 'Invalid seedFolderName string provided.')
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided seedFileName is not a non-empty string', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.seed('someFolder')
+					} catch(e) {
+						didThrowAnError = e && (e.customMessage === 'Invalid seedFileName string provided.')
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error if the provided seedFolderName and seedFileName do not exist', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.seed('someFolder', 'someFile')
+					} catch(e) {
+						didThrowAnError = true
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully and generate a preSeed file if all parameters are correct', function() {
+				return co(function*() {
+					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
+						wasSuccessful = false
+					yield instance.seed('seedFiles', 'ramsterTestSeedFile')
+					wasSuccessful = currentSyncHistoryDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					try {
+						yield fs.emptyDir(config.migrations.syncHistoryPath)
+						yield fs.remove(path.join(config.migrations.seedFilesPath, 'ramsterTestSeedFile.json'))
+					} catch(e) {
+					}
+					assert(wasSuccessful)
+					return true
+				})
+			})
+		})
+	},
+	testGenerateBackup: function() {
+		const instance = this,
+			{config} = this
+		let changeableInstance = this
+		describe('migrations.generateBackup', function() {
+			it('should throw an error if the backupPath does not exist or is not a valid directory', function() {
+				return co(function*() {
+					const originalPath = config.migrations.backupPath
+					let didThrowAnError = false
+					changeableInstance.config.migrations.backupPath = 'fakePath'
+					try {
+						yield instance.generateBackup()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					changeableInstance.config.migrations.backupPath = originalPath
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully and generate a backup file if all parameters are correct', function() {
+				return co(function*() {
+					let currentBackupDirData = yield fs.readdir(config.migrations.backupPath),
+						wasSuccessful = false
+					yield instance.generateBackup()
+					wasSuccessful = currentBackupDirData.length !== (yield fs.readdir(config.migrations.backupPath)).length
+					try {
+						yield fs.emptyDir(config.migrations.backupPath)
+					} catch(e) {
+					}
+					assert(wasSuccessful)
+					return true
+				})
+			})
+		})
+	},
+	testInsertStaticData: function() {
+		const instance = this,
+			{config} = this
+		let changeableInstance = this
+		describe('migrations.insertStaticData', function() {
+			it('should throw an error if the staticDataPath does not exist or is not a valid directory', function() {
+				return co(function*() {
+					const originalPath = config.migrations.staticDataPath
+					let didThrowAnError = false
+					changeableInstance.config.migrations.staticDataPath = 'fakePath'
+					try {
+						yield instance.insertStaticData()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					changeableInstance.config.migrations.staticDataPath = originalPath
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error if no staticData.json file exists at the staticDataPath or is not a valid json file', function() {
+				return co(function*() {
+					const originalPath = config.migrations.staticDataPath
+					let didThrowAnError = false
+					changeableInstance.config.migrations.staticDataPath = config.migrations.syncHistoryPath
+					try {
+						yield instance.insertStaticData()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					changeableInstance.config.migrations.staticDataPath = originalPath
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct', function() {
+				return co(function*() {
+					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
+						wasSuccessful = false
+					yield instance.insertStaticData()
+					wasSuccessful = currentSyncHistoryDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					try {
+						yield fs.emptyDir(config.migrations.syncHistoryPath)
+					} catch(e) {
+					}
+					assert(wasSuccessful)
 					return true
 				})
 			})
