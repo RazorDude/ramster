@@ -3,6 +3,7 @@
 const
 	assert = require('assert'),
 	co = require('co'),
+	csvPromise = new (require('./modules/csvPromise'))(),
 	{describeSuiteConditionally, runTestConditionally} = require('./modules/toolbelt'),
 	fs = require('fs-extra'),
 	path = require('path')
@@ -53,6 +54,10 @@ module.exports = {
 			})
 			it.skip('should execute testListen successfully', function() {
 				instance.testListen()
+				assert(true)
+			})
+			it('should execute csvPromise.testMe successfully', function() {
+				csvPromise.testMe()
 				assert(true)
 			})
 		})
@@ -718,6 +723,7 @@ module.exports = {
 		describe('core.modules.db', function() {
 			it('should execute testMe successfully', function() {
 				instance.modules.db.testMe()
+				assert(true)
 			})
 		})
 	}

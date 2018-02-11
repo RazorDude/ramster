@@ -68,13 +68,13 @@ class Core {
 	loadMailClient() {
 		let instance = this
 		return co(function*() {
-			const {config, logger} = instance
+			const {config} = instance
 			let db = instance.modules.db
 			if (config.emails.customModulePath) {
 				let CustomMailClient = require(config.emails.customModulePath)
-				instance.mailClient = new CustomMailClient(config, logger, db)
+				instance.mailClient = new CustomMailClient(config)
 			} else {
-				instance.mailClient = new Emails(config, logger)
+				instance.mailClient = new Emails(config)
 			}
 			if (db) {
 				db.mailClient = instance.mailClient

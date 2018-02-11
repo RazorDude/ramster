@@ -44,7 +44,7 @@
 	- Reworked to no longer rely on the db module.
 	- Added the bcc array to the optional list of arguments
 	- Added a lot of tests, complete code coverage.
-- migrations modules:
+- migrations module:
 	- *BREAKING* Constructor is now in the form constructor(config, sequelize, dbComponents, seedingOrder), rather than (config, db).
 	- Reworked to no longer rely on the db module. This way we can add it to the db module and avoid circularization.
 	- Improved the queries and made the code more consistent. Refactored a lot of things, beacuase some parts were untouched since the first releases of ramster.
@@ -101,6 +101,11 @@
 	- Added a specMethodNames object to all db components, which will be used to execute tests from the user-defined spec for each component automatically.
 	- Added a lot of tests, complete code coverage.
 - Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis).
+- csvPromise:
+	- *BREAKING* - the parse method is now in the format parse(data, options), rather than parse({data, options}).
+	- *BREAKING* - the stringify method is now in the format stringify(data, options), rather than stringify({data, options}).
+	- Added some validations (there's nothing much to validate here).
+	- Tests, full code coverage.
 
 # 0.6.22
 - Updated the v1.0.0 roadmap with an additional feature.

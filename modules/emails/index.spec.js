@@ -88,13 +88,14 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully up to the emal sending point', function() {
+			it('should execute successfully up to the email sending point', function() {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
 						yield instance.sendEmail('sample', 'admin@ramster.com', 'testSubject')
 					} catch(e) {
-						didThrowAnError = e && (e.message === 'Unauthorized')
+						// console.log(e)
+						didThrowAnError = e && ((e.message === 'Unauthorized') || (e.code === 'ENOTFOUND'))
 					}
 					assert(didThrowAnError)
 					return true

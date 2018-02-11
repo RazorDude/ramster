@@ -1,16 +1,24 @@
 'use strict'
 
-const csv = require('csv')
+const
+	csv = require('csv'),
+	spec = require('./index.spec')
 
 class CSVPromise {
 	constructor() {
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
 	}
 
-	parse({data, options}) {
+	parse(data, options) {
 		return new Promise((res, rej) => {
 			try {
-				options = options || {}
-				csv.parse(data, options, (err, csvData) => {
+				if ((typeof data !== 'string') || !data.length) {
+					throw {customMessage: 'Invalid data string provided.'}
+				}
+				let actualOptions = options || {}
+				csv.parse(data, actualOptions, (err, csvData) => {
 					if (err) {
 						rej(err)
 						return
@@ -23,13 +31,14 @@ class CSVPromise {
 		})
 	}
 
-	stringify({data, options}) {
+	stringify(data, options) {
 		return new Promise((res, rej) => {
 			try {
-				if (!options) {
-					options = {}
+				if (!(data instanceof Array)) {
+					throw {customMessage: 'Invalid data array provided.'}
 				}
-				csv.stringify(data, options, (err, result) => {
+				let actualOptions = options || {}
+				csv.stringify(data, actualOptions, (err, result) => {
 					if (err) {
 						rej(err)
 						return
@@ -42,4 +51,5 @@ class CSVPromise {
 		})
 	}
 }
+
 module.exports = CSVPromise
