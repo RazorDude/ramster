@@ -6,7 +6,8 @@ const
 	csvPromise = new (require('./modules/csvPromise'))(),
 	{describeSuiteConditionally, runTestConditionally} = require('./modules/toolbelt'),
 	fs = require('fs-extra'),
-	path = require('path')
+	path = require('path'),
+	toolbeltSpec = require('./modules/toolbelt/index.spec')
 
 module.exports = {
 	testMe: function() {
@@ -28,7 +29,7 @@ module.exports = {
 				instance.testGeneralStore()
 				assert(true)
 			})
-			it.skip('should execute testTokenManager successfully', function() {
+			it('should execute testTokenManager successfully', function() {
 				instance.testTokenManager()
 				assert(true)
 			})
@@ -58,6 +59,10 @@ module.exports = {
 			})
 			it('should execute csvPromise.testMe successfully', function() {
 				csvPromise.testMe()
+				assert(true)
+			})
+			it('should execute toolbeltSpec.testAll successfully', function() {
+				toolbeltSpec.testAll()
 				assert(true)
 			})
 		})

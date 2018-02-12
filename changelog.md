@@ -106,6 +106,16 @@
 	- *BREAKING* - the stringify method is now in the format stringify(data, options), rather than stringify({data, options}).
 	- Added some validations (there's nothing much to validate here).
 	- Tests, full code coverage.
+- toolbelt:
+	- Added lots of validations.
+	- Fixed the arrayStort method - it now correctly sorts when "haveValuesOnly" is set.
+	- Fixed the changeKeyCase method - it now correctly processes strings (the "?" regex error; the empty string error).
+	- Optimized the checkRoutes method.
+	- *BREAKING* - emptyToNull is now in the form emptyToNull(data), rather than emptyToNull(data, outputData). It returns the outputData object instead of altering it.
+	- Improved the findVertexByIdDFS method and handled various cases properly.
+	- *BREAKING* - fixed the unit conversion in getFolderSize. Your code may not work if you were relying on the old numbers.
+	- getNested now always returns null, instead of sometimes null and sometimes undefined.
+	- Tests, added full code coverage.
 
 # 0.6.22
 - Updated the v1.0.0 roadmap with an additional feature.

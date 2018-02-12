@@ -4,14 +4,18 @@ const
 	co = require('co'),
 	fs = require('fs-extra'),
 	path = require('path'),
-	arraySort = (array, orderBy, caseSensitive) => {
-		if (caseSensitive !== true) {
-			caseSensitive = false
+	arraySort = (array, orderBy, caseSensitiveOption) => {
+		if (!(array instanceof Array)) {
+			throw {customMessage: 'Invalid array provided.'}
 		}
+		if (!(orderBy instanceof Array) || !orderBy.length) {
+			throw {customMessage: 'Invalid orderBy array provided.'}
+		}
+		let caseSensitive = caseSensitiveOption === true
 		return array.sort((item1, item2) => {
 			for (const i in orderBy) {
-				let sortingOptions = orderBy[i],
-					key = sortingOptions[0],
+				let sortingOptions = orderBy[i]
+				let key = sortingOptions[0],
 					sortingType = sortingOptions[2],
 					a = item1[key],
 					b = item2[key]
@@ -33,13 +37,12 @@ const
 						if (!aIsDefined && bIsDefined) {
 							return -1
 						}
-					} else {
-						if (a > b) {
-							return 1
-						}
-						if (a < b) {
-							return -1
-						}
+					}
+					if (a > b) {
+						return 1
+					}
+					if (a < b) {
+						return -1
 					}
 				} else {
 					if (sortingType === 'haveValuesOnly') {
@@ -51,13 +54,12 @@ const
 						if (!aIsDefined && bIsDefined) {
 							return 1
 						}
-					} else {
-						if (a > b) {
-							return -1
-						}
-						if (a < b) {
-							return 1
-						}
+					}
+					if (a > b) {
+						return -1
+					}
+					if (a < b) {
+						return 1
 					}
 				}
 			}
@@ -65,22 +67,28 @@ const
 		})
 	},
 	changeKeyCase = (keyMap, input, outputType) => {
+		if (!(keyMap instanceof Array)) {
+			throw {customMessage: 'Invalid keyMap array provided.'}
+		}
 		let str = '',
 			inputType = ''
 		if (outputType === 'upper') {
 			inputType = 'lower'
 		} else if (outputType === 'lower') {
 			inputType = 'upper'
+		} else {
+			throw {customMessage: 'Invalid outputType: should be "lower" or "upper"'}
 		}
 
-		if (typeof input === 'object') {
+		if ((typeof input === 'object') && (input !== null)) {
 			str = JSON.stringify(input)
 			keyMap.forEach((e, i) => {
 				str = str.replace(new RegExp(`("${e[inputType]}":)`, 'g'), `"${e[outputType]}":`)
 			})
 		} else if (typeof input === 'string') {
+			str = input
 			keyMap.forEach((e, i) => {
-				str = str.replace(new RegExp(`(?${e[inputType]}=)`, 'g'), `?${e[outputType]}=`).replace(new RegExp(`(&${e[inputType]}=)`, 'g'), `&${e[outputType]}=`)
+				str = str.replace(new RegExp(`(\\?${e[inputType]}=)`, 'g'), `?${e[outputType]}=`).replace(new RegExp(`(&${e[inputType]}=)`, 'g'), `&${e[outputType]}=`)
 			})
 		} else {
 			str = input
@@ -88,10 +96,16 @@ const
 		return str
 	},
 	checkRoutes = (route, routes) => {
+		if ((typeof route !== 'string') || !route.length) {
+			throw {customMessage: 'The route argument must be a non-empty string.'}
+		}
+		if (!(routes instanceof Array)) {
+			throw {customMessage: 'The routes argument must be an array.'}
+		}
+		let splitRoute = route.split('/')
 		for (const i in routes) {
 			let thisRoute = routes[i],
-				splitThisRoute = thisRoute.split('/'),
-				splitRoute = route.split('/')
+				splitThisRoute = thisRoute.split('/')
 			if (route === thisRoute) {
 				return true
 			}
@@ -120,29 +134,33 @@ const
 		describe.skip(suiteTest, suiteMethod)
 		return -1
 	},
-	emptyToNull = (data, outputData) => {
-		for (let key in data) {
-			let currentValue = null
-
-			if (data[key] instanceof Array) {
-				currentValue = emptyToNull(data[key], [])
-			} else if (typeof data[key] === 'object') {
-				currentValue = emptyToNull(data[key], {})
-			} else if (data[key] === '') {
-				currentValue = null
-			} else {
-				currentValue = data[key]
+	emptyToNull = (data) => {
+		if ((typeof data === 'undefined') || (data === null)) {
+			return null
+		}
+		if (typeof data === 'string') {
+			return data.length ? data : null
+		}
+		if (typeof data !== 'object') {
+			return data
+		}
+		if (data instanceof Array) {
+			let outputData = []
+			for (const key in data) {
+				outputData.push(emptyToNull(data[key]))
 			}
-
-			if (outputData instanceof Array) {
-				outputData.push(currentValue)
-				continue;
-			}
-			outputData[key] = currentValue
+			return outputData
+		}
+		let outputData = {}
+		for (const key in data) {
+			outputData[key] = emptyToNull(data[key])
 		}
 		return outputData
 	},
 	findVertexByIdDFS = (vertexId, graph, action) => {
+		if ((typeof vertexId === 'undefined') || (vertexId === null)) {
+			throw {customMessage: 'Invalid vertexId provided.'}
+		}
 		if (!graph || (typeof graph !== 'object')) {
 			return null
 		}
@@ -157,7 +175,11 @@ const
 			return true
 		}
 		for (const id in graph) {
-			let targetVertex = findVertexByIdDFS(vertexId, graph[id].vertices, 'get')
+			let currentVertex = graph[id]
+			if (!currentVertex || !currentVertex.vertices) {
+				continue
+			}
+			let targetVertex = findVertexByIdDFS(vertexId, currentVertex.vertices, action)
 			if (targetVertex) {
 				return targetVertex
 			}
@@ -171,7 +193,7 @@ const
 			folderSize = folderData.size
 			// convert to KB/MB/GB/TB etc.
 			for (let i = 0; i < unit; i++) {
-				folderSize /= 1000000.0
+				folderSize /= 1000.0
 			}
 			return folderSize
 		}
@@ -182,7 +204,7 @@ const
 		return folderSize
 	}),
 	getNested = (parent, field) => {
-		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string')) {
+		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string') || !field.length) {
 			return null
 		}
 		let fieldData = field.split('.'),
@@ -190,7 +212,7 @@ const
 		for (let i in fieldData) {
 			let innerElement = fieldData[i]
 			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
-				return currentElement
+				return null
 			}
 			currentElement = currentElement[innerElement]
 		}

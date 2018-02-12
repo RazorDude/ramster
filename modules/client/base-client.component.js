@@ -57,13 +57,13 @@ class BaseClientComponent extends BaseServerComponent {
 				matchesTemplate = true,
 				columns = []
 			extName = extName && extName[0] || ''
-			template.data = yield csv.parse({data: template.fileData, options: {delimiter: locals.cfg.csvFileDelimiter || ';'}})
+			template.data = yield csv.parse(template.fileData, {delimiter: locals.cfg.csvFileDelimiter || ';'})
 			template.data[0].forEach((column, index) => {
 				template.columns.push(column)
 			})
 
 			if (extName === '.csv') {
-				parsedInputFileData = yield csv.parse({data: inputFileData, options: {delimiter: delimiter}})
+				parsedInputFileData = yield csv.parse(inputFileData, {delimiter: delimiter})
 			}
 			if (extName === '.xlsx') {
 				parsedInputFileData = xlsx.parse(inputFileData)
@@ -192,9 +192,9 @@ class BaseClientComponent extends BaseServerComponent {
 								item[column] = row[cIndex]
 							})
 							if (item.id) {
-								dataToUpdate.push(toolbelt.emptyToNull(item, {}))
+								dataToUpdate.push(toolbelt.emptyToNull(item))
 							} else {
-								dataToInsert.push(toolbelt.emptyToNull(item, {}))
+								dataToInsert.push(toolbelt.emptyToNull(item))
 							}
 						}
 					})
@@ -214,9 +214,9 @@ class BaseClientComponent extends BaseServerComponent {
 								item[column] = row[columnsToMatch[column]]
 							})
 							if (item.id) {
-								dataToUpdate.push(toolbelt.emptyToNull(item, {}))
+								dataToUpdate.push(toolbelt.emptyToNull(item))
 							} else {
-								dataToInsert.push(toolbelt.emptyToNull(item, {}))
+								dataToInsert.push(toolbelt.emptyToNull(item))
 							}
 						}
 					})
