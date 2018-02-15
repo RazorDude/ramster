@@ -3,10 +3,14 @@
 const
 	co = require('co'),
 	merge = require('deepmerge'),
-	moment = require('moment')
+	moment = require('moment'),
+	spec = require('./base-db.component.spec')
 
 class BaseDBComponent {
 	constructor() {
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
 		this.defaults = {
 			orderBy: 'id',
 			orderDirection: 'DESC',
@@ -23,17 +27,18 @@ class BaseDBComponent {
 		this.specMethodNames = []
 	}
 
-	associate(components) {
-		const {associationsConfig, associationDefaults, componentName, model} = this
+	associate() {
+		const components = this.db.components,
+			{associationsConfig, associationDefaults, componentName, model} = this
 		let dependencyMap = {slaveOf: [], masterOf: [], equalWith: [], associationKeys: []}
-		if (associationsConfig) {
+		if (associationsConfig && (typeof associationsConfig === 'object')) {
 			for (const alias in associationsConfig) {
 				const itemData = associationsConfig[alias],
 					targetComponentName = itemData.componentName || alias,
 					typeConfig = associationDefaults[itemData.type]
 				// do various validations
 				if (!typeConfig) {
-					throw {customMessage: `At "${componentName}" component relation "${alias}": invalid association type.`}
+					throw {customMessage: `At "${componentName}" component, relation "${alias}": invalid association type.`}
 				}
 				const {requiredKeys} = typeConfig
 				let associationOptionsObject = {as: alias}
@@ -41,13 +46,13 @@ class BaseDBComponent {
 					let key = requiredKeys[i],
 						value = itemData[key]
 					if ((typeof value !== 'string') || !value.length) {
-						throw {customMessage: `At "${componentName}" component relation "${alias}: the provided config is missing a required property - "${key}".`}
+						throw {customMessage: `At "${componentName}" component, relation "${alias}: the provided config is missing a required property - "${key}".`}
 					}
 					associationOptionsObject[key] = value
 				}
 				const targetComponent = components[targetComponentName]
 				if (!targetComponent) {
-					throw {customMessage: `At "${componentName}" component relation "${alias}": invalid target component name - "${targetComponentName}".`}
+					throw {customMessage: `At "${componentName}" component, relation "${alias}": invalid target component name - "${targetComponentName}".`}
 				}
 				// create the association
 				model[itemData.type](targetComponent.model, associationOptionsObject)
@@ -59,6 +64,12 @@ class BaseDBComponent {
 	}
 
 	mapNestedRelations(sourceComponent, config) {
+		if (!sourceComponent || (typeof sourceComponent !== 'object')) {
+			throw {customMessage: 'Invalid sourceComponent object provided.'}
+		}
+		if (!(config instanceof Array)) {
+			throw {customMessage: 'Invalid config array provided.'}
+		}
 		const components = this.db.components,
 			sourceComponentName = sourceComponent.componentName,
 			associationKeys = sourceComponent.dependencyMap.associationKeys
@@ -71,35 +82,36 @@ class BaseDBComponent {
 				throw {customMessage: `At "${sourceComponentName}": invalid association name - "${associationName}".`}
 			}
 			if (!targetAssociation) {
-				throw {customMessage: `At "${sourceComponentName}": the associated does not have an association named "${associationName}".`}
+				throw {customMessage: `At "${sourceComponentName}": the component does not have an association named "${associationName}".`}
 			}
 			const targetComponent = components[targetAssociation.componentName || associationName]
 			relationObject = {model: targetComponent.model, as: associationName, required: required === true}
 			if (attributes) {
-				if (!(attributes instanceof Array)) {
-					throw {customMessage: `At "${sourceComponentName}" component relation "${associationName}": the "attributes" object in the relation config must be an array.`}
+				if (!(attributes instanceof Array) || !attributes.length) {
+					throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": the "attributes" object in the relation config must be a non-empty array.`}
 				}
 				for (const i in attributes) {
 					let attribute = attributes[i]
 					if ((typeof attribute !== 'string') || !attribute.length) {
-						throw {customMessage: `At "${sourceComponentName}" component relation "${associationName}": "attributes" object with invalid contents provided in the relation config.`}
+						throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": "attributes" array with invalid contents provided in the relation config.`}
 					}
 				}
 				relationObject.attributes = attributes
 			}
 			if (where) {
-				if (typeof where !== 'object') {
-					throw {customMessage: `At "${sourceComponentName}" component relation "${associationName}": the "where" object in the relation config must be an object or an array.`}
+				if ((typeof where !== 'object') || !Object.keys(where).length) {
+					throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": the "where" object in the relation config must be a non-empty object or array.`}
 				}
 				relationObject.where = where
 			}
 			if (order) {
-				if (!(order instanceof Array)) {
-					throw {customMessage: `At "${sourceComponentName}" component relation "${associationName}": the "order" object in the relation config must be an array.`}
+				if (!(order instanceof Array) || !order.length) {
+					throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": the "order" object in the relation config must be a non-empty array.`}
 				}
-				let orderItemsAreArrayOfStrings = true
-				for (const i in order) {
-					let orderItem = order[i]
+				let orderItemsAreArrayOfStrings = true,
+					actualOrder = JSON.parse(JSON.stringify(order))
+				for (const i in actualOrder) {
+					let orderItem = actualOrder[i]
 					if (!(orderItem instanceof Array)) {
 						orderItemsAreArrayOfStrings = false
 						break
@@ -111,15 +123,26 @@ class BaseDBComponent {
 							break
 						}
 					}
+					// order by model, field and direction (need for inner ordering queries)
+					if (orderItem.length === 3) {
+						let innerComponentName = orderItem[0],
+							innerComponent = components[innerComponentName]
+						if (!innerComponent) {
+							throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": no component named "${innerComponentName}" exists, cannot order results by it.`}
+						}
+						actualOrder[i][0] = {model: innerComponent.model, as: associationName}
+					} else if (orderItem.length !== 2) {
+						throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": "order" object with invalid length provided in the relation config.`}
+					}
 				}
 				if (!orderItemsAreArrayOfStrings) {
-					throw {customMessage: `At "${sourceComponentName}" component relation "${associationName}": "order" object with invalid contents provided in the relation config.`}
+					throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": "order" object with invalid contents provided in the relation config.`}
 				}
-				relationObject.order = order
+				relationObject.order = actualOrder
 			}
 			if (include) {
-				if (!(include instanceof Array)) {
-					throw {customMessage: `At "${sourceComponentName}" component relation "${associationName}": the "include" object in the relation config must be an array.`}
+				if (!(include instanceof Array) || !include.length) {
+					throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": the "include" object in the relation config must be a non-empty array.`}
 				}
 				relationObject.include = this.mapNestedRelations(targetComponent, include)
 			}
@@ -128,9 +151,10 @@ class BaseDBComponent {
 		return mappedArray
 	}
 
-	mapRelations(components) {
-		const {associationsConfig, componentName} = this,
-			relationsConfig = this.relationsConfig && Object.assign({}, this.relationsConfig) || {}
+	mapRelations() {
+		const components = this.db.components,
+			{associationsConfig, componentName} = this,
+			relationsConfig = this.relationsConfig && JSON.parse(JSON.stringify(this.relationsConfig)) || {}
 		if (!associationsConfig) {
 			return
 		}
@@ -141,6 +165,9 @@ class BaseDBComponent {
 				targetComponent = components[targetModelName],
 				relationConfig = relationsConfig[alias]
 			if (relationConfig && (typeof relationConfig === 'object')) {
+				if (!relationConfig.associationName) {
+					relationConfig.associationName = alias
+				}
 				relations[alias] = (this.mapNestedRelations(this, [relationConfig]))[0]
 				delete relationsConfig[alias]
 				continue
@@ -151,7 +178,7 @@ class BaseDBComponent {
 			if (relations[alias]) {
 				throw {customMessage: `At "${componentName}" component: duplicate relation "${alias}".`}
 			}
-			relations[alias] = (this.mapNestedRelations(this, [Object.assign({associationName: alias}, relationsConfig[alias])]))[0]
+			relations[alias] = (this.mapNestedRelations(this, [relationsConfig[alias]]))[0]
 		}
 		this.relReadKeys = Object.keys(relations)
 		this.relations = relations

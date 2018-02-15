@@ -1,4 +1,5 @@
 ramster [![npm version](https://badge.fury.io/js/ramster.svg)](https://badge.fury.io/js/ramster)
+[![dependencies Status](https://david-dm.org/razordude/ramster/status.svg)](https://david-dm.org/razordude/ramster)
 ==
 Ramster is a standalone NodeJS MVC boilerplate, based on the <a href="https://github.com/expressjs/express">express</a> framework and <a href="https://github.com/tj/co">co</a>.<br/> It runs on node 6+.<br/>
 The goal of this module is to speed up development as much as possible, by providing a fast, reliable, customizable and secure standalone boilerplate, that can cover a lot of use cases with the proper configuration. By using ramster, you get to focus on developing your business logic and the actual specifics of your project, instead of worrying about the wireframe and the architecture.<br><br>
@@ -75,20 +76,22 @@ Roadmap
 ==
 The main goal at this time is to get Ramster stable and feature-rich enough for a v1.0.0 release. To do that, it must include:
 - Extensive tests of all modules and components that can cover as much cases as possible.
-- The ability to generate Swagger documentation out of db models, as well as endpoints based on their route params and possibly what they return. Ramster should be able to validate the request object and the response data.
 - The ability to execute tests for each db, client and api module's components, based on a .spec file inside the component folder. This will greatly aid the user with continuous integration.
-- The ability to generate certain files (like the bootstrapping index.js file of the whole project, user model, permissions system models) and configs.
-- Complete removal of all not-so-good practices that exist at the moment for the sake of backwards compatibility with v0.4.x and v0.5.x (at the time of writing this they have several thousand downloads each).
-- The ability to generate project templates, such as blank and basic (users and permissions system).
-- In the migrations module, auto-restore the DB state for failed sync and seed.
-- Create a separate ramster-cli package, that will be used to run commands from the console - migrations, config and file generation, testing, etc.
-- Create a buildAssociation method for the db models, that automates the current associate method.
+- The ability to generate certain files, like the bootstrapping index.js file of the whole project, webpack build tools and configs.
 - Webpack build tools; base and default configurations for React and Angular.
+- The ability to generate project templates, such as blank and basic (users and permissions system).
+- Complete removal of all not-so-good practices that exist at the moment for the sake of backwards compatibility with v0.4.x and v0.5.x (at the time of writing this they have several thousand downloads each).
+- In the migrations module, auto-restore the DB state for failed sync and seed.
+- Create a buildAssociation method for the db models, that automates the current associate method.
+- Add a built-in permissions system for client and api servers.
+- Create a separate ramster-cli package, that will be used to run commands from the console - migrations, config and file generation, testing, etc.
 - Try and reduce the number of dependencies as much as possible.
 - A lot of good an informative badges on top of this readme, all of which must shine in bright green :)
+
 <br/>
 I've got things in mind for post-v1 releases as well:
 - Add more project templates: blog, cms.
+- The ability to generate Swagger documentation out of db models, as well as endpoints based on their route params and possibly what they return. Ramster should be able to validate the request object and the response data.
 - Loads and loads of docs and a website that hosts them, not just .md files in the repo.
 
 

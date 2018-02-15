@@ -1,7 +1,9 @@
 # 1.0.0
 - Added a fury.io npm version badge.
+- Added a david-dm dependencies badge.
 - Added a base .travis.yml file.
 - Removed inconsistencies that were left in up till now for the sake of backwards compatibility.
+- Renamed index.js to core.js. Added a new index.js file that exports everything like the old one used to.
 - Config changes:
 	- *BREAKING* - renamed globalPublicPath to clientModulesPath.
 	- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.
@@ -96,6 +98,7 @@
 	- *BREAKING* - component.model.associate is no longer supported.
 	- *BREAKING* - component.associate reworked completely - it now takes a configurtion object from component.associationsConfig and generates the seeding order and a dependencyMap property for each component.
 	- *BREAKING* - removed the component.generateHandle method.
+	- *BREAKING* - all relations that are for reading purposes only - i.e. they are not factual DB associations, but just aliases with different fields and more/less properties, should now be configured in component.relationsConfig. The component.associationsConfig object should be used just for the actual DB associations.
 	- Added a component.mapRelations method, which generates the relations object and the relReadKeys for each component.
 	- Added a setDBInComponents method, which is used to set the db property of components instead of setComponentProperties. The major difference is that it creates a shallow copy of the db object for each component and removes the component in question from the copied object's component list to avoid circularization.
 	- Added a specMethodNames object to all db components, which will be used to execute tests from the user-defined spec for each component automatically.

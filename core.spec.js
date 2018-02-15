@@ -2,6 +2,7 @@
 
 const
 	assert = require('assert'),
+	BaseDBComponent = require('./modules/db/base-db.component'),
 	co = require('co'),
 	csvPromise = new (require('./modules/csvPromise'))(),
 	{describeSuiteConditionally, runTestConditionally} = require('./modules/toolbelt'),
@@ -21,19 +22,19 @@ module.exports = {
 				instance.testLoadDependencies()
 				assert(true)
 			})
-			it('should execute testErrorLogger successfully', function() {
+			it.skip('should execute testErrorLogger successfully', function() {
 				instance.testErrorLogger()
 				assert(true)
 			})
-			it('should execute testGeneralStore successfully', function() {
+			it.skip('should execute testGeneralStore successfully', function() {
 				instance.testGeneralStore()
 				assert(true)
 			})
-			it('should execute testTokenManager successfully', function() {
+			it.skip('should execute testTokenManager successfully', function() {
 				instance.testTokenManager()
 				assert(true)
 			})
-			it('should execute testCodeGenerator successfully', function() {
+			it.skip('should execute testCodeGenerator successfully', function() {
 				instance.testCodeGenerator()
 				assert(true)
 			})
@@ -41,11 +42,11 @@ module.exports = {
 				instance.testLoadDB()
 				assert(true)
 			})
-			it('should execute testMailClient successfully', function() {
+			it.skip('should execute testMailClient successfully', function() {
 				instance.testMailClient()
 				assert(true)
 			})
-			it('should execute testMigrations successfully', function() {
+			it.skip('should execute testMigrations successfully', function() {
 				instance.testMigrations()
 				assert(true)
 			})
@@ -53,15 +54,19 @@ module.exports = {
 				instance.testDBModule()
 				assert(true)
 			})
+			it.skip('should execute testLoadClients successfully', function() {
+				instance.testLoadClients()
+				assert(true)
+			})
 			it.skip('should execute testListen successfully', function() {
 				instance.testListen()
 				assert(true)
 			})
-			it('should execute csvPromise.testMe successfully', function() {
+			it.skip('should execute csvPromise.testMe successfully', function() {
 				csvPromise.testMe()
 				assert(true)
 			})
-			it('should execute toolbeltSpec.testAll successfully', function() {
+			it.skip('should execute toolbeltSpec.testAll successfully', function() {
 				toolbeltSpec.testAll()
 				assert(true)
 			})
@@ -675,6 +680,18 @@ module.exports = {
 			})
 		})
 	},
+	testLoadDB: function() {
+		const instance = this
+		describe('core.loadDB', function() {
+			it('should execute successfully if all parameters and configuration variables are correct', function() {
+				return co(function*() {
+					yield instance.loadDB()
+					assert(true)
+					return true
+				})
+			})
+		})
+	},
 	testMailClient: function() {
 		const instance = this
 		describe('core.mailClient', function() {
@@ -711,24 +728,29 @@ module.exports = {
 			})
 		})
 	},
-	testLoadDB: function() {
-		const instance = this
-		describe('core.loadDB', function() {
-			it('should execute successfully if all parameters and configuration variables are correct', function() {
-				return co(function*() {
-					yield instance.loadDB()
-					assert(true)
-					return true
-				})
-			})
-		})
-	},
 	testDBModule: function() {
 		const instance = this
 		describe('core.modules.db', function() {
 			it('should execute testMe successfully', function() {
 				instance.modules.db.testMe()
 				assert(true)
+			})
+			it('should execture BaseDBComponent.testMe successfully', function() {
+				let testDBComponent = new BaseDBComponent()
+				testDBComponent.testMe()
+				assert(true)
+			})
+		})
+	},
+	testLoadClients: function() {
+		const instance = this
+		describe('core.loadClients', function() {
+			it('should execute successfully if all parameters and configuration variables are correct', function() {
+				return co(function*() {
+					yield instance.loadClients()
+					assert(true)
+					return true
+				})
 			})
 		})
 	}
