@@ -3,6 +3,7 @@ const
 	assert = require('assert'),
 	co = require('co'),
 	fs = require('fs-extra'),
+	moment = require('moment'),
 	path = require('path'),
 	toolbelt = require('./index')
 
@@ -32,6 +33,18 @@ module.exports = {
 			})
 			it('should execute testGetFolderSize successfully', function() {
 				instance.testGetFolderSize()
+				assert(true)
+			})
+			it('should execute testGenerateRandomNumber successfully', function() {
+				instance.testGenerateRandomNumber()
+				assert(true)
+			})
+			it('should execute testGenerateRandomString successfully', function() {
+				instance.testGenerateRandomString()
+				assert(true)
+			})
+			it('should execute testParseData successfully', function() {
+				instance.testParseData()
 				assert(true)
 			})
 			it('should execute testGetNested successfully', function() {
@@ -430,6 +443,58 @@ module.exports = {
 					assert(folderSize < 0.05)
 					return true
 				})
+			})
+		})
+	},
+	testGenerateRandomNumber: function() {
+		const generateRandomNumber = toolbelt.generateRandomNumber
+		describe('toolbelt.generateRandomNumber', function() {
+			it('should throw an error with the correct message if the length argument is not a number greater than or equal to 1', function() {
+				let didThrowAnError = false
+				try {
+					generateRandomNumber()
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid length number provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should execute successfully and return a random number if al paramters are correct', function() {
+				assert(typeof generateRandomNumber(10) === 'number')
+			})
+		})
+	},
+	testGenerateRandomString: function() {
+		const generateRandomString = toolbelt.generateRandomString
+		describe('toolbelt.generateRandomString', function() {
+			it('should throw an error with the correct message if the length argument is not a number greater than or equal to 1', function() {
+				let didThrowAnError = false
+				try {
+					generateRandomString()
+				} catch(e) {
+					didThrowAnError = e && (e.customMessage === 'Invalid length number provided.')
+				}
+				assert(didThrowAnError)
+			})
+			it('should execute successfully and return a random string if all paramters are correct', function() {
+				let result = generateRandomString(10)
+				assert((typeof result === 'string') && (result.length <= 10))
+			})
+		})
+	},
+	testParseData: function() {
+		const parseDate = toolbelt.parseDate
+		describe('toolbelt.parseDate', function() {
+			it('should execute successfully and return valid moment date object if the date is a string in the format "DD/MM/YYYY"', function() {
+				let result = parseDate('23/12/1994')
+				assert(result.isValid() && (result.format('YYYY-MM-DD').toString() === '1994-12-23'))
+			})
+			it('should execute successfully and return valid moment date object if the date is a string in the format "YYYY-MM-DD"', function() {
+				let result = parseDate('1994-12-23')
+				assert(result.isValid() && (result.format('YYYY-MM-DD').toString() === '1994-12-23'))
+			})
+			it('should execute successfully and return valid moment date object if the date is a date object', function() {
+				let result = parseDate(new Date(moment.utc('1994-12-23', 'YYYY-MM-DD').valueOf()))
+				assert(result.isValid() && (result.format('YYYY-MM-DD').toString() === '1994-12-23'))
 			})
 		})
 	},

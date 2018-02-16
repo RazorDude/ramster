@@ -13,11 +13,11 @@ class BaseDBComponent {
 		}
 		this.defaults = {
 			orderBy: 'id',
-			orderDirection: 'DESC',
+			orderDirection: 'desc',
 			page: 1,
 			perPage: 10
 		}
-		this.allowedFilterKeywordOperators = ['$not', '$gt', '$gte', '$lt', '$lte']
+		this.allowedFilterKeywordOperators = ['$and', '$not', '$gt', '$gte', '$lt', '$lte']
 		this.associationDefaults = {
 			belongsTo: {requiredKeys: ['foreignKey'], dependencyCategory: 'slaveOf'},
 			hasOne: {requiredKeys: ['foreignKey'], dependencyCategory: 'masterOf'},
@@ -184,96 +184,45 @@ class BaseDBComponent {
 		this.relations = relations
 	}
 
-	generateRandomNumber(length) {
-		let number = ''
-		for (let i = 0; i < length; i++) {
-			number += Math.floor(Math.random() * 9)
-		}
-		return parseInt(number, 10)
-	}
-
-	generateRandomString(length) {
-		let buf = new Buffer(length)
-		for (let i = 0; i < buf.length; i++) {
-			buf[i] = Math.floor(Math.random() * 256)
-		}
-		return buf
-	}
-
-	parseDate(date) {
-		if (typeof date === 'string') {
-			if (date.indexOf('/') !== -1) {
-				let tempDate = moment.utc(date, 'DD/MM/YYYY')
-				if (tempDate.isValid()) {
-					return tempDate
-				}
-			}
-			return moment.utc(date, 'YYYY-MM-DD')
-		}
-		if (date && (typeof date === 'object')) {
-			return moment.utc(date.getTime(), 'x')
-		}
-		return moment.utc('Invalid date', 'YYYY-MM-DD')
-	}
-
 	// this method enables the use of certain objects as filters, but protects against JSON injection
 	checkFilterValue(fieldValue) {
 		if (typeof fieldValue === 'undefined') {
 			return false
 		}
-		
-
-		if ((typeof fieldValue === 'object') && (fieldValue !== null)) {
-			// protect against objects nested in arrays
+		if ((typeof fieldValue === 'object') && (fieldValue !== null) && !(fieldValue instanceof Date)) {
+			if (!Object.keys(fieldValue).length) {
+				return false
+			}
+			// protect against bad objects nested in arrays
 			if (fieldValue instanceof Array) {
 				for (let i in fieldValue) {
-					if (typeof fieldValue[i] === 'object') {
+					if (!this.checkFilterValue(fieldValue[i])) {
 						return false
 					}
 				}
 				return true
 			}
-
 			// allow enabled keyword operators
 			const allowedFilterKeywordOperators = this.allowedFilterKeywordOperators
-			for (const i in allowedFilterKeywordOperators) {
-				const opName = allowedFilterKeywordOperators[i],
-					opValue = fieldValue[opName]
-				if ((typeof opValue !== 'undefined') && (typeof opValue !== 'object')) {
-					return true
+			for (const key in fieldValue) {
+				if ((allowedFilterKeywordOperators.indexOf(key) === -1) || !this.checkFilterValue(fieldValue[key])) {
+					return false
 				}
 			}
-			
-			if (fieldValue.$not instanceof Array) {
-				let not = fieldValue.$not
-				for (let i in not) {
-					if (typeof not[i] === 'object') {
-						return false
-					}
-				}
-				return true
-			}
-			
-			if (fieldValue.$and instanceof Array) {
-				let and = fieldValue.$and
-				for (let i in and) {
-					if ((typeof and[i] === 'object') && !this.checkFilterValue(and[i])) {
-						return false
-					}
-				}
-				return true
-			}
-
-			return false
 		}
-
 		return true
 	}
 
 	setFilterValue(container, filter, field, value, exactMatch) {
 		// check if the filter has a value and if it's acceptable
 		if (!this.checkFilterValue(value)) {
-			return
+			return false
+		}
+		if (!filter || (typeof filter !== 'object')) {
+			throw {customMessage: 'Invalid filter object provided.'}
+		}
+		if ((typeof field !== 'string') || !field.length) {
+			throw {customMessage: 'Invalid field string provided.'}
 		}
 		let exactMatchFields = exactMatch instanceof Array ? exactMatch : []
 		// match filter
@@ -287,7 +236,7 @@ class BaseDBComponent {
 				suffix = '%'
 			}
 			container[field] = {[filter.caseSensitive ? '$like' : '$iLike']: `${prefix}${value}${suffix}`}
-			return
+			return true
 		}
 		// range filter
 		if (filter.betweenFrom) {
@@ -296,7 +245,7 @@ class BaseDBComponent {
 				container[actualField] = {}
 			}
 			container[actualField][(exactMatchFields.indexOf(actualField) !== -1) || filter.exactMatchFields ? '$gte' : '$gt'] = value
-			return
+			return true
 		}
 		if (filter.betweenTo) {
 			let actualField = field.replace('To', '')
@@ -304,125 +253,116 @@ class BaseDBComponent {
 				container[actualField] = {}
 			}
 			container[actualField][actualField, (exactMatchFields.indexOf(actualField) !== -1) || filter.exactMatchFields ? '$lte' : '$lt'] = value
-			return
+			return true
 		}
 		// equality filter
 		container[field] = value
+		return true
 	}
 
-	getWhereQuery({filters, relSearch, exactMatch}) {
-		let where = {}
+	getWhereObjects(filters, exactMatch) {
+		let where = {},
+			requiredRelationsData = {}
 		if ((typeof filters === 'object') && Object.keys(filters).length > 0) {
 			this.searchFields.forEach((element, index) => {
-				let fieldValue = filters[element.field],
-					field = element.field,
-					searchContainer = where,
-					hasValue = this.checkFilterValue(fieldValue)
-				if (element.associatedModel) {
-					if (!this.checkFilterValue(fieldValue)) {
-						return
-					}
-					searchContainer = relSearch[element.associatedModel]
-					field = element.associatedModelField
-					if (element.nestedInclude) {
-						if (!searchContainer.nestedIncludeFields) {
-							searchContainer.nestedIncludeFields = {}
-						}
-						searchContainer = searchContainer.nestedIncludeFields
-					}
+				let field = element.field,
+					fieldValue = filters[field]
+				if (this.setFilterValue(where, element, field, fieldValue, exactMatch) && (field[0] === '$') && (field[field.length - 1] === '$')) {
+					field = field.replace(/\$/g, '').split('.')
+					field.pop()
+					requiredRelationsData[field[0]] = field.join('.')
 				}
-				this.setFilterValue(searchContainer, element, field, fieldValue, exactMatch)
 			})
 		}
-		return where
+		return {where, requiredRelationsData}
 	}
 
-	getIncludeQuery({data, rel, relSearch}) {
+	getRelationObjects(data, requiredRelationsData) {
 		let include = [],
-			countInclude = [],
-			order = []
+			order = [],
+			actualData = ((typeof data !== 'object') || (data === null)) ? {} : data
 		this.relReadKeys.forEach((key, index) => {
-			let relSearchLength = relSearch[key] && Object.keys(relSearch[key]).length || 0
-			if (data[key] || relSearchLength) {
-				let thisInclude = {},
-					relS = relSearch[key]
-				for (let iKey in rel[key].include) {
-					if (iKey === 'order') {
-						order = order.concat(rel[key].include[iKey])
-						continue
+			let relationPath = requiredRelationsData[key]
+			if (relationPath) {
+				let splitPath = relationPath.split('.'),
+					includeItem = JSON.parse(JSON.stringify(this.relations[key])),
+					relationItem = {include: [includeItem]},
+					nonChangeableRelationItem = {include: [this.relations[key]]}, // we need this one, so we can get the models for each one, because they're otherwise destroyed in JSON.parse(JSON.stringify())
+					currentItemName = this.componentName
+				splitPath.forEach((keyFromPath, pcIndex) => {
+					if (!(relationItem.include instanceof Array)) {
+						throw {customMessage: `Invalid include array in "${currentItemName}"'s relations item.`}
 					}
-					thisInclude[iKey] = rel[key].include[iKey]
-				}
-
-				if (relSearchLength) {
-					if (!thisInclude.where) {
-						thisInclude.where = relS
-					} else {
-						for (let sKey in relS) {
-							thisInclude.where[sKey] = relS[sKey]
-						}
-					}
-
-					if (thisInclude.where.nestedIncludeFields) {
-						delete thisInclude.where.nestedIncludeFields
-						for (let sKey in relS.nestedIncludeFields) {
-							if (!thisInclude.include.where) {
-								thisInclude.include.where = relS.nestedIncludeFields
-							} else {
-								for (let sKey in relS.nestedIncludeFields) {
-									thisInclude.include.where[sKey] = relS.nestedIncludeFields[sKey]
+					let nextRelationItemFound = false
+					for (const i in relationItem.include) {
+						let thisItem = relationItem.include[i]
+						if (thisItem.as === keyFromPath) {
+							nextRelationItemFound = true
+							nonChangeableRelationItem = nonChangeableRelationItem.include[i]
+							relationItem = thisItem
+							relationItem.model = nonChangeableRelationItem.model
+							relationItem.required = true
+							if (relationItem.order) {
+								for (const j in relationItem.order) {
+									let orderItem = relationItem.order[j]
+									if (orderItem.length === 3) {
+										orderItem[0].model = nonChangeableRelationItem.order[j][0].model
+									}
 								}
+								order = order.concat(relationItem.order)
+								delete relationItem.order
 							}
+							currentItemName = keyFromPath
+							break
 						}
 					}
-					countInclude.push(thisInclude)
-				}
-
-				include.push(thisInclude)
+					if (!nextRelationItemFound) {
+						throw {customMessage: `Invalid relation "${keyFromPath}" for "${currentItemName}".`}
+					}
+				})
+				include.push(includeItem)
+				return
+			}
+			if (actualData[key]) {
+				include.push(JSON.parse(JSON.stringify(this.relations[key])))
 			}
 		})
-		return {include, countInclude, order}
+		return {include, order}
 	}
 
-	create(data) {
+	create(data, options) {
 		const instance = this
 		return co(function*() {
+			if ((typeof options === 'object') && (options !== null)) {
+				return yield instance.model.create(data, options)
+			}
 			return yield instance.model.create(data)
 		})
 	}
 
-	bulkCreate({dbObjects, options}) {
+	bulkCreate(data, options) {
 		const instance = this
 		return co(function*() {
-			let opt = {}
-			if (options.transaction) {
-				opt.transaction = options.transaction
+			if ((typeof options === 'object') && (options !== null)) {
+				return yield instance.model.bulkCreate(data, options)
 			}
-			return yield instance.model.bulkCreate(data, opt)
+			return yield instance.model.bulkCreate(data)
 		})
 	}
 
-	read(data) {
+	read({filters, relReadKeys, exactMatch, transaction}) {
 		const instance = this
 		return co(function*() {
-			let where = {},
-				include = [],
-				rel = instance.relations,
-				relSearch = {},
-				exactMatch = (data.exactMatch instanceof Array) && data.exactMatch || []
-
-			for (let key in rel) {
-				relSearch[key] = {}
+			let {where, requiredRelationsData} = instance.getWhereObjects(filters, (exactMatch instanceof Array) && exactMatch || []),
+				{include, order} = instance.getRelationObjects(relReadKeys, requiredRelationsData),
+				readOptions = {where, include, order}
+			if (!Object.keys(where).length) {
+				throw {customMessage: 'No filters provided.'}
 			}
-			let whereQueryData = instance.getWhereQuery({filters: data, relSearch, exactMatch}),
-				includeQueryData = instance.getIncludeQuery({data, rel, relSearch}),
-				options = {
-					where: whereQueryData,
-					include: includeQueryData.include,
-					order: includeQueryData.order
-				}
-
-			return yield instance.model.findOne(options)
+			if (transaction) {
+				readOptions.transaction = transaction
+			}
+			return yield instance.model.findOne(readOptions)
 		})
 	}
 
@@ -434,38 +374,36 @@ class BaseDBComponent {
 				],
 				page = data.page ? parseInt(data.page, 10) : instance.defaults.page,
 				perPage = data.perPage ? parseInt(data.perPage, 10) : instance.defaults.perPage,
-				include = [],
 				more = false,
-				rel = instance.relations,
-				relSearch = {},
-				filters = data.filters || {},
-				exactMatch = (data.exactMatch instanceof Array) && data.exactMatch || [] //disables 'like' and makes 'between' >= <=, instead of > <
-
-			for (let key in rel) {
-				relSearch[key] = {}
-			}
-
-			let whereQueryData = instance.getWhereQuery({filters, relSearch, exactMatch}),
-				includeQueryData = instance.getIncludeQuery({data, rel, relSearch}),
-				options = {
-					where: whereQueryData,
+				{where, requiredRelationsData} = instance.getWhereObjects(data.filters || {}, (data.exactMatch instanceof Array) && data.exactMatch || []),
+				includeQueryData = instance.getRelationObjects(data, requiredRelationsData),
+				readListOptions = {
+					where,
 					include: includeQueryData.include,
 					order: order.concat(includeQueryData.order)
-				}
+				},
+				countOptions = {where, include: includeQueryData.include}
+			if (!Object.keys(where).length) {
+				throw {customMessage: 'No filters provided.'}
+			}
 
+			if (data.transaction) {
+				readListOptions.transaction = data.transaction
+				countOptions.transaction = data.transaction
+			}
 			if (data.fields) {
-				options.attributes = data.fields
+				readListOptions.attributes = data.fields
 			}
-
 			if ((data.excludeIdsFromSearch instanceof Array) && data.excludeIdsFromSearch.length) {
-				if (typeof options.where.id !== 'undefined') {
-					options.where.id = {$and: [options.where.id, {$not: data.excludeIdsFromSearch}]}
+				if (typeof readListOptions.where.id !== 'undefined') {
+					readListOptions.where.id = {$and: [readListOptions.where.id, {$not: data.excludeIdsFromSearch}]}
 				} else {
-					options.where.id = {$not: data.excludeIdsFromSearch}
+					readListOptions.where.id = {$not: data.excludeIdsFromSearch}
 				}
+				countOptions.where = readListOptions.where
 			}
 
-			let totalCount = yield instance.model.count({where: options.where, include: includeQueryData.countInclude}),
+			let totalCount = yield instance.model.count(countOptions),
 				totalPages = 0
 			if (data.readAll) {
 				totalPages = 1
@@ -476,11 +414,11 @@ class BaseDBComponent {
 				if ((totalPages > 0) && (page > totalPages)) {
 					page = totalPages
 				}
-				options.offset = (page - 1) * perPage
-				options.limit = perPage + 1
+				readListOptions.offset = (page - 1) * perPage
+				readListOptions.limit = perPage + 1
 			}
 
-			let results = yield instance.model.findAll(options)
+			let results = yield instance.model.findAll(readListOptions)
 			if (results.length === (perPage + 1)) {
 				results.pop()
 				more = true
@@ -492,7 +430,7 @@ class BaseDBComponent {
 	update({dbObject, where, transaction}) {
 		const instance = this
 		return co(function*() {
-			if ((typeof where !== 'object') || (Object.keys(where).length === 0)) {
+			if ((typeof where !== 'object') || (where === null) || (Object.keys(where).length === 0)) {
 				throw {customMessage: 'Cannot update without criteria.'}
 			}
 			let options = {
@@ -506,10 +444,47 @@ class BaseDBComponent {
 		})
 	}
 
-	delete(data) {
-		const instance = this
+	delete({id, checkForRelatedModels, transaction}) {
+		const instance = this,
+			{associationsConfig, componentName, dependencyMap, relations} = this,
+			masterOf = dependencyMap.masterOf
 		return co(function*() {
-			return {deleted: yield instance.model.destroy({where: {id: data.id}})}
+			let findAllOptions = {where: {id}},
+				deleteOptions = {where: {id}}
+			if (transaction) {
+				findAllOptions.transaction = transaction
+				deleteOptions.transaction = transaction
+			}
+			if (checkForRelatedModels && masterOf.length) {
+				let include = [],
+					componentNameToAssociationNameMap = {},
+					includedRelationNames = []
+				for (const alias in associationsConfig) {
+					const assocItem = associationsConfig[alias]
+					componentNameToAssociationNameMap[assocItem.componentName || alias] = alias
+				}
+				masterOf.forEach((item, index) => {
+					let relName = componentNameToAssociationNameMap[item]
+					include.push(relations[relName])
+					includedRelationNames.push(relName)
+				})
+				if (include.length) {
+					findAllOptions.include = include
+				}
+				let existingItems = yield instance.model.findAll(findAllOptions)
+				for (const i in existingItems) {
+					const item = (existingItems[i]).dataValues
+					for (const j in includedRelationNames) {
+						const key = includedRelationNames[j],
+							relItem = item[key]
+						if ((typeof relItem === 'object') && (relItem !== null) && (!(relItem instanceof Array) || ((relItem instanceof Array) && relItem.length))) {
+							throw {customMessage: `Cannot delete a "${componentName}" item that has related "${key}" items in the database.`}
+						}
+					}
+				}
+				return {deleted: yield instance.model.destroy(deleteOptions)}
+			}
+			return {deleted: yield instance.model.destroy(deleteOptions)}
 		})
 	}
 }

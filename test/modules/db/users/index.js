@@ -4,6 +4,7 @@ const
 	Base = require('../../../../index.js').BaseDBComponent,
 	bcryptjs = require('bcryptjs'),
 	co = require('co'),
+	{generateRandomString} = require('../../../../index.js').toolbelt,
 	merge = require('deepmerge'),
 	moment = require('moment')
 
@@ -53,7 +54,7 @@ class Component extends Base {
 					}
 				},
 				resetPassword: function (value) {
-					this.setDataValue('resetPasswordToken', (instance.generateRandomString(16)).toString('base64'))
+					this.setDataValue('resetPasswordToken', generateRandomString(16, 'base64'))
 					this.setDataValue('resetPasswordExpires', moment.utc().add(10, 'minutes').format())
 				},
 				resetPasswordToken: function (value) {

@@ -737,6 +737,8 @@ module.exports = {
 			})
 			it('should execture BaseDBComponent.testMe successfully', function() {
 				let testDBComponent = new BaseDBComponent()
+				testDBComponent.sequelize = instance.modules.db.sequelize
+				testDBComponent.Sequelize = instance.modules.db.Sequelize
 				testDBComponent.testMe()
 				assert(true)
 			})

@@ -95,13 +95,52 @@
 		- Generates the module-wide the seedingOrder.
 	- *BREAKING* - the base-db.component contructor is now in the format constructor(), rather than constructor({logger, config, mailClient}).
 	- *BREAKING* - removed logger, config and mailClient from the base-db.component (and all db componennts, subsequentially), as they're all accessible as properties in each dbComponent's db property.
+	- *BREAKING* - removed the component.generateHandle method.
+	- *BREAKING* - moved the generateRandomNumber, generateRandomString and parseDate methods to the toolbelt. Also, generateRandomString now returns a string and accepts an optional second argument for the string type.
 	- *BREAKING* - component.model.associate is no longer supported.
 	- *BREAKING* - component.associate reworked completely - it now takes a configurtion object from component.associationsConfig and generates the seeding order and a dependencyMap property for each component.
-	- *BREAKING* - removed the component.generateHandle method.
 	- *BREAKING* - all relations that are for reading purposes only - i.e. they are not factual DB associations, but just aliases with different fields and more/less properties, should now be configured in component.relationsConfig. The component.associationsConfig object should be used just for the actual DB associations.
 	- Added a component.mapRelations method, which generates the relations object and the relReadKeys for each component.
 	- Added a setDBInComponents method, which is used to set the db property of components instead of setComponentProperties. The major difference is that it creates a shallow copy of the db object for each component and removes the component in question from the copied object's component list to avoid circularization.
 	- Added a specMethodNames object to all db components, which will be used to execute tests from the user-defined spec for each component automatically.
+	- Reworked component.checkFilterValues to fully encompass the range of allowed possibilities. It now returns true if the value was set.
+	- *BREAKING* - component.getWhereQuery is now named getWhereObjects and is in the format getWhereObjects(filters, exactMatch), rather than getWhereQuery({filters, relSearch, exactMatch}). It no longer populates an external relSearch object, but returns 2 objects - the "where" object and an array, containing the paths of required relations.
+	- *BREAKING* - component.getIncludeQuery is now named getRelationObjects and is in the format getRelationObjects(data, requiredRelationPaths), rather than getIncludeQuery({data, rel, relSearch}). It has changed greatly and does not populate the relSearch object and "where" clauses in relations items.
+	- *BREAKING* - in component.searchFields, for filtering by related items' fields, a new syntax should be used. Example below:
+		- Old syntax, the following will instruct ramster to build the include object's "where" clause based on realtions.product.include[0], which would hopefully be productType:
+			```javascript
+			{
+				field: 'productTypeName',
+				associatedModel: 'product',
+				associatedModelField: 'name',
+				nestedInclude: true
+				like: '-%'
+			}
+			```
+		- New syntax, from now on Ramster automatically maps relations and creates the proper include objects:
+			```javascript
+			/* example associationsConfig */
+			{product: {componentName: 'products', include: [{componentName: 'productTypes', associationName: 'type'}]}}
+
+			/* for the above, in component.searchFields we'd have */
+			{
+				field: '$product.type.name$',
+				like: '-%'
+			}
+			```
+	- Added an optional options argument to component.create, which can be used to provide an external transaction to the method.
+	- *BREAKING* - bulkCreate is now in the format bulkCreate(data, options), rather than bulkCreate({dbObjects, options}).
+	- Changes in the read method:
+		- *BREAKING* - data should now be in the format {filters, relReadKeys, exactMatch, transaction}, where filters are required.
+		- Added transaction support - pass {transaction: t} to data to make use of this functionality.
+		- Reworked the method to make use of the new getWhereObjects and getRelationObjects methods.
+	- Changes in the readList method:
+		- *BREAKING* - data should now be in the format {filters, relReadKeys, exactMatch, page, perPage, readAll, orderBy, orderDirection, transaction}, where filters are required.
+		- Added transaction support - pass {transaction: t} to data to make use of this functionality.
+		- Reworked the method to make use of the new getWhereObjects and getRelationObjects methods.
+	- Change in the delete method:
+		- Added transaction support - pass {transaction: t} to data to make use of this functionality.
+		- Added checkForRelatedModels to data - set it to true to perfor a check if the items to be deleted have items for their hasOne and hasMany relations. If they do, throw errors accordingly. E.g. "Cannot delete a userType that has users".
 	- Added a lot of tests, complete code coverage.
 - Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis).
 - csvPromise:

@@ -1,5 +1,7 @@
 'use strict'
 
+const moment = require('moment')
+
 const
 	co = require('co'),
 	fs = require('fs-extra'),
@@ -203,6 +205,26 @@ const
 		}
 		return folderSize
 	}),
+	generateRandomNumber = (length) => {
+		if ((typeof length !== 'number') || (length < 1)) {
+			throw {customMessage: 'Invalid length number provided.'}
+		}
+		let number = ''
+		for (let i = 0; i < length; i++) {
+			number += Math.floor(Math.random() * 9)
+		}
+		return parseInt(number, 10)
+	},
+	generateRandomString = (length, stringType) => {
+		if ((typeof length !== 'number') || (length < 1)) {
+			throw {customMessage: 'Invalid length number provided.'}
+		}
+		let buf = new Buffer(length)
+		for (let i = 0; i < buf.length; i++) {
+			buf[i] = Math.floor(Math.random() * 256)
+		}
+		return buf.toString(stringType)
+	},
 	getNested = (parent, field) => {
 		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string') || !field.length) {
 			return null
@@ -218,6 +240,21 @@ const
 		}
 		return currentElement
 	},
+	parseDate = (date) => {
+		if (typeof date === 'string') {
+			if (date.indexOf('/') !== -1) {
+				let tempDate = moment.utc(date, 'DD/MM/YYYY')
+				if (tempDate.isValid()) {
+					return tempDate
+				}
+			}
+			return moment.utc(date, 'YYYY-MM-DD')
+		}
+		if (date && (typeof date === 'object')) {
+			return moment.utc(date.getTime(), 'x')
+		}
+		return moment.utc('Invalid date', 'YYYY-MM-DD')
+	},
 	runTestConditionally = (condition, testText, testMethod) => {
 		if (condition) {
 			it(testText, testMethod)
@@ -227,4 +264,4 @@ const
 		return -1
 	}
 
-module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, findVertexByIdDFS, getFolderSize, getNested, runTestConditionally}
+module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, findVertexByIdDFS, getFolderSize, generateRandomNumber, generateRandomString, getNested, parseDate, runTestConditionally}
