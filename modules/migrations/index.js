@@ -443,7 +443,11 @@ class Migrations {
 
 				// seed the remaining data (junction tables and other tables without sequelize models)
 				for (let tableName in data) {
-					let preparedData = instance.prepareColumnData(data[tableName], tableLayout[tableName])
+					let thisTableLayout = tableLayout[tableName]
+					if (!thisTableLayout) {
+						continue
+					}
+					let preparedData = instance.prepareColumnData(data[tableName], thisTableLayout)
 					for (const j in preparedData) {
 						yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents, dontSetIdSequence: true})
 					}

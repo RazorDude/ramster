@@ -754,6 +754,8 @@ module.exports = {
 					for (const tableName in fileData) {
 						data[tableName] = fileData[tableName].data
 					}
+					// add this so we can test if it will skip the tables for which there is no layout
+					data.absolutelyFakeAndInexistentTableName = [1, 2, 3, 4, 5]
 					try {
 						yield instance.insertData(data, {
 								userTypes: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
