@@ -112,7 +112,8 @@ class TokenManager{
 
 	validate() {
 		return (req, res, next) => {
-			const instance = this
+			const instance = this,
+				{generalStore, errorLogger} = this
 			let moduleName = '',
 				moduleType = '',
 				config = {},
@@ -123,14 +124,14 @@ class TokenManager{
 				moduleName = JSON.parse(JSON.stringify(req.locals.moduleName))
 				moduleType = JSON.parse(JSON.stringify(req.locals.moduleType))
 				originalModuleName = JSON.parse(JSON.stringify(req.locals.moduleName))
-				config = JSON.parse(JSON.stringify(req.locals.config[moduleType][moduleName]))
-				originalConfig = JSON.parse(JSON.stringify(req.locals.config[moduleType][moduleName]))
+				config = JSON.parse(JSON.stringify(instance.config[`${moduleType}s`][moduleName]))
+				originalConfig = JSON.parse(JSON.stringify(instance.config[`${moduleType}s`][moduleName]))
 				if (!req.headers.authorization) {
 					throw {customMessage: 'No access token provided.', status: 401}
 				}
 				if (config.useApiModuleConfigForAuthTokens) {
-					moduleName = JSON.parse(JSON.stringify(config.useApiModuleConfigForAuthTokens))
-					config = JSON.parse(JSON.stringify(req.locals.config.apis[config.useApiModuleConfigForAuthTokens]))
+					moduleName = JSON.parse(JSON.stringify(instance.config.useApiModuleConfigForAuthTokens))
+					config = JSON.parse(JSON.stringify(instance.config.apis[config.useApiModuleConfigForAuthTokens]))
 				}
 
 				let tokens = req.headers.authorization.split(' ')
@@ -175,7 +176,7 @@ class TokenManager{
 								throw {customMessage: 'Access token expired. Invalid refresh token.', status: 401}
 							}
 
-							let newAccessToken = yield req.locals.tokenManager.createToken('access', decoded, config.jwt.secret, moduleName, config.jwt.accessTokenExpiresInMinutes)
+							let newAccessToken = yield instance.createToken('access', decoded, config.jwt.secret, moduleName, config.jwt.accessTokenExpiresInMinutes)
 							yield instance.generalStore.removeEntry(`${moduleName}user${decoded.id}RefreshTokenForAccessToken${currentAccessToken}`)
 							yield instance.generalStore.storeEntry(`${moduleName}user${decoded.id}RefreshTokenForAccessToken${newAccessToken}`, currentRefreshToken)
 
@@ -184,7 +185,7 @@ class TokenManager{
 							return true
 						} catch (innerError) {
 							req.user = null
-							req.locals.logger.error(innerError)
+							errorLogger.error(innerError)
 							let status = innerError.status || 500,
 								message = innerError.customMessage || 'An internal server error has occurred.'
 							if (innerError.tokenExpired) {
@@ -214,7 +215,7 @@ class TokenManager{
 				let response = {},
 					status = e.status || req.locals.errorStatus || 500,
 					message = e.customMessage || 'An internal server error has occurred.'
-				if (req.locals.config.responseType === 'serviceName') {
+				if (config.responseType === 'serviceName') {
 					response = {serviceName: req.locals.serviceName, data: null, message}
 				} else {
 					response = {message}
@@ -223,7 +224,7 @@ class TokenManager{
 					next({status, message})
 					return
 				}
-				req.locals.logger.error(e)
+				errorLogger.error(e)
 				res.status(status).json(response)
 			}
 		}

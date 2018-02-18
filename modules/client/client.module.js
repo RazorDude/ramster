@@ -40,7 +40,7 @@ class ClientModule extends BaseServerModule {
 
 			// set up access control by origin
 			if (moduleConfig.allowOrigins) {
-				app.use(instance.accessControlOrigin())
+				app.use(instance.accessControlAllowOrigin())
 			}
 
 			// set up the passport session

@@ -34,7 +34,7 @@ class APIModule extends BaseServerModule {
 
 			// set up access control by origin
 			if (moduleConfig.allowOrigins) {
-				app.use(instance.accessControlOrigin())
+				app.use(instance.accessControlAllowOrigin())
 			}
 
 			// before every request - add the service name

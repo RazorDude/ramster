@@ -87,7 +87,7 @@
 	- *BREAKING* - renamed all occurences of "postgres" (except for the default root user & pass for postgreSQL) to "postgreSQL".
 	- *BREAKING* - split loadComponents into three methods for better testing and debugging - connectToDB, loadComponents and createAssociations.
 	- loadComponents:
-		- It now loads index.spec.js files from each component's directory. It must be a valid js file, whose exports are a json with test methods for mochajs. See ramster's own index.spec.js in the root folder for reference.
+		- It now loads index.spec.js files from each component's directory. It must be a valid js file, whose exports are a json with test methods for mochajs. See ramster's own core.spec.js in the root folder for reference.
 		- It now does various checks to ensure the basic validity of the loaded components and throws errors accordingly.
 		- It now sets the componentName property automatically.
 	- (new) createAssociations:
@@ -142,7 +142,20 @@
 		- Added transaction support - pass {transaction: t} to data to make use of this functionality.
 		- Added checkForRelatedModels to data - set it to true to perfor a check if the items to be deleted have items for their hasOne and hasMany relations. If they do, throw errors accordingly. E.g. "Cannot delete a userType that has users".
 	- Added a lot of tests, complete code coverage.
-- Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis).
+<!-- - Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis). -->
+- client modules and components:
+	- 
+	- Added moduleType to req.locals, as the module-specific configs are now in config.clients, rather than just in config.
+	- *BREAKING* - removed the settings object for the module and req.locals. Use module.config instead.
+	- *BREAKING* - removed the config object for the module and req.locals. Use module.config instead.
+	- *BREAKING* - only the componentName as the first and single argument is now passed to the components' constructors by loadComponents.
+	- The componentName is now automatically set by loadComponents. You still need to set componentNameSingular manually in the component's constructor, however.
+	- The loadComponents method now loads index.spec.js files from each component's directory. It must be a valid js file, whose exports are a json with test methods for mochajs. See ramster's own core.spec.js in the root folder for reference.
+	- *BREAKING* - renamed accessControlOrigin to accessControlAllowOrigin.
+	- Fixed the changeFieldCase method - it now parses the changeKeyCase output (which is a json string).
+	- *BREAKING* - the base client component constructor no longer accepts moduleName and moduleNameSingular.
+	- *BREAKING* - all routes are now prefixed by the componentName by default
+	- All components have the module property automatically set by loadComponents.
 - csvPromise:
 	- *BREAKING* - the parse method is now in the format parse(data, options), rather than parse({data, options}).
 	- *BREAKING* - the stringify method is now in the format stringify(data, options), rather than stringify({data, options}).

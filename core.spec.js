@@ -3,6 +3,7 @@
 const
 	assert = require('assert'),
 	BaseDBComponent = require('./modules/db/base-db.component'),
+	BaseServerModule = require('./modules/shared/base-server.module'),
 	co = require('co'),
 	csvPromise = new (require('./modules/csvPromise'))(),
 	{describeSuiteConditionally, runTestConditionally} = require('./modules/toolbelt'),
@@ -50,12 +51,16 @@ module.exports = {
 				instance.testMigrations()
 				assert(true)
 			})
-			it('should execute testDBModule successfully', function() {
+			it.skip('should execute testDBModule successfully', function() {
 				instance.testDBModule()
 				assert(true)
 			})
-			it.skip('should execute testLoadClients successfully', function() {
+			it('should execute testLoadClients successfully', function() {
 				instance.testLoadClients()
+				assert(true)
+			})
+			it('should execute testClientModule successfully', function() {
+				instance.testClientModule()
 				assert(true)
 			})
 			it.skip('should execute testListen successfully', function() {
@@ -735,7 +740,7 @@ module.exports = {
 				instance.modules.db.testMe()
 				assert(true)
 			})
-			it('should execture BaseDBComponent.testMe successfully', function() {
+			it('should execute BaseDBComponent.testMe successfully', function() {
 				let testDBComponent = new BaseDBComponent()
 				testDBComponent.sequelize = instance.modules.db.sequelize
 				testDBComponent.Sequelize = instance.modules.db.Sequelize
@@ -754,6 +759,21 @@ module.exports = {
 					return true
 				})
 			})
+		})
+	},
+	testClientModule: function() {
+		const instance = this
+		describe('core.modules.clients', function() {
+			it('should execute BaseServerModule.testMe successfully', function() {
+				const {db, logger, generalStore, tokenManager} = instance
+				let testServerModule = new BaseServerModule(instance.config, 'site', 'client', {db, logger, generalStore, tokenManager})
+				testServerModule.testMe()
+				assert(true)
+			})
+			// it('should execute testMe successfully', function() {
+			// 	instance.modules.clients.site.testMe()
+			// 	assert(true)
+			// })
 		})
 	}
 }

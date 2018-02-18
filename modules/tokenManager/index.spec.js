@@ -421,15 +421,14 @@ module.exports = {
 	},
 	testValidate: function() {
 		const instance = this,
-			{config, errorLogger, generalStore} = this,
+			{errorLogger, generalStore} = this,
 			validate = this.validate()
-		let req = {
+		let {config} = this,
+			req = {
 				locals: {
 					moduleName: 'mobile',
-					moduleType: 'apis',
-					config: JSON.parse(JSON.stringify(config)),
-					tokenManager: instance,
-					logger: {error: (e) => e}
+					moduleType: 'api'
+					// logger: {error: (e) => e}
 				},
 				headers: {
 					authorization: ''
@@ -493,7 +492,7 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "next" if no "authorization" header is provided and moduleConfig.passErrorToNext is true', function() {
 				return co(function*() {
 					delete req.headers.authorization
-					req.locals.config.apis.mobile.passErrorToNext = true
+					config.apis.mobile.passErrorToNext = true
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -503,7 +502,7 @@ module.exports = {
 				})
 			})
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if no "authorization" header is provided and moduleConfig.passErrorToNext is false', function() {
-				req.locals.config.apis.mobile.passErrorToNext = false
+				config.apis.mobile.passErrorToNext = false
 				res.json = res.jsonTemplate.bind(res, null)
 				validate(req, res, next.bind(next, null))
 				assert(res.response && (res.response.statusCode === 401) && res.response.jsonBody && (res.response.jsonBody.message === 'No access token provided.'))
@@ -511,7 +510,7 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "next" if an ill-formed "authorization" header is provided and moduleConfig.passErrorToNext is true', function() {
 				return co(function*() {
 					req.headers.authorization = 'NotBearer NotToken'
-					req.locals.config.apis.mobile.passErrorToNext = true
+					config.apis.mobile.passErrorToNext = true
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -522,7 +521,7 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an ill-formed "authorization" header is provided and moduleConfig.passErrorToNext is false', function() {
 				req.headers.authorization = 'NotBearer NotToken'
-				req.locals.config.apis.mobile.passErrorToNext = false
+				config.apis.mobile.passErrorToNext = false
 				res.json = res.jsonTemplate.bind(res, null)
 				validate(req, res, next.bind(next, null))
 				assert(res.response && (res.response.statusCode === 401) && res.response.jsonBody && (res.response.jsonBody.message === 'No access token provided.'))
@@ -530,7 +529,7 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "next" if an invalid access token is provided and moduleConfig.passErrorToNext is true', function() {
 				return co(function*() {
 					req.headers.authorization = 'Bearer invalidAccessToken'
-					req.locals.config.apis.mobile.passErrorToNext = true
+					config.apis.mobile.passErrorToNext = true
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -542,7 +541,7 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an invalid access token is provided and moduleConfig.passErrorToNext is false', function() {
 				return co(function*() {
 					req.headers.authorization = 'Bearer invalidAccessToken'
-					req.locals.config.apis.mobile.passErrorToNext = false
+					config.apis.mobile.passErrorToNext = false
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -553,9 +552,9 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if an ill-formed access token is provided and moduleConfig.passErrorToNext is true', function() {
 				return co(function*() {
-					let token = yield instance.signToken({someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret)
+					let token = yield instance.signToken({someRandomKey: true}, config.apis.mobile.jwt.secret)
 					req.headers.authorization = `Bearer ${token}`
-					req.locals.config.apis.mobile.passErrorToNext = true
+					config.apis.mobile.passErrorToNext = true
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -566,9 +565,9 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an ill-formed access token is provided and moduleConfig.passErrorToNext is false', function() {
 				return co(function*() {
-					let token = yield instance.signToken({someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret)
+					let token = yield instance.signToken({someRandomKey: true}, config.apis.mobile.jwt.secret)
 					req.headers.authorization = `Bearer ${token}`
-					req.locals.config.apis.mobile.passErrorToNext = false
+					config.apis.mobile.passErrorToNext = false
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -579,10 +578,10 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if a blacklisted access token is provided and moduleConfig.passErrorToNext is true', function() {
 				return co(function*() {
-					let blacklistedToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
-					yield instance.createToken('access', {id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
+					let blacklistedToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
+					yield instance.createToken('access', {id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret, 'mobile')
 					req.headers.authorization = `Bearer ${blacklistedToken}`
-					req.locals.config.apis.mobile.passErrorToNext = true
+					config.apis.mobile.passErrorToNext = true
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -593,10 +592,10 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if a blacklisted access token is provided and moduleConfig.passErrorToNext is false', function() {
 				return co(function*() {
-					let blacklistedToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
-					yield instance.createToken('access', {id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
+					let blacklistedToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
+					yield instance.createToken('access', {id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret, 'mobile')
 					req.headers.authorization = `Bearer ${blacklistedToken}`
-					req.locals.config.apis.mobile.passErrorToNext = false
+					config.apis.mobile.passErrorToNext = false
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -607,10 +606,10 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if a valid access token, which is not the user\'s current one, is provided and moduleConfig.passErrorToNext is true', function() {
 				return co(function*() {
-					let nonCurrentToken = yield instance.signToken({id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret)
-					yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
+					let nonCurrentToken = yield instance.signToken({id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret)
+					yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
 					req.headers.authorization = `Bearer ${nonCurrentToken}`
-					req.locals.config.apis.mobile.passErrorToNext = true
+					config.apis.mobile.passErrorToNext = true
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -621,10 +620,10 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if a valid access token, which is not the user\'s current one, is provided and moduleConfig.passErrorToNext is false', function() {
 				return co(function*() {
-					let nonCurrentToken = yield instance.signToken({id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret)
-					yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
+					let nonCurrentToken = yield instance.signToken({id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret)
+					yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
 					req.headers.authorization = `Bearer ${nonCurrentToken}`
-					req.locals.config.apis.mobile.passErrorToNext = false
+					config.apis.mobile.passErrorToNext = false
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						validate(req, res, next.bind(next, resolve))
@@ -635,9 +634,9 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if an expired access token is provided, moduleConfig.passErrorToNext is true and moduleConfig.jwt.useRefreshTokens is false', function() {
 				return new Promise((resolve, reject) => {
-					instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
+					instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
 						req.headers.authorization = `Bearer ${token}`
-						req.locals.config.apis.mobile.passErrorToNext = true
+						config.apis.mobile.passErrorToNext = true
 						setTimeout(() => {
 							(new Promise((innerResolve, innerReject) => {
 								res.json = res.jsonTemplate.bind(res, innerResolve)
@@ -659,9 +658,9 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an expired access token is provided, moduleConfig.passErrorToNext is false and moduleConfig.jwt.useRefreshTokens is false', function() {
 				return new Promise((resolve, reject) => {
-					instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
+					instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
 						req.headers.authorization = `Bearer ${token}`
-						req.locals.config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.passErrorToNext = false
 						setTimeout(() => {
 							(new Promise((innerResolve, innerReject) => {
 								res.json = res.jsonTemplate.bind(res, innerResolve)
@@ -683,112 +682,112 @@ module.exports = {
 			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if an expired access token is provided, moduleConfig.passErrorToNext is true, moduleConfig.jwt.useRefreshTokens is true and no refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
-					instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
+					instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
 						req.headers.authorization = `Bearer ${token}`
-						req.locals.config.apis.mobile.passErrorToNext = true
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = true
+						config.apis.mobile.jwt.useRefreshTokens = true
 						setTimeout(() => {
 							(new Promise((innerResolve, innerReject) => {
 								res.json = res.jsonTemplate.bind(res, innerResolve)
 								validate(req, res, next.bind(next, innerResolve))
 							})).then((promiseResult) => {
-								req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+								config.apis.mobile.jwt.useRefreshTokens = false
 								if (next.fail && (next.errorStatus === 401) && (next.errorMessage === 'Access token expired. No refresh token provided.')) {
 									resolve()
 									return
 								}
 								reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 							}, (err) => {
-								req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+								config.apis.mobile.jwt.useRefreshTokens = false
 								reject(err)
 							})
 						}, 1500)
 					}, (err) => {
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+						config.apis.mobile.jwt.useRefreshTokens = false
 						reject(err)
 					})
 				})
 			})
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an expired access token is provided, moduleConfig.passErrorToNext is false, moduleConfig.jwt.useRefreshTokens is true and no refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
-					instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
+					instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
 						req.headers.authorization = `Bearer ${token}`
-						req.locals.config.apis.mobile.passErrorToNext = false
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.jwt.useRefreshTokens = true
 						setTimeout(() => {
 							(new Promise((innerResolve, innerReject) => {
 								res.json = res.jsonTemplate.bind(res, innerResolve)
 								validate(req, res, next.bind(next, innerResolve))
 							})).then((promiseResult) => {
-								req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+								config.apis.mobile.jwt.useRefreshTokens = false
 								if (res.response && (res.response.statusCode === 401) && res.response.jsonBody && (res.response.jsonBody.message === 'Access token expired. No refresh token provided.')) {
 									resolve()
 									return
 								}
 								reject({response: res.response})
 							}, (err) => {
-								req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+								config.apis.mobile.jwt.useRefreshTokens = false
 								reject(err)
 							})
 						}, 1500)
 					}, (err) => {
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+						config.apis.mobile.jwt.useRefreshTokens = false
 						reject(err)
 					})
 				})
 			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if an expired access token is provided, moduleConfig.passErrorToNext is true, moduleConfig.jwt.useRefreshTokens is true and an invalid refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
-					instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
+					instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
 						req.headers.authorization = `Bearer ${token} invalidRefreshToken`
-						req.locals.config.apis.mobile.passErrorToNext = true
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = true
+						config.apis.mobile.jwt.useRefreshTokens = true
 						setTimeout(() => {
 							(new Promise((innerResolve, innerReject) => {
 								res.json = res.jsonTemplate.bind(res, innerResolve)
 								validate(req, res, next.bind(next, innerResolve))
 							})).then((promiseResult) => {
-								req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+								config.apis.mobile.jwt.useRefreshTokens = false
 								if (next.fail && (next.errorStatus === 401) && (next.errorMessage === 'Access token expired. Failed to verify token.')) {
 									resolve()
 									return
 								}
 								reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 							}, (err) => {
-								req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+								config.apis.mobile.jwt.useRefreshTokens = false
 								reject(err)
 							})
 						}, 1500)
 					}, (err) => {
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+						config.apis.mobile.jwt.useRefreshTokens = false
 						reject(err)
 					})
 				})
 			})
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an expired access token is provided, moduleConfig.passErrorToNext is false, moduleConfig.jwt.useRefreshTokens is true and an invalid refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
-					instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
+					instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60).then((token) => {
 						req.headers.authorization = `Bearer ${token} invalidRefreshToken`
-						req.locals.config.apis.mobile.passErrorToNext = false
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.jwt.useRefreshTokens = true
 						setTimeout(() => {
 							(new Promise((innerResolve, innerReject) => {
 								res.json = res.jsonTemplate.bind(res, innerResolve)
 								validate(req, res, next.bind(next, innerResolve))
 							})).then((promiseResult) => {
-								req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+								config.apis.mobile.jwt.useRefreshTokens = false
 								if (res.response && (res.response.statusCode === 401) && res.response.jsonBody && (res.response.jsonBody.message === 'Access token expired. Failed to verify token.')) {
 									resolve()
 									return
 								}
 								reject({response: res.response})
 							}, (err) => {
-								req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+								config.apis.mobile.jwt.useRefreshTokens = false
 								reject(err)
 							})
 						}, 1500)
 					}, (err) => {
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+						config.apis.mobile.jwt.useRefreshTokens = false
 						reject(err)
 					})
 				})
@@ -796,10 +795,10 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "next" if an expired access token is provided, moduleConfig.passErrorToNext is true, moduleConfig.jwt.useRefreshTokens is true and an ill-formed refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
-						req.headers.authorization = `Bearer ${accessToken} ${yield instance.signToken({someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret)}`
-						req.locals.config.apis.mobile.passErrorToNext = true
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
+						req.headers.authorization = `Bearer ${accessToken} ${yield instance.signToken({someRandomKey: true}, config.apis.mobile.jwt.secret)}`
+						config.apis.mobile.passErrorToNext = true
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -807,19 +806,19 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (next.fail && (next.errorStatus === 401) && (next.errorMessage === 'Access token expired. Invalid refresh token.')) {
 										resolve()
 										return
 									}
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -828,10 +827,10 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an expired access token is provided, moduleConfig.passErrorToNext is false, moduleConfig.jwt.useRefreshTokens is true and an ill-formed refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
-						req.headers.authorization = `Bearer ${accessToken} ${yield instance.signToken({someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret)}`
-						req.locals.config.apis.mobile.passErrorToNext = false
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
+						req.headers.authorization = `Bearer ${accessToken} ${yield instance.signToken({someRandomKey: true}, config.apis.mobile.jwt.secret)}`
+						config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -839,19 +838,19 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (res.response && (res.response.statusCode === 401) && res.response.jsonBody && (res.response.jsonBody.message === 'Access token expired. Invalid refresh token.')) {
 										resolve()
 										return
 									}
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -860,12 +859,12 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "next" if an expired access token is provided, moduleConfig.passErrorToNext is true, moduleConfig.jwt.useRefreshTokens is true and a blacklisted refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
-							blacklistedRefreshToken = yield instance.createToken('refresh', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
-						yield instance.createToken('refresh', {id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
+							blacklistedRefreshToken = yield instance.createToken('refresh', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
+						yield instance.createToken('refresh', {id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret, 'mobile')
 						req.headers.authorization = `Bearer ${accessToken} ${blacklistedRefreshToken}`
-						req.locals.config.apis.mobile.passErrorToNext = true
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = true
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -873,19 +872,19 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (next.fail && (next.errorStatus === 401) && (next.errorMessage === 'Access token expired. Invalid refresh token.')) {
 										resolve()
 										return
 									}
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -894,12 +893,12 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an expired access token is provided, moduleConfig.passErrorToNext is false, moduleConfig.jwt.useRefreshTokens is true and a blacklisted refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
-							blacklistedRefreshToken = yield instance.createToken('refresh', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
-						yield instance.createToken('refresh', {id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
+							blacklistedRefreshToken = yield instance.createToken('refresh', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
+						yield instance.createToken('refresh', {id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret, 'mobile')
 						req.headers.authorization = `Bearer ${accessToken} ${blacklistedRefreshToken}`
-						req.locals.config.apis.mobile.passErrorToNext = false
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -907,19 +906,19 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (res.response && (res.response.statusCode === 401) && res.response.jsonBody && (res.response.jsonBody.message === 'Access token expired. Invalid refresh token.')) {
 										resolve()
 										return
 									}
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -928,11 +927,11 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "next" if an expired access token is provided, moduleConfig.passErrorToNext is true, moduleConfig.jwt.useRefreshTokens is true and a valid refresh token, which is not the user\'s current one, is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
-						yield instance.createToken('refresh', {id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
-						req.headers.authorization = `Bearer ${accessToken} ${yield instance.signToken({id: -1}, req.locals.config.apis.mobile.jwt.secret)}`
-						req.locals.config.apis.mobile.passErrorToNext = true
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
+						yield instance.createToken('refresh', {id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret, 'mobile')
+						req.headers.authorization = `Bearer ${accessToken} ${yield instance.signToken({id: -1}, config.apis.mobile.jwt.secret)}`
+						config.apis.mobile.passErrorToNext = true
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -940,19 +939,19 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (next.fail && (next.errorStatus === 401) && (next.errorMessage === 'Access token expired. Invalid refresh token.')) {
 										resolve()
 										return
 									}
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -961,11 +960,11 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an expired access token is provided, moduleConfig.passErrorToNext is false, moduleConfig.jwt.useRefreshTokens is true and a valid refresh token, which is not the user\'s current one, is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
-						yield instance.createToken('refresh', {id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
-						req.headers.authorization = `Bearer ${accessToken} ${yield instance.signToken({id: -1}, req.locals.config.apis.mobile.jwt.secret)}`
-						req.locals.config.apis.mobile.passErrorToNext = false
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
+						yield instance.createToken('refresh', {id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret, 'mobile')
+						req.headers.authorization = `Bearer ${accessToken} ${yield instance.signToken({id: -1}, config.apis.mobile.jwt.secret)}`
+						config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -973,19 +972,19 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (res.response && (res.response.statusCode === 401) && res.response.jsonBody && (res.response.jsonBody.message === 'Access token expired. Invalid refresh token.')) {
 										resolve()
 										return
 									}
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -994,11 +993,11 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "next" if an expired access token is provided, moduleConfig.passErrorToNext is true, moduleConfig.jwt.useRefreshTokens is true and an expired refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
-							refreshToken = yield instance.createToken('refresh', {id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
+							refreshToken = yield instance.createToken('refresh', {id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
 						req.headers.authorization = `Bearer ${accessToken} ${refreshToken}`
-						req.locals.config.apis.mobile.passErrorToNext = true
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = true
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -1006,19 +1005,19 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (next.fail && (next.errorStatus === 401) && (next.errorMessage === 'Access token expired. Refresh token expired.')) {
 										resolve()
 										return
 									}
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -1027,11 +1026,11 @@ module.exports = {
 			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an expired access token is provided, moduleConfig.passErrorToNext is false, moduleConfig.jwt.useRefreshTokens is true and an expired refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
-							refreshToken = yield instance.createToken('refresh', {id: -1, someRandomKey: true}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
+							refreshToken = yield instance.createToken('refresh', {id: -1, someRandomKey: true}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60)
 						req.headers.authorization = `Bearer ${accessToken} ${refreshToken}`
-						req.locals.config.apis.mobile.passErrorToNext = false
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -1039,19 +1038,19 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (res.response && (res.response.statusCode === 401) && res.response.jsonBody && (res.response.jsonBody.message === 'Access token expired. Refresh token expired.')) {
 										resolve()
 										return
 									}
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -1059,8 +1058,8 @@ module.exports = {
 			})
 			it('should execute "next" with no arguments sucessfully and set "req.user" to the valid decoded object if a valid access token is provided', function() {
 				return co(function*() {
-					req.headers.authorization = `Bearer ${yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')}`
-					req.locals.config.apis.mobile.passErrorToNext = true
+					req.headers.authorization = `Bearer ${yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')}`
+					config.apis.mobile.passErrorToNext = true
 					delete req.user
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
@@ -1073,11 +1072,11 @@ module.exports = {
 			it('should execute "next" with no arguments sucessfully, set "req.user" to the valid decoded object if an expired access token is provided, moduleConfig.jwt.useRefreshTokens is true a valid refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
-							refreshToken = yield instance.createToken('refresh', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
+							refreshToken = yield instance.createToken('refresh', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
 						req.headers.authorization = `Bearer ${accessToken} ${refreshToken}`
-						req.locals.config.apis.mobile.passErrorToNext = false
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
 					}).then(() => {
 							setTimeout(() => {
@@ -1085,20 +1084,20 @@ module.exports = {
 									res.json = res.jsonTemplate.bind(res, innerResolve)
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									if (!next.fail && req.user && (Object.keys(req.user).length === 2) && (req.user.id === -1) && (typeof req.user.iat !== 'undefined')) {
 										resolve()
 										return
 									}
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)
@@ -1107,11 +1106,11 @@ module.exports = {
 			it('should execute "next" with no arguments sucessfully, set "authorization-newaccesstoken" to the new access token and set the current refresh token for it if an expired access token is provided, moduleConfig.jwt.useRefreshTokens is true a valid refresh token is provided', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let accessToken = yield instance.createToken('access', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
-							refreshToken = yield instance.createToken('refresh', {id: -1}, req.locals.config.apis.mobile.jwt.secret, 'mobile')
+						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
+							refreshToken = yield instance.createToken('refresh', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
 						req.headers.authorization = `Bearer ${accessToken} ${refreshToken}`
-						req.locals.config.apis.mobile.passErrorToNext = false
-						req.locals.config.apis.mobile.jwt.useRefreshTokens = true
+						config.apis.mobile.passErrorToNext = false
+						config.apis.mobile.jwt.useRefreshTokens = true
 						return refreshToken
 					}).then((refreshToken) => {
 							setTimeout(() => {
@@ -1120,7 +1119,7 @@ module.exports = {
 									validate(req, res, next.bind(next, innerResolve))
 								})).then((promiseResult) => {
 									co(function*() {
-										req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+										config.apis.mobile.jwt.useRefreshTokens = false
 										if (!next.fail && req.user && (Object.keys(req.user).length === 2) && (req.user.id === -1) && (typeof req.user.iat !== 'undefined')) {
 											if (res.headers && res.headers['authorization-newaccesstoken']) {
 												let newAccessToken = res.headers['authorization-newaccesstoken'],
@@ -1138,20 +1137,20 @@ module.exports = {
 												return
 											}
 										}
-										req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+										config.apis.mobile.jwt.useRefreshTokens = false
 										reject({hasFailed: next.fail, errorStatus: next.errorStatus, errorMessage: next.errorMessage})
 									}).then(() => {
 									}, (err) => {
-										req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+										config.apis.mobile.jwt.useRefreshTokens = false
 										reject(err)
 									})
 								}, (err) => {
-									req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+									config.apis.mobile.jwt.useRefreshTokens = false
 									reject(err)
 								})
 							}, 1500)
 						}, (err) => {
-							req.locals.config.apis.mobile.jwt.useRefreshTokens = false
+							config.apis.mobile.jwt.useRefreshTokens = false
 							reject(err)
 						}
 					)

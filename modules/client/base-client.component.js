@@ -10,13 +10,12 @@ const
 	xlsx = require('node-xlsx')
 
 class BaseClientComponent extends BaseServerComponent {
-	constructor({componentName, componentNameSingular, routes, additionalDefaultRoutes, addDefaultRoutes, routePrefix}) {
+	constructor({componentName, routes, routePrefix, addDefaultRoutes, additionalDefaultRoutes}) {
 		super()
-		this.componentName = componentName
-		this.componentNameSingular = componentNameSingular
 
+		this.componentName = componentName
 		this.routes = routes || []
-		routePrefix = routePrefix || ''
+		let actualRoutePrefix = (typeof routePrefix === 'stirng') && routePrefix.length ? routePrefix : componentName
 		if (addDefaultRoutes instanceof Array) {
 			let defaultRoutes = {
 					create: {method: 'post', path: `${routePrefix}/${this.componentName}/create`, func: 'create'},

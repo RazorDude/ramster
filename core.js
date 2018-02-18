@@ -91,9 +91,8 @@ class Core {
 	loadClients() {
 		let instance = this
 		return co(function*() {
-			const {config, logger, generalStore, tokenManager} = instance
-			let db = instance.db,
-				clientModules = instance.modules.clients,
+			const {config, db, logger, generalStore, tokenManager} = instance
+			let clientModules = {},
 				modulesDirPath = config.clientModulesPath,
 				modulesDirData = yield fs.readdir(modulesDirPath)
 			for (const index in modulesDirData) {
@@ -105,6 +104,7 @@ class Core {
 					yield clientModule.loadComponents()
 				}
 			}
+			instance.modules.clients = clientModules
 			return true
 		})
 	}
