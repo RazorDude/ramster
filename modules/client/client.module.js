@@ -14,11 +14,60 @@ const
 	multipart = require('connect-multiparty'),
 	path = require('path'),
 	requestLogger = require('morgan'),
+	spec = require('./client.module.spec'),
 	wrap = require('co-express')
 
 class ClientModule extends BaseServerModule {
 	constructor(config, moduleName, options) {
 		super(config, moduleName, 'client', options)
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
+	}
+
+	setDefaultsBeforeRequest() {
+		const instance = this,
+			{moduleName, moduleConfig, config} = this
+		return function(req, res, next) {
+			let originalUrl = req.originalUrl.split('?')[0],
+				cookies = new Cookies(req, res)
+			console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
+
+			if (!checkRoutes(originalUrl, instance.paths)) {
+				const notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
+				if (notFoundRedirectRoutes) {
+					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
+					return
+				}
+				res.status(404).end()
+				return
+			}
+			if (!req.isAuthenticated() && (!(moduleConfig.anonymousAccessRoutes instanceof Array) || !checkRoutes(originalUrl, moduleConfig.anonymousAccessRoutes))) {
+				if (
+					((instance.layoutRoutes instanceof Array) && checkRoutes(originalUrl, instance.layoutRoutes)) ||
+					((moduleConfig.nonLayoutDirectRoutes instanceof Array) && checkRoutes(originalUrl, moduleConfig.nonLayoutDirectRoutes))
+				) {
+					cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
+					if (moduleConfig.unauthorizedPageRedirectRoute) {
+						res.redirect(302, moduleConfig.unauthorizedPageRedirectRoute)
+						return
+					}
+					if (moduleConfig.redirectUnauthorizedPagesToNotFound && moduleConfig.notFoundRedirectRoutes && moduleConfig.notFoundRedirectRoutes.default) {
+						res.redirect(302, moduleConfig.notFoundRedirectRoutes.default)
+						return
+					}
+				}
+				res.status(401).end()
+				return
+			}
+
+			req.locals = {
+				error: null,
+				errorStatus: 500,
+				originalUrl
+			}
+			next()
+		}
 	}
 
 	mountRoutes({sessionStore}) {
@@ -35,7 +84,9 @@ class ClientModule extends BaseServerModule {
 			app.use(requestLogger(`[${moduleName} client] :method request to :url; result: :status; completed in: :response-time; :date`))
 			app.use(bodyParser.json()) // for 'application/json' request bodies
 			app.use(bodyParser.urlencoded({extended: false})) // 'x-www-form-urlencoded' request bodies
-			app.use(multipart({uploadDir: config.globalUploadPath})) // for multipart bodies - file uploads etc.
+			if (config.globalUploadPath) {
+				app.use(multipart({uploadDir: config.globalUploadPath})) // for multipart bodies - file uploads etc.
+			}
 			app.use(cookieParser())
 
 			// set up access control by origin
@@ -107,7 +158,7 @@ class ClientModule extends BaseServerModule {
 			instance.layoutRoutes = layoutRoutes
 
 			// before every route - set up post params logging, redirects and locals
-			app.use(instance.paths, wrap(instance.setDefaultsBeforeRequest()))
+			app.use(instance.paths, instance.setDefaultsBeforeRequest())
 
 			// mount all routes
 			for (const i in components) {
@@ -130,59 +181,6 @@ class ClientModule extends BaseServerModule {
 
 			return true
 		})
-	}
-
-	setDefaultsBeforeRequest() {
-		const instance = this,
-			{moduleName, moduleConfig, config} = this
-		return function* (req, res, next) {
-			let originalUrl = req.originalUrl.split('?')[0],
-				cookies = new Cookies(req, res)
-			console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
-
-			if (!req.isAuthenticated() && !checkRoutes(originalUrl, moduleConfig.anonymousAccessRoutes)) {
-				if (checkRoutes(originalUrl, instance.layoutRoutes) || checkRoutes(originalUrl, moduleConfig.nonLayoutDirectRoutes)) {
-					cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
-					if (moduleConfig.unauthorizedPageRedirectRoute) {
-						res.redirect(302, moduleConfig.unauthorizedPageRedirectRoute)
-						return
-					}
-					if (moduleConfig.redirectUnauthorizedPagesToNotFound) {
-						res.redirect(302, moduleConfig.notFoundRedirectRoutes.default)
-						return
-					}
-				}
-				res.status(401).end()
-				return
-			}
-			if (!checkRoutes(originalUrl, instance.paths)) {
-				const notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
-				if (notFoundRedirectRoutes) {
-					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
-					return
-				}
-				res.status(404).end()
-				return
-			}
-
-
-			req.locals = {
-				moduleName,
-				cfg: config, // #refactorAtV1.0.0
-				settings: instance.settings, // #refactorAtV1.0.0
-				fieldCaseMap: instance.fieldCaseMap,
-				logger: instance.logger,
-				mailClient: instance.mailClient,
-				generalStore: instance.generalStore,
-				tokenManager: instance.tokenManager,
-				db: instance.db,
-				passport: instance.passport,
-				error: null,
-				errorStatus: 500,
-				originalUrl
-			}
-			next()
-		}
 	}
 }
 

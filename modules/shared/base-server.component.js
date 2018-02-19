@@ -1,27 +1,37 @@
 'use strict'
 
+const
+	spec = require('./base-server.component.spec')
+
 class BaseServerComponent {
-	decodeQueryValues(object, decodedObject) {
-		for (const key in object) {
-			let item = object[key],
-				decodedKey = decodeURIComponent(key)
-			if (item && (typeof item === 'object')) {
-				if (item instanceof Array) {
-					if (decodedObject instanceof Array) {
-						decodedObject.push([])
-						this.decodeQueryValues(item, decodedObject[decodedObject.length])
-						continue
-					}
-					decodedObject[decodedKey] = []
-					this.decodeQueryValues(item, decodedObject[decodedKey])
-					continue
-				}
-				decodedObject[decodedKey] = {}
-				this.decodeQueryValues(item, decodedObject[decodedKey])
-				continue
-			}
-			decodedObject[decodedKey] = decodeURIComponent(item)
+	constructor() {
+		for (const testName in spec) {
+			this[testName] = spec[testName]
 		}
+	}
+
+	decodeQueryValues(object) {
+		if (typeof object === 'undefined') {
+			return null
+		}
+		if (typeof object === 'string') {
+			return decodeURIComponent(object)
+		}
+		if ((typeof object !== 'object') || (object === null)) {
+			return object
+		}
+		if (object instanceof Array) {
+			let decodedObject = []
+			object.forEach((item, index) => {
+				decodedObject.push(this.decodeQueryValues(item))
+			})
+			return decodedObject
+		}
+		let decodedObject = {}
+		for (const key in object) {
+			decodedObject[decodeURIComponent(key)] = this.decodeQueryValues(object[key])
+		}
+		return decodedObject
 	}
 }
 

@@ -153,8 +153,10 @@
 	- The loadComponents method now loads index.spec.js files from each component's directory. It must be a valid js file, whose exports are a json with test methods for mochajs. See ramster's own core.spec.js in the root folder for reference.
 	- *BREAKING* - renamed accessControlOrigin to accessControlAllowOrigin.
 	- Fixed the changeFieldCase method - it now parses the changeKeyCase output (which is a json string).
+	- *BREAKING* - base-server.component.decodeQueryValues now accepts only the object to be decoded as an argument, and returns the decoded object.
 	- *BREAKING* - the base client component constructor no longer accepts moduleName and moduleNameSingular.
-	- *BREAKING* - all routes are now prefixed by the componentName by default
+	- *BREAKING* - all routes are now prefixed by the componentName by default.
+	- *BREAKING* - reamoved moduleName, cfg, settings, fieldCaseMap, logger, mailClient, generalStore, tokenManager, db and passport from req.locals, as they are present in the module's this (instance) context.
 	- All components have the module property automatically set by loadComponents.
 - csvPromise:
 	- *BREAKING* - the parse method is now in the format parse(data, options), rather than parse({data, options}).

@@ -87,10 +87,6 @@ module.exports = {
 				instance.testSetModuleInComponents()
 				assert(true)
 			})
-			it('should execute testSetModuleInComponents successfully', function() {
-				instance.testSetModuleInComponents()
-				assert(true)
-			})
 			it('should execute testAccessControlAllowOrigin successfully', function() {
 				instance.testAccessControlAllowOrigin(req, res, next)
 				assert(true)

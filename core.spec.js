@@ -3,8 +3,10 @@
 const
 	assert = require('assert'),
 	BaseDBComponent = require('./modules/db/base-db.component'),
+	BaseServerComponent = require('./modules/shared/base-server.component'),
 	BaseServerModule = require('./modules/shared/base-server.module'),
 	co = require('co'),
+	ClientModule = require('./modules/client/client.module'),
 	csvPromise = new (require('./modules/csvPromise'))(),
 	{describeSuiteConditionally, runTestConditionally} = require('./modules/toolbelt'),
 	fs = require('fs-extra'),
@@ -768,6 +770,17 @@ module.exports = {
 				const {db, logger, generalStore, tokenManager} = instance
 				let testServerModule = new BaseServerModule(instance.config, 'site', 'client', {db, logger, generalStore, tokenManager})
 				testServerModule.testMe()
+				assert(true)
+			})
+			it('should execute BaseServerComponent.testMe successfully', function() {
+				let testServerComponent = new BaseServerComponent()
+				testServerComponent.testMe()
+				assert(true)
+			})
+			it('should execute ClientModule.testMe successfully', function() {
+				const {db, logger, generalStore, tokenManager} = instance
+				let testClientModule = new ClientModule(instance.config, 'site', {db, logger, generalStore, tokenManager})
+				testClientModule.testMe()
 				assert(true)
 			})
 			// it('should execute testMe successfully', function() {

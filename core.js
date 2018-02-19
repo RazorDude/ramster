@@ -170,8 +170,7 @@ class Core {
 			let clientModules = instance.modules.clients
 			for (const moduleName in clientModules) {
 				let clientModule = clientModules[moduleName]
-				yield clientModule.buildLayoutFile()
-				yield clientModule.mountRoutes({sessionStore})
+				yield clientModule.mountRoutes(sessionStore)
 			}
 
 			// load the api module server routes and start the servers
