@@ -1,10 +1,8 @@
 const
 	assert = require('assert'),
 	co = require('co'),
-	{describeSuiteConditionally, runTestConditionally} = require('../toolbelt'),
 	fs = require('fs-extra'),
-	path = require('path'),
-	moment = require('moment')
+	path = require('path')
 
 module.exports = {
 	testMe: function() {
@@ -90,7 +88,7 @@ module.exports = {
 			setDefaultsBeforeRequest = this.setDefaultsBeforeRequest.bind(this)
 		let {moduleConfig} = this,
 			changeableInstance = this
-		describe('base-server.module.setDefaultsBeforeRequest', function() {
+		describe('client.module.setDefaultsBeforeRequest', function() {
 			it('should execute successfully and return 404 if the route is not found and notFoundRedirectRoutes is not set', function() {
 				return co(function*() {
 					delete moduleConfig.notFoundRedirectRoutes

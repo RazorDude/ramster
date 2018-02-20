@@ -1,7 +1,7 @@
 'use strict'
 
 const
-	Base = require('../../../../index.js').BaseDBComponent,
+	Base = require('../../../../').BaseDBComponent,
 	co = require('co')
 
 class Component extends Base {
@@ -61,23 +61,25 @@ class Component extends Base {
 		return instance.db.sequelize.transaction((t) => {
 			return co(function*() {
 				let typeList = yield instance.model.findAll({
-					where: {id: data.id},
-					include: [
-						{model: users.model, as: 'users', limit: 1}
-					],
-					transaction: t
-				})
+						where: {id: data.id},
+						include: [
+							{model: users.model, as: 'users', limit: 1}
+						],
+						transaction: t
+					}),
+					typeIds = []
 				if (!typeList.length) {
 					throw {customMessage: 'Roles not found.'}
 				}
 				typeList.forEach((type, index) => {
-					if (systemCriticalIds.indexOf(parseInt(where.id, 10)) !== -1) {
-						throw {customMessage: 'Cannot delete a system-critical users type.'}
+					if (systemCriticalIds.indexOf(parseInt(type.id, 10)) !== -1) {
+						throw {customMessage: 'Cannot delete a system-critical user type.'}
 					}
+					typeIds.push(type.id)
 				})
-				yield instance.db.sequelize.query(`delete from "typeModules" where "typeId"=${type.id};`, {transaction: t})
-				yield instance.db.sequelize.query(`delete from "typeKeyAccessPoints" where "typeId"=${type.id};`, {transaction: t})
-				return yield instance.model.destroy({where: {id: type.id}, transaction: t})
+				// yield instance.db.sequelize.query(`delete from "typeModules" where "typeId" in (${typeIds});`, {transaction: t})
+				yield instance.db.sequelize.query(`delete from "userTypeModuleAccessPoints" where "userTypeId" in (${typeIds.join(',')});`, {transaction: t})
+				return yield instance.model.destroy({where: {id: typeIds}, transaction: t})
 			})
 		})
 	}

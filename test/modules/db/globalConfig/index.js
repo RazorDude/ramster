@@ -1,7 +1,7 @@
 'use strict'
 
 const
-	Base = require('ramster').BaseDBComponent,
+	Base = require('../../../../').BaseDBComponent,
 	co = require('co')
 
 class Component extends Base {

@@ -1,7 +1,7 @@
 'use strict'
 
 const
-	Base = require('../../../../index.js').BaseDBComponent
+	Base = require('../../../../').BaseDBComponent
 
 class Component extends Base {
 	constructor(sequelize, Sequelize, settings) {

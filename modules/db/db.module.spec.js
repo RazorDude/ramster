@@ -290,7 +290,7 @@ module.exports = {
 	},
 	testCreateAssociations: function() {
 		const instance = this,
-			{config, moduleConfig, seedingOrder} = this,
+			{config, moduleConfig} = this,
 			originalConfig = JSON.parse(JSON.stringify(config))
 		let changeableInstance = this
 		describe('core.modules.db.createAssociations', function() {
@@ -302,7 +302,9 @@ module.exports = {
 				})
 			})
 			it('should have generated the correct seeding order', function() {
-				let correctSeedingOrder = ['moduleCategories', 'modules', 'moduleAccessPoints', 'userTypes', 'users']
+				const seedingOrder = instance.seedingOrder
+				let correctSeedingOrder = ['globalConfig', 'moduleCategories', 'modules', 'moduleAccessPoints', 'userTypes', 'users']
+				// console.log(correctSeedingOrder, seedingOrder)
 				for (const i in correctSeedingOrder) {
 					if (correctSeedingOrder[i] !== seedingOrder[i]) {
 						assert(false)

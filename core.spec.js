@@ -2,6 +2,7 @@
 
 const
 	assert = require('assert'),
+	BaseClientComponent = require('./modules/client/base-client.component'),
 	BaseDBComponent = require('./modules/db/base-db.component'),
 	BaseServerComponent = require('./modules/shared/base-server.component'),
 	BaseServerModule = require('./modules/shared/base-server.module'),
@@ -59,6 +60,10 @@ module.exports = {
 			})
 			it('should execute testLoadClients successfully', function() {
 				instance.testLoadClients()
+				assert(true)
+			})
+			it.skip('should execute testBaseServerModule successfully', function() {
+				instance.testBaseServerModule()
 				assert(true)
 			})
 			it('should execute testClientModule successfully', function() {
@@ -763,30 +768,44 @@ module.exports = {
 			})
 		})
 	},
-	testClientModule: function() {
+	testBaseServerModule: function() {
 		const instance = this
-		describe('core.modules.clients', function() {
+		describe('core.modules.base-server.module', function() {
 			it('should execute BaseServerModule.testMe successfully', function() {
-				const {db, logger, generalStore, tokenManager} = instance
+				const {logger, generalStore, tokenManager} = instance,
+					db = instance.modules.db
 				let testServerModule = new BaseServerModule(instance.config, 'site', 'client', {db, logger, generalStore, tokenManager})
 				testServerModule.testMe()
 				assert(true)
 			})
 			it('should execute BaseServerComponent.testMe successfully', function() {
-				let testServerComponent = new BaseServerComponent()
+				const {logger, generalStore, tokenManager} = instance,
+					db = instance.modules.db
+				let testServerComponent = new BaseServerComponent({})
+				testServerComponent.module = new BaseServerModule(instance.config, 'site', 'client', {db, logger, generalStore, tokenManager})
 				testServerComponent.testMe()
 				assert(true)
 			})
+		})
+	},
+	testClientModule: function() {
+		const instance = this
+		describe('core.modules.client', function() {
 			it('should execute ClientModule.testMe successfully', function() {
-				const {db, logger, generalStore, tokenManager} = instance
+				const {logger, generalStore, tokenManager} = instance,
+					db = instance.modules.db
 				let testClientModule = new ClientModule(instance.config, 'site', {db, logger, generalStore, tokenManager})
 				testClientModule.testMe()
 				assert(true)
 			})
-			// it('should execute testMe successfully', function() {
-			// 	instance.modules.clients.site.testMe()
-			// 	assert(true)
-			// })
+			it('should execute BaseClientComponent.testMe successfully', function() {
+				const {logger, generalStore, tokenManager} = instance,
+					db = instance.modules.db
+				let testClientComponent = new BaseClientComponent({componentName: 'testComponent'})
+				testClientComponent.module = new ClientModule(instance.config, 'site', {db, logger, generalStore, tokenManager})
+				testClientComponent.testMe()
+				assert(true)
+			})
 		})
 	}
 }

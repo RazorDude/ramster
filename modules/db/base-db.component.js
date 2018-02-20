@@ -277,6 +277,18 @@ class BaseDBComponent {
 		return {where, requiredRelationsData}
 	}
 
+	assignModelToDereferencedRelationRecursively(relItem) {
+		let includeItem = JSON.parse(JSON.stringify(relItem)),
+			innerInclude = includeItem.include
+		includeItem.model = relItem.model
+		if (innerInclude instanceof Array) {
+			for (const i in innerInclude) {
+				innerInclude[i] = this.assignModelToDereferencedRelationRecursively(relItem.include[i])
+			}
+		}
+		return includeItem
+	}
+
 	getRelationObjects(data, requiredRelationsData) {
 		let include = [],
 			order = [],
@@ -324,7 +336,7 @@ class BaseDBComponent {
 				return
 			}
 			if (actualData[key]) {
-				include.push(JSON.parse(JSON.stringify(this.relations[key])))
+				include.push(this.assignModelToDereferencedRelationRecursively(this.relations[key]))
 			}
 		})
 		return {include, order}
@@ -334,6 +346,9 @@ class BaseDBComponent {
 		const instance = this
 		return co(function*() {
 			if ((typeof options === 'object') && (options !== null)) {
+				if (options.userId) {
+					data.changeUserId = options.userId
+				}
 				return yield instance.model.create(data, options)
 			}
 			return yield instance.model.create(data)
@@ -344,6 +359,9 @@ class BaseDBComponent {
 		const instance = this
 		return co(function*() {
 			if ((typeof options === 'object') && (options !== null)) {
+				if (options.userId) {
+					data.forEach((item, index) => data[index].changeUserId = options.userId)
+				}
 				return yield instance.model.bulkCreate(data, options)
 			}
 			return yield instance.model.bulkCreate(data)
@@ -376,7 +394,7 @@ class BaseDBComponent {
 				perPage = data.perPage ? parseInt(data.perPage, 10) : instance.defaults.perPage,
 				more = false,
 				{where, requiredRelationsData} = instance.getWhereObjects(data.filters || {}, (data.exactMatch instanceof Array) && data.exactMatch || []),
-				includeQueryData = instance.getRelationObjects(data, requiredRelationsData),
+				includeQueryData = instance.getRelationObjects(data.relReadKeys || {}, requiredRelationsData),
 				readListOptions = {
 					where,
 					include: includeQueryData.include,
@@ -427,7 +445,7 @@ class BaseDBComponent {
 		})
 	}
 
-	update({dbObject, where, transaction}) {
+	update({dbObject, where, userId, transaction}) {
 		const instance = this
 		return co(function*() {
 			if ((typeof where !== 'object') || (where === null) || (Object.keys(where).length === 0)) {
@@ -440,7 +458,36 @@ class BaseDBComponent {
 			if (transaction) {
 				options.transaction = transaction
 			}
+			if (userId) {
+				dbObject.changeUserId = userId
+			}
 			return yield instance.model.update(dbObject, options)
+		})
+	}
+
+	bulkUpsert(dbObjects, options) {
+		if (!(dbObjects instanceof Array)) {
+			throw {customMessage: `Invalid array of "${this.componentName}" to update.`}
+		}
+		if (!options || !options.transaction) {
+			return this.db.sequelize.transaction((t) => this.bulkUpsert(dbObjects, {transaction: t}))
+		}
+		const instance = this,
+			t = options.transaction,
+			userId = options.userId
+		return co(function*() {
+			let objectsToCreate = []
+			for (const i in dbObjects) {
+				let dbObject = dbObjects[i],
+					id = parseInt(dbObject.id, 10)
+				if (!dbObject.id) {
+					objectsToCreate.push(dbObject)
+					continue
+				}
+				yield instance.model.update(dbObject, {where: {id}, userId, transaction: t})
+			}
+			yield instance.model.bulkCreate(objectsToCreate, {userId, transaction: t})
+			return {success: true}
 		})
 	}
 
@@ -449,8 +496,9 @@ class BaseDBComponent {
 			{associationsConfig, componentName, dependencyMap, relations} = this,
 			masterOf = dependencyMap.masterOf
 		return co(function*() {
-			let findAllOptions = {where: {id}},
-				deleteOptions = {where: {id}}
+			let findAllOptions = {where: {id}, attributes: ['id']},
+				deleteOptions = {where: {id}},
+				systemCriticalIds = instance.systemCriticalIds || []
 			if (transaction) {
 				findAllOptions.transaction = transaction
 				deleteOptions.transaction = transaction
@@ -465,7 +513,7 @@ class BaseDBComponent {
 				}
 				masterOf.forEach((item, index) => {
 					let relName = componentNameToAssociationNameMap[item]
-					include.push(relations[relName])
+					include.push(Object.assign({limit: 1}, relations[relName]))
 					includedRelationNames.push(relName)
 				})
 				if (include.length) {
@@ -474,6 +522,9 @@ class BaseDBComponent {
 				let existingItems = yield instance.model.findAll(findAllOptions)
 				for (const i in existingItems) {
 					const item = (existingItems[i]).dataValues
+					if (systemCriticalIds.indexOf(item.id) !== -1) {
+						throw {customMessage: `Cannot delete the "${componentName}" item with id ${item.id} - it is system-critical.`}
+					}
 					for (const j in includedRelationNames) {
 						const key = includedRelationNames[j],
 							relItem = item[key]
@@ -483,6 +534,15 @@ class BaseDBComponent {
 					}
 				}
 				return {deleted: yield instance.model.destroy(deleteOptions)}
+			}
+			if (systemCriticalIds.length) {
+				let existingItems = yield instance.model.findAll(findAllOptions)
+				for (const i in existingItems) {
+					const item = (existingItems[i]).dataValues
+					if (systemCriticalIds.indexOf(item.id) !== -1) {
+						throw {customMessage: `Cannot delete the "${componentName}" item with id ${item.id} - it is system-critical.`}
+					}
+				}
 			}
 			return {deleted: yield instance.model.destroy(deleteOptions)}
 		})

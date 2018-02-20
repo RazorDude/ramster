@@ -91,7 +91,8 @@ class Core {
 	loadClients() {
 		let instance = this
 		return co(function*() {
-			const {config, db, logger, generalStore, tokenManager} = instance
+			const {config, generalStore, logger, modules, tokenManager} = instance,
+				db = modules.db
 			let clientModules = {},
 				modulesDirPath = config.clientModulesPath,
 				modulesDirData = yield fs.readdir(modulesDirPath)

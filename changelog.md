@@ -138,26 +138,44 @@
 		- *BREAKING* - data should now be in the format {filters, relReadKeys, exactMatch, page, perPage, readAll, orderBy, orderDirection, transaction}, where filters are required.
 		- Added transaction support - pass {transaction: t} to data to make use of this functionality.
 		- Reworked the method to make use of the new getWhereObjects and getRelationObjects methods.
-	- Change in the delete method:
+	- Added a bulkUpdate method, used to update multiple objects one by one in the same transactions.
+	- Changes in the delete method:
 		- Added transaction support - pass {transaction: t} to data to make use of this functionality.
 		- Added checkForRelatedModels to data - set it to true to perfor a check if the items to be deleted have items for their hasOne and hasMany relations. If they do, throw errors accordingly. E.g. "Cannot delete a userType that has users".
+	- Added changeUserId to all base methods.
 	- Added a lot of tests, complete code coverage.
 <!-- - Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis). -->
 - client modules and components:
-	- 
 	- Added moduleType to req.locals, as the module-specific configs are now in config.clients, rather than just in config.
-	- *BREAKING* - removed the settings object for the module and req.locals. Use module.config instead.
-	- *BREAKING* - removed the config object for the module and req.locals. Use module.config instead.
 	- *BREAKING* - only the componentName as the first and single argument is now passed to the components' constructors by loadComponents.
 	- The componentName is now automatically set by loadComponents. You still need to set componentNameSingular manually in the component's constructor, however.
 	- The loadComponents method now loads index.spec.js files from each component's directory. It must be a valid js file, whose exports are a json with test methods for mochajs. See ramster's own core.spec.js in the root folder for reference.
 	- *BREAKING* - renamed accessControlOrigin to accessControlAllowOrigin.
 	- Fixed the changeFieldCase method - it now parses the changeKeyCase output (which is a json string).
+	- Moved the routes setup to a new method in base-server.component (no longer present in the base client and api components) - setRoutes. Added validations in it.
+	- Added appendComponentNameToRoutes to the base-server.component component constructor. If set to true, it will add /componentName to all provided routes.
+	- *BRAEKING* - the componentName is now always prepended to the additionalDefaultRoutes.
 	- *BREAKING* - base-server.component.decodeQueryValues now accepts only the object to be decoded as an argument, and returns the decoded object.
+	- Added the accessFilter method to the base-server.component. Use it to set moduleAccessPoints for routes and secure access based on that.
+	- Added the readSelectList method to the base-server.component. Use it to get a list of items in the form {value, text}, prepared for use in UI selects.
 	- *BREAKING* - the base client component constructor no longer accepts moduleName and moduleNameSingular.
-	- *BREAKING* - all routes are now prefixed by the componentName by default.
+	- *BREAKING* - all routes are now prefixed by the componentName by default. Removed routePrefix from the component constructor.
 	- *BREAKING* - reamoved moduleName, cfg, settings, fieldCaseMap, logger, mailClient, generalStore, tokenManager, db and passport from req.locals, as they are present in the module's this (instance) context.
 	- All components have the module property automatically set by loadComponents.
+	- Added req.user to client server routes, when the user is authenticated.
+	- *BREAKING* - base-client.component.importFileCheck is now in the format importFileCheck(inputFileName, delimiter), rather than importFileCheck({locals, inputFileName, delimiter}).
+	- *BREAKING* - base-client.component.importFileCheck now returns the actual file data (without the columns row) under the fileData key.
+	- Made the server components api actually restful:
+		- *BREAKING* - moved base-client.component.create to the base-sever.component. It now returns {result: <theCreatedObject>}.
+		- *BREAKING* - moved base-client.component.read to the base-sever.component. It is now at the route /componentName/item and returns {result: <theFoundObject>}.
+		- *BREAKING* - moved base-client.component.readList to the base-sever.component. It is now of type GET and is at the route /componentName.
+		- Upgraded base-client.component.readList to store search values in the generalStore, if set in the request.
+		- *BREAKING* - moved base-client.component.update to the base-sever.component. It is now named bulkUpsert, is of type PUT and is at the route /componentName. According to REST standards, this means that we will be using this method for bulkCreate, update and bulkUpdate, based on what is provided in the body.
+		- *BREAKING* - (clients only) base-client.component.checkImportFile now takes "delimiter", as well as "fileName" in the query.
+		- *BREAKING* - base-client.component.importFile now takes "fileName" (instead of "locationDataFile") and "delimiter" in the body.
+		- *BREAKING* - moved base-client.component.delete to the base-server.component. It is now of type DELETE, at the route /componentName/:id and returns {success: true}
+	- All of the above methods now pass userId to the db component methods.
+	- Tests, full code coverage.
 - csvPromise:
 	- *BREAKING* - the parse method is now in the format parse(data, options), rather than parse({data, options}).
 	- *BREAKING* - the stringify method is now in the format stringify(data, options), rather than stringify({data, options}).

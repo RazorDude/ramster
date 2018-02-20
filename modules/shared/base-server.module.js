@@ -43,6 +43,9 @@ class BaseServerModule {
 					let componentDirData = yield fs.readdir(componentPath),
 						component = new (require(componentPath))(componentName),
 						specMethodNames = []
+					if (!component.componentName) {
+						component.componentName = componentName
+					}
 					// load the mocha spec, if present
 					for (const j in componentDirData) {
 						let item = componentDirData[j]
@@ -66,7 +69,6 @@ class BaseServerModule {
 							break
 						}
 					}
-					// component.componentName = componentName
 					components[componentName] = component
 				} else if (componentName === 'fieldCaseMap.js') {
 					instance.fieldCaseMap = require(componentPath)
@@ -84,10 +86,14 @@ class BaseServerModule {
 		let {components} = this
 		for (const componentName in components) {
 			let component = components[componentName],
-				moduleClone = Object.assign({}, this)
+				moduleClone = Object.assign({}, this),
+				dbComponent = moduleClone.db.components[componentName]
 			moduleClone.components = Object.assign({}, components)
 			delete moduleClone.components[componentName]
 			component.module = moduleClone
+			if (dbComponent) {
+				component.dbComponent = dbComponent
+			}
 		}
 	}
 
@@ -96,7 +102,7 @@ class BaseServerModule {
 		return function (req, res, next) {
 			res.set('Access-Control-Allow-Origin', moduleConfig.allowOrigins)
 			res.set('Access-Control-Allow-Headers', 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent')
-			res.set('Allow', 'OPTIONS, GET, POST, PUT, DELETE')
+			res.set('Allow', 'OPTIONS, GET, POST, PUT, PATCH, DELETE')
 			if (req.method.toLowerCase() === 'options') {
 				res.status(200).end()
 				return

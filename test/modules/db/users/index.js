@@ -1,10 +1,10 @@
 'use strict'
 
 const
-	Base = require('../../../../index.js').BaseDBComponent,
+	Base = require('../../../../').BaseDBComponent,
 	bcryptjs = require('bcryptjs'),
 	co = require('co'),
-	{generateRandomString} = require('../../../../index.js').toolbelt,
+	{generateRandomString} = require('../../../../').toolbelt,
 	merge = require('deepmerge'),
 	moment = require('moment')
 
@@ -64,10 +64,10 @@ class Component extends Base {
 			},
 			scopes: {
 				default: {
-					attributes: ['id', 'roleId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'resetPassword', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'resetPassword', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 				},
 				full: {
-					attributes: ['id', 'roleId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'resetPassword', 'resetPasswordToken', 'resetPasswordExpires', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'resetPassword', 'resetPasswordToken', 'resetPasswordExpires', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 				}
 			},
 			paranoid: true

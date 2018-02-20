@@ -64,10 +64,10 @@ class Component extends Base {
 			},
 			scopes: {
 				default: {
-					attributes: ['id', 'roleId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'resetPassword', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'resetPassword', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 				},
 				full: {
-					attributes: ['id', 'roleId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'resetPassword', 'resetPasswordToken', 'resetPasswordExpires', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'resetPassword', 'resetPasswordToken', 'resetPasswordExpires', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 				}
 			},
 			paranoid: true

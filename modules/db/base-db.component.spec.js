@@ -36,8 +36,12 @@ module.exports = {
 				instance.testGetWhereObjects()
 				assert(true)
 			})
-			it('should execute testGetRelationObjects successfully', function() {
-				instance.testGetRelationObjects()
+			it('should execute testGetWhereObjects successfully', function() {
+				instance.testGetWhereObjects()
+				assert(true)
+			})
+			it('should execute testAssignModelToDereferencedRelationRecursively successfully', function() {
+				instance.testAssignModelToDereferencedRelationRecursively()
 				assert(true)
 			})
 			it('should execute testCreate successfully', function() {
@@ -58,6 +62,10 @@ module.exports = {
 			})
 			it('should execute testUpdate successfully', function() {
 				instance.testUpdate()
+				assert(true)
+			})
+			it('should execute testBulkUpsert successfully', function() {
+				instance.testBulkUpsert()
 				assert(true)
 			})
 			it('should execute testDelete successfully', function() {
@@ -908,6 +916,27 @@ module.exports = {
 			})
 		})
 	},
+	testAssignModelToDereferencedRelationRecursively: function() {
+		const instance = this
+		let changeableInstance = this
+		describe('baseDBComponent.assignModelToDereferencedRelationRecursively', function() {
+			it('should execute successfully and return the correct object if all parameters are correct', function() {
+				let item = {
+						model: new Date(),
+						as: 'test1',
+						include: [{model: new Date(), as: 'test2'}, {model: new Date(), as: 'test3', include: [{model: new Date(), as: 'test4'}]}, {model: new Date(), as: 'test5'}]
+					},
+					result = instance.assignModelToDereferencedRelationRecursively(item)
+				assert(
+					(result.model instanceof Date) &&
+					(result.include[0].model instanceof Date) &&
+					(result.include[1].model instanceof Date) &&
+					(result.include[1].include[0].model instanceof Date) &&
+					(result.include[2].model instanceof Date)
+				)
+			})
+		})
+	},
 	testGetRelationObjects: function() {
 		const instance = this
 		let changeableInstance = this
@@ -1208,7 +1237,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully and read a list of db entries correctly if all parameters are correct', function() {
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are no relReadKeys', function() {
 				return co(function*() {
 					let dataIsGood = false
 					try {
@@ -1330,6 +1359,116 @@ module.exports = {
 					return true
 				})
 			})
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are relReadKeys', function() {
+				return co(function*() {
+					let dataIsGood = false
+					try {
+						yield sequelize.transaction((t) => co(function*() {
+							let items = [
+									{id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
+									{id: 2, test2Id: 1, name: 'test2Name', description: 'test2Description'},
+									{id: 3, test2Id: 1, name: 'test3Name', description: 'test3Description'}
+								],
+								test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
+								test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
+							changeableInstance.model = sequelize.define('test1Model', {
+								name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+							})
+							changeableInstance.searchFields = [
+								{field: 'id'},
+								{field: '$test2.name$', like: '-%'},
+								{field: '$test2.test3.description$', like: '-%'}
+							]
+							changeableInstance.associationsConfig = {
+								test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
+							}
+							changeableInstance.relationsConfig = {
+								test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
+							}
+							changeableInstance.db = {
+								components: {
+									testComponent2: {
+										model: sequelize.define('test2Model', {
+											name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+											description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+										}),
+										associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
+										dependencyMap: {associationKeys: ['test3']}
+									},
+									test3: {
+										model: sequelize.define('test3Model', {
+											name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+											description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+										}),
+										dependencyMap: {associationKeys: []}
+									}
+								}
+							}
+							changeableInstance.associate()
+							changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
+							changeableInstance.mapRelations()
+							yield sequelize.sync({force: true, transaction: t})
+							yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
+							yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+							yield instance.bulkCreate(items, {transaction: t})
+							let createdItemsData = yield instance.readList({
+								filters: {
+									id: [1, 2, 3]
+								},
+								relReadKeys: {test2: true},
+								orderDirection: 'asc',
+								transaction: t
+							})
+							dataIsGood = true
+							for (const index in createdItemsData.results) {
+								let item = items[index],
+									createdItem = createdItemsData.results[index].dataValues,
+									createdTest2Item = createdItem.test2.dataValues
+								for (const i in item) {
+									if (createdItem[i] !== item[i]) {
+										console.log(`Bad value '${createdItem[i]}' for field "${i}" for the main item, index ${index}.`)
+										dataIsGood = false
+										break
+									}
+								}
+								if (!dataIsGood) {
+									break
+								}
+								for (const i in test2Item) {
+									if (createdTest2Item[i] !== test2Item[i]) {
+										console.log(`Bad value '${createdTest2Item[i]}' for field "${i}" for the test2 item, index ${index}.`)
+										dataIsGood = false
+										break
+									}
+								}
+								if (!dataIsGood) {
+									break
+								}
+							}
+							if (
+								dataIsGood && (
+									(createdItemsData.page !== 1) ||
+									(createdItemsData.perPage !== 10) ||
+									(createdItemsData.totalPages !== 1) ||
+									(createdItemsData.more !== false)
+								)
+							) {
+								console.log(`Bad additional params in the method return object.`)
+							}
+							delete changeableInstance.model
+							delete changeableInstance.db
+							throw 'fakeError'
+						}))
+					} catch(e) {
+						if (e !== 'fakeError') {
+							throw e
+						}
+					}
+					assert(dataIsGood)
+					return true
+				})
+			})
 		})
 	},
 	testUpdate: function() {
@@ -1362,7 +1501,6 @@ module.exports = {
 							yield sequelize.sync({force: true, transaction: t})
 							yield instance.create({id: 3, name: 'testName', description: 'testDescription'}, {transaction: t})
 							yield instance.update({dbObject: item, where: {id: 3}, transaction: t})
-							yield instance.model.findOne({where: {id: 3}, transaction: t})
 							let updatedItem = (yield instance.model.findOne({where: {id: 3}, transaction: t})).dataValues
 							dataIsGood = true
 							for (const i in item) {
@@ -1386,12 +1524,79 @@ module.exports = {
 			})
 		})
 	},
+	testBulkUpsert: function() {
+		const instance = this,
+			{sequelize, Sequelize} = this
+		let changeableInstance = this
+		describe('baseDBComponent.bulkUpsert', function() {
+			it('should throw an error with the correct message if the dbObjects argument is not an array', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.bulkUpsert()
+					} catch(e) {
+						didThrowAnError = e && (e.customMessage === `Invalid array of "${instance.componentName}" to update.`)
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully create and update the list of db entries correctly if all parameters are correct', function() {
+				return co(function*() {
+					let dataIsGood = false
+					changeableInstance.db = {sequelize}
+					try {
+						yield sequelize.transaction((t) => co(function*() {
+							let items = [
+								{id: 1, name: 'testName1Updated', description: 'testDescription1Updated'},
+								{id: 2, name: 'testName2Updated', description: 'testDescription2Updated'},
+								{name: 'testName3Created', description: 'testDescription3Created'}
+							]
+							changeableInstance.model = sequelize.define('test1Model', {
+								name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+							})
+							yield sequelize.sync({force: true, transaction: t})
+							yield instance.bulkCreate([
+									{name: 'testName1', description: 'testDescription1'},
+									{name: 'testName2', description: 'testDescription2'}
+								],
+								{transaction: t}
+							)
+							yield instance.bulkUpsert(items, {transaction: t})
+							let updatedItems = yield instance.model.findAll({orderBy: [['id', 'asc']], transaction: t})
+							dataIsGood = true
+							for (const index in updatedItems) {
+								const updatedItem = updatedItems[index].dataValues,
+									item = items[index]
+								for (const i in item) {
+									if (updatedItem[i] !== item[i]) {
+										console.log(`Bad value '${updatedItem[i]}' for field "${i}" in item ${index}.`)
+										dataIsGood = false
+										break
+									}
+								}
+							}
+							delete changeableInstance.model
+							throw 'fakeError'
+						}))
+					} catch(e) {
+						if (e !== 'fakeError') {
+							throw e
+						}
+					}
+					assert(dataIsGood)
+					return true
+				})
+			})
+		})
+	},
 	testDelete: function() {
 		const instance = this,
 			{sequelize, Sequelize} = this
 		let changeableInstance = this
 		describe('baseDBComponent.delete', function() {
-			it('should throw an error with the correct message if checkForRelatedModels and an item has dependent items', function() {
+			it('should throw an error with the correct message if checkForRelatedModels is set to true and an item has dependent items', function() {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
@@ -1439,12 +1644,92 @@ module.exports = {
 					return true
 				})
 			})
+			it('should throw an error with the correct message if checkForRelatedModels is set to true and the item is system-critical', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield sequelize.transaction((t) => co(function*() {
+							let item = {id: 1, name: 'test1Name', description: 'test1Description'},
+								test2Item = {id: 1, test1Id: 1, name: 'test2Name', description: 'test2Description'}
+							changeableInstance.systemCriticalIds = [1]
+							changeableInstance.componentName = 'test1Component'
+							changeableInstance.model = sequelize.define('test1Model', {
+								name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+							})
+							changeableInstance.associationsConfig = {
+								test2: {type: 'hasMany', componentName: 'testComponent2', foreignKey: 'test1Id'}
+							}
+							changeableInstance.relationsConfig = {}
+							changeableInstance.db = {
+								components: {
+									testComponent2: {
+										model: sequelize.define('test2Model', {
+											name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+											description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+										}),
+										dependencyMap: {associationKeys: []}
+									}
+								}
+							}
+							changeableInstance.associate()
+							changeableInstance.mapRelations()
+							yield sequelize.sync({force: true, transaction: t})
+							yield instance.create(item, {transaction: t})
+							yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+							try {
+								yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})
+							} catch(e) {
+								didThrowAnError = e && (e.customMessage === 'Cannot delete the "test1Component" item with id 1 - it is system-critical.')
+							}
+							throw 'fakeError'
+						}))
+					} catch(e) {
+						if (e !== 'fakeError') {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if checkForRelatedModels is not set to true and the item is system-critical', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield sequelize.transaction((t) => co(function*() {
+							let item = {id: 1, name: 'test1Name', description: 'test1Description'}
+							changeableInstance.systemCriticalIds = [1]
+							changeableInstance.componentName = 'test1Component'
+							changeableInstance.model = sequelize.define('test1Model', {
+								name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+							})
+							yield sequelize.sync({force: true, transaction: t})
+							yield instance.create(item, {transaction: t})
+							try {
+								yield instance.delete({id: 1, transaction: t})
+							} catch(e) {
+								didThrowAnError = e && (e.customMessage === 'Cannot delete the "test1Component" item with id 1 - it is system-critical.')
+							}
+							throw 'fakeError'
+						}))
+					} catch(e) {
+						if (e !== 'fakeError') {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
 			it('should execute successfully delete a db entry correctly if all parameters are correct', function() {
 				return co(function*() {
 					let deletedCount = 0
 					try {
 						yield sequelize.transaction((t) => co(function*() {
 							let item = {id: 1, name: 'test1Name', description: 'test1Description'}
+							delete changeableInstance.systemCriticalIds
 							changeableInstance.componentName = 'test1Component'
 							changeableInstance.model = sequelize.define('test1Model', {
 								name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},

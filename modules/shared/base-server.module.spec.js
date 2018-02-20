@@ -1,7 +1,6 @@
 const
 	assert = require('assert'),
 	co = require('co'),
-	{describeSuiteConditionally, runTestConditionally} = require('../toolbelt'),
 	fs = require('fs-extra'),
 	path = require('path'),
 	moment = require('moment')
@@ -249,7 +248,7 @@ module.exports = {
 				instance.setModuleInComponents()
 				for (const componentName in components) {
 					const component = components[componentName]
-					if (!component.module || component.module.components[componentName]) {
+					if (!component.module || component.module.components[componentName] || (component.db.components[componentName] && !component.dbComponent)) {
 						allHaveTheValidModuleProperty = false
 						break
 					}
@@ -283,7 +282,7 @@ module.exports = {
 						(res.response.statusCode === 200) &&
 						(res.headers['Access-Control-Allow-Origin'] === 'testAllowOrigins') &&
 						(res.headers['Access-Control-Allow-Headers'] === 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent') &&
-						(res.headers['Allow'] === 'OPTIONS, GET, POST, PUT, DELETE')
+						(res.headers['Allow'] === 'OPTIONS, GET, POST, PUT, PATCH, DELETE')
 					)
 					return true
 				})
@@ -305,7 +304,7 @@ module.exports = {
 						(next.fail === false) &&
 						(res.headers['Access-Control-Allow-Origin'] === 'testAllowOrigins') &&
 						(res.headers['Access-Control-Allow-Headers'] === 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent') &&
-						(res.headers['Allow'] === 'OPTIONS, GET, POST, PUT, DELETE')
+						(res.headers['Allow'] === 'OPTIONS, GET, POST, PUT, PATCH, DELETE')
 					)
 					return true
 				})
