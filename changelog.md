@@ -144,8 +144,7 @@
 		- Added checkForRelatedModels to data - set it to true to perfor a check if the items to be deleted have items for their hasOne and hasMany relations. If they do, throw errors accordingly. E.g. "Cannot delete a userType that has users".
 	- Added changeUserId to all base methods.
 	- Added a lot of tests, complete code coverage.
-<!-- - Added moduleType to req.locals in client and api modules, it's used to get the proper config (remember, we moved the module configs to sub-objects in config.clients and config.apis). -->
-- client modules and components:
+- server modules and components (clients and apis):
 	- Added moduleType to req.locals, as the module-specific configs are now in config.clients, rather than just in config.
 	- *BREAKING* - only the componentName as the first and single argument is now passed to the components' constructors by loadComponents.
 	- The componentName is now automatically set by loadComponents. You still need to set componentNameSingular manually in the component's constructor, however.
@@ -160,7 +159,7 @@
 	- Added the readSelectList method to the base-server.component. Use it to get a list of items in the form {value, text}, prepared for use in UI selects.
 	- *BREAKING* - the base client component constructor no longer accepts moduleName and moduleNameSingular.
 	- *BREAKING* - all routes are now prefixed by the componentName by default. Removed routePrefix from the component constructor.
-	- *BREAKING* - reamoved moduleName, cfg, settings, fieldCaseMap, logger, mailClient, generalStore, tokenManager, db and passport from req.locals, as they are present in the module's this (instance) context.
+	- *BREAKING* - removed moduleName, cfg, settings, fieldCaseMap, logger, mailClient, generalStore, tokenManager, db and passport from req.locals, as they are present in the module's this (instance) context.
 	- All components have the module property automatically set by loadComponents.
 	- Added req.user to client server routes, when the user is authenticated.
 	- *BREAKING* - base-client.component.importFileCheck is now in the format importFileCheck(inputFileName, delimiter), rather than importFileCheck({locals, inputFileName, delimiter}).

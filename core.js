@@ -113,9 +113,9 @@ class Core {
 	loadAPIs() {
 		let instance = this
 		return co(function*() {
-			const {config, logger, generalStore, tokenManager} = instance
-			let db = instance.db,
-				apiModules = instance.modules.apis,
+			const {config, generalStore, logger, modules, tokenManager} = instance,
+				db = modules.db
+			let apiModules = {},
 				modulesDirPath = config.apiModulesPath,
 				modulesDirData = yield fs.readdir(modulesDirPath)
 			for (const index in modulesDirData) {
@@ -126,6 +126,7 @@ class Core {
 					yield apiModules[moduleDir].loadComponents()
 				}
 			}
+			instance.modules.apis = apiModules
 			return true
 		})
 	}

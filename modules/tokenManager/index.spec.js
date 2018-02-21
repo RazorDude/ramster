@@ -489,6 +489,18 @@ module.exports = {
 				}
 			}
 		describe('tokenManager.validate', function() {
+			it('should append the correct req.isAuthenticated method at the start of execution, regardless of execution outcome', function() {
+				return co(function*() {
+					delete req.headers.authorization
+					config.apis.mobile.passErrorToNext = true
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						validate(req, res, next.bind(next, resolve))
+					}))
+					assert((typeof req.isAuthenticated === 'function') && !req.isAuthenticated())
+					return true
+				})
+			})
 			it('should throw a status 401 error with the correct message and pass it to "next" if no "authorization" header is provided and moduleConfig.passErrorToNext is true', function() {
 				return co(function*() {
 					delete req.headers.authorization
@@ -1075,6 +1087,7 @@ module.exports = {
 						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
 							refreshToken = yield instance.createToken('refresh', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
 						req.headers.authorization = `Bearer ${accessToken} ${refreshToken}`
+						delete req.isAuthenticated
 						config.apis.mobile.passErrorToNext = false
 						config.apis.mobile.jwt.useRefreshTokens = true
 						return true
@@ -1086,6 +1099,10 @@ module.exports = {
 								})).then((promiseResult) => {
 									config.apis.mobile.jwt.useRefreshTokens = false
 									if (!next.fail && req.user && (Object.keys(req.user).length === 2) && (req.user.id === -1) && (typeof req.user.iat !== 'undefined')) {
+										if (!req.isAuthenticated()) {
+											reject({customMessage: 'req.isAuthenticated returned false.'})
+											return
+										}
 										resolve()
 										return
 									}
@@ -1109,6 +1126,7 @@ module.exports = {
 						let accessToken = yield instance.createToken('access', {id: -1}, config.apis.mobile.jwt.secret, 'mobile', 1 / 60),
 							refreshToken = yield instance.createToken('refresh', {id: -1}, config.apis.mobile.jwt.secret, 'mobile')
 						req.headers.authorization = `Bearer ${accessToken} ${refreshToken}`
+						delete req.isAuthenticated
 						config.apis.mobile.passErrorToNext = false
 						config.apis.mobile.jwt.useRefreshTokens = true
 						return refreshToken
@@ -1131,6 +1149,10 @@ module.exports = {
 												let refreshTokenFromRedis = yield generalStore.getStoredEntry(`mobileuser-1RefreshTokenForAccessToken${newAccessToken}`)
 												if (refreshToken !== refreshTokenFromRedis) {
 													reject('Incorrect refresh token set for the new access token.')
+													return
+												}
+												if (!req.isAuthenticated()) {
+													reject({customMessage: 'req.isAuthenticated returned false.'})
 													return
 												}
 												resolve()

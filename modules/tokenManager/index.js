@@ -120,6 +120,9 @@ class TokenManager{
 				originalModuleName = '',
 				originalConfig = ''
 			try {
+				req.isAuthenticated = function() {
+					return this.user ? true : false
+				}
 				// all the JSON.parse is just making sure we break all references and don't change anything in the locals and configs
 				moduleName = JSON.parse(JSON.stringify(req.locals.moduleName))
 				moduleType = JSON.parse(JSON.stringify(req.locals.moduleType))

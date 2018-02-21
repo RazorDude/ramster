@@ -10,11 +10,53 @@ const
 	http = require('http'),
 	path = require('path'),
 	requestLogger = require('morgan'),
+	spec = require('./api.module.spec'),
 	wrap = require('co-express')
 
 class APIModule extends BaseServerModule {
 	constructor(config, moduleName, options) {
 		super(config, moduleName, 'api', options)
+		for (const testName in spec) {
+			this[testName] = spec[testName]
+		}
+	}
+
+	setDefaultsBeforeRequest() {
+		const instance = this,
+			{config, moduleConfig, moduleName} = this
+		return function(req, res, next) {
+			let originalUrl = req.originalUrl.split('?')[0]
+			console.log(`[${moduleName} API]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
+			req.locals = {
+				error: null,
+				errorStatus: 500,
+				originalUrl
+			}
+			next()
+		}
+	}
+
+	prepareServiceNameTypeResponse() {
+		return function(req, res, next) {
+			let originalUrl = req.locals.originalUrl.split('/'),
+				deparametrizedUrl = []
+			originalUrl.forEach((item, index) => {
+				let parsedItem = parseInt(item, 10)
+				if ((item === '') || (!isNaN(parsedItem) && (parsedItem.toString() === item))) {
+					return
+				}
+				deparametrizedUrl.push(item)
+			})
+			let length = deparametrizedUrl.length
+			if (!length) {
+				req.locals.serviceName = null
+			} else if (length === 1) {
+				req.locals.serviceName = `${deparametrizedUrl[0]}`
+			} else {
+				req.locals.serviceName = `${deparametrizedUrl[length - 2]}/${deparametrizedUrl[length - 1]}`
+			}
+			next()
+		}
 	}
 
 	mountRoutes({sessionStore}) {
@@ -36,6 +78,9 @@ class APIModule extends BaseServerModule {
 			if (moduleConfig.allowOrigins) {
 				app.use(instance.accessControlAllowOrigin())
 			}
+
+			// before every route - set up post params logging, redirects and locals
+			app.use(instance.paths, wrap(instance.setDefaultsBeforeRequest()))
 
 			// before every request - add the service name
 			if (moduleConfig.responseType === 'serviceName') {
@@ -77,9 +122,6 @@ class APIModule extends BaseServerModule {
 				})
 			}
 
-			// before every route - set up post params logging, redirects and locals
-			app.use(instance.paths, wrap(instance.setDefaultsBeforeRequest()))
-
 			// mount all routes
 			for (const i in components) {
 				let component = components[i]
@@ -105,42 +147,6 @@ class APIModule extends BaseServerModule {
 
 			return true
 		})
-	}
-
-	prepareServiceNameTypeResponse() {
-		return function (req, res, next) {
-			let originalUrl = req.originalUrl.split('?')[0],
-				serviceNameData = originalUrl.split('/')
-			req.locals = {serviceName: serviceNameData[serviceNameData.length - 1]}
-			next()
-		}
-	}
-
-	setDefaultsBeforeRequest() {
-		const instance = this,
-			{moduleName, moduleConfig, config} = this
-		return function* (req, res, next) {
-			let originalUrl = req.originalUrl.split('?')[0]
-			console.log(`[${moduleName} API]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
-
-			req.locals = {
-				moduleName,
-				cfg: config, // #refactorAtV1.0.0
-				settings: instance.settings, // #refactorAtV1.0.0
-				serviceName: req.locals.serviceName,
-				fieldCaseMap: instance.fieldCaseMap,
-				logger: instance.logger,
-				mailClient: instance.mailClient,
-				generalStore: instance.generalStore,
-				tokenManager: instance.tokenManager,
-				db: instance.db,
-				passport: instance.passport,
-				error: null,
-				errorStatus: 500,
-				originalUrl
-			}
-			next()
-		}
 	}
 }
 

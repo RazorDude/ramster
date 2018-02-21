@@ -1,7 +1,9 @@
 'use strict'
 
 const
+	APIModule = require('./modules/api/api.module'),
 	assert = require('assert'),
+	BaseAPIComponent = require('./modules/api/base-api.component'),
 	BaseClientComponent = require('./modules/client/base-client.component'),
 	BaseDBComponent = require('./modules/db/base-db.component'),
 	BaseServerComponent = require('./modules/shared/base-server.component'),
@@ -62,12 +64,20 @@ module.exports = {
 				instance.testLoadClients()
 				assert(true)
 			})
+			it('should execute testLoadAPIs successfully', function() {
+				instance.testLoadAPIs()
+				assert(true)
+			})
 			it.skip('should execute testBaseServerModule successfully', function() {
 				instance.testBaseServerModule()
 				assert(true)
 			})
 			it('should execute testClientModule successfully', function() {
 				instance.testClientModule()
+				assert(true)
+			})
+			it('should execute testAPIModule successfully', function() {
+				instance.testAPIModule()
 				assert(true)
 			})
 			it.skip('should execute testListen successfully', function() {
@@ -768,6 +778,18 @@ module.exports = {
 			})
 		})
 	},
+	testLoadAPIs: function() {
+		const instance = this
+		describe('core.loadAPIs', function() {
+			it('should execute successfully if all parameters and configuration variables are correct', function() {
+				return co(function*() {
+					yield instance.loadAPIs()
+					assert(true)
+					return true
+				})
+			})
+		})
+	},
 	testBaseServerModule: function() {
 		const instance = this
 		describe('core.modules.base-server.module', function() {
@@ -804,6 +826,26 @@ module.exports = {
 				let testClientComponent = new BaseClientComponent({componentName: 'testComponent'})
 				testClientComponent.module = new ClientModule(instance.config, 'site', {db, logger, generalStore, tokenManager})
 				testClientComponent.testMe()
+				assert(true)
+			})
+		})
+	},
+	testAPIModule: function() {
+		const instance = this
+		describe('core.modules.api', function() {
+			it('should execute APIModule.testMe successfully', function() {
+				const {logger, generalStore, tokenManager} = instance,
+					db = instance.modules.db
+				let testAPIModule = new APIModule(instance.config, 'site', {db, logger, generalStore, tokenManager})
+				testAPIModule.testMe()
+				assert(true)
+			})
+			it('should execute BaseAPIComponent.testMe successfully', function() {
+				const {logger, generalStore, tokenManager} = instance,
+					db = instance.modules.db
+				let testAPIComponent = new BaseAPIComponent({componentName: 'testComponent'})
+				testAPIComponent.module = new APIModule(instance.config, 'site', {db, logger, generalStore, tokenManager})
+				testAPIComponent.testMe()
 				assert(true)
 			})
 		})
