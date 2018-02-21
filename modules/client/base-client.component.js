@@ -4,10 +4,10 @@ const
 	BaseServerComponent = require('../shared/base-server.component'),
 	co = require('co'),
 	csv = new (require('../csvPromise'))(),
+	{emptyToNull} = require('../toolbelt'),
 	fs = require('fs-extra'),
 	path = require('path'),
-	spec = require('./base-client.component.spec'),
-	toolbelt = require('../toolbelt')
+	spec = require('./base-client.component.spec')
 
 class BaseClientComponent extends BaseServerComponent {
 	constructor(data) {
@@ -68,7 +68,7 @@ class BaseClientComponent extends BaseServerComponent {
 							}
 						}
 						if (isBlank) {
-							return
+							continue
 						}
 						actualFileData.push(row)
 					}
@@ -153,31 +153,28 @@ class BaseClientComponent extends BaseServerComponent {
 	}
 
 	importFile() {
-		const instance = this
+		const instance = this,
+			{dbComponent} = this
 		return function* (req, res, next) {
 			try {
+				const addFields = instance.addFields || []
 				let check = yield instance.importFileCheck(req.body.fileName, req.body.delimiter),
-					dbComponent = req.locals.dbComponents[instance.componentName],
-					dataToInsert = [],
-					dataToUpdate = []
+					data = []
 
-				if (!(check.fileData instanceof Array) || (check.fileData.length < 2)) {
+				if (!(check.fileData instanceof Array) || !check.fileData.length) {
 					throw {customMessage: 'The file is empty or does not contain any data.'}
 				}
 
 				if (check.matchesTemplate) {
 					check.fileData.forEach((row, index) => {
-						if (index > 0) {
-							let item = {}
-							check.columns.forEach((column, cIndex) => {
-								item[column] = row[cIndex]
-							})
-							if (item.id) {
-								dataToUpdate.push(toolbelt.emptyToNull(item))
-							} else {
-								dataToInsert.push(toolbelt.emptyToNull(item))
-							}
-						}
+						let item = {}
+						check.columns.forEach((column, cIndex) => {
+							item[column] = row[cIndex]
+						})
+						addFields.forEach((fieldData, fIndex) => {
+							item[fieldData.fieldName] = fieldData.getValue(item)
+						})
+						data.push(emptyToNull(item))
 					})
 				} else {
 					let columnsToMatch = {}
@@ -189,44 +186,18 @@ class BaseClientComponent extends BaseServerComponent {
 						columnsToMatch[column] = check.columns.indexOf(fileColumn)
 					})
 					check.fileData.forEach((row, index) => {
-						if (index > 0) {
-							let item = {}
-							check.templateColumns.forEach((column, cIndex) => {
-								item[column] = row[columnsToMatch[column]]
-							})
-							if (item.id) {
-								dataToUpdate.push(toolbelt.emptyToNull(item))
-							} else {
-								dataToInsert.push(toolbelt.emptyToNull(item))
-							}
-						}
+						let item = {}
+						check.templateColumns.forEach((column, cIndex) => {
+							item[column] = row[columnsToMatch[column]]
+						})
+						addFields.forEach((fieldData, fIndex) => {
+							item[fieldData.fieldName] = fieldData.getValue(item)
+						})
+						data.push(emptyToNull(item))
 					})
 				}
 
-				req.body.UserId = req.session.passport.user
-
-				yield req.locals.db.sequelize.transaction((t) => {
-					return co(function*() {
-						req.body.transaction = t
-
-						if (dataToInsert.length) {
-							yield dbComponent.bulkCreate({
-								dbObjects: dataToInsert,
-								options: req.body
-							})
-						}
-
-						if (dataToUpdate.length) {
-							for (let i in dataToUpdate) {
-								let item = dataToUpdate[i]
-								yield dbComponent.update({dbObject: item, where: {id: item.id}, transaction: t})
-							}
-						}
-
-						return true
-					})
-				})
-
+				yield dbComponent.bulkUpsert(data, {userId: req.user && req.user.id || null})
 				res.json({success: true})
 			} catch (e) {
 				req.locals.error = e

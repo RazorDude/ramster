@@ -136,6 +136,10 @@ module.exports = {
 				instance.testCheckImportFile(req, res, next)
 				assert(true)
 			})
+			it('should execute testImportFile successfully', function() {
+				instance.testImportFile(req, res, next)
+				assert(true)
+			})
 		})
 	},
 	testImportFileCheck: function() {
@@ -161,7 +165,7 @@ module.exports = {
 					let didThrowAnError = false,
 						inputFileName = 'testFile.csv',
 						fd = yield fs.open(path.join(config.globalUploadPath, inputFileName), 'w')
-					yield fs.writeFile(fd, `col0,col1,col2\nrow0val0,row0val1,row0val2\nrow1val0,row1val1,row1val2`)
+					yield fs.writeFile(fd, `col0,col1,col2\n\nrow0val0,row0val1,row0val2\nrow1val0,row1val1,row1val2`)
 					yield fs.close(fd)
 					yield fs.remove(path.join(config.globalStoragePath, `importTemplates/${componentName}.csv`))
 					try {
@@ -332,6 +336,19 @@ module.exports = {
 			{config} = module
 		let changeableInstance = this
 		describe('base-client.component.checkImportFile', function() {
+			it('should throw an error if the input file does not exist', function() {
+				return co(function*() {
+					delete req.locals.error
+					req.user = {id: 1}
+					req.query = {fileName: 'inexistentFile.csv', delimiter: ','}
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						wrap(instance.checkImportFile())(req, res, next.bind(next, resolve))
+					}))
+					assert(req.locals.error)
+					return true
+				})
+			})
 			it('should execute successfully and return the correct data if the csv file matches the template and all parameters are correct', function() {
 				return co(function*() {
 					delete req.locals.error
@@ -353,6 +370,167 @@ module.exports = {
 							['row1val0', 'row1val1', 'row1val2']
 						]
 					))
+					return true
+				})
+			})
+		})
+	},
+	testImportFile: function(req, res, next) {
+		const instance = this,
+			{componentName, dbComponent, module} = this,
+			{config, db} = module
+		let changeableInstance = this
+		describe('base-client.component.importFile', function() {
+			it('should throw an error if the input file does not exist', function() {
+				return co(function*() {
+					delete req.locals.error
+					req.user = {id: 1}
+					req.body = {fileName: 'inexistentFile.csv', delimiter: ','}
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						wrap(instance.importFile())(req, res, next.bind(next, resolve))
+					}))
+					assert(req.locals.error)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the input file does does not contain any data', function() {
+				return co(function*() {
+					let fileName = 'testFile.csv',
+						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w')
+					yield fs.writeFile(fd, '')
+					yield fs.close(fd)
+					delete req.locals.error
+					req.user = {id: 1}
+					req.body = {fileName, delimiter: ','}
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						wrap(instance.importFile())(req, res, next.bind(next, resolve))
+					}))
+					assert(req.locals.error && (req.locals.error.customMessage === 'Invalid data string provided.'))
+					return true
+				})
+			})
+			it('should execute successfully, skip empty lines, populate data from addfields and create and update records accordingly, if the csv file matches the template and all parameters are correct', function() {
+				return co(function*() {
+					let fileName = 'testFile.csv',
+						fd = yield fs.open(path.join(config.globalStoragePath, `importTemplates/${componentName}.csv`), 'w')
+					yield fs.writeFile(fd, `id,typeId,firstName,lastname,email,password,status`)
+					yield fs.close(fd)
+					fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w')
+					yield fs.writeFile(fd, 'id,typeId,firstName,lastname,email,password,status\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
+					yield fs.close(fd)
+					yield db.components.userTypes.create({name: 'type1', description: 'description1', status: true})
+					yield dbComponent.create({typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', status: true})
+					delete req.locals.error
+					req.user = {id: 1}
+					req.body = {fileName, delimiter: ','}
+					changeableInstance.addFields = [{fieldName: 'lastName', getValue: (item) => `thisIsTheNewShit${item.typeId}`}]
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						wrap(instance.importFile())(req, res, next.bind(next, resolve))
+					}))
+					if (req.locals.error) {
+						throw req.locals.error
+					}
+					let usersShouldBe = [
+							{id: 2, typeId: 2, firstName: 'updatedFN2', lastName: 'thisIsTheNewShit2', email: 'email2Updated@ramster.com', status: true},
+							{id: 3, typeId: 2, firstName: 'fn3', lastName: 'thisIsTheNewShit2', email: 'email3@ramster.com', status: true}
+						],
+						users = yield dbComponent.model.findAll({order: [['id', 'asc']]}),
+						dataIsGood = true
+					for (const i in usersShouldBe) {
+						const item = usersShouldBe[i],
+							user = users[i].dataValues
+						for (const key in item) {
+							if (item[key] !== user[key]) {
+								console.log(`Bad value '${user[key]}' for field "${key}" in item no. ${i}.`)
+								dataIsGood = false
+								break
+							}
+						}
+						if (!dataIsGood) {
+							break
+						}
+					}
+					assert(dataIsGood)
+					return true
+				})
+			})
+			it('should throw an error if the csv file does not match the template and the columns are not mapped in the body', function() {
+				return co(function*() {
+					let fileName = 'testFile.csv',
+						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w')
+					yield fs.writeFile(fd, 'id,typeId,firstNameTest,lastname,emailTest,password,status\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
+					yield fs.close(fd)
+					delete req.locals.error
+					req.user = {id: 1}
+					req.body = {fileName, delimiter: ','}
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						wrap(instance.importFile())(req, res, next.bind(next, resolve))
+					}))
+					assert(req.locals.error && (req.locals.error.customMessage === 'The file does not match the template and not all columns have been mapped.'))
+					return true
+				})
+			})
+			it('should execute successfully, skip empty lines, populate data from addfields and create and update records accordingly, if the csv file does not match the template, the columns are mapped in the body and all parameters are correct', function() {
+				return co(function*() {
+					let fileName = 'testFile.csv',
+						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w')
+					yield fs.writeFile(fd, 'id,typeId,firstNameTest,lastname,emailTest,password,status\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
+					yield fs.close(fd)
+					yield db.sequelize.query(`
+						delete from "users";
+						select setval('"users_id_seq"'::regclass, 1);
+					`)
+					yield dbComponent.create({typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', status: true})
+					delete req.locals.error
+					req.user = {id: 1}
+					req.body = {fileName, delimiter: ',', id: 'id', typeId: 'typeId', firstName: 'firstNameTest', lastname: 'lastname', email: 'emailTest', password: 'password', status: 'status'}
+					changeableInstance.addFields = [{fieldName: 'lastName', getValue: (item) => `thisIsTheNewShit${item.typeId}`}]
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						wrap(instance.importFile())(req, res, next.bind(next, resolve))
+					}))
+					if (req.locals.error) {
+						throw req.locals.error
+					}
+					let usersShouldBe = [
+							{id: 2, typeId: 2, firstName: 'updatedFN2', lastName: 'thisIsTheNewShit2', email: 'email2Updated@ramster.com', status: true},
+							{id: 3, typeId: 2, firstName: 'fn3', lastName: 'thisIsTheNewShit2', email: 'email3@ramster.com', status: true}
+						],
+						users = yield dbComponent.model.findAll({order: [['id', 'asc']]}),
+						dataIsGood = true
+					for (const i in usersShouldBe) {
+						const item = usersShouldBe[i],
+							user = users[i].dataValues
+						for (const key in item) {
+							if (item[key] !== user[key]) {
+								console.log(`Bad value '${user[key]}' for field "${key}" in item no. ${i}.`)
+								dataIsGood = false
+								break
+							}
+						}
+						if (!dataIsGood) {
+							break
+						}
+					}
+					assert(dataIsGood)
+					return true
+				})
+			})
+			it('should clean up the files, users and userTypes after it finishes testing', function() {
+				return co(function*() {
+					yield fs.unlink(path.join(config.globalUploadPath, 'testFile.csv'))
+					yield fs.unlink(path.join(config.globalStoragePath, 'importTemplates/users.csv'))
+					yield db.sequelize.query(`
+						delete from "userTypes";
+						delete from "users";
+						select setval('"userTypes_id_seq"'::regclass, 1);
+						select setval('"users_id_seq"'::regclass, 1);
+					`)
+					assert(true)
 					return true
 				})
 			})
