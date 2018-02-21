@@ -24,78 +24,78 @@ module.exports = {
 				instance.testConfig()
 				assert(true)
 			})
-			it('should execute csvPromise.testMe successfully', function() {
-				csvPromise.testMe()
-				assert(true)
-			})
-			it('should execute toolbeltSpec.testAll successfully', function() {
-				toolbeltSpec.testAll()
-				assert(true)
-			})
+			// it('should execute csvPromise.testMe successfully', function() {
+			// 	csvPromise.testMe()
+			// 	assert(true)
+			// })
+			// it('should execute toolbeltSpec.testAll successfully', function() {
+			// 	toolbeltSpec.testAll()
+			// 	assert(true)
+			// })
 			it('should execute testLoadDependencies successfully', function() {
 				instance.testLoadDependencies()
 				assert(true)
 			})
-			it('should execute testErrorLogger successfully', function() {
-				instance.testErrorLogger()
-				assert(true)
-			})
-			it('should execute testGeneralStore successfully', function() {
-				instance.testGeneralStore()
-				assert(true)
-			})
-			it('should execute testTokenManager successfully', function() {
-				instance.testTokenManager()
-				assert(true)
-			})
+			// it('should execute testErrorLogger successfully', function() {
+			// 	instance.testErrorLogger()
+			// 	assert(true)
+			// })
+			// it('should execute testGeneralStore successfully', function() {
+			// 	instance.testGeneralStore()
+			// 	assert(true)
+			// })
+			// it('should execute testTokenManager successfully', function() {
+			// 	instance.testTokenManager()
+			// 	assert(true)
+			// })
 			it('should execute testCodeGenerator successfully', function() {
 				instance.testCodeGenerator()
 				assert(true)
 			})
-			it('should execute testLoadDB successfully', function() {
-				instance.testLoadDB()
-				assert(true)
-			})
-			it('should execute testMailClient successfully', function() {
-				instance.testMailClient()
-				assert(true)
-			})
-			it('should execute testMigrations successfully', function() {
-				instance.testMigrations()
-				assert(true)
-			})
-			it('should execute testDBModule successfully', function() {
-				instance.testDBModule()
-				assert(true)
-			})
-			it('should execute testLoadClients successfully', function() {
-				instance.testLoadClients()
-				assert(true)
-			})
-			it('should execute testLoadAPIs successfully', function() {
-				instance.testLoadAPIs()
-				assert(true)
-			})
-			it('should execute testBaseServerModule successfully', function() {
-				instance.testBaseServerModule()
-				assert(true)
-			})
-			it('should execute testClientModule successfully', function() {
-				instance.testClientModule()
-				assert(true)
-			})
-			it('should execute testAPIModule successfully', function() {
-				instance.testAPIModule()
-				assert(true)
-			})
-			it('should execute testLoadCRONJobs successfully', function() {
-				instance.testLoadCRONJobs()
-				assert(true)
-			})
-			it('should execute testListen successfully', function() {
-				instance.testListen()
-				assert(true)
-			})
+			// it('should execute testLoadDB successfully', function() {
+			// 	instance.testLoadDB()
+			// 	assert(true)
+			// })
+			// it('should execute testMailClient successfully', function() {
+			// 	instance.testMailClient()
+			// 	assert(true)
+			// })
+			// it('should execute testMigrations successfully', function() {
+			// 	instance.testMigrations()
+			// 	assert(true)
+			// })
+			// it('should execute testDBModule successfully', function() {
+			// 	instance.testDBModule()
+			// 	assert(true)
+			// })
+			// it('should execute testLoadClients successfully', function() {
+			// 	instance.testLoadClients()
+			// 	assert(true)
+			// })
+			// it('should execute testLoadAPIs successfully', function() {
+			// 	instance.testLoadAPIs()
+			// 	assert(true)
+			// })
+			// it('should execute testBaseServerModule successfully', function() {
+			// 	instance.testBaseServerModule()
+			// 	assert(true)
+			// })
+			// it('should execute testClientModule successfully', function() {
+			// 	instance.testClientModule()
+			// 	assert(true)
+			// })
+			// it('should execute testAPIModule successfully', function() {
+			// 	instance.testAPIModule()
+			// 	assert(true)
+			// })
+			// it('should execute testLoadCRONJobs successfully', function() {
+			// 	instance.testLoadCRONJobs()
+			// 	assert(true)
+			// })
+			// it('should execute testListen successfully', function() {
+			// 	instance.testListen()
+			// 	assert(true)
+			// })
 		})
 	},
 	testConfig: function() {

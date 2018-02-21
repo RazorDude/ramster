@@ -43,6 +43,7 @@ module.exports = {
 			host: `${hostProtocol}://${hostAddress}:${site.wsPort || site.port}`,
 			webpackDevserverPort: site.webpackDevserverPort,
 			webpackHost: `http://${hostAddress}:${site.webpackDevserverPort}`,
+			startWebpackDevserver: true,
 			session: {
 				key: 'sessionKey',
 				secret: 'sessionSecret'

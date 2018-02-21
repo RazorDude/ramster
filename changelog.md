@@ -7,7 +7,6 @@
 - Config changes:
 	- *BREAKING* - renamed globalPublicPath to clientModulesPath.
 	- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.
-	- *BREAKING* - renamed moduleList to webpackDevserverModuleList.
 	- *BREAKING* - renamed protocol to hostProtocol.
 	- *BREAKING* - in the db config, it is now mandatory to specify "dbType"; it no longer defaults to 'postgres'.
 	- *BREAKING* - in the db config, it is now mandatory to specify "schema"; it no longer defaults to 'public'.
@@ -23,7 +22,7 @@
 	- Added a lot of tests, complete code coverage.
 - Added config templates.
 - Added templates for the following db modules: users, userTypes, moduleCategories, modules, moduleAccessPoints, globalConfig.
-- Added a codeGenerator module, which generates config files, db modules, client server layout files, nginx config files, webpack config files and utility scripts. Added tests for it.
+- Added a codeGenerator module, which generates config files, db modules, client server layout files, nginx config files, webpack config files, utility scripts and more. Added tests for it.
 - Added an .npmignore file, that keeps the "test" folder out of the final package (it's for testing ramster and you don't need it in the build). It's still in the repo, though.
 - Removed the buildLayoutFile and generateNGINXConfig methods from the client module, as the codeGenerator now covers this functionality.
 - *BREAKING* - loadDependencies now returns a promise that must be handled. This was done so that generalStore.createClient() can be called before the modules that depend on the generalStore and loaded.

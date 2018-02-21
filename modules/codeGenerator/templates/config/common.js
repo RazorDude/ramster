@@ -52,8 +52,7 @@ module.exports = {
 			},
 			redirectUnauthorizedPagesToNotFound: true,
 			useApiModuleConfigForAuthTokens: 'mobile',
-			passErrorToNext: true,
-			startWebpackDevserver: true
+			passErrorToNext: true
 		}
 	},
 	apis: {

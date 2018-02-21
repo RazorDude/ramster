@@ -95,10 +95,11 @@ class Component extends Base {
 
 		this.searchFields = [
 			{field: 'id'},
-			{field: 'roleId'},
+			{field: 'typeId'},
 			{field: 'firstName', like: '-%'},
 			{field: 'lastName', like: '-%'},
 			{field: 'email', like: '-%'},
+			{field: 'unconfirmedEmail', like: '-%'},
 			{field: 'phone', like: '-%'},
 			{field: 'gender'},
 			{field: 'status'},
@@ -166,7 +167,7 @@ class Component extends Base {
 			if (!bcryptjs.compareSync(data.password, user.password)) {
 				throw {customMessage: 'Invalid email or password.'}
 			}
-			yield instance.model.update({lastLogin: moment().format('YYYY-MM-DD H:mm:ss')}, {where: {id: user.id}})
+			yield instance.model.update({lastLogin: moment.utc().format('YYYY-MM-DD H:mm:ss')}, {where: {id: user.id}})
 			delete user.dataValues.password
 			delete user.dataValues.resetPasswordToken
 			delete user.dataValues.resetPasswordExpires
@@ -196,7 +197,7 @@ class Component extends Base {
 		})
 	}
 
-	resetPassword({email}) {
+	sendPasswordResetRequest({email}) {
 		const instance = this
 		return co(function*() {
 			let user = yield instance.model.scope('full').update({resetPassword: true}, {
@@ -213,7 +214,7 @@ class Component extends Base {
 			let mailSendResult = yield instance.mailClient.sendEmail('resetPassword', user.email, 'Reset Password Request', {
 				fields: {
 					userFirstName: user.firstName,
-					resetPasswordLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/users/me')}`
+					resetPasswordLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/mySettings')}`
 				}
 			})
 
@@ -275,7 +276,7 @@ class Component extends Base {
 			yield instance.mailClient.sendEmail('updateEmail', user.email, 'Email Update Request', {
 				fields: {
 					userFirstName: user.firstName,
-					updateEmailLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/users/me')}&tokenKeyName=emailToken`
+					updateEmailLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/mySettings')}&tokenKeyName=emailToken`
 				}
 			})
 			return {success: true}
