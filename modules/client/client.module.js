@@ -71,7 +71,7 @@ class ClientModule extends BaseServerModule {
 		}
 	}
 
-	mountRoutes({sessionStore}) {
+	mountRoutes(sessionStore) {
 		let instance = this
 		return co(function*() {
 			const {config, moduleName, moduleConfig, passport} = instance

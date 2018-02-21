@@ -132,34 +132,37 @@ class Core {
 	}
 
 	loadCRONJobs() {
+		const {config, generalStore, logger, mailClient, modules, tokenManager} = this
 		let cronJobsModule = require(config.cronJobs.path),
 			jobs = cronJobsModule.getJobs({
-				cfg: config,
-				logger,
-				mailClient: instance.mailClient,
+				config,
+				db: modules.db,
 				generalStore,
-				tokenManager,
-				db
-			})
+				logger,
+				mailClient,
+				tokenManager
+			}),
+			jobsModule = {jobs, activeJobs: []}
 		if (jobs instanceof Array) {
 			jobs.forEach((jobData, index) => {
 				try {
 					if (!jobData.start) {
 						jobData.start = true
 					}
-					new CronJob(jobData)
+					jobsModule.activeJobs.push(new CronJob(jobData))
 				} catch (e) {
 					console.log('Error starting a cron job:')
 					logger.error(e)
 				}
 			})
 		}
+		this.modules.cronJobs = jobsModule
 	}
 
 	listen() {
 		let instance = this
 		return co(function*() {
-			const {config} = instance
+			const {config, modules} = instance
 			// create the redis client (session storage)
 			let redisClient = redis.createClient(config.redis),
 				sessionStore = new RedisStore({
@@ -169,20 +172,20 @@ class Core {
 				})
 
 			// load the client module server routes and start the servers
-			let clientModules = instance.modules.clients
+			let clientModules = modules.clients
 			for (const moduleName in clientModules) {
 				let clientModule = clientModules[moduleName]
 				yield clientModule.mountRoutes(sessionStore)
 			}
 
 			// load the api module server routes and start the servers
-			let apiModules = instance.modules.apis
+			let apiModules = modules.apis
 			for (const moduleName in apiModules) {
-				yield apiModules[moduleName].mountRoutes({sessionStore})
+				yield apiModules[moduleName].mountRoutes(sessionStore)
 			}
 
 			if (config.migrations && config.migrations.startAPI) {
-				instance.modules.migrations.listen()
+				modules.db.migrations.listen()
 			}
 
 			return true

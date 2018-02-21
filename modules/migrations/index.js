@@ -98,8 +98,8 @@ class Migrations {
 			res.status(200).end()
 		})
 
-		let migrationsApiServer = http.createServer(app)
-		migrationsApiServer.listen(moduleConfig.serverPort, () => {
+		this.server = http.createServer(app)
+		this.server.listen(moduleConfig.serverPort, () => {
 			console.log(`[Migrations Module API] Server started.`)
 			console.log(`[Migrations Module API] Port:`, moduleConfig.serverPort)
 			console.log(`[Migrations Module API] Configuration profile:`, config.name)

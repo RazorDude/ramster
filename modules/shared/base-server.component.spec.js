@@ -555,6 +555,12 @@ module.exports = {
 		describe('base-server.component.create', function() {
 			it('should execute successfully and return the newly created object if all paramteres are correct', function() {
 				return co(function*() {
+					yield db.sequelize.query(`
+						delete from "userTypes";
+						delete from "users";
+						select setval('"userTypes_id_seq"'::regclass, 1);
+						select setval('"users_id_seq"'::regclass, 1);
+					`)
 					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
 					delete req.locals.error
 					req.user = {id: 1}
@@ -566,8 +572,8 @@ module.exports = {
 					if (req.locals.error) {
 						throw req.locals.error
 					}
-					let result = res.response.jsonBody.result,
-						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
+					let result = res.response.jsonBody.result.dataValues,
+						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
 						dataIsGood = true
 					for (const key in item) {
 						if (result[key] !== item[key]) {

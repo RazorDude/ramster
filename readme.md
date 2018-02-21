@@ -47,31 +47,6 @@ The DB module, as mentioned briefly above, is the very heart of your project. It
 
 
 ___
-Migrating from 0.5 to 0.6
-==
-Version 0.6 improves the overall code quality and structure a lot, but it's still a minor version, so it's mostly backwards compatible. There is only one change to be made, the project's index.js file should now look (approximately) like, or at lest be based on this:<br/>
-```javascript
-'use strict'
-const
-	argv = require('optimist').argv,
-	co = require('co'),
-	config = require('./config/profiles/' + (argv.configProfile || 'local')),
-	{Core} = require('ramster'),
-	ramster = new Core(config)
-
-co(function*() {
-	yield ramster.loadModules()
-	yield ramster.listen()
-}).then((res) => true, (err) => console.log(err))
-
-module.exports = ramster
-
-```
-The notable change here is that the initialization, module loading and listening code has been moved to the `loadModules` and `listen` methods. They are asynchronous and return promises. `listen` requires `loadModules` to have completed in order to execute successfully, so you must wait for the `loadModules` promise to resolve successfully before invoking `listen`.<br/>
-With that, you're all set and done to use ramster 0.6!
-
-
-___
 Roadmap
 ==
 The main goal at this time is to get Ramster stable and feature-rich enough for a v1.0.0 release. To do that, it must include:
@@ -89,7 +64,9 @@ The main goal at this time is to get Ramster stable and feature-rich enough for 
 - A lot of good an informative badges on top of this readme, all of which must shine in bright green :)
 
 <br/>
+
 I've got things in mind for post-v1 releases as well:
+
 - Add more project templates: blog, cms.
 - The ability to generate Swagger documentation out of db models, as well as endpoints based on their route params and possibly what they return. Ramster should be able to validate the request object and the response data.
 - Loads and loads of docs and a website that hosts them, not just .md files in the repo.
