@@ -210,7 +210,7 @@ class CodeGenerator {
 			} catch(e) {
 				throw {customMessage: 'Invalid webpack config type.'}
 			}
-			let outputFilePath = path.join(outputPath, `webpack${type.charAt(0).toUpperCase()}${type.substr(1, type.length)}.js`),
+			let outputFilePath = path.join(outputPath, `${type}.js`),
 				outputFile = yield fs.open(outputFilePath, 'w')
 			yield fs.writeFile(outputFile, configFileData)
 			yield fs.close(outputFile)
@@ -292,9 +292,23 @@ class CodeGenerator {
 		})
 	}
 
-	generateBlankProject(outputPath) {
+	generateLayoutFile(outputPath) {
 		const instance = this,
 			{config} = this
+		return co(function*() {
+			if ((typeof outputPath !== 'string') || !outputPath.length) {
+				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
+			}
+			yield instance.checkOutputPath(outputPath)
+			let outputFile = yield fs.open(path.join(outputPath, 'layout_local.pug'), 'w')
+			yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, 'templates/clients/site/layout_local.pug')))
+			yield fs.close(outputFile)
+			return true
+		})
+	}
+
+	generateBlankProject(outputPath) {
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
@@ -307,13 +321,13 @@ class CodeGenerator {
 			yield instance.generateCommonConfigFile(path.join(outputPath, 'config'))
 			yield instance.generateProfileConfigFile(path.join(outputPath, 'config'), 'local')
 			yield instance.generateWebpackBuildTools(outputPath)
+			yield fs.copyFile(path.join(__dirname, 'templates/modules/emails/templates/sample.pug'), path.join(outputPath, 'modules/emails/templates/sample.pug'))
 			return true
 		})
 	}
 
 	generateBasicProject(outputPath) {
-		const instance = this,
-			{config} = this
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
@@ -323,6 +337,10 @@ class CodeGenerator {
 				clientModules = ['layout', 'users'],
 				outputFile = null
 			yield instance.generateBlankProject(outputPath)
+			yield fs.mkdirp(path.join(outputPath, 'config/webpack'))
+			yield instance.generateWebpackConfig(path.join(outputPath, 'config/webpack'), 'react')
+			yield instance.generateLayoutFile(path.join(outputPath, 'clients/site'))
+			yield fs.mkdirp(path.join(outputPath, 'public/site'))
 			for (const i in dbModules) {
 				let moduleName = dbModules[i],
 					modulePath = path.join(outputPath, `modules/db/${moduleName}`)
@@ -330,9 +348,9 @@ class CodeGenerator {
 				outputFile = yield fs.open(path.join(modulePath, `index.js`), 'w')
 				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/db/${moduleName}/index.js`)))
 				yield fs.close(outputFile)
-				// outputFile = yield fs.open(path.join(modulePath, `index.spec.js`), 'w')
-				// yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/db/${moduleName}/index.spec.js`)))
-				// yield fs.close(outputFile)
+				outputFile = yield fs.open(path.join(modulePath, `index.spec.js`), 'w')
+				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/db/${moduleName}/index.spec.js`)))
+				yield fs.close(outputFile)
 			}
 			for (const i in clientModules) {
 				let moduleName = clientModules[i],
@@ -341,10 +359,24 @@ class CodeGenerator {
 				outputFile = yield fs.open(path.join(modulePath, `index.js`), 'w')
 				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/clients/site/${moduleName}/index.js`)))
 				yield fs.close(outputFile)
-				// outputFile = yield fs.open(path.join(modulePath, `index.spec.js`), 'w')
-				// yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/clients/site/${moduleName}/index.spec.js`)))
-				// yield fs.close(outputFile)
+				outputFile = yield fs.open(path.join(modulePath, `index.spec.js`), 'w')
+				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/clients/site/${moduleName}/index.spec.js`)))
+				yield fs.close(outputFile)
 			}
+			let cronJobsPath = path.join(outputPath, 'modules/cronJobs')
+			yield fs.mkdirp(cronJobsPath)
+			outputFile = yield fs.open(path.join(cronJobsPath, `index.js`), 'w')
+			yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, 'templates/modules/cronJobs/index.js')))
+			yield fs.close(outputFile)
+			outputFile = yield fs.open(path.join(cronJobsPath, `index.spec.js`), 'w')
+			yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, 'templates/modules/cronJobs/index.spec.js')))
+			yield fs.close(outputFile)
+			outputFile = yield fs.open(path.join(outputPath, `modules/migrations/staticData/staticData.json`), 'w')
+			yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, 'templates/modules/migrations/staticData/staticData.json')))
+			yield fs.close(outputFile)
+			outputFile = yield fs.open(path.join(outputPath, `modules/migrations/staticData/mockStaticData.json`), 'w')
+			yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, 'templates/modules/migrations/staticData/mockStaticData.json')))
+			yield fs.close(outputFile)
 			return true
 		})
 	}

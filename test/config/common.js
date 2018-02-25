@@ -51,9 +51,8 @@ module.exports = {
 				authenticated: '/four-oh-four'
 			},
 			redirectUnauthorizedPagesToNotFound: true,
-			useApiModuleConfigForAuthTokens: 'mobile',
-			passErrorToNext: true,
-			startWebpackDevserver: true
+			// useApiModuleConfigForAuthTokens: 'mobile',
+			passErrorToNext: true
 		}
 	},
 	apis: {

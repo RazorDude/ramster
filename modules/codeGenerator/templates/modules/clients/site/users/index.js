@@ -13,9 +13,11 @@ const
 		})
 	})
 
-class Component extends Base {
-	constructor(data) {
-		data.routes = [
+class Component extends BaseClientComponent {
+	constructor(componentName) {
+		super({
+			componentName,
+			routes: [
 				{method: 'get', path: '/users/loadLoggedInUserData', func: 'loadLoggedInUserData'},
 				{method: 'get', path: '/users/checkEmail', func: 'checkEmail'},
 				{method: 'get', path: '/users/sendPasswordResetRequest', func: 'sendPasswordResetRequest'},
@@ -30,7 +32,7 @@ class Component extends Base {
 				{method: 'patch', path: '/users/email', func: 'updateEmail'},
 				{method: 'delete', path: `/users/delete/:id`, func: 'accessFilter', options: {next: 'delete', keyAccessPointIds: []}}
 			]
-		super(data)
+		})
 
 		this.addFields = [
 			{fieldName: 'password', getValue: () => (new Date()).getTime().toString()},

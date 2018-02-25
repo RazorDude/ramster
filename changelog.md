@@ -27,7 +27,7 @@
 - Removed the buildLayoutFile and generateNGINXConfig methods from the client module, as the codeGenerator now covers this functionality.
 - *BREAKING* - loadDependencies now returns a promise that must be handled. This was done so that generalStore.createClient() can be called before the modules that depend on the generalStore and loaded.
 - *BREAKING* - removed the loadModules method and broke it down into four separate ones - loadDB, loadMailClient, loadClients and loadAPIs. This way it's easier to debug and test the ramster initialization process.
-- *BREAKING* - Renamed cfg and settings to config in client modules.
+- The core module (ramster) now has a runTests method, which executes defined tests for all db, client and api modules' components.
 - Added tests and validations to the generalStore and errorLogger modules.
 - Moved the findVertexById method from the migrations module to the toolbelt and renamed it to findVertexByIdDFS.
 - tokenManager:

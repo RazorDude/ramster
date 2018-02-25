@@ -94,7 +94,6 @@ module.exports = {
 					try {
 						yield instance.sendEmail('sample', 'admin@ramster.com', 'testSubject')
 					} catch(e) {
-						// console.log(e)
 						didThrowAnError = e && ((e.message === 'Unauthorized') || (e.code === 'ENOTFOUND'))
 					}
 					assert(didThrowAnError)

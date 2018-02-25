@@ -1,11 +1,11 @@
 'use strict'
 
 const
-	Base = require('../../../../').BaseDBComponent
+	Base = require('../../../../index').BaseDBComponent
 
 class Component extends Base {
-	constructor(sequelize, Sequelize, settings) {
-		super(settings)
+	constructor(sequelize, Sequelize) {
+		super()
 
 		this.model = sequelize.define('moduleAccessPoint', {
 			moduleId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},

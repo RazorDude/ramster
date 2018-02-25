@@ -1,4 +1,11 @@
 {
+	"GlobalConfigs": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"id": 1, "field": "testField", "value": "test", "description": "Test Field", "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 2, "field": "testField2", "value": "test2", "description": "Test Field 2", "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
+		]
+	},
 	"userTypes": {
 		"primaryKeys": ["id"],
 		"data": [

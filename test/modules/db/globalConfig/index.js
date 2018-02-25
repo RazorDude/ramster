@@ -1,17 +1,14 @@
 'use strict'
 
 const
-	Base = require('../../../../').BaseDBComponent,
+	Base = require('../../../../index').BaseDBComponent,
 	co = require('co')
 
 class Component extends Base {
-	constructor(sequelize, Sequelize, settings) {
-		super(settings)
+	constructor(sequelize, Sequelize) {
+		super()
 
-		this.componentName = 'globalConfig'
-		this.relReadKeys = []
-
-		this.model = sequelize.define('GlobalConfig', {
+		this.model = sequelize.define('globalConfig', {
 			field: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 			value: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 			description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}}

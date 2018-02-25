@@ -63,6 +63,7 @@ The main goal at this time is to get Ramster stable and feature-rich enough for 
 - Create a separate ramster-cli package, that will be used to run commands from the console - migrations, config and file generation, testing, etc.
 - Try and reduce the number of dependencies as much as possible.
 - A lot of good an informative badges on top of this readme, all of which must shine in bright green :)
+- Add a snyk.io test - https://snyk.io
 
 <br/>
 

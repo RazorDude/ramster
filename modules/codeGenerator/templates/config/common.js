@@ -51,7 +51,7 @@ module.exports = {
 				authenticated: '/four-oh-four'
 			},
 			redirectUnauthorizedPagesToNotFound: true,
-			useApiModuleConfigForAuthTokens: 'mobile',
+			// useApiModuleConfigForAuthTokens: 'mobile',
 			passErrorToNext: true
 		}
 	},

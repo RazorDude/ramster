@@ -12,8 +12,6 @@ class Component extends Base {
 	constructor(sequelize, Sequelize) {
 		super()
 
-		const instance = this
-
 		this.model = sequelize.define('user', {
 			typeId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
 			firstName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},

@@ -1,12 +1,12 @@
 'use strict'
 
 const
-	Base = require('../../../../').BaseDBComponent,
+	Base = require('../../../../index').BaseDBComponent,
 	co = require('co')
 
 class Component extends Base {
-	constructor(sequelize, Sequelize, settings) {
-		super(settings)
+	constructor(sequelize, Sequelize) {
+		super()
 
 		this.model = sequelize.define('userType', {
 			name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
@@ -61,25 +61,23 @@ class Component extends Base {
 		return instance.db.sequelize.transaction((t) => {
 			return co(function*() {
 				let typeList = yield instance.model.findAll({
-						where: {id: data.id},
-						include: [
-							{model: users.model, as: 'users', limit: 1}
-						],
-						transaction: t
-					}),
-					typeIds = []
+					where: {id: data.id},
+					include: [
+						{model: users.model, as: 'users', limit: 1}
+					],
+					transaction: t
+				})
 				if (!typeList.length) {
 					throw {customMessage: 'Roles not found.'}
 				}
 				typeList.forEach((type, index) => {
-					if (systemCriticalIds.indexOf(parseInt(type.id, 10)) !== -1) {
-						throw {customMessage: 'Cannot delete a system-critical user type.'}
+					if (systemCriticalIds.indexOf(parseInt(where.id, 10)) !== -1) {
+						throw {customMessage: 'Cannot delete a system-critical users type.'}
 					}
-					typeIds.push(type.id)
 				})
-				// yield instance.db.sequelize.query(`delete from "typeModules" where "typeId" in (${typeIds});`, {transaction: t})
-				yield instance.db.sequelize.query(`delete from "userTypeModuleAccessPoints" where "userTypeId" in (${typeIds.join(',')});`, {transaction: t})
-				return yield instance.model.destroy({where: {id: typeIds}, transaction: t})
+				yield instance.db.sequelize.query(`delete from "typeModules" where "typeId"=${type.id};`, {transaction: t})
+				yield instance.db.sequelize.query(`delete from "typeKeyAccessPoints" where "typeId"=${type.id};`, {transaction: t})
+				return yield instance.model.destroy({where: {id: type.id}, transaction: t})
 			})
 		})
 	}

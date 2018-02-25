@@ -5,21 +5,23 @@ const
 	path = require('path')
 
 class Component extends BaseClientComponent {
-	constructor(data) {
-		data.routes = [
-			{
-				method: 'get',
-				path: [
-					'/',
-					'/login',
-					'/dashboard',
-					'/mySettings'
-				],
-				func: 'loadLayout',
-				isALayoutRoute: true
-			}
-		]
-		super(data)
+	constructor(componentName) {
+		super({
+			componentName,
+			routes: [
+				{
+					method: 'get',
+					path: [
+						'/',
+						'/login',
+						'/dashboard',
+						'/mySettings'
+					],
+					func: 'loadLayout',
+					isALayoutRoute: true
+				}
+			]
+		})
 	}
 
 	loadLayout() {

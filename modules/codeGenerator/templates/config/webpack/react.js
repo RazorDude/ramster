@@ -4,18 +4,20 @@ const
 	BellOnBundlerErrorPlugin = require('bell-on-bundler-error-plugin'),
 	path = require('path'),
 	ProgressBarPlugin = require('progress-bar-webpack-plugin'),
+	UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
 	webpack = require('webpack')
 
 
 module.exports = (config, name) => {
 	let includePath = config.clientPath,
 		publicPath = config.publicPath,
+		nodeModulesPath = config.nodeModulesPath,
 		include = [includePath]
 
 	return {
 		devtool: 'source-map',
 		entry: [
-			'babel-polyfill',
+			'@babel/polyfill',
 			path.join(includePath, 'index.js')
 		],
 		output: {
@@ -28,43 +30,45 @@ module.exports = (config, name) => {
 			modules: ['node_modules', path.join(includePath, 'ramster-ui-components')]
 		},
 		module: {
-			loaders: [
+			rules: [
 				{
 					test: /\.(jpg|png|svg|jpeg)$/,
-					loader: 'file-loader',
-					options: {
-						name: '[path][name].[hash].[ext]',
-					},
+					use: [{
+						loader: 'file-loader',
+						options: {
+							name: '[path][name].[hash].[ext]',
+						}
+					}]
 				},
 				{
 					test: /\.css$/,
-					include: [path.join(__dirname, '../node_modules'), includePath],
+					include: [nodeModulesPath, includePath],
 					exclude: [],
-					loaders: ['style-loader', 'css-loader']
+					use: ['style-loader', 'css-loader']
 				},
 				{
 					test: /\.less$/,
-					include: [path.join(__dirname, '../node_modules'), includePath],
+					include: [nodeModulesPath, includePath],
 					exclude: [],
-					loaders: ['style-loader', 'css-loader', 'less-loader']
+					use: ['style-loader', 'css-loader', 'less-loader']
 				},
 				{
 					test: /\.scss$/,
 					include,
 					exclude: [],
-					loaders: ['style-loader', 'css-loader', 'sass-loader']
+					use: ['style-loader', 'css-loader', 'sass-loader']
 				},
 				{
 					test: /\.jsx?$/,
 					include,
 					exclude: [],
-					loader: `babel-loader?cacheDirectory=false&plugins[]=transform-runtime&presets[]=es2015&presets[]=react&presets[]=stage-0${name === 'production' ? '' : '&presets[]=react-hmre'}`
+					use: ['babel-loader?cacheDirectory=false&plugins[]=@babel/plugin-transform-runtime&presets[]=@babel/preset-env&presets[]=@babel/preset-react']
 				},
 				{
 					test: /\.json$/,
 					include,
 					exclude: [],
-					loader: "json2-loader"
+					use: ["json2-loader"]
 				}
 			]
 		},
@@ -79,7 +83,7 @@ module.exports = (config, name) => {
 			})
 		],
 		productionPlugins: [
-			new webpack.NoErrorsPlugin(),
+			new webpack.NoEmitOnErrorsPlugin(),
 			new BellOnBundlerErrorPlugin(),
 			new ProgressBarPlugin({
 				format: '  build [:bar] (:percent) - (:elapsed seconds)',
@@ -87,10 +91,12 @@ module.exports = (config, name) => {
 				complete: '#',
 				summary: 'true'
 			}),
-			new webpack.optimize.UglifyJsPlugin({
+			new UglifyJsPlugin({
 				sourceMap: false,
-				mangle: true,
-				compress: true
+				uglifyOptions: {
+					mangle: true,
+					compress: true
+				}
 			}),
 			new webpack.DefinePlugin({
 				'process.env': {

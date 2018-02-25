@@ -1083,7 +1083,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct', function() {
+			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct and no staticData fileName is provided', function() {
 				return co(function*() {
 					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
 						wasSuccessful = false
@@ -1091,6 +1091,25 @@ module.exports = {
 					wasSuccessful = currentSyncHistoryDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
 					try {
 						yield fs.emptyDir(config.migrations.syncHistoryPath)
+					} catch(e) {
+					}
+					assert(wasSuccessful)
+					return true
+				})
+			})
+			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct and a staticData fileName is provided', function() {
+				return co(function*() {
+					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
+						wasSuccessful = false,
+						testFilePath = path.join(config.migrations.staticDataPath, 'staticDataTest.json'),
+						fd = yield fs.open(testFilePath, 'w')
+					yield fs.write(fd, yield fs.readFile(path.join(config.migrations.staticDataPath, 'staticData.json')))
+					yield fs.close(fd)
+					yield instance.insertStaticData('staticDataTest')
+					wasSuccessful = currentSyncHistoryDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					try {
+						yield fs.emptyDir(config.migrations.syncHistoryPath)
+						yield fs.remove(testFilePath)
 					} catch(e) {
 					}
 					assert(wasSuccessful)

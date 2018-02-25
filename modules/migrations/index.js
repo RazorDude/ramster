@@ -82,7 +82,7 @@ class Migrations {
 
 		router.get('/insertStaticData', wrap(function* (req, res, next) {
 			try {
-				res.json({data: yield instance.insertStaticData()})
+				res.json({data: yield instance.insertStaticData(decodeURIComponent(req.query.fileName))})
 			} catch (error) {
 				req.locals = {error}
 				next()
@@ -525,7 +525,7 @@ class Migrations {
 		})
 	}
 
-	insertStaticData() {
+	insertStaticData(fileName) {
 		const instance = this,
 			sequelize = this.sequelize,
 			dbComponents = this.dbComponents
@@ -538,7 +538,7 @@ class Migrations {
 			yield fs.close(fileDescriptor)
 
 			// get the data from the file and merge it with the current data
-			let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, 'staticData.json'))).toString())
+			let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, `${fileName || 'staticData'}.json`))).toString())
 			// insert the staticData according to the seeding order
 			instance.seedingOrder.forEach((componentName, index) => {
 				const tableName = dbComponents[componentName].model.getTableName()

@@ -25,9 +25,9 @@ module.exports = {
 		host: '127.0.0.1',
 		port: 5432,
 		database: 'ramster_v1',
-		mockDatabase: 'ramster_v1',
+		mockDatabase: 'ramster_v1_mock',
 		schema: 'public',
-		logging: false
+		logging: true
 	},
 	redis: {
 		host: '127.0.0.1',
@@ -43,6 +43,7 @@ module.exports = {
 			host: `${hostProtocol}://${hostAddress}:${site.wsPort || site.port}`,
 			webpackDevserverPort: site.webpackDevserverPort,
 			webpackHost: `http://${hostAddress}:${site.webpackDevserverPort}`,
+			startWebpackDevserver: true,
 			session: {
 				key: 'sessionKey',
 				secret: 'sessionSecret'
