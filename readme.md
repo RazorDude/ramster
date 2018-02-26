@@ -1,6 +1,5 @@
 ![npm](https://img.shields.io/npm/v/ramster.svg)
 ![node](https://img.shields.io/node/v/ramster.svg)
-[![npm version](https://badge.fury.io/js/ramster.svg)](https://badge.fury.io/js/ramster)
 [![dependencies Status](https://david-dm.org/razordude/ramster/status.svg)](https://david-dm.org/razordude/ramster)
 <!-- [![Known Vulnerabilities](https://snyk.io/test/github/razordude/ramster/badge.svg)](https://snyk.io/test/github/razordude/ramster) -->
 [![Build Status](https://travis-ci.org/RazorDude/ramster.svg?branch=master)](https://travis-ci.org/RazorDude/ramster)
