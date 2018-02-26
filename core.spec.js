@@ -48,10 +48,10 @@ module.exports = {
 				toolbeltSpec.testAll()
 				assert(true)
 			})
-			// it('should execute testWebpackBuildTools successfully', function() {
-			// 	instance.testWebpackBuildTools()
-			// 	assert(true)
-			// })
+			it('should execute testWebpackBuildTools successfully', function() {
+				instance.testWebpackBuildTools()
+				assert(true)
+			})
 			it('should execute testLoadDependencies successfully', function() {
 				instance.testLoadDependencies()
 				assert(true)
@@ -64,10 +64,10 @@ module.exports = {
 				instance.testGeneralStore()
 				assert(true)
 			})
-			// it('should execute testTokenManager successfully', function() {
-			// 	instance.testTokenManager()
-			// 	assert(true)
-			// })
+			it('should execute testTokenManager successfully', function() {
+				instance.testTokenManager()
+				assert(true)
+			})
 			it('should execute testCodeGenerator successfully', function() {
 				instance.testCodeGenerator()
 				assert(true)

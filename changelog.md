@@ -1,8 +1,9 @@
 # 1.0.0
-- Added a fury.io npm version badge.
+- Added a shields.io node version badge.
+- Added a shields.io npm package version badge.
 - Added a david-dm dependencies badge.
-- Added a snyk.io security badge.
 - Added a .travis.yml build file and a travis-ci build badge.
+- Added shields.io downloads count badges.
 - Removed inconsistencies that were left in up till now for the sake of backwards compatibility.
 - Renamed index.js to core.js. Added a new index.js file that exports everything like the old one used to.
 - Moved the whole project from optimist to yargs.
