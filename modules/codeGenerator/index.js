@@ -301,7 +301,7 @@ class CodeGenerator {
 		})
 	}
 
-	generateBlankProject(outputPath) {
+	generateBlankProject(outputPath, configProfile) {
 		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
@@ -313,14 +313,14 @@ class CodeGenerator {
 			yield instance.generateFolders(outputPath)
 			yield instance.generateIndexConfigFile(path.join(outputPath, 'config'))
 			yield instance.generateCommonConfigFile(path.join(outputPath, 'config'))
-			yield instance.generateProfileConfigFile(path.join(outputPath, 'config'), 'local')
+			yield instance.generateProfileConfigFile(path.join(outputPath, 'config'), configProfile || 'local')
 			yield instance.generateWebpackBuildTools(outputPath)
 			yield fs.copyFile(path.join(__dirname, 'templates/modules/emails/templates/sample.pug'), path.join(outputPath, 'modules/emails/templates/sample.pug'))
 			return true
 		})
 	}
 
-	generateBasicProject(outputPath) {
+	generateBasicProject(outputPath, configProfile) {
 		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
@@ -330,7 +330,7 @@ class CodeGenerator {
 			let dbModules = ['globalConfig', 'moduleAccessPoints', 'moduleCategories', 'modules', 'users', 'userTypes'],
 				clientModules = ['layout', 'users'],
 				outputFile = null
-			yield instance.generateBlankProject(outputPath)
+			yield instance.generateBlankProject(outputPath, configProfile)
 			yield fs.mkdirp(path.join(outputPath, 'config/webpack'))
 			yield instance.generateWebpackConfig(path.join(outputPath, 'config/webpack'), 'react')
 			yield instance.generateLayoutFile(path.join(outputPath, 'clients/site'))

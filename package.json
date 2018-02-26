@@ -59,8 +59,9 @@
     "url": "git+https://github.com/RazorDude/ramster.git"
   },
   "scripts": {
-    "test": "node ./test/generateStuff.js && mocha ./test/test.js",
-    "testRunTests": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testDB --testClients --testAPIs"
+    "test-local": "node ./test/generateStuff.js && mocha ./test/test.js",
+    "test-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest",
+    "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testDB --testClients --testAPIs"
   },
   "version": "1.0.0-beta.1",
   "devDependencies": {

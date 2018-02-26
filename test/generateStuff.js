@@ -1,13 +1,14 @@
 'use strict'
 
 const
+	argv = require('yargs').argv,
 	co = require('co'),
 	{codeGenerator} = require('../index'),
 	fs = require('fs-extra'),
 	path = require('path')
 
 co(function*() {
-	yield codeGenerator.generateBasicProject(__dirname)
+	yield codeGenerator.generateBasicProject(__dirname, argv.configProfile)
 	codeGenerator.config = require('./config')
 	yield codeGenerator.generateNGINXConfig('site')
 	yield codeGenerator.generateImagesRedirectNGINXConfig(path.join(__dirname, 'config/nginx'))

@@ -14,11 +14,11 @@ let site = {
 	hostAddress = '127.0.0.1'
 
 module.exports = {
-	name: 'local',
+	name: 'travisTest',
 	hostProtocol,
 	hostAddress,
 	wsPort: site.wsPort,
-	wsConfigFolderPath: 'c:\\programs\\nginx\\conf',
+	wsConfigFolderPath: '/var',
 	postgreSQL: {
 		user: 'postgres',
 		password: 'postgres',
