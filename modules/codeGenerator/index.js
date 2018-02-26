@@ -276,7 +276,7 @@ class CodeGenerator {
 			yield fs.mkdirp(path.join(outputPath, 'modules/clients'))
 			yield fs.mkdirp(path.join(outputPath, 'modules/apis'))
 			yield fs.mkdirp(path.join(outputPath, 'modules/emails/templates'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/seedfiles'))
+			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/seedFiles'))
 			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/syncHistory'))
 			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/backup'))
 			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/staticData'))
@@ -357,6 +357,7 @@ class CodeGenerator {
 				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/clients/site/${moduleName}/index.spec.js`)))
 				yield fs.close(outputFile)
 			}
+			yield fs.mkdirp(path.join(outputPath, `modules/apis/mobile`))
 			let cronJobsPath = path.join(outputPath, 'modules/cronJobs')
 			yield fs.mkdirp(cronJobsPath)
 			outputFile = yield fs.open(path.join(cronJobsPath, `index.js`), 'w')

@@ -101,6 +101,7 @@ module.exports = {
 						try {
 							yield instance.connectToDB()
 						} catch(e) {
+							console.log(e)
 							didThrowAnError = e && (e.name === 'SequelizeConnectionError')
 						}
 						
