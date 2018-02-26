@@ -18,6 +18,7 @@ const
 	CodeGenerator = require('./modules/codeGenerator'),
 	coreTests = require('./core.spec'),
 	{DBModule} = require('./modules/db'),
+	{describeSuiteConditionally, runTestConditionally} = require('./modules/toolbelt'),
 	Emails = require('./modules/emails'),
 	GeneralStore = require('./modules/generalStore'),
 	Logger = require('./modules/errorLogger'),
@@ -49,12 +50,12 @@ class Core {
 		})
 	}
 
-	loadDB() {
+	loadDB(mockMode) {
 		let instance = this
 		return co(function*() {
 			const {config, logger, generalStore, tokenManager} = instance
 			let db = new DBModule(config, logger, generalStore, tokenManager)
-			yield db.connectToDB()
+			yield db.connectToDB(mockMode)
 			yield db.loadComponents()
 			yield db.createAssociations()
 			instance.modules.db = db
@@ -172,16 +173,20 @@ class Core {
 				})
 
 			// load the client module server routes and start the servers
-			let clientModules = modules.clients
-			for (const moduleName in clientModules) {
-				let clientModule = clientModules[moduleName]
-				yield clientModule.mountRoutes(sessionStore)
+			if (modules.clients) {
+				let clientModules = modules.clients
+				for (const moduleName in clientModules) {
+					let clientModule = clientModules[moduleName]
+					yield clientModule.mountRoutes(sessionStore)
+				}
 			}
 
 			// load the api module server routes and start the servers
-			let apiModules = modules.apis
-			for (const moduleName in apiModules) {
-				yield apiModules[moduleName].mountRoutes(sessionStore)
+			if (modules.apis) {
+				let apiModules = modules.apis
+				for (const moduleName in apiModules) {
+					yield apiModules[moduleName].mountRoutes(sessionStore)
+				}
 			}
 
 			if (config.migrations && config.migrations.startAPI) {
@@ -189,6 +194,93 @@ class Core {
 			}
 
 			return true
+		})
+	}
+
+	runTests({testDB, testClients, testAPIs}) {
+		const instance = this,
+			{config} = instance
+		describe(config.projectName, function() {
+			before(function() {
+				return co(function*() {
+					yield instance.loadDB(true)
+					if (config.emails) {
+						yield instance.loadMailClient()
+					}
+					instance.loadMigrations()
+					if (testDB) {
+						yield instance.loadClients()
+					}
+					if (testAPIs) {
+						yield instance.loadAPIs()
+					}
+					if (config.cronJobs) {
+						instance.loadCRONJobs()
+					}
+					yield instance.listen()
+					try {
+						let stats = yield fs.lstat(path.join(config.migrations.staticDataPath, 'mockStaticData.json'))
+						if (stats.isFile()) {
+							yield instance.migrations.insertStaticData('mockStaticData')
+						}
+					} catch(e) {
+						console.log('Error while populating mockStaticData, skipping: ', e)
+					}
+					return true
+				})
+			})
+			describeSuiteConditionally(testDB === true, 'db module', function() {
+				it('should test all db module components successfully', function() {
+					const dbModule = instance.modules.db,
+						dbComponents = dbModule.components
+					for (const i in dbComponents) {
+						const dbComponent = dbModule.components[i],
+							{componentName, specMethodNames} = dbComponent
+						describeSuiteConditionally(
+							(specMethodNames instanceof Array) && specMethodNames.length,
+							`db module, component ${componentName}`,
+							function() {
+								for (const j in specMethodNames) {
+									dbComponent[specMethodNames[j]]()
+								}
+							}
+						)
+					}
+					return true
+				})
+			})
+			describeSuiteConditionally((testClients === true) || ((typeof testClients === 'string') && testClients.length), 'client modules', function() {
+				it('should test all client modules\'s components successfully', function() {
+					const clientModules = instance.modules.clients
+					let moduleNamesToTest = []
+					if (typeof testClients === 'string') {
+						moduleNamesToTest = testClients.split(',')
+					} else {
+						moduleNamesToTest = Object.keys(clientModules)
+					}
+					for (const i in moduleNamesToTest) {
+						const clientModule = clientModules[moduleNamesToTest[i]]
+						if (!clientModule) {
+							continue
+						}
+						const clientComponents = clientModule.components
+						for (const i in clientComponents) {
+							const clientComponent = clientModule.components[i],
+								{componentName, specMethodNames} = clientComponent
+							describeSuiteConditionally(
+								(specMethodNames instanceof Array) && specMethodNames.length,
+								`client module ${clientModule.moduleName}, component ${componentName}`,
+								function() {
+									for (const j in specMethodNames) {
+										clientComponent[specMethodNames[j]]()
+									}
+								}
+							)
+						}
+					}
+					return true
+				})
+			})
 		})
 	}
 }

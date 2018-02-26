@@ -1,9 +1,29 @@
 {
-	"GlobalConfigs": {
+	"globalConfigs": {
 		"primaryKeys": ["id"],
 		"data": [
 			{"id": 1, "field": "testField", "value": "test", "description": "Test Field", "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
 			{"id": 2, "field": "testField2", "value": "test2", "description": "Test Field 2", "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
+		]
+	},
+	"modules": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"id": 1, "name": "Module 1", "route": "/module1", "description": "Module1", "order": 0, "alwaysAccessible": false, "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 2, "name": "Module 2", "route": "/module2", "description": "Module2", "order": 1, "alwaysAccessible": true, "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
+		]
+	},
+	"moduleAccessPoints": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"id": 1, "moduleId": 1, "name": "Create", "description": "Create", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 2, "moduleId": 1, "name": "View", "description": "View", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 3, "moduleId": 1, "name": "Edit", "description": "Edit", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 4, "moduleId": 1, "name": "Delete", "description": "Delete", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 5, "moduleId": 2, "name": "Create", "description": "Create", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 6, "moduleId": 2, "name": "View", "description": "View", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 7, "moduleId": 2, "name": "Edit", "description": "Edit", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 8, "moduleId": 2, "name": "Delete", "description": "Delete", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
 		]
 	},
 	"userTypes": {
@@ -16,6 +36,15 @@
 		"primaryKeys": ["id"],
 		"data": [
 			{"id": 1, "typeId": 1, "firstName": "Admin", "lastName": "User", "email": "admin@ramster.com", "password": "1234", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
+		]
+	},
+	"userTypeModuleAccessPoints": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"moduleAccessPointId": 1, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"moduleAccessPointId": 2, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"moduleAccessPointId": 3, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"moduleAccessPointId": 4, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"}
 		]
 	}
 }

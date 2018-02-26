@@ -86,9 +86,8 @@
     "url": "git+https://github.com/RazorDude/ramster.git"
   },
   "scripts": {
-    "test-builds": "mocha test/builds.js",
-    "test-devservers": "mocha test/devservers.js",
-    "test": "mocha test/test.js"
+	"test": "mocha test/test.js",
+	"testRunTests": "mocha test/index.js --runTests=true --testDB=true --testClients=true --testAPIs=true"
   },
   "version": "0.6.22",
   "devDependencies": {

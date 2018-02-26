@@ -26,24 +26,33 @@ class DBModule {
 		this.sequelize = null
 	}
 
-	connectToDB() {
+	connectToDB(mockMode) {
 		let instance = this
 		return co(function*() {
 			const {postgreSQL} = instance.config,
 				{dbType} = instance.moduleConfig
 
 			if (dbType === 'postgreSQL') {
-				const sequelize = new Sequelize(postgreSQL.database, postgreSQL.user, postgreSQL.password, {
-					host: postgreSQL.host,
-					port: postgreSQL.port,
-					dialect: 'postgres',
-					logging: (postgreSQL.logging === true) ?
-						(sql) => {
-							console.log('================ /SQL\\ ==================')
-							console.log(pd.sql(sql))
-							console.log('================ \\SQL/ ==================')
-						} : false
-				})
+				let databaseName = postgreSQL.database
+				if (mockMode && postgreSQL.mockDatabase) {
+					instance.runningInMockMode = true
+					databaseName = postgreSQL.mockDatabase
+				}
+				const sequelize = new Sequelize(
+					databaseName,
+					postgreSQL.user,
+					postgreSQL.password, {
+						host: postgreSQL.host,
+						port: postgreSQL.port,
+						dialect: 'postgres',
+						logging: (postgreSQL.logging === true) ?
+							(sql) => {
+								console.log('================ /SQL\\ ==================')
+								console.log(pd.sql(sql))
+								console.log('================ \\SQL/ ==================')
+							} : false
+					}
+				)
 				yield sequelize.authenticate()
 				instance.Sequelize = Sequelize
 				instance.sequelize = sequelize

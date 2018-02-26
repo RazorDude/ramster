@@ -4,8 +4,8 @@ const
 	Base = require('ramster').BaseDBComponent
 
 class Component extends Base {
-	constructor(sequelize, Sequelize, settings) {
-		super(settings)
+	constructor(sequelize, Sequelize) {
+		super()
 
 		this.model = sequelize.define('module', {
 			name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},

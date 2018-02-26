@@ -13,6 +13,12 @@ co(function*() {
 	yield codeGenerator.generateImagesRedirectNGINXConfig(path.join(__dirname, 'config/nginx'))
 	yield codeGenerator.buildLayoutFile('site')
 
+	let projectMainFilePath = path.join(__dirname, 'index.js'),
+		fileData = (yield fs.readFile(projectMainFilePath)).toString().replace(/require\('ramster'\)/g, `require('../index')`),
+		fd = yield fs.open(projectMainFilePath, 'w')
+	yield fs.writeFile(fd, fileData)
+	yield fs.close(fd)
+
 	// replace "require('ramster')" with "require('../../../../index')" in db modules and with "require('../../../../../index')" in clients and apis
 	let dbComponentsPath = path.join(__dirname, 'modules/db'),
 		dbComponents = yield fs.readdir(dbComponentsPath)

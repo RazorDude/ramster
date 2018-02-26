@@ -1,14 +1,14 @@
 'use strict'
 
 const
-	Base = require('../../../../index').BaseDBComponent,
+	{BaseDBComponent, toolbelt} = require('../../../../index'),
 	bcryptjs = require('bcryptjs'),
 	co = require('co'),
-	{generateRandomString} = require('../../../../index').toolbelt,
+	{generateRandomString} = toolbelt,
 	merge = require('deepmerge'),
 	moment = require('moment')
 
-class Component extends Base {
+class Component extends BaseDBComponent {
 	constructor(sequelize, Sequelize) {
 		super()
 
@@ -108,46 +108,53 @@ class Component extends Base {
 		]
 	}
 
-	getPermissionsData({keyAccessPoints}) {
-		let data = {}
-		keyAccessPoints.forEach((kap, index) => {
-			data[`can${kap.name.replace(/\s/g, '')}`] = true
-		})
-		return data
-	}
-
 	getUserWithPermissionsData(filters) {
 		const instance = this,
-			{roles, keyAccessPoints, modules} = this.db.components
+			{userTypes, moduleAccessPoints, modules} = this.db.components
 		return co(function*() {
-			let alwaysAccessibleModules = yield modules.model.findAll({where: {alwaysAccessible: true}})
-				let user = yield instance.model.scope('full').findOne({
+			if (!filters || (typeof filters !== 'object') || !Object.keys(filters).length) {
+				throw {customMessage: 'The filters argument must be a non-empty object.'}
+			}
+			let alwaysAccessibleModules = yield modules.model.findAll({
+					where: {alwaysAccessible: true},
+					include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+				}),
+				user = yield instance.model.scope('full').findOne({
 					where: filters,
-					include: {
-						model: roles.model,
-						as: 'role',
-						include: [
-							{model: keyAccessPoints.model, as: 'keyAccessPoints'},
-							{model: modules.model, as: 'roleModules'}
-						]
-					}
+					include: [{
+						model: userTypes.model,
+						as: 'type',
+						include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+					}]
 				})
-				if (user) {
-					let moduleIds = [],
-						roleModules = user.role.roleModules
-					roleModules.forEach((module, index) => {
-						if (module.alwaysAccessible) {
-							moduleIds.push(module.id)
+			if (user) {
+				user = user.dataValues
+				let permissionsData = {}
+				user.type.accessPoints.forEach((ap, index) => {
+					let pd = permissionsData[ap.moduleId]
+					if (!pd) {
+						pd = {text: {}, ids: []}
+						permissionsData[ap.moduleId] = pd
+					}
+					pd.ids.push(ap.id)
+					pd.text[`can${ap.name.replace(/\s/g, '')}`] = true
+				})
+				alwaysAccessibleModules.forEach((module, index) => {
+					let pd = permissionsData[module.id]
+					if (!pd) {
+						pd = {text: {}, ids: []}
+						permissionsData[module.id] = pd
+					}
+					module.accessPoints.forEach((ap, apIndex) => {
+						if (pd.ids.indexOf(ap.id) === -1) {
+							pd.ids.push(ap.id)
+							pd.text[`can${ap.name.replace(/\s/g, '')}`] = true
 						}
 					})
-					alwaysAccessibleModules.forEach((module, index) => {
-						if (moduleIds.indexOf(module.id) === -1) {
-							roleModules.push(module)
-						}
-					})
-					user.dataValues.permissionsData = instance.getPermissionsData({keyAccessPoints: user.role.keyAccessPoints})
-				}
-				return user
+				})
+				user.permissionsData = permissionsData
+			}
+			return user
 		})
 	}
 

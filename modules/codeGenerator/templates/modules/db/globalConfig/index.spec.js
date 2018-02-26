@@ -1,13 +1,11 @@
 const
 	assert = require('assert'),
-	co = require('co'),
-	fs = require('fs-extra'),
-	path = require('path')
+	co = require('co')
 
 module.exports = {
 	testGetField: function() {
 		const instance = this
-		describe('client.module.getField', function() {
+		describe('globalConfig.getField', function() {
 			it('should return null if the field is not found', function() {
 				return co(function*() {
 					assert((yield instance.getField('suchAFieldDoesntExist')) === null)
@@ -27,16 +25,9 @@ module.exports = {
 						console.log('The method did not return the field.')
 						dataIsGood = false
 					}
-					if (dataIsGood) {
-						fieldFromDB = fieldFromDB.dataValues
-						fieldFromMethod = fieldFromMethod.dataValues
-						for (const i in fieldFromDB) {
-							if (fieldFromDB[i] !== fieldFromMethod[i]) {
-								console.log(`Bad value '${fieldFromMethod[i]}' for field "${i}".`)
-								dataIsGood = false
-								break
-							}
-						}
+					if (dataIsGood && (fieldFromDB.value !== fieldFromMethod)) {
+						console.log(`Bad value '${fieldFromMethod}', expected '${fieldFromDB.value}'`)
+						dataIsGood = false
 					}
 					assert(dataIsGood)
 					return true
@@ -46,15 +37,15 @@ module.exports = {
 	},
 	testGetFields: function() {
 		const instance = this
-		describe('client.module.getFields', function() {
-			it('should return a blank array if no fields are not found', function() {
+		describe('globalConfig.getFields', function() {
+			it('should return an empty object if no fields are found', function() {
 				return co(function*() {
 					let result = yield instance.getFields(['suchAFieldDoesntExist'])
-					assert((result instanceof Array) && !result.length)
+					assert(result && (typeof result === 'object') && !Object.keys(result).length)
 					return true
 				})
 			})
-			it('should return the fields data if the fields are found', function() {
+			it('should return the field values data object if the fields are found', function() {
 				return co(function*() {
 					let fieldsFromMethod = yield instance.getFields(['testField', 'testField2']),
 						fieldsFromDB = yield instance.model.findAll({where: {field: ['testField', 'testField2']}}),
@@ -76,8 +67,8 @@ module.exports = {
 								dataIsGood = false
 								break
 							}
-							if (fieldFromMethod.value !== fieldFromDB.value) {
-								console.log(`Bad value '${fieldFromMethod.value}' for field "${fieldFromDB.field}".`)
+							if (fieldFromMethod !== fieldFromDB.value) {
+								console.log(`Bad value '${fieldFromMethod}' for field "${fieldFromDB.field}".`)
 								dataIsGood = false
 								break
 							}

@@ -123,7 +123,14 @@ module.exports = {
 						return true
 					})
 				})
-				it('should execute successfully if all paramters are correct', function() {
+				it('should execute successfully if all paramters are correct and mockMode is set to true', function() {
+					return co(function*() {
+						yield instance.connectToDB(true)
+						assert(instance.runningInMockMode)
+						return true
+					})
+				})
+				it('should execute successfully if all paramters are correct and mockMode is not set to true', function() {
 					return co(function*() {
 						yield instance.connectToDB()
 						assert(true)
