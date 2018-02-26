@@ -287,15 +287,15 @@ class CodeGenerator {
 		})
 	}
 
-	generateLayoutFile(outputPath) {
+	generateLayoutFile(outputPath, configProfile) {
 		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
 			}
 			yield instance.checkOutputPath(outputPath)
-			let outputFile = yield fs.open(path.join(outputPath, 'layout_local.pug'), 'w')
-			yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, 'templates/clients/site/layout_local.pug')))
+			let outputFile = yield fs.open(path.join(outputPath, `layout_${configProfile || 'local'}.pug`), 'w')
+			yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/clients/site/layout_${configProfile || 'local'}.pug`)))
 			yield fs.close(outputFile)
 			return true
 		})
@@ -333,7 +333,7 @@ class CodeGenerator {
 			yield instance.generateBlankProject(outputPath, configProfile)
 			yield fs.mkdirp(path.join(outputPath, 'config/webpack'))
 			yield instance.generateWebpackConfig(path.join(outputPath, 'config/webpack'), 'react')
-			yield instance.generateLayoutFile(path.join(outputPath, 'clients/site'))
+			yield instance.generateLayoutFile(path.join(outputPath, 'clients/site'), configProfile)
 			yield fs.mkdirp(path.join(outputPath, 'public/site'))
 			for (const i in dbModules) {
 				let moduleName = dbModules[i],

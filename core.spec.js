@@ -21,6 +21,18 @@ const
 module.exports = {
 	testMe: function() {
 		const instance = this
+		let aTestHasFailed = false
+		afterEach(function() {
+			if (!aTestHasFailed && (this.currentTest.state !== 'passed')) {
+				aTestHasFailed = true
+			}
+		})
+		after((function() {
+			if (aTestHasFailed) {
+				process.exit(1)
+			}
+			process.exit(0)
+		}))
 		describe('core', function() {
 			it('should execute testConfig successfully', function() {
 				instance.testConfig()
