@@ -6,10 +6,16 @@ cache:
   directories:
     - node_modules
     - $HOME/.npm
+services:
+  - postgresql
+  - redis-server
+addons:
+  postgresql: "9.5"
 branches:
   only:
     - master
 before_install:
   - npm install
   - npm i mocha -g
+  - psql -c 'create database travis_ci_test;' -U postgres
   - npm run test-travis
