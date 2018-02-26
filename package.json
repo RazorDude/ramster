@@ -1,32 +1,4 @@
 {
-  "_from": "ramster@^0.6.1",
-  "_id": "ramster@0.6.11",
-  "_inBundle": false,
-  "_integrity": "sha1-SQoil6bNYoF52gpbb7WGCuGswG4=",
-  "_location": "/ramster",
-  "_phantomChildren": {
-    "graceful-fs": "4.1.11",
-    "passport-strategy": "1.0.0",
-    "pause": "0.0.1",
-    "universalify": "0.1.1"
-  },
-  "_requested": {
-    "type": "range",
-    "registry": true,
-    "raw": "ramster@^0.6.1",
-    "name": "ramster",
-    "escapedName": "ramster",
-    "rawSpec": "^0.6.1",
-    "saveSpec": null,
-    "fetchSpec": "^0.6.1"
-  },
-  "_requiredBy": [
-    "/"
-  ],
-  "_resolved": "https://registry.npmjs.org/ramster/-/ramster-0.6.11.tgz",
-  "_shasum": "490a2297a6cd628179da0a5b6fb5860ae1acc06e",
-  "_spec": "ramster@^0.6.1",
-  "_where": "C:\\code\\stocked-nyetimber\\v3",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -89,7 +61,7 @@
 	"test": "mocha test/test.js",
 	"testRunTests": "mocha test/index.js --runTests=true --testDB=true --testClients=true --testAPIs=true"
   },
-  "version": "0.6.22",
+  "version": "1.0.0-beta0",
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.40",
     "@babel/plugin-transform-runtime": "^7.0.0-beta.40",
