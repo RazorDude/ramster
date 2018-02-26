@@ -25,7 +25,7 @@
     "express-session": "^1.14.1",
     "fs-extra": "^4.0.2",
     "handlebars": "^4.0.11",
-    "jsonwebtoken": "^7.1.9",
+    "jsonwebtoken": "^8.0.0",
     "moment": "^2.15.0",
     "morgan": "^1.7.0",
     "node-xlsx": "^0.7.2",
@@ -58,8 +58,8 @@
     "url": "git+https://github.com/RazorDude/ramster.git"
   },
   "scripts": {
-	"test": "mocha test/test.js",
-	"testRunTests": "mocha test/index.js --runTests=true --testDB=true --testClients=true --testAPIs=true"
+    "test": "mocha test/test.js",
+    "testRunTests": "mocha test/index.js --runTests=true --testDB=true --testClients=true --testAPIs=true"
   },
   "version": "1.0.0-beta0",
   "devDependencies": {
