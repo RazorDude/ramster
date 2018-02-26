@@ -1,10 +1,15 @@
+sudo: enabled
 language: node_js
 node_js:
   - "lts/*"
-sudo: enabled
+cache:
+  directories:
+    - node_modules
+    - $HOME/.npm
 branches:
   only:
     - master
 before_install:
   - npm install
+  - npm i mocha -g
   - npm run test-travis

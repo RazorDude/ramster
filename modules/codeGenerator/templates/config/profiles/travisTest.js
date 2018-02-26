@@ -18,7 +18,7 @@ module.exports = {
 	hostProtocol,
 	hostAddress,
 	wsPort: site.wsPort,
-	wsConfigFolderPath: '/var',
+	wsConfigFolderPath: __dirname,
 	postgreSQL: {
 		user: 'postgres',
 		password: 'postgres',
