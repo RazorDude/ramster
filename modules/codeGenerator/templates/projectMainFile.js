@@ -1,6 +1,6 @@
 'use strict'
 const
-	argv = require('optimist').argv,
+	argv = require('yargs').argv,
 	co = require('co'),
 	config = require('./config'),
 	{Core} = require('ramster'),
@@ -8,9 +8,9 @@ const
 
 if (argv.runTests) {
 	ramster.runTests({
-		testDB: argv.testDB === 'true',
-		testClients: argv.testClients === 'true' ? true : argv.testClients,
-		testAPIs: argv.testAPIs === 'true' ? true : argv.testAPIs
+		testDB: (argv.testDB === 'true') || (argv.testDB === true),
+		testClients: (argv.testClients === 'true') || (argv.testClients === true) ? true : argv.testClients,
+		testAPIs: (argv.testAPIs === 'true') || (argv.testAPIs === true) ? true : argv.testAPIs
 	})
 } else {
 	co(function*() {

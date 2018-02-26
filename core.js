@@ -281,6 +281,38 @@ class Core {
 					return true
 				})
 			})
+			describeSuiteConditionally((testAPIs === true) || ((typeof testAPIs === 'string') && testAPIs.length), 'client modules', function() {
+				it('should test all client modules\'s components successfully', function() {
+					const apiModules = instance.modules.apis
+					let moduleNamesToTest = []
+					if (typeof testAPIs === 'string') {
+						moduleNamesToTest = testAPIs.split(',')
+					} else {
+						moduleNamesToTest = Object.keys(apiModules)
+					}
+					for (const i in moduleNamesToTest) {
+						const apiModule = apiModules[moduleNamesToTest[i]]
+						if (!apiModule) {
+							continue
+						}
+						const apiComponents = apiModule.components
+						for (const i in apiComponents) {
+							const apiComponent = apiModule.components[i],
+								{componentName, specMethodNames} = apiComponent
+							describeSuiteConditionally(
+								(specMethodNames instanceof Array) && specMethodNames.length,
+								`client module ${apiModule.moduleName}, component ${componentName}`,
+								function() {
+									for (const j in specMethodNames) {
+										apiComponent[specMethodNames[j]]()
+									}
+								}
+							)
+						}
+					}
+					return true
+				})
+			})
 		})
 	}
 }

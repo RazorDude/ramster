@@ -1,2 +1,8 @@
 language: node_js
 sudo: enabled
+branches:
+  only:
+    - master
+before_install:
+  - npm install
+  - npm run test

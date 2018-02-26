@@ -2,9 +2,10 @@
 - Added a fury.io npm version badge.
 - Added a david-dm dependencies badge.
 - Added a snyk.io security badge.
-- Added a base .travis.yml file.
+- Added a .travis.yml build file and a travis-ci build badge.
 - Removed inconsistencies that were left in up till now for the sake of backwards compatibility.
 - Renamed index.js to core.js. Added a new index.js file that exports everything like the old one used to.
+- Moved the whole project from optimist to yargs.
 - Config changes:
 	- *BREAKING* - renamed globalPublicPath to clientModulesPath.
 	- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.

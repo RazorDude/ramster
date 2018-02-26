@@ -50,6 +50,7 @@ module.exports = {
 	testMe: function(config, dirName) {
 		describe('webpackDevserver', function() {
 			it('should throw an error if the provided webpackConfigType does not exist', function() {
+				this.timeout(10000)
 				return co(function*() {
 					let result = yield spawnPromise(dirName, [])
 					assert((result.code !== 0) && (result.lastBreakpoint === 0))

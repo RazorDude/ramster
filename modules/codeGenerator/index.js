@@ -16,6 +16,7 @@ class CodeGenerator {
 		if (config) {
 			this.config = config
 		}
+		this.configRequiredForMethods = ['buildLayoutFile', 'generateNGINXConfig']
 	}
 
 	buildLayoutFile(clientModuleName) {
@@ -109,8 +110,7 @@ class CodeGenerator {
 	}
 
 	generateImagesRedirectNGINXConfig(outputPath) {
-		const instance = this,
-			{config} = this
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
@@ -197,8 +197,7 @@ class CodeGenerator {
 	}
 
 	generateWebpackConfig(outputPath, type) {
-		const instance = this,
-			{config} = this
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
@@ -219,8 +218,7 @@ class CodeGenerator {
 	}
 
 	generateWebpackBuildTools(outputPath) {
-		const instance = this,
-			{config} = this
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
@@ -237,8 +235,7 @@ class CodeGenerator {
 	}
 
 	generateProjectMainFile(outputPath) {
-		const instance = this,
-			{config} = this
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
@@ -252,8 +249,7 @@ class CodeGenerator {
 	}
 
 	generateGitignore(outputPath) {
-		const instance = this,
-			{config} = this
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
@@ -267,8 +263,7 @@ class CodeGenerator {
 	}
 
 	generateFolders(outputPath) {
-		const instance = this,
-			{config} = this
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
@@ -293,8 +288,7 @@ class CodeGenerator {
 	}
 
 	generateLayoutFile(outputPath) {
-		const instance = this,
-			{config} = this
+		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}

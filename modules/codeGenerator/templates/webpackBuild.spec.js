@@ -43,6 +43,7 @@ module.exports = {
 	testMe: function(config, dirName) {
 		describe('webpackBuild', function() {
 			it('should throw an error if the provided webpackConfigType does not exist', function() {
+				this.timeout(10000)
 				return co(function*() {
 					let result = yield spawnPromise(dirName, [])
 					assert((result.code !== 0) && (result.lastBreakpoint === 0))
@@ -50,6 +51,7 @@ module.exports = {
 				})
 			})
 			it('should throw an error if the provided configProfile does not exist', function() {
+				this.timeout(10000)
 				return co(function*() {
 					let result = yield spawnPromise(dirName, ['--webpackConfigType=react', '--configProfile=absolutelyFake'])
 					assert((result.code !== 0) && (result.lastBreakpoint === 1))
@@ -57,6 +59,7 @@ module.exports = {
 				})
 			})
 			it('should execute successfully and do nothing if all parameters are correct, configProfile is not set and buildForClientModules is not set', function() {
+				this.timeout(10000)
 				return co(function*() {
 					let siteMainJSFilePath = path.join(config.clientModulesPublicPath, 'site/main.js')
 					yield fs.remove(siteMainJSFilePath)
@@ -72,6 +75,7 @@ module.exports = {
 				})
 			})
 			it('should execute successfully and do nothing if all parameters are correct, configProfile is set and valid and buildForClientModules is not set', function() {
+				this.timeout(10000)
 				return co(function*() {
 					let siteMainJSFilePath = path.join(config.clientModulesPublicPath, 'site/main.js')
 					yield fs.remove(siteMainJSFilePath)

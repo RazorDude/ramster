@@ -1,7 +1,7 @@
 'use strict'
 console.log('[webpackDevserver info]: Starting script...')
 const
-	argv = require('optimist').argv,
+	argv = require('yargs').argv,
 	co = require('co'),
 	getWebpackConfig = require(`./config/webpack/${argv.webpackConfigType}`),
 	merge = require('deepmerge'),

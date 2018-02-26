@@ -1,6 +1,7 @@
 ramster [![npm version](https://badge.fury.io/js/ramster.svg)](https://badge.fury.io/js/ramster)
 [![dependencies Status](https://david-dm.org/razordude/ramster/status.svg)](https://david-dm.org/razordude/ramster)
 [![Known Vulnerabilities](https://snyk.io/test/github/razordude/ramster/badge.svg)](https://snyk.io/test/github/razordude/ramster)
+[![Build Status](https://travis-ci.org/RazorDude/ramster.svg?branch=master)](https://travis-ci.org/RazorDude/ramster)
 ==
 Ramster is a standalone NodeJS MVC boilerplate, based on the <a href="https://github.com/expressjs/express">express</a> framework and <a href="https://github.com/tj/co">co</a>.<br/> It runs on node 6+.<br/>
 The goal of this module is to speed up development as much as possible, by providing a fast, reliable, customizable and secure standalone boilerplate, that can cover a lot of use cases with the proper configuration. By using ramster, you get to focus on developing your business logic and the actual specifics of your project, instead of worrying about the wireframe and the architecture.<br>
@@ -61,7 +62,7 @@ A lot of things were added in v1.0, including:
 - In the migrations module, the DB state is auto-restore for failed data inserts.
 - Created a buildAssociation method for the db models, that automates the old associate method.
 - Added a built-in permissions system for client and api servers.
-- Added a cli that will be used to run commands from the console - migrations, config and file generation, testing, etc.
+- Created a separate cli package (ramster-cli) that can be used to run commands from the console - migrations, config and file generation, testing, etc.
 - Added a lot of good an informative badges on top of this readme, all of which must shine in bright green :)
 
 <br/>

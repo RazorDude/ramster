@@ -1,7 +1,7 @@
 'use strict'
 
 const
-	argv = require('optimist').argv,
+	argv = require('yargs').argv,
 	commonConfig = require(`./common.js`),
 	merge = require('deepmerge'),
 	profileConfig = require(`./profiles/${argv.configProfile || 'local'}`)
