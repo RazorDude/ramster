@@ -106,7 +106,7 @@ class CodeGenerator {
 		if ((typeof profileName !== 'string') || !profileName.length) {
 			throw {customMessage: 'The profileName argument must be a non-empty string.'}
 		}
-		return this.generateConfigFile(path.join(outputPath, './profiles'), `${profileName}.js`, path.join(__dirname, './templates/config/profiles/local.js'))
+		return this.generateConfigFile(path.join(outputPath, './profiles'), `${profileName}.js`, path.join(__dirname, `./templates/config/profiles/${profileName}.js`))
 	}
 
 	generateImagesRedirectNGINXConfig(outputPath) {
