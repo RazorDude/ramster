@@ -17,5 +17,6 @@ branches:
 before_install:
   - npm install
   - npm i mocha -g
-  - psql -c 'create database travis_ci_test;' -U postgres
+  - psql -c 'create database ramster_v1;' -U postgres
+  - psql -c 'create database ramster_v1_mock;' -U postgres
   - npm run test-travis
