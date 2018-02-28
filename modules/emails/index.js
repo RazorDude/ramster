@@ -8,7 +8,7 @@ const
 	spec = require('./index.spec')
 
 class Emails {
-	constructor(config) {
+	constructor(config, mockMode) {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
@@ -17,11 +17,12 @@ class Emails {
 		this.sendgrid = sendgrid
 		this.sendgrid.setApiKey(config.emails.sendgridApiKey)
 		this.sender = config.emails.emailSender
+		this.runningInMockMode = mockMode === true
 	}
 
 	sendEmail(templateName, to, subject, options) {
 		const instance = this,
-			{sender, emailsConfig} = this
+			{emailsConfig, runningInMockMode, sender} = this
 		return co(function*(){
 			if ((typeof templateName !== 'string') || !templateName.length) {
 				throw {customMessage: 'Invalid templateName string provided.'}
@@ -72,6 +73,9 @@ class Emails {
 				rq.bcc = bccs
 			}
 
+			if (runningInMockMode) {
+				return {success: true}
+			}
 			return yield instance.sendgrid.send(rq)
 		})
 	}

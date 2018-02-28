@@ -8,7 +8,7 @@
 - Renamed index.js to core.js. Added a new index.js file that exports everything like the old one used to.
 - Moved the whole project from optimist to yargs.
 - Config changes:
-	- *BREAKING* - renamed globalPublicPath to clientModulesPath.
+	- *BREAKING* - renamed globalPublicPath to clientModulesPublicPath.
 	- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.
 	- *BREAKING* - renamed protocol to hostProtocol.
 	- *BREAKING* - in the db config, it is now mandatory to specify "dbType"; it no longer defaults to 'postgres'.
@@ -46,7 +46,8 @@
 	- Added a lot of tests, complete code coverage.
 - emails module:
 	- Reworked to no longer rely on the db module.
-	- Added the bcc array to the optional list of arguments
+	- Added a mock execution mode (set in the constructor).
+	- Added the bcc array to the optional list of arguments.
 	- Added a lot of tests, complete code coverage.
 - migrations module:
 	- *BREAKING* Constructor is now in the form constructor(config, sequelize, dbComponents, seedingOrder), rather than (config, db).

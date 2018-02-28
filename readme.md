@@ -9,8 +9,9 @@
 ramster
 ==
 Ramster is a standalone NodeJS MVC boilerplate, based on the <a href="https://github.com/expressjs/express">express</a> framework and <a href="https://github.com/tj/co">co</a>.<br/> It runs on node 8+.<br/>
-The goal of this module is to speed up development as much as possible, by providing a fast, reliable, customizable and secure standalone boilerplate, that can cover a lot of use cases with the proper configuration. By using ramster, you get to focus on developing your business logic and the actual specifics of your project, instead of worrying about the wireframe and the architecture.<br>
-With the new v1.0 out, it is of utmost importance that proper docs are created, which I will do in the very near future and make it a v1.1 release.<br><br>
+The goal of this module is to speed up development as much as possible, by providing a fast, reliable, customizable and secure standalone boilerplate, that can cover a lot of use cases with the proper configuration. By using ramster, you get to focus on developing your business logic and the actual specifics of your project, instead of worrying about the wireframe and the architecture.<br/>
+Be sure to checkout out the <a href="https://github.com/RazorDude/ramster-cli">ramster-cli</a> package as well.<br/>
+With the new v1.0 out, it is of utmost importance that proper docs are created, which I will do in the very near future and make it a v1.1 release.<br/><br/>
 
 
 ___
