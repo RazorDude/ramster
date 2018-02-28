@@ -205,7 +205,7 @@ class Core {
 				return co(function*() {
 					yield instance.loadDB(true)
 					if (config.emails) {
-						yield instance.loadMailClient()
+						yield instance.loadMailClient(config, true)
 					}
 					instance.loadMigrations()
 					if (testDB) {
