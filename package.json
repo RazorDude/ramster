@@ -1,4 +1,6 @@
 {
+  "name": "ramster",
+  "version": "1.0.0-beta.2",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -54,7 +56,6 @@
   ],
   "license": "MIT",
   "main": "index.js",
-  "name": "ramster",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/RazorDude/ramster.git"
@@ -64,7 +65,6 @@
     "test-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest",
     "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testDB --testClients --testAPIs"
   },
-  "version": "1.0.0-beta.1",
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.40",
     "@babel/plugin-transform-runtime": "^7.0.0-beta.40",
