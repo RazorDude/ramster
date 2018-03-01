@@ -205,6 +205,7 @@ class Core {
 			{config} = instance
 		describe(config.projectName, function() {
 			before(function() {
+				this.timeout(50000)
 				return co(function*() {
 					yield instance.loadDB(true)
 					if (config.emails) {
