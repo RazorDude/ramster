@@ -58,6 +58,9 @@ class Core {
 			yield db.connectToDB(mockMode)
 			yield db.loadComponents()
 			yield db.createAssociations()
+			if (mockMode) {
+				yield db.sequelize.sync({force: true})
+			}
 			instance.modules.db = db
 			return true
 		})
