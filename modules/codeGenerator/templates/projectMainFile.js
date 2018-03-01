@@ -14,10 +14,12 @@ if (argv.runTests) {
 		}
 	})
 	after(function() {
-		if (thereWereErrors) {
-			process.exit(1)
-		}
-		process.exit(0)
+		setTimeout(() => {
+			if (thereWereErrors) {
+				process.exit(1)
+			}
+			process.exit(0)
+		}, 1000)
 	})
 	ramster.runTests({
 		testDB: (argv.testDB === 'true') || (argv.testDB === true),
