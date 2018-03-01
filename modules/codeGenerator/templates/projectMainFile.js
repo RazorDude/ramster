@@ -17,10 +17,10 @@ if (argv.runTests) {
 		yield ramster.loadDependencies()
 		yield ramster.loadDB()
 		yield ramster.loadMailClient()
-		yield ramster.loadMigrations()
+		ramster.loadMigrations()
 		yield ramster.loadClients()
 		yield ramster.loadAPIs()
-		yield ramster.loadCRONJobs()
+		ramster.loadCRONJobs()
 		yield ramster.listen()
 	}).then((res) => true, (err) => console.log(err))
 }
