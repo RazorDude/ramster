@@ -66,16 +66,16 @@ class Core {
 		})
 	}
 
-	loadMailClient() {
+	loadMailClient(mockMode) {
 		let instance = this
 		return co(function*() {
 			const {config} = instance
 			let db = instance.modules.db
 			if (config.emails.customModulePath) {
 				let CustomMailClient = require(config.emails.customModulePath)
-				instance.mailClient = new CustomMailClient(config)
+				instance.mailClient = new CustomMailClient(config, mockMode)
 			} else {
-				instance.mailClient = new Emails(config)
+				instance.mailClient = new Emails(config, mockMode)
 			}
 			if (db) {
 				db.mailClient = instance.mailClient
