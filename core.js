@@ -207,6 +207,7 @@ class Core {
 			before(function() {
 				this.timeout(50000)
 				return co(function*() {
+					yield instance.loadDependencies()
 					yield instance.loadDB(true)
 					if (config.emails) {
 						yield instance.loadMailClient(true)
