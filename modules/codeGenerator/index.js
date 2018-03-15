@@ -315,7 +315,7 @@ class CodeGenerator {
 			yield instance.generateCommonConfigFile(path.join(outputPath, 'config'))
 			yield instance.generateProfileConfigFile(path.join(outputPath, 'config'), configProfile || 'local')
 			yield instance.generateWebpackBuildTools(outputPath)
-			yield fs.copyFile(path.join(__dirname, 'templates/modules/emails/templates/sample.pug'), path.join(outputPath, 'modules/emails/templates/sample.pug'))
+			yield fs.copy(path.join(__dirname, 'templates/modules/emails/templates/sample.pug'), path.join(outputPath, 'modules/emails/templates/sample.pug'))
 			return true
 		})
 	}

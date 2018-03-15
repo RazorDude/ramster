@@ -36,6 +36,9 @@ module.exports = {
 	migrations: {
 		serverPort: 1177
 	},
+	db: {
+		tokensSecret: 'jwtSecret'
+	},
 	clients: {
 		site: {
 			serverPort: site.port,

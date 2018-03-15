@@ -18,7 +18,7 @@ class Component extends BaseClientComponent {
 		super({
 			componentName,
 			routes: [
-				{method: 'get', path: '/users/loadLoggedInUserData', func: 'loadLoggedInUserData'},
+				{method: 'get', path: '/users/loggedInUserData', func: 'getLoggedInUserData'},
 				{method: 'get', path: '/users/checkEmail', func: 'checkEmail'},
 				{method: 'get', path: '/users/sendPasswordResetRequest', func: 'sendPasswordResetRequest'},
 				{method: 'get', path: '/users/sendEmailUpdateRequest', func: 'sendEmailUpdateRequest'},
@@ -40,7 +40,7 @@ class Component extends BaseClientComponent {
 		]
 	}
 
-	loadLoggedInUserData() {
+	getLoggedInUserData() {
 		return function* (req, res, next) {
 			try {
 				res.json({user: req.user})

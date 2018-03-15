@@ -20,9 +20,6 @@ class Component extends BaseDBComponent {
 			unconfirmedEmail: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
 			phone: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
 			password: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			resetPassword: {type: Sequelize.VIRTUAL},
-			resetPasswordToken: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
-			resetPasswordExpires: {type: Sequelize.DATE, allowNull: true, validate: {isDate: true}},
 			gender: {type: Sequelize.ENUM('male', 'female', 'other'), allowNull: true},
 			status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true},
 			lastLogin: {type: Sequelize.DATE, allowNull: true, validate: {isDate: true}}
@@ -35,8 +32,6 @@ class Component extends BaseDBComponent {
 				},
 				password: function (value) {
 					if (typeof value !== 'undefined') {
-						this.setDataValue('resetPasswordToken', null)
-						this.setDataValue('resetPasswordExpires', null)
 						if ((typeof value !== 'string') || (value.length < 4)) {
 							throw {customMessage: 'The password must be at least 4 characters long.'}
 						}
@@ -45,15 +40,9 @@ class Component extends BaseDBComponent {
 				},
 				email: function (value) {
 					if (typeof value !== 'undefined') {
-						this.setDataValue('resetPasswordToken', null)
-						this.setDataValue('resetPasswordExpires', null)
 						this.setDataValue('unconfirmedEmail', null)
 						this.setDataValue('email', value)
 					}
-				},
-				resetPassword: function (value) {
-					this.setDataValue('resetPasswordToken', generateRandomString(16, 'base64'))
-					this.setDataValue('resetPasswordExpires', moment.utc().add(10, 'minutes').format())
 				},
 				resetPasswordToken: function (value) {
 				},
@@ -62,10 +51,10 @@ class Component extends BaseDBComponent {
 			},
 			scopes: {
 				default: {
-					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'resetPassword', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 				},
 				full: {
-					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'resetPassword', 'resetPasswordToken', 'resetPasswordExpires', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 				}
 			},
 			paranoid: true
@@ -89,7 +78,7 @@ class Component extends BaseDBComponent {
 			}
 		}
 
-		this.profileUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
+		this.allowedUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
 
 		this.searchFields = [
 			{field: 'id'},
@@ -158,51 +147,67 @@ class Component extends BaseDBComponent {
 		})
 	}
 
-	login(data) {
+	login({email, password}) {
 		const instance = this,
 			dbComponents = this.db.components
 		return co(function*() {
-			let user = yield instance.getUserWithPermissionsData(data.filters)
+			let user = yield instance.getUserWithPermissionsData({email})
 			if (!user) {
 				throw {customMessage: 'Invalid email or password.'}
 			}
 			if (!user.status) {
 				throw {customMessage: 'Your account is currently inactive.'}
 			}
-			if (!bcryptjs.compareSync(data.password, user.password)) {
+			if (!bcryptjs.compareSync(password, user.password)) {
 				throw {customMessage: 'Invalid email or password.'}
 			}
 			yield instance.model.update({lastLogin: moment.utc().format('YYYY-MM-DD H:mm:ss')}, {where: {id: user.id}})
-			delete user.dataValues.password
-			delete user.dataValues.resetPasswordToken
-			delete user.dataValues.resetPasswordExpires
+			yield instance.db.generalStore.removeEntry(`user-${user.id}-dbLoginToken`)
+			delete user.password
 			return user
 		})
 	}
 
-	tokenLogin({token, filters}) {
+	tokenLogin(token) {
 		const instance = this,
-			dbComponents = this.db.components
+			generalStore = this.db.generalStore
 		return co(function*() {
-			let user = yield instance.getUserWithPermissionsData(filters)
-			if (!user) {
-				throw {customMessage: 'User not found / invalid or expired token.'}
+			let decoded = null
+			try {
+				decoded = yield instance.db.tokenManager.verifyToken(token, instance.db.config.db.tokensSecret)
+			} catch(e) {
+				if (e && e.tokenExpired) {
+					throw {customMessage: 'Invalid or expired token.', stage: 0}
+				}
+				throw {customMessage: 'Invalid or expired token.', stage: 1}
 			}
-			if (moment.utc().valueOf() > moment.utc(user.resetPasswordExpires, 'YYYY-MM-DD H:mm:ss').valueOf()) {
-				throw {customMessage: 'Invalid or expired token.'}
+			if (!decoded || !decoded.id) {
+				throw {customMessage: 'Invalid or expired token.', stage: 2}
+			}
+			let user = yield instance.getUserWithPermissionsData({id: decoded.id})
+			if (!user) {
+				throw {customMessage: 'Invalid or expired token.', stage: 3}
 			}
 			if (!user.status) {
 				throw {customMessage: 'Your account is currently inactive.'}
 			}
+			let tokenData = yield generalStore.getStoredEntry(`user-${user.id}-dbLoginToken`)
+			if (!tokenData) {
+				throw {customMessage: 'Invalid or expired token.', stage: 4}
+			}
+			tokenData = JSON.parse(tokenData)
+			if ((tokenData.token !== token) || tokenData.alreadyUsedForLogin) {
+				throw {customMessage: 'Invalid or expired token.', stage: 5}
+			}
+			tokenData.alreadyUsedForLogin = true
 			yield instance.model.update({lastLogin: moment.utc().format('YYYY-MM-DD H:mm:ss')}, {where: {id: user.id}})
-			delete user.dataValues.password
-			delete user.dataValues.resetPasswordToken
-			delete user.dataValues.resetPasswordExpires
+			yield generalStore.storeEntry(`user-${user.id}-dbLoginToken`, JSON.stringify(tokenData))
+			delete user.password
 			return user
 		})
 	}
 
-	sendPasswordResetRequest({email}) {
+	sendPasswordResetRequest(email) {
 		const instance = this
 		return co(function*() {
 			let user = yield instance.model.scope('full').update({resetPassword: true}, {
@@ -248,11 +253,11 @@ class Component extends BaseDBComponent {
 		})
 	}
 
-	updateProfile(data) {
+	update(data) {
 		const instance = this
 		return co(function*() {
 			let userToUpdate = {}
-			instance.profileUpdateFields.forEach((field, index) => {
+			instance.allowedUpdateFields.forEach((field, index) => {
 				if (typeof data[field] !== 'undefined') {
 					userToUpdate[field] = data[field]
 				}

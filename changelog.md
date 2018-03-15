@@ -22,6 +22,7 @@
 	- *BREAKING* - renamed "useModuleConfigForAuthTokens" to "useApiModuleConfigForAuthTokens" in the client modules config.
 	- *BREAKING* - moved "wsPort" from the client modules config to the root config object.
 	- *BREAKING* - removed the defaultConfig. From now on, ramster will blow up if you don't give it a config.
+	- Added a "tokensSecret" variable to the db config. It's used in the user token-related methods (tokenLogin, resetPassword, updateEmail) to sign and verify the login tokens.
 	- Added a lot of tests, complete code coverage.
 - Added config templates.
 - Added templates for the following db modules: users, userTypes, moduleCategories, modules, moduleAccessPoints, globalConfig.
