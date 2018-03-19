@@ -861,5 +861,45 @@ module.exports = {
 				})
 			})
 		})
+	},
+	testUpdateProfile: function() {
+		const instance = this,
+			db = this.db
+		describe('users.updateProfile', function() {
+			it('should throw an error with the correct message if the user is not found by id', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updateProfile({id: 1500})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully and update only the allowed profile update fields if all parameters are correct', function() {
+				return co(function*() {
+					let user = yield instance.updateProfile({id: 1, typeId: 35, email: 'shouldNotUpdateTheEmail@ramster.com', phone: '+359888777666', gender: 'other', lastLogin: 'now'}),
+						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admintest@ramster.com', phone: '+359888777666', gender: 'other', status: true}
+						dataIsGood = true
+					for (const i in userShouldBe) {
+						const sbField = userShouldBe[i],
+							isField = user[i]
+						if (sbField !== isField) {
+							console.log(`Bad value '${isField}' for field "${i}", expected '${sbField}'.`)
+							dataIsGood = false
+							break
+						}
+					}
+					assert(dataIsGood)
+					return true
+				})
+			})
+		})
 	}
 }

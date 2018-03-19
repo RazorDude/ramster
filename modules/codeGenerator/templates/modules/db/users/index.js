@@ -78,7 +78,7 @@ class Component extends BaseDBComponent {
 			}
 		}
 
-		this.allowedUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
+		this.profileUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
 
 		this.searchFields = [
 			{field: 'id'},
@@ -339,7 +339,7 @@ class Component extends BaseDBComponent {
 		const instance = this
 		return co(function*() {
 			let userToUpdate = {}
-			instance.allowedUpdateFields.forEach((field, index) => {
+			instance.profileUpdateFields.forEach((field, index) => {
 				if (typeof data[field] !== 'undefined') {
 					userToUpdate[field] = data[field]
 				}
@@ -348,7 +348,7 @@ class Component extends BaseDBComponent {
 			if (!result || !result[1] || !result[1][0]) {
 				throw {customMessage: 'User not found.'}
 			}
-			return {success: true}
+			return result[1][0].dataValues
 		})
 	}
 }
