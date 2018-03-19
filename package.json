@@ -8,7 +8,6 @@
   "bugs": {
     "url": "https://github.com/RazorDude/ramster/issues"
   },
-  "bundleDependencies": false,
   "dependencies": {
     "@sendgrid/mail": "^6.1.4",
     "bcryptjs": "^2.4.3",

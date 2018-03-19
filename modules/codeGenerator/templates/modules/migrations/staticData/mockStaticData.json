@@ -29,13 +29,16 @@
 	"userTypes": {
 		"primaryKeys": ["id"],
 		"data": [
-			{"id": 1, "name": "god", "description": "God User", "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"}
+			{"id": 1, "name": "God", "description": "God user", "status": true, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"id": 2, "name": "Regular", "description": "Regular user", "status": true, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"id": 3, "name": "Random", "description": "Random user", "status": true, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"}
 		]
 	},
 	"users": {
 		"primaryKeys": ["id"],
 		"data": [
-			{"id": 1, "typeId": 1, "firstName": "Admin", "lastName": "User", "email": "admin@ramster.com", "password": "1234", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
+			{"id": 1, "typeId": 1, "firstName": "Admin", "lastName": "User", "email": "admin@ramster.com", "password": "1234", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 2, "typeId": 2, "firstName": "Regular", "lastName": "User", "email": "regular@ramster.com", "password": "1234", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
 		]
 	},
 	"userTypeModuleAccessPoints": {
@@ -44,7 +47,12 @@
 			{"moduleAccessPointId": 1, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
 			{"moduleAccessPointId": 2, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
 			{"moduleAccessPointId": 3, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
-			{"moduleAccessPointId": 4, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"}
+			{"moduleAccessPointId": 4, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"moduleAccessPointId": 3, "userTypeId": 2, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"moduleAccessPointId": 4, "userTypeId": 2, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"moduleAccessPointId": 7, "userTypeId": 2, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"moduleAccessPointId": 8, "userTypeId": 2, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"moduleAccessPointId": 2, "userTypeId": 3, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"}
 		]
 	}
 }

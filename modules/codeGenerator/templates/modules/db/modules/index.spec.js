@@ -1,8 +1,6 @@
-// const
-// 	assert = require('assert'),
-// 	co = require('co'),
-// 	fs = require('fs-extra'),
-// 	path = require('path')
+const
+	assert = require('assert'),
+	co = require('co')
 
 module.exports = {
 }

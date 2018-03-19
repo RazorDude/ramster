@@ -155,7 +155,7 @@ class Component extends BaseDBComponent {
 			if (!user) {
 				throw {customMessage: 'Invalid email or password.'}
 			}
-			if (!user.status) {
+			if (!user.status || !user.type.status) {
 				throw {customMessage: 'Your account is currently inactive.'}
 			}
 			if (!bcryptjs.compareSync(password, user.password)) {
@@ -188,7 +188,7 @@ class Component extends BaseDBComponent {
 			if (!user) {
 				throw {customMessage: 'Invalid or expired token.', stage: 3}
 			}
-			if (!user.status) {
+			if (!user.status || !user.type.status) {
 				throw {customMessage: 'Your account is currently inactive.'}
 			}
 			let tokenData = yield generalStore.getStoredEntry(`user-${user.id}-dbLoginToken`)

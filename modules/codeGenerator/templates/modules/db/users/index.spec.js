@@ -154,10 +154,29 @@ module.exports = {
 					return true
 				})
 			})
+			it('should throw an error with the correct message if the user type not active', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					yield instance.model.update({status: true}, {where: {id: 1}})
+					yield userTypes.model.update({status: false}, {where: {id: 1}})
+					try {
+						yield instance.login({email: 'admin@ramster.com'})
+					} catch(e) {
+						if (e && (e.customMessage === 'Your account is currently inactive.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
 			it('should throw an error with the correct message if the user\'s password is incorrect', function() {
 				return co(function*() {
 					let didThrowAnError = false
 					yield instance.model.update({status: true}, {where: {id: 1}})
+					yield userTypes.model.update({status: true}, {where: {id: 1}})
 					try {
 						yield instance.login({email: 'admin@ramster.com', password: 'badPassword'})
 					} catch(e) {
@@ -353,10 +372,29 @@ module.exports = {
 					return true
 				})
 			})
+			it('should throw an error with the correct message if the user type is inactive', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					yield instance.model.update({status: true}, {where: {id: 1}})
+					yield userTypes.model.update({status: false}, {where: {id: 1}})
+					try {
+						yield instance.tokenLogin(yield tokenManager.signToken({id: 1}, tokensSecret))
+					} catch(e) {
+						if (e && (e.customMessage === 'Your account is currently inactive.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
 			it('should throw an error with the correct message if the user does not have a stored token', function() {
 				return co(function*() {
 					let didThrowAnError = false
 					yield instance.model.update({status: true}, {where: {id: 1}})
+					yield userTypes.model.update({status: true}, {where: {id: 1}})
 					try {
 						yield instance.tokenLogin(yield tokenManager.signToken({id: 1}, tokensSecret))
 					} catch(e) {

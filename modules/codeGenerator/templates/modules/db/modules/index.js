@@ -35,6 +35,8 @@ class Component extends Base {
 			accessPoints: {type: 'hasMany', componentName: 'moduleAccessPoints', foreignKey: 'moduleId'}
 		}
 
+		this.systemCriticalIds = [1]
+
 		this.searchFields = [
 			{field: 'id'},
 			{field: 'categoryId'},
