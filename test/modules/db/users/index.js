@@ -78,7 +78,7 @@ class Component extends BaseDBComponent {
 			}
 		}
 
-		this.profileUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
+		this.allowedUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
 
 		this.searchFields = [
 			{field: 'id'},
@@ -207,46 +207,63 @@ class Component extends BaseDBComponent {
 		})
 	}
 
-	sendPasswordResetRequest({email}) {
-		const instance = this
+	sendPasswordResetRequest(email) {
+		const instance = this,
+			db = this.db
 		return co(function*() {
-			let user = yield instance.model.scope('full').update({resetPassword: true}, {
-				where: {email},
-				returning: true
-			})
-			if (!user || !user[0] || !user[1][0]) {
+			let user = yield instance.model.findOne({where: {email}})
+			if (!user) {
 				throw {customMessage: 'User not found.'}
 			}
-			user = user[1][0]
-
-			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
-				host = clientModuleConfig ? clientModuleConfig.host : ''
-			let mailSendResult = yield instance.mailClient.sendEmail('resetPassword', user.email, 'Reset Password Request', {
+			user = user.dataValues
+			delete user.password
+			let clientModuleConfig = db.config.clients[db.config.emails.useClientModule],
+				host = clientModuleConfig ? clientModuleConfig.host : '',
+				token = yield db.tokenManager.signToken(user, db.config.db.tokensSecret, 15)
+				yield db.generalStore.storeEntry(`user-${user.id}-dbLoginToken`, JSON.stringify({token, alreadyUsedForLogin: false}))
+			yield db.mailClient.sendEmail('resetPassword', user.email, 'Reset Password Request', {
 				fields: {
 					userFirstName: user.firstName,
-					resetPasswordLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/mySettings')}`
+					resetPasswordLink: `${host}/tokenLogin?token=${encodeURIComponent(token)}&next=${encodeURIComponent('/mySettings')}`
 				}
 			})
-
-			delete user.password
-			delete user.resetPasswordToken
-			delete user.resetPasswordExpires
-			return user
+			return {success: true}
 		})
 	}
 
 	updatePassword({id, passwordResetToken, currentPassword, newPassword}) {
-		const instance = this
+		const instance = this,
+			{generalStore, tokenManager} = this.db
 		return co(function*() {
 			let user = yield instance.model.scope('full').findOne({where: {id}})
-			if (!user || (!passwordResetToken && !currentPassword)) {
-				throw {customMessage: 'User not found.'}
+			if (!user) {
+				throw {customMessage: 'User not found, wrong current password, or an invalid or expired token.', stage: 0}
 			}
-			if (passwordResetToken && ((passwordResetToken !== user.resetPasswordToken) || (moment.utc().valueOf() > moment.utc(user.resetPasswordExpires, 'YYYY-MM-DD H:mm:ss')))) {
-				throw {customMessage: 'Invalid or expired token.'}
-			}
-			if (currentPassword && !bcryptjs.compareSync(currentPassword, user.password)) {
-				throw {customMessage: 'Incorrect current password.'}
+			user = user.dataValues
+			if (passwordResetToken) {
+				try {
+					let tokenData = JSON.parse(yield generalStore.getStoredEntry(`user-${user.id}-dbLoginToken`))
+					if (passwordResetToken !== tokenData.token) {
+						throw true
+					}
+				} catch(e) {
+					throw {customMessage: 'User not found, wrong current password, or an invalid or expired token.', stage: 1}
+				}
+				try {
+					yield instance.db.tokenManager.verifyToken(passwordResetToken, instance.db.config.db.tokensSecret)
+				} catch(e) {
+					if (e && e.tokenExpired) {
+						throw {customMessage: 'User not found, wrong current password, or an invalid or expired token.', stage: 2}
+					}
+					throw e
+				}
+				yield generalStore.removeEntry(`user-${user.id}-dbLoginToken`)
+			} else if (currentPassword) {
+				if (!bcryptjs.compareSync(currentPassword, user.password)) {
+					throw {customMessage: 'User not found, wrong current password, or an invalid or expired token.', stage: 3}
+				}
+			} else {
+				throw {customMessage: 'User not found, wrong current password, or an invalid or expired token.', stage: 4}
 			}
 			yield instance.model.update({password: newPassword}, {where: {id}})
 			return {success: true}
@@ -257,7 +274,7 @@ class Component extends BaseDBComponent {
 		const instance = this
 		return co(function*() {
 			let userToUpdate = {}
-			instance.profileUpdateFields.forEach((field, index) => {
+			instance.allowedUpdateFields.forEach((field, index) => {
 				if (typeof data[field] !== 'undefined') {
 					userToUpdate[field] = data[field]
 				}

@@ -331,6 +331,9 @@ class CodeGenerator {
 				clientModules = ['layout', 'users'],
 				outputFile = null
 			yield instance.generateBlankProject(outputPath, configProfile)
+			yield fs.copy(path.join(__dirname, 'templates/modules/emails/templates/emailUpdatedSuccessfully.pug'), path.join(outputPath, 'modules/emails/templates/emailUpdatedSuccessfully.pug'))
+			yield fs.copy(path.join(__dirname, 'templates/modules/emails/templates/resetPassword.pug'), path.join(outputPath, 'modules/emails/templates/resetPassword.pug'))
+			yield fs.copy(path.join(__dirname, 'templates/modules/emails/templates/updateEmail.pug'), path.join(outputPath, 'modules/emails/templates/updateEmail.pug'))
 			yield fs.mkdirp(path.join(outputPath, 'config/webpack'))
 			yield instance.generateWebpackConfig(path.join(outputPath, 'config/webpack'), 'react')
 			yield instance.generateLayoutFile(path.join(outputPath, 'clients/site'), configProfile)

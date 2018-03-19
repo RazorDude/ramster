@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.0.0-beta.8",
+  "version": "1.0.0-beta.9",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -62,7 +62,7 @@
   },
   "scripts": {
     "test-local": "node ./test/generateStuff.js && mocha ./test/test.js",
-    "test-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest",
+    "test-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testDB --testClients --testAPIs",
     "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testDB --testClients --testAPIs"
   },
   "devDependencies": {

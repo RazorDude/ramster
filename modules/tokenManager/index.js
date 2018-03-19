@@ -28,6 +28,7 @@ class TokenManager{
 				}
 				jwt.sign(userData, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
 					if (err) {
+						this.errorLogger.error(err)
 						reject({customMessage: 'Failed to sign token.', status: 401})
 						return
 					}
@@ -36,6 +37,7 @@ class TokenManager{
 			}
 			jwt.sign(userData, secret, null, (err, token) => {
 				if (err) {
+					this.errorLogger.error(err)
 					reject({customMessage: 'Failed to sign token.', status: 401})
 					return
 				}

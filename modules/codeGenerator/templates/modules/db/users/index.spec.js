@@ -1,5 +1,6 @@
 const
 	assert = require('assert'),
+	bcryptjs = require('bcryptjs'),
 	co = require('co')
 
 module.exports = {
@@ -29,7 +30,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should return the user with his permissions mapped in a permissionsData object if all paramters are correct and the user is found', function() {
+			it('should return the user with his permissions mapped in a permissionsData object if all parameters are correct and the user is found', function() {
 				return co(function*() {
 					let userFromMethod = yield instance.getUserWithPermissionsData({id: 1}),
 						userFromDB = yield instance.model.findOne({
@@ -170,7 +171,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should return the user with his permissions mapped in a permissionsData object if all paramters are correct and the user is found', function() {
+			it('should return the user with his permissions mapped in a permissionsData object if all parameters are correct and the user is found', function() {
 				return co(function*() {
 					let userFromMethod = yield instance.login({email: 'admin@ramster.com', password: 'test'})
 						userFromDB = yield instance.model.findOne({
@@ -404,11 +405,11 @@ module.exports = {
 					return true
 				})
 			})
-			it('should return the user with his permissions mapped in a permissionsData object and set the token as already used if all paramters are correct and the user is found', function() {
+			it('should return the user with his permissions mapped in a permissionsData object and set the token as already used if all parameters are correct and the user is found', function() {
 				return co(function*() {
 					let token = yield tokenManager.signToken({id: 1}, tokensSecret)
 					yield generalStore.storeEntry('user-1-dbLoginToken', `{"token": "${token}", "alreadyUsedForLogin": false}`)
-					let userFromMethod = yield instance.tokenLogin(token)
+					let userFromMethod = yield instance.tokenLogin(token),
 						userFromDB = yield instance.model.findOne({
 							where: {id: 1},
 							include: [{
@@ -493,6 +494,207 @@ module.exports = {
 						}
 					}
 					assert(dataIsGood)
+					return true
+				})
+			})
+		})
+	},
+	testSendPasswordResetRequest: function() {
+		const instance = this
+		describe('users.sendPasswordResetRequest', function() {
+			before(function(){
+				return co(function*() {
+					yield instance.db.generalStore.removeEntry('user-1-dbLoginToken')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user is not found by email', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.sendPasswordResetRequest('emailDoesNotExist')
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully and set the proper token if all parameters are correct and the user is found', function() {
+				return co(function*() {
+					yield instance.sendPasswordResetRequest('admin@ramster.com')
+					let tokenData = JSON.parse(yield instance.db.generalStore.getStoredEntry('user-1-dbLoginToken')),
+						dataIsGood = true
+					if (!tokenData) {
+						console.log('The method did not set the token data object correctly.')
+						dataIsGood = false
+					}
+					if (dataIsGood && !tokenData.token) {
+						console.log('The method did not set the token correctly.')
+						dataIsGood = false
+					}
+					if (dataIsGood && (tokenData.alreadyUsedForLogin !== false)) {
+						console.log('The method did not set the alreadyUsedForLogin property to false.')
+						dataIsGood = false
+					}
+					assert(dataIsGood)
+					return true
+				})
+			})
+		})
+	},
+	testUpdatePassword: function() {
+		const instance = this
+		describe('users.updatePassword', function() {
+			before(function() {
+				return co(function*() {
+					yield instance.db.generalStore.removeEntry('user-1-dbLoginToken')
+					yield instance.model.update({password: '1234'}, {where: {id: 1}})
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user is not found by id', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updatePassword({id: 1500})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found, wrong current password, or an invalid or expired token.') && (e.stage === 0)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if no token and no current password is provided', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updatePassword({id: 1})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found, wrong current password, or an invalid or expired token.') && (e.stage === 4)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided token does not match the user\'s token', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updatePassword({id: 1, passwordResetToken: 'fakeToken'})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found, wrong current password, or an invalid or expired token.') && (e.stage === 1)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided token has expired', function() {
+				return new Promise((resolve, reject) => {
+					co(function*() {
+						let token = yield instance.db.tokenManager.signToken({id: 1}, instance.db.config.db.tokensSecret, 1 / 60)
+						yield instance.db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
+						return token
+					}).then((token) => {
+						setTimeout(() => {
+							instance.updatePassword({id: 1, passwordResetToken: token}).then((promiseResult) => {
+								reject('Token did not expire.')
+							}, (err) => {
+								if (err && (err.customMessage === 'User not found, wrong current password, or an invalid or expired token.') && (err.stage === 2)) {
+									resolve(true)
+									return
+								}
+								reject(err)
+							})
+						}, 1500)
+					}, (err) => reject(err))
+				})
+			})
+			it('should throw an error with the correct message if the provided currentPassword does not match the user\'s current password', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updatePassword({id: 1, currentPassword: 'fakePassword'})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found, wrong current password, or an invalid or expired token.') && (e.stage === 3)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully, update the password and remove the token if all parameters are correct and a valid token is provided', function() {
+				return co(function*() {
+					let token = yield instance.db.tokenManager.signToken({id: 1}, instance.db.config.db.tokensSecret)
+					yield instance.db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
+					yield instance.updatePassword({id: 1, passwordResetToken: token, newPassword: 'testPassword1234'})
+					let user = yield instance.model.scope('full').findOne({where: {id: 1}, attributes: ['password']}),
+						tokenData = yield instance.db.generalStore.getStoredEntry('user-1-dbLoginToken'),
+						dataIsGood = true
+					if (!bcryptjs.compareSync('testPassword1234', user.password)) {
+						console.log('The method did not update the password correctly.')
+						dataIsGood = false
+					}
+					if (dataIsGood && (tokenData !== null)) {
+						console.log('The method did not remove the token.')
+						dataIsGood = false
+					}
+					assert(dataIsGood)
+					return true
+				})
+			})
+			it('should execute successfully and update the password if all paramters are correct and the correct currentPassword is provided', function() {
+				return co(function*() {
+					yield instance.updatePassword({id: 1, currentPassword: 'testPassword1234', newPassword: 'testPassword4321'})
+					let user = yield instance.model.scope('full').findOne({where: {id: 1}, attributes: ['password']})
+					assert(bcryptjs.compareSync('testPassword4321', user.password))
+					return true
+				})
+			})
+			it('should throw an error if no new password is provided', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updatePassword({id: 1, currentPassword: 'testPassword4321'})
+					} catch(e) {
+						didThrowAnError = true
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided new password is less than 3 characters long', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updatePassword({id: 1, currentPassword: 'testPassword4321', newPassword: '123'})
+					} catch(e) {
+						if (e && (e.customMessage === 'The password must be at least 4 characters long.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
 					return true
 				})
 			})
