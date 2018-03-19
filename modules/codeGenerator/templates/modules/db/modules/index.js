@@ -1,9 +1,9 @@
 'use strict'
 
 const
-	Base = require('ramster').BaseDBComponent
+	{BaseDBComponent} = require('ramster')
 
-class Component extends Base {
+class Component extends BaseDBComponent {
 	constructor(sequelize, Sequelize) {
 		super()
 

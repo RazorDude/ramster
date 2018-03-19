@@ -1,10 +1,10 @@
 'use strict'
 
 const
-	Base = require('../../../../index').BaseDBComponent,
+	{BaseDBComponent} = require('../../../../index'),
 	co = require('co')
 
-class Component extends Base {
+class Component extends BaseDBComponent {
 	constructor(sequelize, Sequelize) {
 		super()
 
