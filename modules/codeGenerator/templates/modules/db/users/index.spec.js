@@ -547,12 +547,66 @@ module.exports = {
 			})
 		})
 	},
-	testUpdatePassword: function() {
+	testSendEmailUpdateRequest: function() {
 		const instance = this
+		describe('users.sendEmailUpdateRequest', function() {
+			before(function(){
+				return co(function*() {
+					yield instance.db.generalStore.removeEntry('user-1-dbLoginToken')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user is not found by id email', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.sendEmailUpdateRequest({id: 1500})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should execute successfully, set the uncofirmed email and set the proper token if all parameters are correct and the user is found', function() {
+				return co(function*() {
+					yield instance.sendEmailUpdateRequest({id: 1, newEmail: 'admintest@ramster.com'})
+					let user = yield instance.model.findOne({where: {id: 1}}),
+						tokenData = JSON.parse(yield instance.db.generalStore.getStoredEntry('user-1-dbLoginToken')),
+						dataIsGood = true
+					if (user.unconfirmedEmail !== 'admintest@ramster.com') {
+						console.log('The method did not set the uncofirmed email correctly.')
+						dataIsGood = false
+					}
+					if (dataIsGood && !tokenData) {
+						console.log('The method did not set the token data object correctly.')
+						dataIsGood = false
+					}
+					if (dataIsGood && !tokenData.token) {
+						console.log('The method did not set the token correctly.')
+						dataIsGood = false
+					}
+					if (dataIsGood && (tokenData.alreadyUsedForLogin !== false)) {
+						console.log('The method did not set the alreadyUsedForLogin property to false.')
+						dataIsGood = false
+					}
+					assert(dataIsGood)
+					return true
+				})
+			})
+		})
+	},
+	testUpdatePassword: function() {
+		const instance = this,
+			db = this.db
 		describe('users.updatePassword', function() {
 			before(function() {
 				return co(function*() {
-					yield instance.db.generalStore.removeEntry('user-1-dbLoginToken')
+					yield db.generalStore.removeEntry('user-1-dbLoginToken')
 					yield instance.model.update({password: '1234'}, {where: {id: 1}})
 					return true
 				})
@@ -592,6 +646,7 @@ module.exports = {
 			it('should throw an error with the correct message if the provided token does not match the user\'s token', function() {
 				return co(function*() {
 					let didThrowAnError = false
+					yield db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token: 'theActualToken', alreadyUsedForLogin: true}))
 					try {
 						yield instance.updatePassword({id: 1, passwordResetToken: 'fakeToken'})
 					} catch(e) {
@@ -608,8 +663,8 @@ module.exports = {
 			it('should throw an error with the correct message if the provided token has expired', function() {
 				return new Promise((resolve, reject) => {
 					co(function*() {
-						let token = yield instance.db.tokenManager.signToken({id: 1}, instance.db.config.db.tokensSecret, 1 / 60)
-						yield instance.db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
+						let token = yield db.tokenManager.signToken({id: 1}, db.config.db.tokensSecret, 1 / 60)
+						yield db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
 						return token
 					}).then((token) => {
 						setTimeout(() => {
@@ -644,11 +699,11 @@ module.exports = {
 			})
 			it('should execute successfully, update the password and remove the token if all parameters are correct and a valid token is provided', function() {
 				return co(function*() {
-					let token = yield instance.db.tokenManager.signToken({id: 1}, instance.db.config.db.tokensSecret)
-					yield instance.db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
+					let token = yield db.tokenManager.signToken({id: 1}, db.config.db.tokensSecret)
+					yield db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
 					yield instance.updatePassword({id: 1, passwordResetToken: token, newPassword: 'testPassword1234'})
 					let user = yield instance.model.scope('full').findOne({where: {id: 1}, attributes: ['password']}),
-						tokenData = yield instance.db.generalStore.getStoredEntry('user-1-dbLoginToken'),
+						tokenData = yield db.generalStore.getStoredEntry('user-1-dbLoginToken'),
 						dataIsGood = true
 					if (!bcryptjs.compareSync('testPassword1234', user.password)) {
 						console.log('The method did not update the password correctly.')
@@ -695,6 +750,113 @@ module.exports = {
 						}
 					}
 					assert(didThrowAnError)
+					return true
+				})
+			})
+		})
+	},
+	testUpdateEmail: function() {
+		const instance = this,
+			db = this.db
+		describe('users.updateEmail', function() {
+			before(function() {
+				return co(function*() {
+					yield db.generalStore.removeEntry('user-1-dbLoginToken')
+					yield instance.model.update({unconfirmedEmail: 'admintest@ramster.com'}, {where: {id: 1}})
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user is not found by id', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updateEmail({id: 1500})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found, or an invalid or expired token has been provided.') && (e.stage === 0)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if no token is provided', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.updateEmail({id: 1})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found, or an invalid or expired token has been provided.') && (e.stage === 1)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided token does not match the user\'s token', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					yield db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token: 'theActualToken', alreadyUsedForLogin: true}))
+					try {
+						yield instance.updateEmail({id: 1, token: 'fakeToken'})
+					} catch(e) {
+						if (e && (e.customMessage === 'User not found, or an invalid or expired token has been provided.') && (e.stage === 2)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided token has expired', function() {
+				return new Promise((resolve, reject) => {
+					co(function*() {
+						let token = yield db.tokenManager.signToken({id: 1}, db.config.db.tokensSecret, 1 / 60)
+						yield db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
+						return token
+					}).then((token) => {
+						setTimeout(() => {
+							instance.updateEmail({id: 1, token}).then((promiseResult) => {
+								reject('Token did not expire.')
+							}, (err) => {
+								if (err && (err.customMessage === 'User not found, or an invalid or expired token has been provided.') && (err.stage === 3)) {
+									resolve(true)
+									return
+								}
+								reject(err)
+							})
+						}, 1500)
+					}, (err) => reject(err))
+				})
+			})
+			it('should execute successfully, update the email and remove the token if all parameters are correct and a valid token is provided', function() {
+				return co(function*() {
+					let token = yield db.tokenManager.signToken({id: 1}, db.config.db.tokensSecret)
+					yield db.generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
+					yield instance.updateEmail({id: 1, token})
+					let user = yield instance.model.scope('full').findOne({where: {id: 1}, attributes: ['email', 'unconfirmedEmail']}),
+						tokenData = yield db.generalStore.getStoredEntry('user-1-dbLoginToken'),
+						dataIsGood = true
+					if (user.email !== 'admintest@ramster.com') {
+						console.log('The method did not update the email correctly.')
+						dataIsGood = false
+					}
+					if (dataIsGood && (user.unconfirmedEmail !== null)) {
+						console.log('The method did not update set the unconfirmedEmail to null.')
+						dataIsGood = false
+					}
+					if (dataIsGood && (tokenData !== null)) {
+						console.log('The method did not remove the token.')
+						dataIsGood = false
+					}
+					assert(dataIsGood)
 					return true
 				})
 			})

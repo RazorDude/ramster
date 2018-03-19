@@ -231,6 +231,29 @@ class Component extends BaseDBComponent {
 		})
 	}
 
+	sendEmailUpdateRequest({id, newEmail}) {
+		const instance = this,
+			db = this.db
+		return co(function*() {
+			let user = yield instance.model.update({unconfirmedEmail: newEmail}, {where: {id}, returning: true})
+			if (!user || !user[0] || !user[1][0]) {
+				throw {customMessage: 'User not found.'}
+			}
+			user = user[1][0].dataValues
+			let clientModuleConfig = db.config.clients[db.config.emails.useClientModule],
+				host = clientModuleConfig ? clientModuleConfig.host : '',
+				token = yield db.tokenManager.signToken(user, db.config.db.tokensSecret, 15)
+				yield db.generalStore.storeEntry(`user-${user.id}-dbLoginToken`, JSON.stringify({token, alreadyUsedForLogin: false}))
+			yield db.mailClient.sendEmail('updateEmail', user.email, 'Email Update Request', {
+				fields: {
+					userFirstName: user.firstName,
+					updateEmailLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/mySettings')}&tokenKeyName=emailToken`
+				}
+			})
+			return {success: true}
+		})
+	}
+
 	updatePassword({id, passwordResetToken, currentPassword, newPassword}) {
 		const instance = this,
 			{generalStore, tokenManager} = this.db
@@ -250,7 +273,7 @@ class Component extends BaseDBComponent {
 					throw {customMessage: 'User not found, wrong current password, or an invalid or expired token.', stage: 1}
 				}
 				try {
-					yield instance.db.tokenManager.verifyToken(passwordResetToken, instance.db.config.db.tokensSecret)
+					yield tokenManager.verifyToken(passwordResetToken, instance.db.config.db.tokensSecret)
 				} catch(e) {
 					if (e && e.tokenExpired) {
 						throw {customMessage: 'User not found, wrong current password, or an invalid or expired token.', stage: 2}
@@ -270,6 +293,48 @@ class Component extends BaseDBComponent {
 		})
 	}
 
+	updateEmail({id, token}) {
+		const instance = this,
+			db = this.db
+		return co(function*() {
+			let user = yield instance.model.findOne({where: {id}})
+			if (!user) {
+				throw {customMessage: 'User not found, or an invalid or expired token has been provided.', stage: 0}
+			}
+			user = user.dataValues
+			if (!token) {
+				throw {customMessage: 'User not found, or an invalid or expired token has been provided.', stage: 1}
+			}
+			try {
+				let tokenData = JSON.parse(yield db.generalStore.getStoredEntry(`user-${user.id}-dbLoginToken`))
+				if (token !== tokenData.token) {
+					throw true
+				}
+			} catch(e) {
+				throw {customMessage: 'User not found, or an invalid or expired token has been provided.', stage: 2}
+			}
+			try {
+				yield db.tokenManager.verifyToken(token, db.config.db.tokensSecret)
+			} catch(e) {
+				if (e && e.tokenExpired) {
+					throw {customMessage: 'User not found, or an invalid or expired token has been provided.', stage: 3}
+				}
+				throw e
+			}
+			yield db.generalStore.removeEntry(`user-${user.id}-dbLoginToken`)
+			user = yield instance.model.update({email: user.unconfirmedEmail}, {where: {id: user.id}, returning: true})
+			user = user[1][0].dataValues
+			let clientModuleConfig = db.config.clients[db.config.emails.useClientModule],
+				host = clientModuleConfig ? clientModuleConfig.host : ''
+			yield db.mailClient.sendEmail('emailUpdatedSuccessfully', user.email, 'Email Updated', {
+				fields: {
+					userFirstName: user.firstName
+				}
+			})
+			return {success: true}
+		})
+	}
+
 	updateProfile(data) {
 		const instance = this
 		return co(function*() {
@@ -283,54 +348,6 @@ class Component extends BaseDBComponent {
 			if (!result || !result[1] || !result[1][0]) {
 				throw {customMessage: 'User not found.'}
 			}
-			return {success: true}
-		})
-	}
-
-	sendEmailUpdateRequest({id, email}) {
-		const instance = this
-		return co(function*() {
-			let user = yield instance.model.scope('full').update({resetPassword: true, unconfirmedEmail: email}, {
-				where: {id},
-				returning: true
-			})
-			if (!user || !user[0] || !user[1][0]) {
-				throw {customMessage: 'User not found.'}
-			}
-			user = user[1][0]
-			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
-				host = clientModuleConfig ? clientModuleConfig.host : ''
-			yield instance.mailClient.sendEmail('updateEmail', user.email, 'Email Update Request', {
-				fields: {
-					userFirstName: user.firstName,
-					updateEmailLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/mySettings')}&tokenKeyName=emailToken`
-				}
-			})
-			return {success: true}
-		})
-	}
-
-	updateEmail({id, token}) {
-		const instance = this
-		return co(function*() {
-			let user = yield instance.model.scope('full').findOne({where: {id}})
-			if (!user) {
-				throw {customMessage: 'User not found.'}
-			}
-			if ((token !== user.resetPasswordToken) || (moment.utc().valueOf() > moment.utc(user.resetPasswordExpires, 'YYYY-MM-DD H:mm:ss'))) {
-				throw {customMessage: 'Invalid or expired token.'}
-			}
-
-			user = yield instance.model.update({email: user.unconfirmedEmail}, {where: {id: user.id}, returning: true})
-			user = user[1][0]
-			let clientModuleConfig = instance.config.clients[instance.config.emails.useClientModule],
-				host = clientModuleConfig ? clientModuleConfig.host : ''
-			yield instance.mailClient.sendEmail('emailUpdatedSuccessfully', user.email, 'Email Updated', {
-				fields: {
-					userFirstName: user.firstName,
-					userEmail: user.email
-				}
-			})
 			return {success: true}
 		})
 	}
