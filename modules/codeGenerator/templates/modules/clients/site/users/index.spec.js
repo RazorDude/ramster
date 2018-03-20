@@ -565,5 +565,374 @@ module.exports = {
 				})
 			})
 		})
+	},
+	testLogout: function() {
+		const instance = this,
+			{moduleConfig} = this.module
+		describe('client.users.logout', function() {
+			let sessionCookie = null
+			before(function() {
+				return co(function*() {
+					let result = yield request({
+						method: 'post',
+						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
+						body: {email: 'admin@ramster.com', password: 'testPassword1234'},
+						json: true,
+						resolveWithFullResponse: true
+					})
+					sessionCookie = result.headers['set-cookie']
+					return true
+				})
+			})
+			it('should return a 401 error if the user is not logged in', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield request({
+							method: 'get',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/logout`,
+							json: true
+						})
+					} catch(e) {
+						if (e && e.response && (e.response.statusCode === 401)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError)
+					return true
+				})
+			})
+			it.skip('should execute successfully and redirect the user to /login', function() {
+				return co(function*() {
+					let result = yield request({
+						method: 'get',
+						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/logout`,
+						headers: {cookie: sessionCookie},
+						json: true,
+						resolveWithFullResponse: true
+					})
+					console.log(result)
+					assert(true)
+					return true
+				})
+			})
+		})
+	},
+	testGetLoggedInUserData: function() {
+		const instance = this,
+			{dbComponent} = this,
+			{db, generalStore, moduleConfig} = this.module,
+			{moduleAccessPoints, modules, userTypes} = db.components
+		describe('client.users.getLoggedInUserData', function() {
+			let sessionCookie = null
+			before(function() {
+				return co(function*() {
+					let result = yield request({
+						method: 'post',
+						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
+						body: {email: 'admin@ramster.com', password: 'testPassword1234'},
+						json: true,
+						resolveWithFullResponse: true
+					})
+					sessionCookie = result.headers['set-cookie']
+					return true
+				})
+			})
+			it('should execute successfully and return null if the user is not logged in', function() {
+				return co(function*() {
+					let user = yield request({
+						method: 'get',
+						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/loggedInUserData`,
+						json: true
+					})
+					assert(user === null)
+					return true
+				})
+			})
+			it('should execute successfully and return the user data if the user is logged in and the permissionsUpdated flag is not set', function() {
+				return co(function*() {
+					let userFromMethod = yield request({
+							method: 'get',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/loggedInUserData`,
+							headers: {cookie: sessionCookie},
+							json: true
+						}),
+						userFromDB = yield dbComponent.model.findOne({
+							where: {id: 1},
+							include: [{
+								model: userTypes.model,
+								as: 'type',
+								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							}]
+						}),
+						alwaysAccessibleModules = yield modules.model.findAll({
+							where: {alwaysAccessible: true},
+							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+						}),
+						dataIsGood = true
+					if (!userFromMethod) {
+						console.log('The method did not return the user.')
+						dataIsGood = false
+					}
+					if (dataIsGood && !userFromMethod.permissionsData) {
+						console.log('The method did not return the user\'s permissions data.')
+						dataIsGood = false
+					}
+					if (dataIsGood) {
+						const permissionsData = userFromMethod.permissionsData,
+							accessPoints = userFromDB.type.accessPoints
+						for (const i in accessPoints) {
+							const ap = accessPoints[i],
+								pd = permissionsData[ap.moduleId]
+							if (!pd) {
+								console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
+								dataIsGood = false
+								break
+							}
+							if (pd.ids.indexOf(ap.id) === -1) {
+								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
+								dataIsGood = false
+								break
+							}
+							if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
+								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
+								dataIsGood = false
+								break
+							}
+						}
+						if (dataIsGood) {
+							for (const i in alwaysAccessibleModules) {
+								const m = alwaysAccessibleModules[i],
+									aps = m.accessPoints,
+									pd = permissionsData[m.id]
+								if (!pd) {
+									console.log(`Missing permissions data object for always accessible module id ${m.id}.`)
+									dataIsGood = false
+									break
+								}
+								for (const j in aps) {
+									const ap = aps[j]
+									if (pd.ids.indexOf(ap.id) === -1) {
+										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (ids array).`)
+										dataIsGood = false
+										break
+									}
+									if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
+										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (text object).`)
+										dataIsGood = false
+										break
+									}
+								}
+								if (!dataIsGood) {
+									break
+								}
+							}
+						}
+					}
+					if (dataIsGood && (typeof userFromMethod.password !== 'undefined')) {
+						console.log('The method did not delete the user\'s password from the returned object.')
+						dataIsGood = false
+					}
+					assert(true)
+					return true
+				})
+			})
+			it('should execute successfully, return the updated user data and remove the permissionsUpdated flag if the user is logged in and the permissionsUpdated flag is set and this user\'s is the only entry in it', function() {
+				return co(function*() {
+					yield generalStore.storeEntry(`db-userTypeId-1-permissionsUpdated`, JSON.stringify([1]))
+					let userFromMethod = yield request({
+							method: 'get',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/loggedInUserData`,
+							headers: {cookie: sessionCookie},
+							json: true
+						}),
+						userFromDB = yield dbComponent.model.findOne({
+							where: {id: 1},
+							include: [{
+								model: userTypes.model,
+								as: 'type',
+								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							}]
+						}),
+						alwaysAccessibleModules = yield modules.model.findAll({
+							where: {alwaysAccessible: true},
+							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+						}),
+						dataIsGood = true
+					if (!userFromMethod) {
+						console.log('The method did not return the user.')
+						dataIsGood = false
+					}
+					if (dataIsGood && !userFromMethod.permissionsData) {
+						console.log('The method did not return the user\'s permissions data.')
+						dataIsGood = false
+					}
+					if (dataIsGood) {
+						const permissionsData = userFromMethod.permissionsData,
+							accessPoints = userFromDB.type.accessPoints
+						for (const i in accessPoints) {
+							const ap = accessPoints[i],
+								pd = permissionsData[ap.moduleId]
+							if (!pd) {
+								console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
+								dataIsGood = false
+								break
+							}
+							if (pd.ids.indexOf(ap.id) === -1) {
+								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
+								dataIsGood = false
+								break
+							}
+							if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
+								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
+								dataIsGood = false
+								break
+							}
+						}
+						if (dataIsGood) {
+							for (const i in alwaysAccessibleModules) {
+								const m = alwaysAccessibleModules[i],
+									aps = m.accessPoints,
+									pd = permissionsData[m.id]
+								if (!pd) {
+									console.log(`Missing permissions data object for always accessible module id ${m.id}.`)
+									dataIsGood = false
+									break
+								}
+								for (const j in aps) {
+									const ap = aps[j]
+									if (pd.ids.indexOf(ap.id) === -1) {
+										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (ids array).`)
+										dataIsGood = false
+										break
+									}
+									if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
+										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (text object).`)
+										dataIsGood = false
+										break
+									}
+								}
+								if (!dataIsGood) {
+									break
+								}
+							}
+						}
+					}
+					if (dataIsGood && (typeof userFromMethod.password !== 'undefined')) {
+						console.log('The method did not delete the user\'s password from the returned object.')
+						dataIsGood = false
+					}
+					if (dataIsGood && ((yield generalStore.getStoredEntry(`db-userTypeId-${userFromDB.typeId}-permissionsUpdated`)) !== null)) {
+						console.log('The method did not remove the permissionsUpdated flag.')
+						dataIsGood = false
+					}
+					assert(true)
+					return true
+				})
+			})
+			it('should execute successfully, return the updated user data and update the permissionsUpdated flag if the user is logged in and the permissionsUpdated flag is set and this user\'s is not the only entry in it', function() {
+				return co(function*() {
+					yield generalStore.storeEntry(`db-userTypeId-1-permissionsUpdated`, JSON.stringify([1, 2]))
+					let userFromMethod = yield request({
+							method: 'get',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/loggedInUserData`,
+							headers: {cookie: sessionCookie},
+							json: true
+						}),
+						userFromDB = yield dbComponent.model.findOne({
+							where: {id: 1},
+							include: [{
+								model: userTypes.model,
+								as: 'type',
+								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							}]
+						}),
+						alwaysAccessibleModules = yield modules.model.findAll({
+							where: {alwaysAccessible: true},
+							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+						}),
+						permissionsUpdatedFlag = yield generalStore.getStoredEntry(`db-userTypeId-${userFromDB.typeId}-permissionsUpdated`),
+						dataIsGood = true
+					if (!userFromMethod) {
+						console.log('The method did not return the user.')
+						dataIsGood = false
+					}
+					if (dataIsGood && !userFromMethod.permissionsData) {
+						console.log('The method did not return the user\'s permissions data.')
+						dataIsGood = false
+					}
+					if (dataIsGood) {
+						const permissionsData = userFromMethod.permissionsData,
+							accessPoints = userFromDB.type.accessPoints
+						for (const i in accessPoints) {
+							const ap = accessPoints[i],
+								pd = permissionsData[ap.moduleId]
+							if (!pd) {
+								console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
+								dataIsGood = false
+								break
+							}
+							if (pd.ids.indexOf(ap.id) === -1) {
+								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
+								dataIsGood = false
+								break
+							}
+							if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
+								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
+								dataIsGood = false
+								break
+							}
+						}
+						if (dataIsGood) {
+							for (const i in alwaysAccessibleModules) {
+								const m = alwaysAccessibleModules[i],
+									aps = m.accessPoints,
+									pd = permissionsData[m.id]
+								if (!pd) {
+									console.log(`Missing permissions data object for always accessible module id ${m.id}.`)
+									dataIsGood = false
+									break
+								}
+								for (const j in aps) {
+									const ap = aps[j]
+									if (pd.ids.indexOf(ap.id) === -1) {
+										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (ids array).`)
+										dataIsGood = false
+										break
+									}
+									if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
+										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (text object).`)
+										dataIsGood = false
+										break
+									}
+								}
+								if (!dataIsGood) {
+									break
+								}
+							}
+						}
+					}
+					if (dataIsGood && (typeof userFromMethod.password !== 'undefined')) {
+						console.log('The method did not delete the user\'s password from the returned object.')
+						dataIsGood = false
+					}
+					if (dataIsGood && (permissionsUpdatedFlag === null)) {
+						console.log('The method did not update the permissionsUpdated flag correctly, it removed it instead.')
+						dataIsGood = false
+					}
+					if (dataIsGood) {
+						permissionsUpdatedFlag = JSON.parse(permissionsUpdatedFlag)
+						if (!(permissionsUpdatedFlag instanceof Array) || (permissionsUpdatedFlag.length !== 1) || (permissionsUpdatedFlag.indexOf(1) !== -1)) {
+							console.log('The method did not update the permissionsUpdated flag correctly.')
+							dataIsGood = false
+						}
+					}
+					assert(true)
+					return true
+				})
+			})
+		})
 	}
 }

@@ -15,7 +15,8 @@ class Component extends BaseClientComponent {
 						'/',
 						'/login',
 						'/dashboard',
-						'/mySettings'
+						'/mySettings',
+						'/four-oh-four'
 					],
 					func: 'loadLayout',
 					isALayoutRoute: true

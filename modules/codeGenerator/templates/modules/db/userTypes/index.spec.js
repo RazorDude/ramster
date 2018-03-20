@@ -119,15 +119,18 @@ module.exports = {
 					yield instance.updateAccessPoints({id: 2, moduleAccessPointIds: [1, 2, 3, 4]})
 					let userType = yield instance.model.findOne({
 							where: {id: 2},
-							include: [{model: db.components.moduleAccessPoints.model, as: 'accessPoints', attributes: ['id'], where: {id: [1, 2, 3 ,4]}}]
+							include: [
+								{model: db.components.moduleAccessPoints.model, as: 'accessPoints', attributes: ['id'], where: {id: [1, 2, 3, 4]}},
+								{model: db.components.users.model, as: 'users', attributes: ['id']}
+							]
 						}),
-						permissionsUpdatedFlag = yield db.generalStore.getStoredEntry('db-userTypeId-2-permissionsUpdated'),
+						permissionsUpdatedFlag = JSON.parse(yield db.generalStore.getStoredEntry('db-userTypeId-2-permissionsUpdated')),
 						dataIsGood = true
 					if (userType.accessPoints.length !== 4) {
 						console.log('The method failed to update the access points correctly.')
 						dataIsGood = false
 					}
-					if (dataIsGood && (permissionsUpdatedFlag !== 'true')) {
+					if (dataIsGood && (!(permissionsUpdatedFlag instanceof Array) || (userType.users.length !== permissionsUpdatedFlag.length))) {
 						console.log('The method failed to set the perimissions update flag in the general store corrrectly.')
 						dataIsGood = false
 					}

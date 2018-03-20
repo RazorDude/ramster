@@ -152,16 +152,30 @@ class Component extends BaseClientComponent {
 		return function* (req, res, next) {
 			try {
 				if (req.user) {
-					let permissionsUpdated = yield generalStore.getStoredEntry(`db-userTypeId-${req.user.typeId}-permissionsUpdated`) === 'true'
-					if (permissionsUpdated) {
-						let user = instance.dbComponent.getUserWithPermissionsData({id: req.user.id})
-						delete user.password
-						req.session.passport.user = user
-						req.user = user
-						yield saveSession(req)
+					let permissionsUpdatedFlag = yield generalStore.getStoredEntry(`db-userTypeId-${req.user.typeId}-permissionsUpdated`)
+					if (permissionsUpdatedFlag !== null) {
+						permissionsUpdatedFlag = JSON.parse(permissionsUpdatedFlag)
+						if ((permissionsUpdatedFlag instanceof Array) && (permissionsUpdatedFlag.indexOf(req.user.id) !== -1)) {
+							let user = yield instance.dbComponent.getUserWithPermissionsData({id: req.user.id})
+							delete user.password
+							req.session.passport.user = user
+							req.user = user
+							yield saveSession(req)
+							let newFlag = []
+							permissionsUpdatedFlag.forEach((e, i) => {
+								if (e !== user.id) {
+									newFlag.push(e)
+								}
+							})
+							if (newFlag.length) {
+								yield generalStore.storeEntry(`db-userTypeId-${req.user.typeId}-permissionsUpdated`, JSON.stringify(newFlag))
+							} else {
+								yield generalStore.removeEntry(`db-userTypeId-${req.user.typeId}-permissionsUpdated`)
+							}
+						}
 					}
 				}
-				res.json({user: req.user})
+				res.json(req.user)
 			} catch (e) {
 				req.locals.error = e
 				next()

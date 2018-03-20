@@ -65,12 +65,16 @@ class Component extends BaseDBComponent {
 
 	updateAccessPoints({id, moduleAccessPointIds}) {
 		const instance = this,
-			{modules, moduleAccessPoints} = this.db.components,
+			{modules, moduleAccessPoints, users} = this.db.components,
 			sequelize = this.db.sequelize,
 			queryInterface = sequelize.getQueryInterface()
 		return sequelize.transaction((t) => {
 			return co(function*() {
-				let userType = yield instance.model.findOne({where: {id}, transaction: t})
+				let userType = yield instance.model.findOne({
+					where: {id},
+					include: [{model: users.model, as : 'users', attributes: ['id']}],
+					transaction: t
+				})
 				if (!userType) {
 					throw {customMessage: 'User type not found.'}
 				}
@@ -90,7 +94,7 @@ class Component extends BaseDBComponent {
 					apQuery += ';'
 					yield sequelize.query(apQuery, {transaction: t})
 				}
-				yield instance.db.generalStore.storeEntry(`db-userTypeId-${userType.id}-permissionsUpdated`, 'true')
+				yield instance.db.generalStore.storeEntry(`db-userTypeId-${userType.id}-permissionsUpdated`, JSON.stringify(userType.users.map((e, i) => e.id)))
 				return true
 			})
 		})
