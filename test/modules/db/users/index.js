@@ -43,10 +43,6 @@ class Component extends BaseDBComponent {
 						this.setDataValue('unconfirmedEmail', null)
 						this.setDataValue('email', value)
 					}
-				},
-				resetPasswordToken: function (value) {
-				},
-				resetPasswordExpires: function (value) {
 				}
 			},
 			scopes: {
@@ -113,31 +109,49 @@ class Component extends BaseDBComponent {
 					include: [{
 						model: userTypes.model,
 						as: 'type',
-						include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+						include: [{model: moduleAccessPoints.model, as: 'accessPoints', include: [{model: modules.model, as: 'module', attributes: ['name']}]}]
 					}]
 				})
 			if (user) {
 				user = user.dataValues
 				let permissionsData = {}
 				user.type.accessPoints.forEach((ap, index) => {
-					let pd = permissionsData[ap.moduleId]
+					let pd = permissionsData[ap.moduleId],
+						mName = ap.module.name.replace(/\s/g, ''),
+						pdText = permissionsData[mName]
 					if (!pd) {
 						pd = {text: {}, ids: []}
 						permissionsData[ap.moduleId] = pd
 					}
+					if (!pdText) {
+						pdText = {text: {}, ids: []}
+						permissionsData[mName] = pdText
+					}
 					pd.ids.push(ap.id)
 					pd.text[`can${ap.name.replace(/\s/g, '')}`] = true
+					pdText.ids.push(ap.id)
+					pdText.text[`can${ap.name.replace(/\s/g, '')}`] = true
 				})
 				alwaysAccessibleModules.forEach((module, index) => {
-					let pd = permissionsData[module.id]
+					let pd = permissionsData[module.id],
+						mName = module.name.replace(/\s/g, ''),
+						pdText = permissionsData[mName]
 					if (!pd) {
 						pd = {text: {}, ids: []}
 						permissionsData[module.id] = pd
+					}
+					if (!pdText) {
+						pdText = {text: {}, ids: []}
+						permissionsData[mName] = pdText
 					}
 					module.accessPoints.forEach((ap, apIndex) => {
 						if (pd.ids.indexOf(ap.id) === -1) {
 							pd.ids.push(ap.id)
 							pd.text[`can${ap.name.replace(/\s/g, '')}`] = true
+						}
+						if (pdText.ids.indexOf(ap.id) === -1) {
+							pdText.ids.push(ap.id)
+							pdText.text[`can${ap.name.replace(/\s/g, '')}`] = true
 						}
 					})
 				})
@@ -224,7 +238,7 @@ class Component extends BaseDBComponent {
 			yield db.mailClient.sendEmail('resetPassword', user.email, 'Reset Password Request', {
 				fields: {
 					userFirstName: user.firstName,
-					resetPasswordLink: `${host}/tokenLogin?token=${encodeURIComponent(token)}&next=${encodeURIComponent('/mySettings')}`
+					resetPasswordLink: `${host}/login?token=${encodeURIComponent(token)}&next=${encodeURIComponent('/mySettings')}`
 				}
 			})
 			return {success: true}
@@ -247,7 +261,7 @@ class Component extends BaseDBComponent {
 			yield db.mailClient.sendEmail('updateEmail', user.email, 'Email Update Request', {
 				fields: {
 					userFirstName: user.firstName,
-					updateEmailLink: `${host}/tokenLogin?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/mySettings')}&tokenKeyName=emailToken`
+					updateEmailLink: `${host}/login?token=${encodeURIComponent(user.resetPasswordToken)}&next=${encodeURIComponent('/mySettings')}&tokenKeyName=emailToken`
 				}
 			})
 			return {success: true}

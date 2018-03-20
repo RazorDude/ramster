@@ -7,7 +7,7 @@ module.exports = {
 	testGetUserWithPermissionsData: function() {
 		const instance = this,
 			{moduleAccessPoints, modules, userTypes} = instance.db.components
-		describe('users.getUserWithPermissionsData', function() {
+		describe('db.users.getUserWithPermissionsData', function() {
 			it('should throw an error with the correct message if no filters are provided', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -38,7 +38,7 @@ module.exports = {
 							include: [{
 								model: userTypes.model,
 								as: 'type',
-								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+								include: [{model: moduleAccessPoints.model, as: 'accessPoints', include: [{model: modules.model, as: 'module', attributes: ['name']}]}]
 							}]
 						}),
 						alwaysAccessibleModules = yield modules.model.findAll({
@@ -59,9 +59,10 @@ module.exports = {
 							accessPoints = userFromDB.type.accessPoints
 						for (const i in accessPoints) {
 							const ap = accessPoints[i],
-								pd = permissionsData[ap.moduleId]
+								pd = permissionsData[ap.moduleId],
+								pdText = permissionsData[ap.module.name.replace(/\s/g, '')]
 							if (!pd) {
-								console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
+								console.log(`Missing permissions data object for module id ${ap.moduleId} (by id).`)
 								dataIsGood = false
 								break
 							}
@@ -75,14 +76,35 @@ module.exports = {
 								dataIsGood = false
 								break
 							}
+							if (!pdText) {
+								console.log(`Missing permissions data object for module id ${ap.moduleId} (by name).`)
+								dataIsGood = false
+								break
+							}
+							if (pdText.ids.indexOf(ap.id) === -1) {
+								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
+								dataIsGood = false
+								break
+							}
+							if (!pdText.text[`can${ap.name.replace(/\s/g, '')}`]) {
+								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
+								dataIsGood = false
+								break
+							}
 						}
 						if (dataIsGood) {
 							for (const i in alwaysAccessibleModules) {
 								const module = alwaysAccessibleModules[i],
 									aps = module.accessPoints,
-									pd = permissionsData[module.id]
+									pd = permissionsData[module.id],
+									pdText = permissionsData[module.name.replace(/\s/g, '')]
 								if (!pd) {
-									console.log(`Missing permissions data object for always accessible module id ${module.id}.`)
+									console.log(`Missing permissions data object for always accessible module id ${module.id} (by id).`)
+									dataIsGood = false
+									break
+								}
+								if (!pdText) {
+									console.log(`Missing permissions data object for always accessible module id ${module.id} (by name).`)
 									dataIsGood = false
 									break
 								}
@@ -94,6 +116,16 @@ module.exports = {
 										break
 									}
 									if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
+										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (text object).`)
+										dataIsGood = false
+										break
+									}
+									if (pdText.ids.indexOf(ap.id) === -1) {
+										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (ids array).`)
+										dataIsGood = false
+										break
+									}
+									if (!pdText.text[`can${ap.name.replace(/\s/g, '')}`]) {
 										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (text object).`)
 										dataIsGood = false
 										break
@@ -114,7 +146,7 @@ module.exports = {
 	testLogin: function() {
 		const instance = this,
 			{moduleAccessPoints, modules, userTypes} = instance.db.components
-		describe('users.login', function() {
+		describe('db.users.login', function() {
 			before(function() {
 				return co(function*() {
 					yield instance.model.update({password: 'test', status: false}, {where: {id: 1}})
@@ -192,7 +224,7 @@ module.exports = {
 			})
 			it('should return the user with his permissions mapped in a permissionsData object if all parameters are correct and the user is found', function() {
 				return co(function*() {
-					let userFromMethod = yield instance.login({email: 'admin@ramster.com', password: 'test'})
+					let userFromMethod = yield instance.login({email: 'admin@ramster.com', password: 'test'}),
 						userFromDB = yield instance.model.findOne({
 							where: {id: 1},
 							include: [{
@@ -204,7 +236,7 @@ module.exports = {
 						alwaysAccessibleModules = yield modules.model.findAll({
 							where: {alwaysAccessible: true},
 							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
-						})
+						}),
 						dataIsGood = true
 					if (!userFromMethod) {
 						console.log('The method did not return the user.')
@@ -280,7 +312,7 @@ module.exports = {
 			{components, config, generalStore, tokenManager} = this.db,
 			{moduleAccessPoints, modules, userTypes} = components,
 			tokensSecret = config.db.tokensSecret
-		describe('users.tokenLogin', function() {
+		describe('db.users.tokenLogin', function() {
 			before(function() {
 				return co(function*() {
 					yield instance.model.update({status: false}, {where: {id: 1}})
@@ -539,7 +571,7 @@ module.exports = {
 	},
 	testSendPasswordResetRequest: function() {
 		const instance = this
-		describe('users.sendPasswordResetRequest', function() {
+		describe('db.users.sendPasswordResetRequest', function() {
 			before(function(){
 				return co(function*() {
 					yield instance.db.generalStore.removeEntry('user-1-dbLoginToken')
@@ -587,7 +619,7 @@ module.exports = {
 	},
 	testSendEmailUpdateRequest: function() {
 		const instance = this
-		describe('users.sendEmailUpdateRequest', function() {
+		describe('db.users.sendEmailUpdateRequest', function() {
 			before(function(){
 				return co(function*() {
 					yield instance.db.generalStore.removeEntry('user-1-dbLoginToken')
@@ -641,7 +673,7 @@ module.exports = {
 	testUpdatePassword: function() {
 		const instance = this,
 			db = this.db
-		describe('users.updatePassword', function() {
+		describe('db.users.updatePassword', function() {
 			before(function() {
 				return co(function*() {
 					yield db.generalStore.removeEntry('user-1-dbLoginToken')
@@ -796,7 +828,7 @@ module.exports = {
 	testUpdateEmail: function() {
 		const instance = this,
 			db = this.db
-		describe('users.updateEmail', function() {
+		describe('db.users.updateEmail', function() {
 			before(function() {
 				return co(function*() {
 					yield db.generalStore.removeEntry('user-1-dbLoginToken')
@@ -898,12 +930,18 @@ module.exports = {
 					return true
 				})
 			})
+			after(function() {
+				return co(function*() {
+					yield instance.model.update({email: 'admin@ramster.com'}, {where: {id: 1}})
+					return true
+				})
+			})
 		})
 	},
 	testUpdateProfile: function() {
 		const instance = this,
 			db = this.db
-		describe('users.updateProfile', function() {
+		describe('db.users.updateProfile', function() {
 			it('should throw an error with the correct message if the user is not found by id', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -923,7 +961,7 @@ module.exports = {
 			it('should execute successfully and update only the allowed profile update fields if all parameters are correct', function() {
 				return co(function*() {
 					let user = yield instance.updateProfile({id: 1, typeId: 35, email: 'shouldNotUpdateTheEmail@ramster.com', phone: '+359888777666', gender: 'other', lastLogin: 'now'}),
-						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admintest@ramster.com', phone: '+359888777666', gender: 'other', status: true}
+						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admin@ramster.com', phone: '+359888777666', gender: 'other', status: true}
 						dataIsGood = true
 					for (const i in userShouldBe) {
 						const sbField = userShouldBe[i],

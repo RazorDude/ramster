@@ -43,7 +43,7 @@ module.exports = {
 	clients: {
 		site: {
 			uploadPath: path.resolve(__dirname, '../storage/tmp'),
-			anonymousAccessRoutes: ['/', '/four-oh-four', '/login', '/tokenLogin', '/users/resetPassword', '/users/loadLoggedInUserData', '/globalConfig/readList'],
+			anonymousAccessRoutes: ['/', '/four-oh-four', '/login', '/users/login', '/users/tokenLogin', '/users/resetPassword', '/users/loadLoggedInUserData', '/globalConfig/readList'],
 			nonLayoutDirectRoutes: [],
 			unauthorizedPageRedirectRoute: '/login',
 			notFoundRedirectRoutes: {

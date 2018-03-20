@@ -5,7 +5,7 @@ const
 module.exports = {
 	testUpdate: function() {
 		const instance = this
-		describe('userTypes.update', function() {
+		describe('db.userTypes.update', function() {
 			it('should throw an error with the correct message if attempting to deactivate a system-critical user type and a list of ids is provided', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -81,7 +81,7 @@ module.exports = {
 	testUpdateAccessPoints: function() {
 		const instance = this,
 			db = this.db
-		describe('userTypes.updateAccessPoints', function() {
+		describe('db.userTypes.updateAccessPoints', function() {
 			it('should throw an error with the correct message if the user type is not found', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -121,7 +121,7 @@ module.exports = {
 							where: {id: 2},
 							include: [{model: db.components.moduleAccessPoints.model, as: 'accessPoints', attributes: ['id'], where: {id: [1, 2, 3 ,4]}}]
 						}),
-						permissionsUpdatedFlag = yield db.generalStore.getStoredEntry('db-userTypeId-2-permissions-updated'),
+						permissionsUpdatedFlag = yield db.generalStore.getStoredEntry('db-userTypeId-2-permissionsUpdated'),
 						dataIsGood = true
 					if (userType.accessPoints.length !== 4) {
 						console.log('The method failed to update the access points correctly.')
@@ -140,7 +140,7 @@ module.exports = {
 	testDelete: function() {
 		const instance = this,
 			db = this.db
-		describe('userTypes.delete', function() {
+		describe('db.userTypes.delete', function() {
 			it('should throw an error with the correct message if the user types are not found', function() {
 				return co(function*() {
 					let didThrowAnError = false

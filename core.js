@@ -287,7 +287,7 @@ class Core {
 				})
 			})
 			describeSuiteConditionally((testAPIs === true) || ((typeof testAPIs === 'string') && testAPIs.length), 'client modules', function() {
-				it('should test all client modules\'s components successfully', function() {
+				it('should test all api modules\'s components successfully', function() {
 					const apiModules = instance.modules.apis
 					let moduleNamesToTest = []
 					if (typeof testAPIs === 'string') {

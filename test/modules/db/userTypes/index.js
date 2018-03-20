@@ -90,7 +90,7 @@ class Component extends BaseDBComponent {
 					apQuery += ';'
 					yield sequelize.query(apQuery, {transaction: t})
 				}
-				yield instance.db.generalStore.storeEntry(`db-userTypeId-${userType.id}-permissions-updated`, 'true')
+				yield instance.db.generalStore.storeEntry(`db-userTypeId-${userType.id}-permissionsUpdated`, 'true')
 				return true
 			})
 		})

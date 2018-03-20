@@ -178,6 +178,7 @@
 		- *BREAKING* - base-client.component.importFile now takes "fileName" (instead of "locationDataFile") and "delimiter" in the body.
 		- *BREAKING* - moved base-client.component.delete to the base-server.component. It is now of type DELETE, at the route /componentName/:id and returns {success: true}
 	- All of the above methods now pass userId to the db component methods.
+	- Added the ability to run a setup method in client and api components, which can be used to configure things after component.module has been set, as it is executed after ``setModuleInComponents``.
 	- Tests, full code coverage.
 - csvPromise:
 	- *BREAKING* - the parse method is now in the format parse(data, options), rather than parse({data, options}).

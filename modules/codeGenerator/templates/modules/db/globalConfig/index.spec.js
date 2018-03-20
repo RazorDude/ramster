@@ -5,7 +5,7 @@ const
 module.exports = {
 	testGetField: function() {
 		const instance = this
-		describe('globalConfig.getField', function() {
+		describe('db.globalConfig.getField', function() {
 			it('should return null if the field is not found', function() {
 				return co(function*() {
 					assert((yield instance.getField('suchAFieldDoesntExist')) === null)
@@ -37,7 +37,7 @@ module.exports = {
 	},
 	testGetFields: function() {
 		const instance = this
-		describe('globalConfig.getFields', function() {
+		describe('db.globalConfig.getFields', function() {
 			it('should return an empty object if no fields are found', function() {
 				return co(function*() {
 					let result = yield instance.getFields(['suchAFieldDoesntExist'])

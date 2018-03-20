@@ -78,6 +78,13 @@ class BaseServerModule {
 			}
 			instance.components = components
 			instance.setModuleInComponents()
+			components = instance.components
+			for (const componentName in components) {
+				const component = components[componentName]
+				if (typeof component.setup === 'function') {
+					component.setup()
+				}
+			}
 			return true
 		})
 	}

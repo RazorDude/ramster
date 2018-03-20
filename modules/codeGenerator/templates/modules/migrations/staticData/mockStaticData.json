@@ -9,7 +9,7 @@
 	"modules": {
 		"primaryKeys": ["id"],
 		"data": [
-			{"id": 1, "name": "Module 1", "route": "/module1", "description": "Module1", "order": 0, "alwaysAccessible": false, "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 1, "name": "Dashboard", "route": "/dashboard", "description": "Dashboard", "order": 0, "alwaysAccessible": false, "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
 			{"id": 2, "name": "Module 2", "route": "/module2", "description": "Module2", "order": 1, "alwaysAccessible": true, "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
 		]
 	},
