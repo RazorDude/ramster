@@ -51,6 +51,12 @@ class BaseServerComponent {
 			if (typeof this[item.func] !== 'function') {
 				throw {customMessage: `Method "${item.func}" (${item.method.toUpperCase()} route to "${item.path}") does not exist in component "${componentName}".`}
 			}
+			if (item.path instanceof Array) {
+				let paths = []
+				item.path.forEach((e, i) => paths.push(`${appendString}${e}`))
+				this.routes[index].path = paths
+				return
+			}
 			this.routes[index].path = `${appendString}${item.path}`
 		})
 		if (addDefaultRoutes instanceof Array) {

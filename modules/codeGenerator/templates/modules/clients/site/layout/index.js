@@ -31,22 +31,14 @@ class Component extends BaseClientComponent {
 		return function* (req, res, next) {
 			try {
 				if (req.isAuthenticated()) {
-					let permissionsData = req.user.permissionsData
+					let permissionsData = req.user.permissionsData,
+						canViewDashboard = permissionsData.Dashboard.text.canView
 					if ((req.locals.originalUrl === '/') || (req.locals.originalUrl === '/login')) {
-						res.redirect(302, permissionsData.canViewDashboard ? '/dashboard' : '/mySettings')
+						res.redirect(302, canViewDashboard ? '/dashboard' : '/mySettings')
 						return
 					}
-					if ((req.locals.originalUrl === '/dashboard') && !permissionsData.canViewDashboard) {
+					if ((req.locals.originalUrl === '/dashboard') && !canViewDashboard) {
 						res.redirect(302, '/mySettings')
-						return
-					}
-				} else {
-					if (req.headers['authorization'] && !req.query.killRedirect) {
-						res.redirect(302, '/tokenLogin')
-						return
-					}
-					if (req.locals.originalUrl === '/') {
-						res.redirect(302, '/login')
 						return
 					}
 				}

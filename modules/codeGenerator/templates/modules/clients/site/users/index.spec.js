@@ -605,7 +605,7 @@ module.exports = {
 					return true
 				})
 			})
-			it.skip('should execute successfully and redirect the user to /login', function() {
+			it('should execute successfully and redirect the user to /login if the user is logged in', function() {
 				return co(function*() {
 					let result = yield request({
 						method: 'get',
@@ -614,8 +614,10 @@ module.exports = {
 						json: true,
 						resolveWithFullResponse: true
 					})
-					console.log(result)
-					assert(true)
+					assert(
+						(result.request.headers.referer === `http://127.0.0.1:${moduleConfig.serverPort}/users/logout`) &&
+						(result.request.href === `http://127.0.0.1:${moduleConfig.serverPort}/login`)
+					)
 					return true
 				})
 			})
