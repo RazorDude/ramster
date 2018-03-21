@@ -53,4 +53,7 @@ co(function*() {
 	}
 
 	return true
-}).then((res) => true, (err) => console.log(err))
+}).then((res) => process.exit(0), (err) => {
+	console.log(err)
+	process.exit(1)
+})

@@ -111,7 +111,7 @@ module.exports = {
 						assert(false)
 						return false
 					}
-					yield fs.remove(outputPath)
+					// yield fs.remove(outputPath)
 					assert(true)
 					return true
 				})
