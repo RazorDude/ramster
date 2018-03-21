@@ -626,7 +626,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should throw an error with the correct message if the user is not found by id email', function() {
+			it('should throw an error with the correct message if the user is not found by id', function() {
 				return co(function*() {
 					let didThrowAnError = false
 					try {

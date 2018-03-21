@@ -33,8 +33,8 @@ class Component extends BaseClientComponent {
 				{method: 'get', path: `/selectList`, func: 'accessFilter', options: {next: 'readSelectList', moduleIds: []}},
 				{method: 'put', path: ``, func: 'accessFilter', options: {next: 'bulkUpsert', keyAccessPointIds: []}},
 				{method: 'patch', path: '/password', func: 'updatePassword'},
-				{method: 'patch', path: '/profile', func: 'updateProfile'},
 				{method: 'patch', path: '/email', func: 'updateEmail'},
+				{method: 'patch', path: '/profile', func: 'updateProfile'},
 				{method: 'delete', path: `/delete/:id`, func: 'accessFilter', options: {next: 'delete', keyAccessPointIds: []}}
 			]
 		})
@@ -187,7 +187,7 @@ class Component extends BaseClientComponent {
 		const instance = this
 		return function* (req, res, next) {
 			try {
-				let user = yield instance.dbComponent.read({email: decodeURIComponent(req.query.email)})
+				let user = yield instance.dbComponent.model.findOne({where: {email: decodeURIComponent(req.query.email)}, attributes: ['id']})
 				res.json({emailInUse: user ? true : false})
 			} catch (e) {
 				req.locals.error = e
@@ -200,7 +200,7 @@ class Component extends BaseClientComponent {
 		const instance = this
 		return function* (req, res, next) {
 			try {
-				yield instance.dbComponent.sendPasswordResetRequest({email: decodeURIComponent(req.query.email)})
+				yield instance.dbComponent.sendPasswordResetRequest(decodeURIComponent(req.query.email))
 				res.json({success: true})
 			} catch (e) {
 				req.locals.error = e
