@@ -570,7 +570,7 @@ module.exports = {
 	testLogout: function() {
 		const instance = this,
 			{moduleConfig} = this.module
-		describe('client.users.logout', function() {
+		describe('client.users.logout: GET /users/login', function() {
 			let sessionCookie = null
 			before(function() {
 				return co(function*() {
@@ -628,7 +628,7 @@ module.exports = {
 			{dbComponent} = this,
 			{db, generalStore, moduleConfig} = this.module,
 			{moduleAccessPoints, modules, userTypes} = db.components
-		describe('client.users.getLoggedInUserData', function() {
+		describe('client.users.getLoggedInUserData: GET /users/loggedInUserData', function() {
 			let sessionCookie = null
 			before(function() {
 				return co(function*() {
@@ -942,7 +942,7 @@ module.exports = {
 		const instance = this,
 			{moduleConfig} = this.module
 		let sessionCookie = null
-		describe('client.users.checkEmail', function() {
+		describe('client.users.checkEmail: GET /users/checkEmail', function() {
 			before(function() {
 				return co(function*() {
 					let result = yield request({
@@ -1011,7 +1011,7 @@ module.exports = {
 	testSendPasswordResetRequest: function() {
 		const instance = this,
 			{db, generalStore, moduleConfig} = this.module
-		describe('client.users.sendPasswordResetRequest', function() {
+		describe('client.users.sendPasswordResetRequest: GET /users/sendPasswordResetRequest', function() {
 			before(function(){
 				return co(function*() {
 					yield generalStore.removeEntry('user-1-dbLoginToken')
@@ -1071,7 +1071,7 @@ module.exports = {
 		const instance = this,
 			{db, generalStore, moduleConfig} = this.module
 		let sessionCookie = null
-		describe('client.users.sendEmailUpdateRequest', function() {
+		describe('client.users.sendEmailUpdateRequest: GET /users/sendEmailUpdateRequest', function() {
 			before(function(){
 				return co(function*() {
 					let result = yield request({
@@ -1145,7 +1145,7 @@ module.exports = {
 		const instance = this,
 			{config, db, generalStore, moduleConfig, tokenManager} = this.module
 		let sessionCookie = null
-		describe('client.users.updatePassword', function() {
+		describe('client.users.updatePassword: PATCH /users/password', function() {
 			before(function(){
 				return co(function*() {
 					let result = yield request({
@@ -1362,7 +1362,7 @@ module.exports = {
 		const instance = this,
 			{config, db, generalStore, moduleConfig, tokenManager} = this.module
 		let sessionCookie = null
-		describe('client.users.updateEmail', function() {
+		describe('client.users.updateEmail: PATCH /users/email', function() {
 			before(function() {
 				return co(function*() {
 					let result = yield request({
@@ -1513,7 +1513,7 @@ module.exports = {
 		const instance = this,
 			{moduleConfig} = this.module
 		let sessionCookie = null
-		describe('client.users.updateProfile', function() {
+		describe('client.users.updateProfile: PATCH /users/profile', function() {
 			before(function() {
 				return co(function*() {
 					let result = yield request({

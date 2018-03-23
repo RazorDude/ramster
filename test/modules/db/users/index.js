@@ -234,7 +234,7 @@ class Component extends BaseDBComponent {
 			let clientModuleConfig = db.config.clients[db.config.emails.useClientModule],
 				host = clientModuleConfig ? clientModuleConfig.host : '',
 				token = yield db.tokenManager.signToken(user, db.config.db.tokensSecret, 15)
-				yield db.generalStore.storeEntry(`user-${user.id}-dbLoginToken`, JSON.stringify({token, alreadyUsedForLogin: false}))
+			yield db.generalStore.storeEntry(`user-${user.id}-dbLoginToken`, JSON.stringify({token, alreadyUsedForLogin: false}))
 			yield db.mailClient.sendEmail('resetPassword', user.email, 'Reset Password Request', {
 				fields: {
 					userFirstName: user.firstName,
@@ -257,7 +257,7 @@ class Component extends BaseDBComponent {
 			let clientModuleConfig = db.config.clients[db.config.emails.useClientModule],
 				host = clientModuleConfig ? clientModuleConfig.host : '',
 				token = yield db.tokenManager.signToken(user, db.config.db.tokensSecret, 15)
-				yield db.generalStore.storeEntry(`user-${user.id}-dbLoginToken`, JSON.stringify({token, alreadyUsedForLogin: false}))
+			yield db.generalStore.storeEntry(`user-${user.id}-dbLoginToken`, JSON.stringify({token, alreadyUsedForLogin: false}))
 			yield db.mailClient.sendEmail('updateEmail', user.email, 'Email Update Request', {
 				fields: {
 					userFirstName: user.firstName,

@@ -1,7 +1,7 @@
 'use strict'
 
 const
-	{BaseClientComponent, csvPromise, toolbelt} = require('../../../../../index'),
+	{BaseClientComponent} = require('../../../../../index'),
 	co = require('co'),
 	localStrategy = require('passport-local').Strategy,
 	moment = require('moment'),

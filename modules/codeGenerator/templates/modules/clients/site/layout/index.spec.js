@@ -11,7 +11,7 @@ module.exports = {
 			{config, moduleConfig, moduleName} = this.module
 		let sessionCookie = null,
 			layoutFileData = null
-		describe('client.layout.loadLayout', function() {
+		describe('client.layout.loadLayout: GET to various routes', function() {
 			before(function() {
 				return co(function*() {
 					let result = yield request({

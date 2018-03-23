@@ -267,10 +267,18 @@ class BaseDBComponent {
 			this.searchFields.forEach((element, index) => {
 				let field = element.field,
 					fieldValue = filters[field]
-				if (this.setFilterValue(where, element, field, fieldValue, exactMatch) && (field[0] === '$') && (field[field.length - 1] === '$')) {
-					field = field.replace(/\$/g, '').split('.')
-					field.pop()
-					requiredRelationsData[field[0]] = field.join('.')
+				if ((field[0] === '$') && (field[field.length - 1] === '$')) {
+					let tempContainer = {}
+					if (this.setFilterValue(tempContainer, element, field, fieldValue, exactMatch)) {
+						let fieldKey = Object.keys(tempContainer)[0],
+							actualFieldKey = field.replace(/\$/g, '').split('.')
+						actualFieldKey = actualFieldKey[actualFieldKey.length - 1]
+						field = field.replace(/\$/g, '').split('.')
+						field.pop()
+						requiredRelationsData[field[0]] = {path: field.join('.'), field: actualFieldKey, value: tempContainer[fieldKey]}
+					}
+				} else {
+					this.setFilterValue(where, element, field, fieldValue, exactMatch)
 				}
 			})
 		}
@@ -294,9 +302,9 @@ class BaseDBComponent {
 			order = [],
 			actualData = ((typeof data !== 'object') || (data === null)) ? {} : data
 		this.relReadKeys.forEach((key, index) => {
-			let relationPath = requiredRelationsData[key]
-			if (relationPath) {
-				let splitPath = relationPath.split('.'),
+			let relationData = requiredRelationsData[key]
+			if (relationData) {
+				let splitPath = relationData.path.split('.'),
 					includeItem = JSON.parse(JSON.stringify(this.relations[key])),
 					relationItem = {include: [includeItem]},
 					nonChangeableRelationItem = {include: [this.relations[key]]}, // we need this one, so we can get the models for each one, because they're otherwise destroyed in JSON.parse(JSON.stringify())
@@ -325,6 +333,9 @@ class BaseDBComponent {
 								delete relationItem.order
 							}
 							currentItemName = keyFromPath
+							if (pcIndex === (splitPath.length - 1) && (typeof relationData.field !== 'undefined')) {
+								relationItem.where = {[relationData.field]: relationData.value}
+							}
 							break
 						}
 					}

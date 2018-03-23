@@ -1,7 +1,7 @@
 'use strict'
 
 const
-	{BaseClientComponent, csvPromise, toolbelt} = require('ramster'),
+	{BaseClientComponent} = require('ramster'),
 	co = require('co'),
 	localStrategy = require('passport-local').Strategy,
 	moment = require('moment'),

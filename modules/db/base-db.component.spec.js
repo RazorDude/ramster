@@ -898,21 +898,37 @@ module.exports = {
 					{field: 'anotherString', like: '-%'}
 				]
 				let {where, requiredRelationsData} = instance.getWhereObjects({
-						id: 3,
-						someString: 'test1',
-						'$testRelation.innerTestRelation.nestedId$': 5,
-						anotherString: 'test2'
-					},
-					['anotherString']
-				)
-				assert(
-					(where.id === 3) &&
-					(where['$testRelation.innerTestRelation.nestedId$'] === 5) &&
-					(where.someString['$iLike'] === '%test1%') &&
-					(where.anotherString === 'test2') &&
-					(Object.keys(requiredRelationsData).length === 1) &&
-					(requiredRelationsData['testRelation'] === 'testRelation.innerTestRelation')
-				)
+							id: 3,
+							someString: 'test1',
+							'$testRelation.innerTestRelation.nestedId$': 5,
+							anotherString: 'test2'
+						},
+						['anotherString']
+					),
+					dataIsGood = true
+				if (where.id !== 3) {
+					console.log(`Expected where.id to be 3, got ${where.id}.`)
+					dataIsGood = false
+				} else if (where.someString.$iLike !== '%test1%') {
+					console.log(`Expected where.someString.$iLike to be '$test1$', got ${where.someString.$iLike}.`)
+					dataIsGood = false
+				} else if (where.anotherString !== 'test2') {
+					console.log(`Expected where.anotherString to be 'test2', got ${where.anotherString}.`)
+					dataIsGood = false
+				} else if (Object.keys(requiredRelationsData).length !== 1) {
+					console.log(`Expected Object.keys(requiredRelationsData).length to be 1, got ${Object.keys(requiredRelationsData).length}.`)
+					dataIsGood = false
+				} else if (requiredRelationsData.testRelation.path !== 'testRelation.innerTestRelation') {
+					console.log(`Expected requiredRelationsData.testRelation.path to be 'testRelation.innerTestRelation', got ${requiredRelationsData.testRelation.path}.`)
+					dataIsGood = false
+				} else if (requiredRelationsData.testRelation.field !== 'nestedId') {
+					console.log(`Expected requiredRelationsData.testRelation.field to be 'nestedId', got ${requiredRelationsData.testRelation.field}.`)
+					dataIsGood = false
+				} else if (requiredRelationsData.testRelation.value !== 5) {
+					console.log(`Expected requiredRelationsData.testRelation.value to be 5, got ${requiredRelationsData.testRelation.value}.`)
+					dataIsGood = false
+				}
+				assert(dataIsGood)
 			})
 		})
 	},
@@ -945,7 +961,7 @@ module.exports = {
 				changeableInstance.searchFields = [
 					{field: 'id'},
 					{field: '$test1.name$'},
-					{field: '$test2.test3.description$'}
+					{field: '$test2.test3.description$', like: '%-'}
 				]
 				changeableInstance.associationsConfig = {
 					test1: {type: 'belongsTo', foreignKey: 'test1Id'},
@@ -1011,7 +1027,10 @@ module.exports = {
 						(include[1].include.length !== 1) ||
 						(include[1].include[0].model !== 'test3Model') ||
 						(include[1].include[0].as !== 'test3') ||
-						(include[1].include[0].required !== true)
+						(include[1].include[0].required !== true) ||
+						!include[1].include[0].where ||
+						!include[1].include[0].where.description ||
+						(include[1].include[0].where.description.$iLike !== '%testDescription')
 					)
 				) {
 					console.log('Bad include array for include item no. 1.')

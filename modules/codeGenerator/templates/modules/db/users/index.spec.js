@@ -44,7 +44,7 @@ module.exports = {
 						alwaysAccessibleModules = yield modules.model.findAll({
 							where: {alwaysAccessible: true},
 							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
-						})
+						}),
 						dataIsGood = true
 					if (!userFromMethod) {
 						console.log('The method did not return the user.')
@@ -961,7 +961,7 @@ module.exports = {
 			it('should execute successfully and update only the allowed profile update fields if all parameters are correct', function() {
 				return co(function*() {
 					let user = yield instance.updateProfile({id: 1, typeId: 35, email: 'shouldNotUpdateTheEmail@ramster.com', phone: '+359888777666', gender: 'other', lastLogin: 'now'}),
-						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admin@ramster.com', phone: '+359888777666', gender: 'other', status: true}
+						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admin@ramster.com', phone: '+359888777666', gender: 'other', status: true},
 						dataIsGood = true
 					for (const i in userShouldBe) {
 						const sbField = userShouldBe[i],
