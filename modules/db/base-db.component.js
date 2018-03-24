@@ -289,6 +289,12 @@ class BaseDBComponent {
 		let includeItem = JSON.parse(JSON.stringify(relItem)),
 			innerInclude = includeItem.include
 		includeItem.model = relItem.model
+		for (const j in relItem.order) {
+			let orderItem = relItem.order[j]
+			if (orderItem.length === 3) {
+				includeItem.order[j] = [{model: orderItem[0].model, as: relItem.as}, orderItem[1], orderItem[2]]
+			}
+		}
 		if (innerInclude instanceof Array) {
 			for (const i in innerInclude) {
 				innerInclude[i] = this.assignModelToDereferencedRelationRecursively(relItem.include[i])
@@ -305,30 +311,22 @@ class BaseDBComponent {
 			let relationData = requiredRelationsData[key]
 			if (relationData) {
 				let splitPath = relationData.path.split('.'),
-					includeItem = JSON.parse(JSON.stringify(this.relations[key])),
+					includeItem = this.assignModelToDereferencedRelationRecursively(this.relations[key]),
 					relationItem = {include: [includeItem]},
-					nonChangeableRelationItem = {include: [this.relations[key]]}, // we need this one, so we can get the models for each one, because they're otherwise destroyed in JSON.parse(JSON.stringify())
 					currentItemName = this.componentName
+				// set required=true for all items in the path and set the filter values to the bottom one
 				splitPath.forEach((keyFromPath, pcIndex) => {
 					if (!(relationItem.include instanceof Array)) {
-						throw {customMessage: `Invalid include array in "${currentItemName}"'s relations item.`}
+						throw {customMessage: `Invalid include array in "${currentItemName}"'s relations item (looking for "${keyFromPath}").`}
 					}
 					let nextRelationItemFound = false
 					for (const i in relationItem.include) {
 						let thisItem = relationItem.include[i]
 						if (thisItem.as === keyFromPath) {
 							nextRelationItemFound = true
-							nonChangeableRelationItem = nonChangeableRelationItem.include[i]
 							relationItem = thisItem
-							relationItem.model = nonChangeableRelationItem.model
 							relationItem.required = true
 							if (relationItem.order) {
-								for (const j in relationItem.order) {
-									let orderItem = relationItem.order[j]
-									if (orderItem.length === 3) {
-										orderItem[0].model = nonChangeableRelationItem.order[j][0].model
-									}
-								}
 								order = order.concat(relationItem.order)
 								delete relationItem.order
 							}
@@ -336,13 +334,13 @@ class BaseDBComponent {
 							if (pcIndex === (splitPath.length - 1) && (typeof relationData.field !== 'undefined')) {
 								relationItem.where = {[relationData.field]: relationData.value}
 							}
-							break
 						}
 					}
 					if (!nextRelationItemFound) {
 						throw {customMessage: `Invalid relation "${keyFromPath}" for "${currentItemName}".`}
 					}
 				})
+				// go through all keys on all levels in includeItem and set their models, as they were destroyed during JSON.parse(JSON.stringify())
 				include.push(includeItem)
 				return
 			}
@@ -351,6 +349,27 @@ class BaseDBComponent {
 			}
 		})
 		return {include, order}
+	}
+
+	stripAndMapAttributesFromOptionsObjectRecursively(optionsObject) {
+		let attributesByPath = {nested: []}
+		if (optionsObject.attributes) {
+			attributesByPath.topLevel = JSON.parse(JSON.stringify(attributes))
+		}
+		optionsObject.attributes = ['id']
+		if (optionsObject.include) {
+			optionsObject.include.forEach((item, index) => attributesByPath.nested.push(this.stripAndMapAttributesFromOptionsObjectRecursively(item)))
+		}
+		return attributesByPath
+	}
+
+	restoreAttributesFromMapRecursively(optionsObject, map) {
+		if (map.topLevel) {
+			optionsObject.attributes = map.topLevel
+		}
+		if (map.nested.length) {
+			map.nested.forEach((item, index) => this.restoreAttributesFromMapRecursively(optionsObject.include[index], item))
+		}
 	}
 
 	create(data, options) {
@@ -447,7 +466,31 @@ class BaseDBComponent {
 				readListOptions.limit = perPage + 1
 			}
 
-			let results = yield instance.model.findAll(readListOptions)
+			let results = []
+			// workaround for this Sequelize bug - https://github.com/sequelize/sequelize/issues/8602
+			try {
+				results = yield instance.model.findAll(readListOptions)
+			} catch(e) {
+				if (e && e.original && e.original.error &&
+					(e.original.error.indexOf('missing FROM-clause entry for table') !== -1) &&
+					((typeof readListOptions.offset !== 'undefined') || (typeof readListOptions.limit !== 'undefined'))
+				) {
+					let {limit, offset, ...goodStuff} = readListOptions,
+						originalAttributesByPath = instance.stripAndMapAttributesFromOptionsObjectRecursively(goodStuff)
+					let idResults = yield instance.model.findAll(goodStuff),
+						idsToSearchFor = []
+					for (let i = offset; i <= limit; i++) {
+						if (!idResults[i]) {
+							break
+						}
+						idsToSearchFor.push(idResults[i].id)
+					}
+					if (idsToSearchFor.length) {
+						instance.restoreAttributesFromMapRecursively(goodStuff, originalAttributesByPath)
+						results = yield instance.model.findAll(goodStuff)
+					}
+				}
+			}
 			if (results.length === (perPage + 1)) {
 				results.pop()
 				more = true

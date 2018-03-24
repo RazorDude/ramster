@@ -15,21 +15,16 @@ module.exports = {
 			it('should return the field data if the field is found', function() {
 				return co(function*() {
 					let fieldFromMethod = yield instance.getField('testField'),
-						fieldFromDB = yield instance.model.findOne({where: {field: 'testField'}}),
-						dataIsGood = true
+						fieldFromDB = yield instance.model.findOne({where: {field: 'testField'}})
 					if (!fieldFromDB) {
-						console.log('Field not found in the database.')
-						dataIsGood = false
+						throw {testError: 'Field not found in the database.'}
 					}
-					if (dataIsGood && !fieldFromMethod) {
-						console.log('The method did not return the field.')
-						dataIsGood = false
+					if (!fieldFromMethod) {
+						throw {testError: 'The method did not return the field.'}
 					}
-					if (dataIsGood && (fieldFromDB.value !== fieldFromMethod)) {
-						console.log(`Bad value '${fieldFromMethod}', expected '${fieldFromDB.value}'`)
-						dataIsGood = false
+					if ((fieldFromDB.value !== fieldFromMethod)) {
+						throw {testError: `Bad value '${fieldFromMethod}', expected '${fieldFromDB.value}'`}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -48,33 +43,23 @@ module.exports = {
 			it('should return the field values data object if the fields are found', function() {
 				return co(function*() {
 					let fieldsFromMethod = yield instance.getFields(['testField', 'testField2']),
-						fieldsFromDB = yield instance.model.findAll({where: {field: ['testField', 'testField2']}}),
-						dataIsGood = true
+						fieldsFromDB = yield instance.model.findAll({where: {field: ['testField', 'testField2']}})
 					if (!fieldsFromDB.length) {
-						console.log('Fields not found in the database.')
-						dataIsGood = false
+						throw {testError: 'Fields not found in the database.'}
 					}
-					if (dataIsGood && !Object.keys(fieldsFromMethod).length) {
-						console.log('The method did not return any fields.')
-						dataIsGood = false
+					if (!Object.keys(fieldsFromMethod).length) {
+						throw {testError: 'The method did not return any fields.'}
 					}
-					if (dataIsGood) {
-						for (const i in fieldsFromDB) {
-							const fieldFromDB = fieldsFromDB[i].dataValues,
-								fieldFromMethod = fieldsFromMethod[fieldFromDB.field]
-							if (typeof fieldFromMethod === 'undefined') {
-								console.log(`The method did not return the "${fieldFromDB.field}" field.`)
-								dataIsGood = false
-								break
-							}
-							if (fieldFromMethod !== fieldFromDB.value) {
-								console.log(`Bad value '${fieldFromMethod}' for field "${fieldFromDB.field}".`)
-								dataIsGood = false
-								break
-							}
+					for (const i in fieldsFromDB) {
+						const fieldFromDB = fieldsFromDB[i].dataValues,
+							fieldFromMethod = fieldsFromMethod[fieldFromDB.field]
+						if (typeof fieldFromMethod === 'undefined') {
+							throw {testError: `The method did not return the "${fieldFromDB.field}" field.`}
+						}
+						if (fieldFromMethod !== fieldFromDB.value) {
+							throw {testError: `Bad value '${fieldFromMethod}' for field "${fieldFromDB.field}".`}
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})

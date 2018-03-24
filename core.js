@@ -203,6 +203,7 @@ class Core {
 	runTests({testDB, testClients, testAPIs}) {
 		const instance = this,
 			{config} = instance
+		let syncHistoryFilesCount = 0
 		describe(config.projectName, function() {
 			before(function() {
 				this.timeout(50000)
@@ -212,8 +213,10 @@ class Core {
 					if (config.emails) {
 						yield instance.loadMailClient(true)
 					}
-					instance.loadMigrations()
-					if (testDB) {
+					if (config.migrations) {
+						instance.loadMigrations()
+					}
+					if (testClients) {
 						yield instance.loadClients()
 					}
 					if (testAPIs) {
@@ -223,13 +226,19 @@ class Core {
 						instance.loadCRONJobs()
 					}
 					yield instance.listen()
-					try {
-						let stats = yield fs.lstat(path.join(config.migrations.staticDataPath, 'mockStaticData.json'))
-						if (stats.isFile()) {
-							yield instance.migrations.insertStaticData('mockStaticData')
+					if (config.migrations) {
+						try {
+							syncHistoryFilesCount = (yield fs.readdir(config.migrations.syncHistoryPath)).length
+						} catch(e) {
 						}
-					} catch(e) {
-						console.log('Error while populating mockStaticData, skipping: ', e)
+						try {
+							let stats = yield fs.lstat(path.join(config.migrations.staticDataPath, 'mockStaticData.json'))
+							if (stats.isFile()) {
+								yield instance.migrations.insertStaticData('mockStaticData')
+							}
+						} catch(e) {
+							console.log('Error while populating mockStaticData, skipping: ', e)
+						}
 					}
 					return true
 				})
@@ -313,6 +322,17 @@ class Core {
 									}
 								}
 							)
+						}
+					}
+					return true
+				})
+			})
+			after(function() {
+				return co(function*() {
+					if (config.migrations) {
+						let dirData = yield fs.readdir(config.migrations.syncHistoryPath)
+						if (dirData.length > syncHistoryFilesCount) {
+							yield fs.remove(path.join(config.migrations.syncHistoryPath, dirData[dirData.length - 1]))
 						}
 					}
 					return true
