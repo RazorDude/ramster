@@ -174,6 +174,7 @@
 		- *BREAKING* - moved base-client.component.readList to the base-sever.component. It is now of type GET and is at the route /componentName.
 		- Upgraded base-client.component.readList to store search values in the generalStore, if set in the request.
 		- *BREAKING* - moved base-client.component.update to the base-sever.component. It is now named bulkUpsert, is of type PUT and is at the route /componentName. According to REST standards, this means that we will be using this method for bulkCreate, update and bulkUpdate, based on what is provided in the body.
+		- Added base-server.component.update PATCH to /update/:id - for updating single items.
 		- *BREAKING* - (clients only) base-client.component.checkImportFile now takes "delimiter", as well as "fileName" in the query.
 		- *BREAKING* - base-client.component.importFile now takes "fileName" (instead of "locationDataFile") and "delimiter" in the body.
 		- *BREAKING* - moved base-client.component.delete to the base-server.component. It is now of type DELETE, at the route /componentName/:id and returns {success: true}

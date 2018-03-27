@@ -65,6 +65,7 @@ class BaseServerComponent {
 					read: {method: 'get', path: `/${componentName}/item`, func: 'read'},
 					readList: {method: 'get', path: `/${componentName}`, func: 'readList'},
 					readSelectList: {method: 'get', path: `/${componentName}/selectList`, func: 'readSelectList'},
+					update: {method: 'patch', path: `/${componentName}/:id`, func: 'update'},
 					bulkUpsert: {method: 'put', path: `/${componentName}`, func: 'bulkUpsert'},
 					checkImportFile: {method: 'get', path: `/${componentName}/checkImportFile`, func: 'checkImportFile'},
 					importFile: {method: 'post', path: `/${componentName}/importFile`, func: 'importFile'},
@@ -255,6 +256,19 @@ class BaseServerComponent {
 					results.push({value: row.id, text})
 				})
 				res.json(results)
+			} catch (e) {
+				req.locals.error = e
+				next()
+			}
+		}
+	}
+
+	update() {
+		const instance = this,
+			{dbComponent} = this
+		return function* (req, res, next) {
+			try {
+				res.json(yield dbComponent.update({dbObject: req.body, where: {id: req.params.id}, userId: req.user.id}))
 			} catch (e) {
 				req.locals.error = e
 				next()
