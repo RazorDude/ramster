@@ -523,8 +523,11 @@ class BaseDBComponent {
 		if (!(dbObjects instanceof Array)) {
 			throw {customMessage: `Invalid array of "${this.componentName}" to update.`}
 		}
-		if (!options || !options.transaction) {
+		if (!options) {
 			return this.db.sequelize.transaction((t) => this.bulkUpsert(dbObjects, {transaction: t}))
+		}
+		if (!options.transaction) {
+			return this.db.sequelize.transaction((t) => this.bulkUpsert(dbObjects, {transaction: t, ...options}))
 		}
 		const instance = this,
 			{userId, transaction, ...otherOptions} = options
