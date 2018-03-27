@@ -152,7 +152,7 @@ class BaseClientComponent extends BaseServerComponent {
 		}
 	}
 
-	importFile() {
+	importFile(additionalOptions) {
 		const instance = this,
 			{dbComponent} = this
 		return function* (req, res, next) {
@@ -197,7 +197,14 @@ class BaseClientComponent extends BaseServerComponent {
 					})
 				}
 
-				yield dbComponent.bulkUpsert(data, {userId: req.user && req.user.id || null})
+				let options = {userId: req.user && req.user.id || null}
+				if ((typeof additionalOptions === 'object') && (additionalOptions !== null)) {
+					let {userId, ...goodOptions} = additionalOptions
+					for (const key in goodOptions) {
+						options[key] = goodOptions[key]
+					}
+				}
+				yield dbComponent.bulkUpsert(data, options)
 				res.json({success: true})
 			} catch (e) {
 				req.locals.error = e

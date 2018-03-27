@@ -428,7 +428,7 @@ module.exports = {
 					changeableInstance.addFields = [{fieldName: 'lastName', getValue: (item) => `thisIsTheNewShit${item.typeId}`}]
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
-						wrap(instance.importFile())(req, res, next.bind(next, resolve))
+						wrap(instance.importFile({test1: 'test', test2: 'testq'}))(req, res, next.bind(next, resolve))
 					}))
 					if (req.locals.error) {
 						throw req.locals.error
