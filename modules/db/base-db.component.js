@@ -538,9 +538,9 @@ class BaseDBComponent {
 					objectsToCreate.push(dbObject)
 					continue
 				}
-				yield instance.model.update(dbObject, {where: {id}, userId, transaction: t})
+				yield instance.update({dbObject, where: {id}, userId, transaction: t})
 			}
-			yield instance.model.bulkCreate(objectsToCreate, {userId, transaction: t})
+			yield instance.bulkCreate(objectsToCreate, {userId, transaction: t})
 			return {success: true}
 		})
 	}
