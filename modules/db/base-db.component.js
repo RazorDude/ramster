@@ -527,8 +527,7 @@ class BaseDBComponent {
 			return this.db.sequelize.transaction((t) => this.bulkUpsert(dbObjects, {transaction: t}))
 		}
 		const instance = this,
-			t = options.transaction,
-			userId = options.userId
+			{userId, transaction, ...otherOptions} = options
 		return co(function*() {
 			let objectsToCreate = []
 			for (const i in dbObjects) {
@@ -538,9 +537,9 @@ class BaseDBComponent {
 					objectsToCreate.push(dbObject)
 					continue
 				}
-				yield instance.update({dbObject, where: {id}, userId, transaction: t})
+				yield instance.update({dbObject, where: {id}, userId, transaction, ...otherOptions})
 			}
-			yield instance.bulkCreate(objectsToCreate, {userId, transaction: t})
+			yield instance.bulkCreate(objectsToCreate, {userId, transaction, ...otherOptions})
 			return {success: true}
 		})
 	}
