@@ -65,7 +65,7 @@ class BaseServerComponent {
 					read: {method: 'get', path: `/${componentName}/item`, func: 'read'},
 					readList: {method: 'get', path: `/${componentName}`, func: 'readList'},
 					readSelectList: {method: 'get', path: `/${componentName}/selectList`, func: 'readSelectList'},
-					update: {method: 'patch', path: `/${componentName}/:id`, func: 'update'},
+					update: {method: 'patch', path: `/${componentName}/item/:id`, func: 'update'},
 					bulkUpsert: {method: 'put', path: `/${componentName}`, func: 'bulkUpsert'},
 					checkImportFile: {method: 'get', path: `/${componentName}/checkImportFile`, func: 'checkImportFile'},
 					importFile: {method: 'post', path: `/${componentName}/importFile`, func: 'importFile'},
