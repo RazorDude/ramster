@@ -9,18 +9,19 @@ class Component extends BaseDBComponent {
 		super()
 
 		this.model = sequelize.define('globalConfig', {
-			field: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			value: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}}
-		}, {
-			setterMethods: {
-				id: function (value) {
+				field: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				value: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}}
+			}, {
+				setterMethods: {
+					id: function (value) {
+					},
+					field: function (value) {
+					}
 				},
-				field: function (value) {
-				}
-			},
-			paranoid: true
-		})
+				paranoid: true
+			}
+		)
 
 		this.searchFields = [
 			{field: 'id'},
