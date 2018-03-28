@@ -42,7 +42,7 @@ co(function*() {
 			continue
 		}
 
-		moduleConfig.clientPath = path.join(config.clientModulesPath, moduleName)
+		moduleConfig.clientPath = path.join(config.clientModulesPublicSourcesPath, moduleName)
 		moduleConfig.publicPath = path.join(config.clientModulesPublicPath, moduleName)
 		moduleConfig.nodeModulesPath = path.join(__dirname, 'node_modules')
 		let webpackConfig = getWebpackConfig(moduleConfig)
