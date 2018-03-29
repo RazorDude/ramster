@@ -337,6 +337,7 @@ class CodeGenerator {
 			yield fs.mkdirp(path.join(outputPath, 'config/webpack'))
 			yield instance.generateWebpackConfig(path.join(outputPath, 'config/webpack'), 'react')
 			yield instance.generateLayoutFile(path.join(outputPath, 'clients/site'), configProfile)
+			yield fs.copy(path.join(__dirname, 'templates/clients/site/index.js'), path.join(outputPath, 'clients/site/index.js'))
 			yield fs.mkdirp(path.join(outputPath, 'public/site'))
 			for (const i in dbModules) {
 				let moduleName = dbModules[i],

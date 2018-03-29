@@ -9,19 +9,20 @@ class Component extends BaseDBComponent {
 		super()
 
 		this.model = sequelize.define('userType', {
-			name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true}
-		}, {
-			indexes: [
-				{unique: true, fields: ['name'], where: {deletedAt: null}}
-			],
-			setterMethods: {
-				id: function (value) {
-				}
-			},
-			paranoid: true
-		})
+				name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true}
+			}, {
+				indexes: [
+					{unique: true, fields: ['name'], where: {deletedAt: null}}
+				],
+				setterMethods: {
+					id: function (value) {
+					}
+				},
+				paranoid: true
+			}
+		)
 
 		this.associationsConfig = {
 			users: {type: 'hasMany', foreignKey: 'typeId'},

@@ -191,7 +191,7 @@ class BaseClientComponent extends BaseServerComponent {
 							item[column] = row[columnsToMatch[column]]
 						})
 						addFields.forEach((fieldData, fIndex) => {
-							item[fieldData.fieldName] = fieldData.getValue(item)
+							item[fieldData.fieldName] = fieldData.getValue(item, req.user)
 						})
 						data.push(emptyToNull(item))
 					})

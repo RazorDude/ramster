@@ -500,7 +500,8 @@ class BaseDBComponent {
 	}
 
 	update({dbObject, where, userId, transaction}) {
-		const instance = this
+		const instance = this,
+			{allowedUpdateFields} = this
 		return co(function*() {
 			if ((typeof where !== 'object') || (where === null) || (Object.keys(where).length === 0)) {
 				throw {customMessage: 'Cannot update without criteria.'}
@@ -514,6 +515,15 @@ class BaseDBComponent {
 			}
 			if (userId) {
 				dbObject.changeUserId = userId
+			}
+			if (allowedUpdateFields instanceof Array) {
+				let objectForUpdate = {}
+				allowedUpdateFields.forEach((e, i) => {
+					if (typeof dbObject[e] !== 'undefined') {
+						objectForUpdate[e] = dbObject[e]
+					}
+				})
+				return yield instance.model.update(objectForUpdate, options)
 			}
 			return yield instance.model.update(dbObject, options)
 		})

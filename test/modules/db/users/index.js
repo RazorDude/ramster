@@ -13,48 +13,49 @@ class Component extends BaseDBComponent {
 		super()
 
 		this.model = sequelize.define('user', {
-			typeId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
-			firstName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			lastName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			email: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			unconfirmedEmail: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
-			phone: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
-			password: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			gender: {type: Sequelize.ENUM('male', 'female', 'other'), allowNull: true},
-			status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true},
-			lastLogin: {type: Sequelize.DATE, allowNull: true, validate: {isDate: true}}
-		}, {
-			indexes: [
-				{unique: true, fields: ['email'], where: {deletedAt: null}}
-			],
-			setterMethods: {
-				id: function (value) {
-				},
-				password: function (value) {
-					if (typeof value !== 'undefined') {
-						if ((typeof value !== 'string') || (value.length < 4)) {
-							throw {customMessage: 'The password must be at least 4 characters long.'}
+				typeId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
+				firstName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				lastName: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				email: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				unconfirmedEmail: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
+				phone: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
+				password: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				gender: {type: Sequelize.ENUM('male', 'female', 'other'), allowNull: true},
+				status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true},
+				lastLogin: {type: Sequelize.DATE, allowNull: true, validate: {isDate: true}}
+			}, {
+				indexes: [
+					{unique: true, fields: ['email'], where: {deletedAt: null}}
+				],
+				setterMethods: {
+					id: function (value) {
+					},
+					password: function (value) {
+						if (typeof value !== 'undefined') {
+							if ((typeof value !== 'string') || (value.length < 4)) {
+								throw {customMessage: 'The password must be at least 4 characters long.'}
+							}
+							this.setDataValue('password', bcryptjs.hashSync(value, 10))
 						}
-						this.setDataValue('password', bcryptjs.hashSync(value, 10))
+					},
+					email: function (value) {
+						if (typeof value !== 'undefined') {
+							this.setDataValue('unconfirmedEmail', null)
+							this.setDataValue('email', value)
+						}
 					}
 				},
-				email: function (value) {
-					if (typeof value !== 'undefined') {
-						this.setDataValue('unconfirmedEmail', null)
-						this.setDataValue('email', value)
+				scopes: {
+					default: {
+						attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+					},
+					full: {
+						attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 					}
-				}
-			},
-			scopes: {
-				default: {
-					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 				},
-				full: {
-					attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
-				}
-			},
-			paranoid: true
-		})
+				paranoid: true
+			}
+		)
 
 		this.model = this.model.scope('default')
 		this.associationsConfig = {

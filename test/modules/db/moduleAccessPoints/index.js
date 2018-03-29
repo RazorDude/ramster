@@ -8,20 +8,21 @@ class Component extends BaseDBComponent {
 		super()
 
 		this.model = sequelize.define('moduleAccessPoint', {
-			moduleId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
-			name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-			status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true}
-		}, {
-			indexes: [
-				{unique: true, fields: ['name', 'moduleId'], where: {deletedAt: null}}
-			],
-			setterMethods: {
-				id: function (value) {
-				}
-			},
-			paranoid: true
-		})
+				moduleId: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 1}},
+				name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+				status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true}
+			}, {
+				indexes: [
+					{unique: true, fields: ['name', 'moduleId'], where: {deletedAt: null}}
+				],
+				setterMethods: {
+					id: function (value) {
+					}
+				},
+				paranoid: true
+			}
+		)
 
 		this.associationsConfig = {
 			module: {type: 'belongsTo', componentName: 'modules', foreignKey: 'moduleId'},
