@@ -186,6 +186,7 @@ module.exports = {
 					delete moduleConfig.unauthorizedPageRedirectRoute
 					delete moduleConfig.redirectUnauthorizedPagesToNotFound
 					req.originalUrl = '/unathorizedRoute'
+					req.method = 'GET'
 					changeableInstance.paths = ['/unathorizedRoute']
 					changeableInstance.layoutRoutes = ['/unathorizedRoute']
 					req.isAuthenticated = () => false
@@ -213,6 +214,7 @@ module.exports = {
 					moduleConfig.unauthorizedPageRedirectRoute = '/unauthrozidPageRedirectRoute'
 					delete moduleConfig.redirectUnauthorizedPagesToNotFound
 					req.originalUrl = '/unathorizedRoute'
+					req.method = 'GET'
 					changeableInstance.paths = ['/unathorizedRoute']
 					changeableInstance.layoutRoutes = ['/unathorizedRoute']
 					req.isAuthenticated = () => false
@@ -244,6 +246,7 @@ module.exports = {
 					moduleConfig.redirectUnauthorizedPagesToNotFound = true
 					moduleConfig.notFoundRedirectRoutes = {default: '/testRoute'}
 					req.originalUrl = '/unathorizedRoute'
+					req.method = 'GET'
 					changeableInstance.paths = ['/unathorizedRoute']
 					changeableInstance.layoutRoutes = ['/unathorizedRoute']
 					req.isAuthenticated = () => false

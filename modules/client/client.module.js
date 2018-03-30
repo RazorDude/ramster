@@ -44,7 +44,7 @@ class ClientModule extends BaseServerModule {
 			}
 			if (!req.isAuthenticated() && (!(moduleConfig.anonymousAccessRoutes instanceof Array) || !checkRoutes(originalUrl, moduleConfig.anonymousAccessRoutes))) {
 				if (
-					((instance.layoutRoutes instanceof Array) && checkRoutes(originalUrl, instance.layoutRoutes)) ||
+					((instance.layoutRoutes instanceof Array) && checkRoutes(originalUrl, instance.layoutRoutes) && (req.method.toLowerCase() === 'get')) ||
 					((moduleConfig.nonLayoutDirectRoutes instanceof Array) && checkRoutes(originalUrl, moduleConfig.nonLayoutDirectRoutes))
 				) {
 					cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
