@@ -195,6 +195,7 @@
 	- Improved the findVertexByIdDFS method and handled various cases properly.
 	- *BREAKING* - fixed the unit conversion in getFolderSize. Your code may not work if you were relying on the old numbers.
 	- getNested now always returns null, instead of sometimes null and sometimes undefined.
+	- Added setNested.
 	- Tests, added full code coverage.
 
 # 0.6.22

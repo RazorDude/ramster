@@ -35,6 +35,10 @@ module.exports = {
 				instance.testGetFolderSize()
 				assert(true)
 			})
+			it('should execute testGetNested successfully', function() {
+				instance.testGetNested()
+				assert(true)
+			})
 			it('should execute testGenerateRandomNumber successfully', function() {
 				instance.testGenerateRandomNumber()
 				assert(true)
@@ -43,12 +47,12 @@ module.exports = {
 				instance.testGenerateRandomString()
 				assert(true)
 			})
-			it('should execute testParseData successfully', function() {
-				instance.testParseData()
+			it('should execute testParseDate successfully', function() {
+				instance.testParseDate()
 				assert(true)
 			})
-			it('should execute testGetNested successfully', function() {
-				instance.testGetNested()
+			it('should execute testSetNested successfully', function() {
+				instance.testSetNested()
 				assert(true)
 			})
 		})
@@ -481,7 +485,7 @@ module.exports = {
 			})
 		})
 	},
-	testParseData: function() {
+	testParseDate: function() {
 		const parseDate = toolbelt.parseDate
 		describe('toolbelt.parseDate', function() {
 			it('should execute successfully and return valid moment date object if the date is a string in the format "DD/MM/YYYY"', function() {
@@ -545,6 +549,61 @@ module.exports = {
 						}, 't.vertices.f.vertices.1.vertices.innerTest.vertices.veryInnerId'
 					) === 25
 				)
+			})
+		})
+	},
+	testSetNested: function() {
+		const setNested = toolbelt.setNested
+		describe('toolbelt.setNested', function() {
+			it('should execute successfully and do nothing if the parent is undefined', function() {
+				setNested()
+				assert(true)
+			})
+			it('should execute successfully and do nothing if the parent is null', function() {
+				setNested(null)
+				assert(true)
+			})
+			it('should execute successfully and do nothing if the parent is not an object', function() {
+				setNested(1)
+				assert(true)
+			})
+			it('should execute successfully and do nothing if the field is not a string', function() {
+				setNested({})
+				assert(true)
+			})
+			it('should execute successfully and do nothing if the field is an empty string', function() {
+				setNested({}, '')
+				assert(true)
+			})
+			it('should execute successfully and do nothing if the field does not exist in the parent', function() {
+				setNested({}, 'test.test1')
+				assert(true)
+			})
+			it('should execute successfully and set the field\'s value if all parameters are correct', function() {
+				let parent = {
+					test1: 'test1string',
+					a: undefined,
+					b: null,
+					c: 567,
+					t: {
+						vertices: {
+							f: {
+								vertices: [
+									'', {
+										vertices: {
+											test2: true,
+											innerTest: {vertices: {veryInnerId: 25}}
+										}
+									},
+									2
+								]
+							}
+						}
+					},
+					d: ''
+				}
+				setNested(parent, 't.vertices.f.vertices.1.vertices.innerTest.vertices.veryInnerId', 26)
+				assert(parent.t.vertices.f.vertices[1].vertices.innerTest.vertices.veryInnerId === 26)
 			})
 		})
 	}

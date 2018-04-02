@@ -205,6 +205,21 @@ const
 		}
 		return folderSize
 	}),
+	getNested = (parent, field) => {
+		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string') || !field.length) {
+			return null
+		}
+		let fieldData = field.split('.'),
+			currentElement = parent
+		for (let i in fieldData) {
+			let innerElement = fieldData[i]
+			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
+				return null
+			}
+			currentElement = currentElement[innerElement]
+		}
+		return currentElement
+	},
 	generateRandomNumber = (length) => {
 		if ((typeof length !== 'number') || (length < 1)) {
 			throw {customMessage: 'Invalid length number provided.'}
@@ -224,21 +239,6 @@ const
 			buf[i] = Math.floor(Math.random() * 256)
 		}
 		return buf.toString(stringType)
-	},
-	getNested = (parent, field) => {
-		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string') || !field.length) {
-			return null
-		}
-		let fieldData = field.split('.'),
-			currentElement = parent
-		for (let i in fieldData) {
-			let innerElement = fieldData[i]
-			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
-				return null
-			}
-			currentElement = currentElement[innerElement]
-		}
-		return currentElement
 	},
 	parseDate = (date) => {
 		if (typeof date === 'string') {
@@ -262,6 +262,22 @@ const
 		}
 		it.skip(testText, testMethod)
 		return -1
+	},
+	setNested = (parent, field, value) => {
+		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string') || !field.length) {
+			return
+		}
+		let fieldData = field.split('.'),
+			fieldName = fieldData.pop(),
+			currentElement = parent
+		for (let i in fieldData) {
+			let innerElement = fieldData[i]
+			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
+				return
+			}
+			currentElement = currentElement[innerElement]
+		}
+		currentElement[fieldName] = value
 	}
 
-module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, findVertexByIdDFS, getFolderSize, generateRandomNumber, generateRandomString, getNested, parseDate, runTestConditionally}
+module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, findVertexByIdDFS, getFolderSize, getNested, generateRandomNumber, generateRandomString, parseDate, runTestConditionally, setNested}
