@@ -1742,7 +1742,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully delete a db entry correctly if all parameters are correct', function() {
+			it('should execute successfully delete a db entry correctly if all parameters are correct and no additionalFilters are provided', function() {
 				return co(function*() {
 					let deletedCount = 0
 					try {
@@ -1762,6 +1762,40 @@ module.exports = {
 							yield sequelize.sync({force: true, transaction: t})
 							yield instance.create(item, {transaction: t})
 							deletedCount = (yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})).deleted
+							throw 'fakeError'
+						}))
+					} catch(e) {
+						if (e !== 'fakeError') {
+							throw e
+						}
+					}
+					assert(deletedCount === 1)
+					return true
+				})
+			})
+			it('should execute successfully delete a db entry correctly if all parameters are correct and additionalFilters are provided', function() {
+				return co(function*() {
+					let deletedCount = 0
+					try {
+						yield sequelize.transaction((t) => co(function*() {
+							let item = {id: 1, name: 'test1Name', description: 'test1Description'}
+							delete changeableInstance.systemCriticalIds
+							changeableInstance.componentName = 'test1Component'
+							changeableInstance.model = sequelize.define('test1Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}, {
+									paranoid: true
+								}
+							)
+							changeableInstance.associationsConfig = {}
+							changeableInstance.relationsConfig = {}
+							changeableInstance.db = {components: {}}
+							changeableInstance.associate()
+							changeableInstance.mapRelations()
+							yield sequelize.sync({force: true, transaction: t})
+							yield instance.create(item, {transaction: t})
+							deletedCount = (yield instance.delete({id: 1, additionalFilters: {id: 15, deletedAt: null}, checkForRelatedModels: true, transaction: t})).deleted
 							throw 'fakeError'
 						}))
 					} catch(e) {

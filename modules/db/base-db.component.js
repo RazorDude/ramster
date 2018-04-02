@@ -557,7 +557,7 @@ class BaseDBComponent {
 		})
 	}
 
-	delete({id, checkForRelatedModels, transaction}) {
+	delete({id, additionalFilters, checkForRelatedModels, transaction}) {
 		const instance = this,
 			{associationsConfig, componentName, dependencyMap, relations} = this,
 			masterOf = dependencyMap.masterOf
@@ -565,6 +565,13 @@ class BaseDBComponent {
 			let findAllOptions = {where: {id}, attributes: ['id']},
 				deleteOptions = {where: {id}},
 				systemCriticalIds = instance.systemCriticalIds || []
+			if ((typeof additionalFilters === 'object') && (additionalFilters !== null)) {
+				delete additionalFilters.id
+				for (const fieldName in additionalFilters) {
+					findAllOptions.where[fieldName] = additionalFilters[fieldName]
+					deleteOptions.where[fieldName] = additionalFilters[fieldName]
+				}
+			}
 			if (transaction) {
 				findAllOptions.transaction = transaction
 				deleteOptions.transaction = transaction

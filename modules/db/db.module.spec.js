@@ -223,7 +223,11 @@ module.exports = {
 					try {
 						yield instance.loadComponents()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === `Invalid spec file for DB module component "${componentName}".`)
+						if (e && (e.customMessage === `Invalid spec file for DB module component "${componentName}".`)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
 					yield fs.remove(componentPath)
 					assert(didThrowAnError)
