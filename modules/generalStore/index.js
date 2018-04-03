@@ -71,7 +71,6 @@ class GeneralStore {
 			}
 			this.client.hdel('general_store', handle, (err, reply) => {
 				if (err) {
-					console.log(e)
 					reject(err)
 					return
 				}
