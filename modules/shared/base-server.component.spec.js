@@ -708,16 +708,6 @@ module.exports = {
 			dbComponents = db.components
 		let changeableInstance = this
 		describe('base-server.component.readSelectList', function() {
-			it('should throw an error with the correct message if no filters are provided is not a non-null object', function() {
-				return co(function*() {
-					req.query = {}
-					yield (new Promise((resolve, reject) => {
-						wrap(instance.readSelectList())(req, res, next.bind(next, resolve))
-					}))
-					assert((req.locals.error.customMessage === 'No filters provided.'))
-					return true
-				})
-			})
 			it('should execute successfully and return the list if only titleField and filters are provided', function() {
 				return co(function*() {
 					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})

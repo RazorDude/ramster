@@ -1642,15 +1642,23 @@ module.exports = {
 									}
 								}
 							}
+							changeableInstance.searchFields = [
+								{field: 'id'},
+								// {field: '$test2.name$'}
+							]
 							changeableInstance.associate()
 							changeableInstance.mapRelations()
 							yield sequelize.sync({force: true, transaction: t})
 							yield instance.create(item, {transaction: t})
 							yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
 							try {
-								yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})
+								yield instance.delete({id: 1, /*additionalFilters: {'$test2.name$': 'test2Name'},*/ checkForRelatedModels: true, transaction: t})
 							} catch(e) {
-								didThrowAnError = e && (e.customMessage === 'Cannot delete a "test1Component" item that has related "test2" items in the database.')
+								if (e && (e.customMessage === 'Cannot delete a "test1Component" item that has related "test2" items in the database.')) {
+									didThrowAnError = true
+								} else {
+									throw e
+								}
 							}
 							throw 'fakeError'
 						}))

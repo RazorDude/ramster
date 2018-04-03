@@ -424,16 +424,19 @@ class BaseDBComponent {
 				perPage = data.perPage ? parseInt(data.perPage, 10) : instance.defaults.perPage,
 				more = false,
 				{where, requiredRelationsData} = instance.getWhereObjects(data.filters || {}, (data.exactMatch instanceof Array) && data.exactMatch || []),
-				includeQueryData = instance.getRelationObjects(data.relReadKeys || {}, requiredRelationsData),
-				readListOptions = {
+				includeQueryData = instance.getRelationObjects(data.relReadKeys || {}, requiredRelationsData)
+			if (!Object.keys(where).length) {
+				if (!data.readAll || !instance.allowNoFiltersOnReadListReadAll) {
+					throw {customMessage: 'No filters provided.'}
+				}
+				where = {}
+			}
+			let readListOptions = {
 					where,
 					include: includeQueryData.include,
 					order: order.concat(includeQueryData.order)
 				},
 				countOptions = {where, include: includeQueryData.include}
-			if (!Object.keys(where).length) {
-				throw {customMessage: 'No filters provided.'}
-			}
 
 			if (data.transaction) {
 				readListOptions.transaction = data.transaction
@@ -449,6 +452,12 @@ class BaseDBComponent {
 					readListOptions.where.id = {$not: data.excludeIdsFromSearch}
 				}
 				countOptions.where = readListOptions.where
+			}
+			if (!Object.keys(readListOptions.where).length) {
+				delete readListOptions.where
+			}
+			if (!Object.keys(countOptions.where).length) {
+				delete countOptions.where
 			}
 
 			let totalCount = yield instance.model.count(countOptions),
@@ -557,10 +566,11 @@ class BaseDBComponent {
 		})
 	}
 
+	// TODO: delete belongsToMany (equalWith) & use component.read, instead of component.model.findAll
 	delete({id, additionalFilters, checkForRelatedModels, transaction}) {
 		const instance = this,
 			{associationsConfig, componentName, dependencyMap, relations} = this,
-			masterOf = dependencyMap.masterOf
+			{equalWith, masterOf} = dependencyMap
 		return co(function*() {
 			let findAllOptions = {where: {id}, attributes: ['id']},
 				deleteOptions = {where: {id}},
