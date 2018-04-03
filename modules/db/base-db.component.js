@@ -25,6 +25,7 @@ class BaseDBComponent {
 			belongsToMany: {requiredKeys: ['through', 'foreignKey', 'otherKey'], dependencyCategory: 'equalWith'}
 		}
 		this.specMethodNames = []
+		this.relReadKeys = []
 	}
 
 	associate() {
