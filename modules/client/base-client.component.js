@@ -83,17 +83,17 @@ class BaseClientComponent extends BaseServerComponent {
 			{componentName, dbComponent, module} = this
 		return function* (req, res, next) {
 			try {
-				if (!req.user) {
-					let results = yield dbComponent.readList(query)
-					results.savedSearchData = null
-					res.json(results)
-					return
-				}
 				let savedSearchData = null,
 					query = instance.decodeQueryValues(req.query),
 					staticFilters = query.staticFilters
 				const currentUser = req.user,
 					searchComponentName = query.searchComponentName || componentName
+				if (!currentUser) {
+					let results = yield dbComponent.readList(query)
+					results.savedSearchData = null
+					res.json(results)
+					return
+				}
 
 				// determine whether to use saved search data (first if), or save search data (second if)
 				if (query.useSavedSearchData) {
