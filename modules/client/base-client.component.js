@@ -1,4 +1,8 @@
 'use strict'
+/**
+ * The base-client.component module. It contains the BaseClientComponent class.
+ * @module base-client.component
+ */
 
 const
 	BaseServerComponent = require('../shared/base-server.component'),
@@ -9,7 +13,17 @@ const
 	path = require('path'),
 	spec = require('./base-client.component.spec')
 
+/**
+ * The BaseClientComponent class. It contains common client methods and inherits the BaseServerComponent class.
+ * @class BaseClientComponent
+ */
 class BaseClientComponent extends BaseServerComponent {
+	/**
+	 * Creates an instance of BaseClientComponent. Sets test methods (defined in the accompanying .spec.js file) and calls the parent constructor.
+	 * @param {any} data The options to pass to BaseServerComponent.
+	 * @see module:data
+	 * @memberof BaseClientComponent
+	 */
 	constructor(data) {
 		super(data)
 		for (const testName in spec) {
@@ -17,6 +31,13 @@ class BaseClientComponent extends BaseServerComponent {
 		}
 	}
 
+	/**
+	 * Performs a check of the data contained in a file being prepared for import. Gives data about whether it matches the template, its contets and the column list, among others.
+	 * @param {any} inputFileName The name of the input file as it was uploaded in the globalUploadPath.
+	 * @param {any} delimiter The delimiter to parse the csv file with. Can be ',' or ';'. It's ';' by default, unless specified otherwise in the config.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof BaseClientComponent
+	 */
 	importFileCheck(inputFileName, delimiter) {
 		const instance = this,
 			{componentName, module} = this,
@@ -78,6 +99,11 @@ class BaseClientComponent extends BaseServerComponent {
 		})
 	}
 
+	/**
+	 * The returned method returns a paginated list of results based on the provided query params. Can save the query as "savedSearchData" and use it as "useSavedSearchData", again, based on the provided query params.
+	 * @returns {function} An expressJs-style function, which accepts req, res and next as arguments.
+	 * @memberof BaseClientComponent
+	 */
 	readList() {
 		const instance = this,
 			{componentName, dbComponent, module} = this
@@ -97,7 +123,7 @@ class BaseClientComponent extends BaseServerComponent {
 
 				// determine whether to use saved search data (first if), or save search data (second if)
 				if (query.useSavedSearchData) {
-					savedSearchData = yield module.generalStore.getStoredEntry(`user${currentUser.id}${searchComponentName}SavedSearchData`)
+					savedSearchData = yield module.generalStore.getStoredEntry(`userId-${currentUser.id}-searchComponent-${searchComponentName}-savedSearchData`)
 					if (savedSearchData) {
 						query = JSON.parse(savedSearchData)
 						savedSearchData = JSON.parse(savedSearchData)
@@ -106,7 +132,7 @@ class BaseClientComponent extends BaseServerComponent {
 					if (!query.filters && (typeof query.filters !== 'object')) {
 						throw {customMessage: 'No filters provided.'}
 					}
-					yield module.generalStore.storeEntry(`user${currentUser.id}${searchComponentName}SavedSearchData`, JSON.stringify(query))
+					yield module.generalStore.storeEntry(`userId-${currentUser.id}-searchComponent-${searchComponentName}-savedSearchData`, JSON.stringify(query))
 				}
 
 				if (!query.filters && (typeof query.filters !== 'object')) {
@@ -140,6 +166,11 @@ class BaseClientComponent extends BaseServerComponent {
 		}
 	}
 
+	/**
+	 * The returned method invokes importFileCheck.
+	 * @returns {function} An expressJs-style function, which accepts req, res and next as arguments.
+	 * @memberof BaseClientComponent
+	 */
 	checkImportFile() {
 		const instance = this
 		return function* (req, res, next) {
@@ -152,6 +183,12 @@ class BaseClientComponent extends BaseServerComponent {
 		}
 	}
 
+	/**
+	 * The returned method imports a data file, based on the data given by importFileCheck.
+	 * @param {object} additionalOptions A list of options to pass to dbComponent.bulkUpsert.
+	 * @returns {function} An expressJs-style function, which accepts req, res and next as arguments.
+	 * @memberof BaseClientComponent
+	 */
 	importFile(additionalOptions) {
 		const instance = this,
 			{dbComponent} = this

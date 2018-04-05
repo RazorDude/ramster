@@ -1,4 +1,8 @@
 'use strict'
+/**
+ * The api module. Contains the APIModule class.
+ * @module api.module
+ */
 
 const
 	BaseServerModule = require('../shared/base-server.module'),
@@ -13,7 +17,21 @@ const
 	spec = require('./api.module.spec'),
 	wrap = require('co-express')
 
+/**
+ * The ramster APIModule class. It has its own server and contains a bunch of components, in which api endpoits are defined.
+ * @class APIModule
+ */
 class APIModule extends BaseServerModule {
+	/**
+	 * Creates an instance of APIModule. Sets the config and test methods (defined in the accompanying .spec.js file) as class properties and passes the moduleName, type and options to the parent class constructor.
+	 * @param {any} config A ramster config object.
+	 * @see module:config
+	 * @param {string} moduleName The name of the module. Ususally passed automatically by coreInstance.loadAPIs.
+	 * @see module:core
+	 * @param {any} options The options object for the BaseServerModule parent.
+	 * @see module:baseServerModule
+	 * @memberof APIModule
+	 */
 	constructor(config, moduleName, options) {
 		super(config, moduleName, 'api', options)
 		for (const testName in spec) {
@@ -21,6 +39,11 @@ class APIModule extends BaseServerModule {
 		}
 	}
 
+	/**
+	 * If mounted properly, the returned method sets req.originalUrl and req.locals before evey request.
+	 * @returns {function} An expressJs-style function, which accepts req, res and next as arguments.
+	 * @memberof APIModule
+	 */
 	setDefaultsBeforeRequest() {
 		const instance = this,
 			{config, moduleConfig, moduleName} = this
@@ -36,30 +59,12 @@ class APIModule extends BaseServerModule {
 		}
 	}
 
-	prepareServiceNameTypeResponse() {
-		return function(req, res, next) {
-			let originalUrl = req.locals.originalUrl.split('/'),
-				deparametrizedUrl = []
-			originalUrl.forEach((item, index) => {
-				let parsedItem = parseInt(item, 10)
-				if ((item === '') || (!isNaN(parsedItem) && (parsedItem.toString() === item))) {
-					return
-				}
-				deparametrizedUrl.push(item)
-			})
-			let length = deparametrizedUrl.length
-			if (!length) {
-				req.locals.serviceName = null
-			} else if (length === 1) {
-				req.locals.serviceName = `${deparametrizedUrl[0]}`
-			} else {
-				req.locals.serviceName = `${deparametrizedUrl[length - 2]}/${deparametrizedUrl[length - 1]}`
-			}
-			next()
-		}
-	}
-
-	mountRoutes(sessionStore) {
+	/**
+	 * Sets up an expressJs server and mounts all routes from all components, then starts the server.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof APIModule
+	 */
+	mountRoutes() {
 		let instance = this
 		return co(function*() {
 			const {config, moduleName, moduleConfig, passport} = instance
@@ -81,11 +86,6 @@ class APIModule extends BaseServerModule {
 
 			// before every route - set up post params logging, redirects and locals
 			app.use(instance.paths, wrap(instance.setDefaultsBeforeRequest()))
-
-			// before every request - add the service name
-			if (moduleConfig.responseType === 'serviceName') {
-				app.use(instance.prepareServiceNameTypeResponse())
-			}
 
 			// before every request - if query/body field case change is enabled
 			const fieldCaseChangeSettings = config.fieldCaseChange,

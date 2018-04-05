@@ -80,10 +80,6 @@ module.exports = {
 				instance.testSetDefaultsBeforeRequest(req, res, next)
 				assert(true)
 			})
-			it('should execute testPrepareServiceNameTypeResponse successfully', function() {
-				instance.testPrepareServiceNameTypeResponse(req, res, next)
-				assert(true)
-			})
 		})
 	},
 	testSetDefaultsBeforeRequest: function(req, res, next) {
@@ -102,66 +98,6 @@ module.exports = {
 						(req.locals.errorStatus === 500) &&
 						(req.locals.originalUrl === '/someRoute')
 					)
-					return true
-				})
-			})
-		})
-	},
-	testPrepareServiceNameTypeResponse: function(req, res, next) {
-		const instance = this
-		describe('api.module.prepareServiceNameTypeResponse', function() {
-			it('should execute successfully and set the serviceName to null if the route is completely paramterized', function() {
-				return co(function*() {
-					next.fail = null
-					req.locals.originalUrl = '/1/2/3/4/5'
-					yield (new Promise((resolve, reject) => {
-						instance.prepareServiceNameTypeResponse()(req, res, next.bind(next, resolve))
-					}))
-					assert((next.fail === false) && (req.locals.serviceName === null))
-					return true
-				})
-			})
-			it('should execute successfully and set the serviceName to itself if there are no parameters', function() {
-				return co(function*() {
-					next.fail = null
-					req.locals.originalUrl = '/read'
-					yield (new Promise((resolve, reject) => {
-						instance.prepareServiceNameTypeResponse()(req, res, next.bind(next, resolve))
-					}))
-					assert((next.fail === false) && (req.locals.serviceName === 'read'))
-					return true
-				})
-			})
-			it('should execute successfully and set the serviceName correctly if there are is only one non-parameter item', function() {
-				return co(function*() {
-					next.fail = null
-					req.locals.originalUrl = '/1/read/2'
-					yield (new Promise((resolve, reject) => {
-						instance.prepareServiceNameTypeResponse()(req, res, next.bind(next, resolve))
-					}))
-					assert((next.fail === false) && (req.locals.serviceName === 'read'))
-					return true
-				})
-			})
-			it('should execute successfully and set the serviceName correctly if there are multiple items and no parameters', function() {
-				return co(function*() {
-					next.fail = null
-					req.locals.originalUrl = '/users/read'
-					yield (new Promise((resolve, reject) => {
-						instance.prepareServiceNameTypeResponse()(req, res, next.bind(next, resolve))
-					}))
-					assert((next.fail === false) && (req.locals.serviceName === 'users/read'))
-					return true
-				})
-			})
-			it('should execute successfully and set the serviceName correctly if there are multiple items and parameters', function() {
-				return co(function*() {
-					next.fail = null
-					req.locals.originalUrl = '3/users/2/read/1'
-					yield (new Promise((resolve, reject) => {
-						instance.prepareServiceNameTypeResponse()(req, res, next.bind(next, resolve))
-					}))
-					assert((next.fail === false) && (req.locals.serviceName === 'users/read'))
 					return true
 				})
 			})

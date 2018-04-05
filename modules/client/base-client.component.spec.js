@@ -260,7 +260,7 @@ module.exports = {
 					let returnedData = res.response.jsonBody,
 						result = returnedData.results[0],
 						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
-						savedSearchData = JSON.parse(yield module.generalStore.getStoredEntry(`user1usersSavedSearchData`)),
+						savedSearchData = JSON.parse(yield module.generalStore.getStoredEntry(`userId-1-searchComponent-users-savedSearchData`)),
 						dataIsGood = true
 					for (const key in item) {
 						if (result[key] !== item[key]) {

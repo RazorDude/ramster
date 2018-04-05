@@ -1,4 +1,8 @@
 'use strict'
+/**
+ * The core module. Contains the Core class.
+ * @module core
+ */
 
 // external dependencies
 const
@@ -23,9 +27,24 @@ const
 	GeneralStore = require('./modules/generalStore'),
 	Logger = require('./modules/errorLogger'),
 	Migrations = require('./modules/migrations'),
-	TokenManager = require('./modules/tokenManager')
+	TokenManager = require('./modules/tokenManager'),
 
+// other
+	webpackBuildSpec = require('./modules/codeGenerator/templates/webpackBuild.spec'),
+	webpackDevserverSpec = require('./modules/codeGenerator/templates/webpackDevserver.spec')
+
+
+/**
+ * The core ramster class. Creating an instance of this is used to start your app.
+ * @class Core
+ */
 class Core {
+	/**
+	 * Creates an instance of Core. Sets the config and test methods (defined in the accompanying .spec.js file) as class properties. Sets the "modules" property to an empty object.
+	 * @param {any} config A ramster config object.
+	 * @see module:config
+	 * @memberof Core
+	 */
 	constructor(config) {
 		try {
 			this.config = config
@@ -38,6 +57,11 @@ class Core {
 		}
 	}
 
+	/**
+	 * Loads the logger (error loger, Loger class), generalStore (redis store), tokenManager and codeGenerator, and sets them as class properties.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof Core
+	 */
 	loadDependencies() {
 		let instance = this
 		return co(function*() {
@@ -50,6 +74,12 @@ class Core {
 		})
 	}
 
+	/**
+	 * Creates an instance of the DBModule and sets it as a property of coreInstance.modules. Creates the db connection, triggers the loading of the db components and runs the associations setup. Also executes full (forced) Sequelize sync in mock mode.
+	 * @param {boolean} mockMode A flag which determines whether the method should run in "live" or "mock" mode (used in unit testing).
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof Core
+	 */
 	loadDB(mockMode) {
 		let instance = this
 		return co(function*() {
@@ -66,6 +96,12 @@ class Core {
 		})
 	}
 
+	/**
+	 * Creates an instance of ramster's Emails class or the provided CustomMailClient class (if coreInstance.config.emails.customModulePath is provided). It then sets the class instance to the mailClient property of coreInstance.modules.db.
+	 * @param {boolean} mockMode A flag which determines whether the method should run in "live" or "mock" mode (used in unit testing).
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof Core
+	 */
 	loadMailClient(mockMode) {
 		let instance = this
 		return co(function*() {
@@ -85,6 +121,11 @@ class Core {
 		})
 	}
 
+	/**
+	 * Creates an instance of ramster's Migrations class and sets it as a property of coreInstance.modules.db.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof Core
+	 */
 	loadMigrations() {
 		let db = this.modules.db
 		this.migrations = new Migrations(this.config, db.sequelize, db.components, db.seedingOrder)
@@ -92,6 +133,11 @@ class Core {
 		db.setDBInComponents()
 	}
 
+	/**
+	 * Creates an instance of the ClientModule for each client module in the specified clients folder and sets them it as properties of coreInstance.modules.clients. Triggers the loading of each module's components.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof Core
+	 */
 	loadClients() {
 		let instance = this
 		return co(function*() {
@@ -114,6 +160,11 @@ class Core {
 		})
 	}
 
+	/**
+	 * Creates an instance of the APIModule for each api module in the specified apis folder and sets them it as properties of coreInstance.modules.apis. Triggers the loading of each module's components.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof Core
+	 */
 	loadAPIs() {
 		let instance = this
 		return co(function*() {
@@ -135,6 +186,11 @@ class Core {
 		})
 	}
 
+	/**
+	 * Loads the cronJobs module, starts all cronJobs and sets the module to coreInstance.modules.cronJobs.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof Core
+	 */
 	loadCRONJobs() {
 		const {config, generalStore, logger, mailClient, modules, tokenManager} = this
 		let cronJobsModule = require(config.cronJobs.path),
@@ -163,6 +219,11 @@ class Core {
 		this.modules.cronJobs = jobsModule
 	}
 
+	/**
+	 * Creates a redis session store and starts the servers for all client and api modules, as well as the migrations module api, if the config requires it.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof Core
+	 */
 	listen() {
 		let instance = this
 		return co(function*() {
@@ -200,9 +261,21 @@ class Core {
 		})
 	}
 
-	runTests({testDB, testClients, testAPIs}) {
+	/**
+	 * Fully loads all Core modules and components, in mock mode when applicable, inserts mockStaticData (if migrations are enabled in the config), and executes tests per the provided method options argument.
+	 * @param {object} options The config object, whose properties specify which tests to execute.
+	 * @param {boolean} options.testConfig If set to true, the ramster tests for the coreInstance config will be executed.
+	 * @param {boolean} options.testDB If set to true, the user-built tests for each dbComponent will be executed.
+	 * @param {boolean} options.testClients If set to true, the user-built tests for each client module's components will be executed.
+	 * @param {boolean} options.testAPIs If set to true, the user-built tests for each api module's components will be executed.
+	 * @param {boolean} options.testWebpackBuildTools If set to true, the tests for the webpack built tools (webpackBuild.js and webpackDevserver.js) will be executed.
+	 * @returns {void}
+	 * @memberof Core
+	 */
+	runTests(options) {
 		const instance = this,
-			{config} = instance
+			{config} = instance,
+			{testConfig, testDB, testClients, testAPIs, testWebpackBuildTools} = options
 		let syncHistoryFilesCount = 0
 		describe(config.projectName, function() {
 			before(function() {
@@ -240,6 +313,12 @@ class Core {
 							console.log('Error while populating mockStaticData, skipping: ', e)
 						}
 					}
+					return true
+				})
+			})
+			describeSuiteConditionally(testConfig === true, 'config', function() {
+				it('should execute testConfig successfully', function() {
+					instance.testConfig()
 					return true
 				})
 			})
@@ -324,6 +403,16 @@ class Core {
 							)
 						}
 					}
+					return true
+				})
+			})
+			describeSuiteConditionally(testWebpackBuildTools === true, 'webpack build tools', function() {
+				it('should execute webpackBuildSpec.testMe successfully', function() {
+					webpackBuildSpec.testMe(instance.config, path.join(__dirname, 'test'))
+					return true
+				})
+				it('should execute webpackDevserverSpec.testMe successfully', function() {
+					webpackDevserverSpec.testMe(instance.config, path.join(__dirname, 'test'))
 					return true
 				})
 			})

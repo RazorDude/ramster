@@ -7,6 +7,7 @@
 - Removed inconsistencies that were left in up till now for the sake of backwards compatibility.
 - Renamed index.js to core.js. Added a new index.js file that exports everything like the old one used to.
 - Moved the whole project from optimist to yargs.
+- Added valid JSDoc comments everywhere.
 - Config changes:
 	- *BREAKING* - renamed globalPublicPath to clientModulesPublicPath.
 	- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.
@@ -90,6 +91,7 @@
 	- *BREAKING* - renamed cfg to config.
 	- *BREAKING* - renamed all occurences of "postgres" (except for the default root user & pass for postgreSQL) to "postgreSQL".
 	- *BREAKING* - split loadComponents into three methods for better testing and debugging - connectToDB, loadComponents and createAssociations.
+	- Added ssh tunnel connection support for PostgreSQL.
 	- loadComponents:
 		- It now loads index.spec.js files from each component's directory. It must be a valid js file, whose exports are a json with test methods for mochajs. See ramster's own core.spec.js in the root folder for reference.
 		- It now does various checks to ensure the basic validity of the loaded components and throws errors accordingly.
@@ -181,6 +183,7 @@
 		- *BREAKING* - moved base-client.component.delete to the base-server.component. It is now of type DELETE, at the route /componentName/:id and returns {success: true}
 	- All of the above methods now pass userId to the db component methods.
 	- Added the ability to run a setup method in client and api components, which can be used to configure things after component.module has been set, as it is executed after ``setModuleInComponents``.
+	- *BREAKING* - removed ``prepareServiceNameTypeResponse`` from the APIModule. "serviceName type response" is a niche thing I had to use for a project a while back, so its deprecation is long due, as it serves no practical purpose.
 	- Tests, full code coverage.
 - csvPromise:
 	- *BREAKING* - the parse method is now in the format parse(data, options), rather than parse({data, options}).

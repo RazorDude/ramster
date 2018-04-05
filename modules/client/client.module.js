@@ -1,4 +1,9 @@
 'use strict'
+/**
+ * The client.component module. It contains the ClientModule class.
+ * @module client.component
+ */
+
 
 const
 	BaseServerModule = require('../shared/base-server.module'),
@@ -17,7 +22,21 @@ const
 	spec = require('./client.module.spec'),
 	wrap = require('co-express')
 
+/**
+ *The ClientModule class. It has its own server and contains a bunch of components, in which client server api endpoits are defined.
+ * @class ClientModule
+ */
 class ClientModule extends BaseServerModule {
+	/**
+	 * Creates an instance of APIModule. Sets the config and test methods (defined in the accompanying .spec.js file) as class properties and passes the moduleName, type and options to the parent class constructor.
+	 * @param {any} config A ramster config object.
+	 * @see module:config
+	 * @param {string} moduleName The name of the module. Ususally passed automatically by coreInstance.loadAPIs.
+	 * @see module:core
+	 * @param {any} options The options object for the BaseServerModule parent.
+	 * @see module:baseServerModule
+	 * @memberof APIModule
+	 */
 	constructor(config, moduleName, options) {
 		super(config, moduleName, 'client', options)
 		for (const testName in spec) {
@@ -25,6 +44,11 @@ class ClientModule extends BaseServerModule {
 		}
 	}
 
+	/**
+	 * If mounted properly, the returned method sets req.originalUrl, req.locals and req.user before evey request. Also takes care of not found redirects, unauthorized redirects and settings the beforeLoginURL cookie for
+	 * @returns {function} An expressJs-style function, which accepts req, res and next as arguments.
+	 * @memberof ClientModule
+	 */
 	setDefaultsBeforeRequest() {
 		const instance = this,
 			{moduleName, moduleConfig, config} = this
@@ -71,6 +95,12 @@ class ClientModule extends BaseServerModule {
 		}
 	}
 
+	/**
+	 * Sets up an expressJs server, hooks up the session store and mounts all routes from all components, then starts the server.
+	 * @param {object} sessionStore The redis store instance that will be used for storing the sessions data.
+	 * @returns {Promise} A promise which wraps a generator function.
+	 * @memberof ClientModule
+	 */
 	mountRoutes(sessionStore) {
 		let instance = this
 		return co(function*() {

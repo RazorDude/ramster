@@ -15,9 +15,7 @@ const
 	fs = require('fs-extra'),
 	path = require('path'),
 	{spawn} = require('child_process'),
-	toolbeltSpec = require('./modules/toolbelt/index.spec'),
-	webpackBuildSpec = require('./modules/codeGenerator/templates/webpackBuild.spec'),
-	webpackDevserverSpec = require('./modules/codeGenerator/templates/webpackDevserver.spec')
+	toolbeltSpec = require('./modules/toolbelt/index.spec')
 
 module.exports = {
 	testMe: function() {
@@ -47,10 +45,6 @@ module.exports = {
 			})
 			it('should execute toolbeltSpec.testAll successfully', function() {
 				toolbeltSpec.testAll()
-				assert(true)
-			})
-			it('should execute testWebpackBuildTools successfully', function() {
-				instance.testWebpackBuildTools()
 				assert(true)
 			})
 			it('should execute testLoadDependencies successfully', function() {
@@ -676,19 +670,6 @@ module.exports = {
 						return true
 					})
 				})
-			})
-		})
-	},
-	testWebpackBuildTools: function() {
-		const instance = this
-		describe('webpack build tools', function() {
-			it('should execute webpackBuildSpec.testMe successfully', function() {
-				webpackBuildSpec.testMe(instance.config, path.join(__dirname, 'test'))
-				assert(true)
-			})
-			it('should execute webpackDevserverSpec.testMe successfully', function() {
-				webpackDevserverSpec.testMe(instance.config, path.join(__dirname, 'test'))
-				assert(true)
 			})
 		})
 	},

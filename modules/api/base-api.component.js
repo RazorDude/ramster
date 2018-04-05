@@ -1,4 +1,8 @@
 'use strict'
+/**
+ * The base-api.component module. Contains the BaseAPIComponent class.
+ * @module core
+ */
 
 const
 	BaseServerComponent = require('../shared/base-server.component'),
@@ -6,9 +10,18 @@ const
 	fs = require('fs'),
 	path = require('path'),
 	spec = require('./base-api.component.spec')
-	
 
+/**
+ * The BaseAPIComponent class. It contains common API methods and inherits the BaseServerComponent class.
+ * @class BaseAPIComponent
+ */
 class BaseAPIComponent extends BaseServerComponent {
+	/**
+	 * Creates an instance of BaseAPIComponent. Sets test methods (defined in the accompanying .spec.js file) as class properties and calls the parent constructor.
+	 * @param {any} data The options to pass to BaseServerComponent.
+	 * @see module:data
+	 * @memberof BaseAPIComponent
+	 */
 	constructor(data) {
 		super(data)
 		for (const testName in spec) {

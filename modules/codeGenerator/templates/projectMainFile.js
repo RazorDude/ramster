@@ -22,9 +22,11 @@ if (argv.runTests) {
 		}, 1000)
 	})
 	ramster.runTests({
+		testConfig: (argv.testConfig === 'true') || (argv.testConfig === true),
 		testDB: (argv.testDB === 'true') || (argv.testDB === true),
 		testClients: (argv.testClients === 'true') || (argv.testClients === true) ? true : argv.testClients,
-		testAPIs: (argv.testAPIs === 'true') || (argv.testAPIs === true) ? true : argv.testAPIs
+		testAPIs: (argv.testAPIs === 'true') || (argv.testAPIs === true) ? true : argv.testAPIs,
+		testWebpackBuildTools: (argv.testWebpackBuildTools === 'true') || (argv.testWebpackBuildTools === true)
 	})
 } else {
 	co(function*() {

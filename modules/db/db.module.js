@@ -7,7 +7,8 @@ const
 	path = require('path'),
 	pd = require('pretty-data').pd,
 	Sequelize = require('sequelize'),
-	spec = require('./db.module.spec')
+	spec = require('./db.module.spec'),
+	ssh = require('ssh2-promise')
 
 class DBModule {
 	constructor(config, logger, generalStore, tokenManager) {
@@ -38,6 +39,18 @@ class DBModule {
 					instance.runningInMockMode = true
 					databaseName = postgreSQL.mockDatabase
 				}
+				if (postgreSQL.useSSH) {
+					console.log('Establishing SSH tunnel...')
+					let tunnel = new ssh({
+						host: postgreSQL.sshHost,
+						username: postgreSQL.sshUsername,
+						identity: postgreSQL.pathToSSHKey,
+						passphrase: postgreSQL.sshKeyPassphrase
+					})
+					yield tunnel.connect()
+					yield tunnel.addTunnel({remoteAddr: '127.0.0.1', remotePort: postgreSQL.sshHostPostgreSQLPort, localPort: postgreSQL.port})
+					console.log('SSH tunnel established.')
+				}
 				const sequelize = new Sequelize(
 					databaseName,
 					postgreSQL.user,
@@ -53,7 +66,9 @@ class DBModule {
 							} : false
 					}
 				)
+				console.log('Authenticating db...')
 				yield sequelize.authenticate()
+				console.log('DB authenticated...')
 				instance.Sequelize = Sequelize
 				instance.sequelize = sequelize
 				return true
