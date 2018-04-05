@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.0.0-beta.26",
+  "version": "1.0.0-beta.27",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -13,6 +13,7 @@
     "bcryptjs": "^2.4.3",
     "bell-on-bundler-error-plugin": "^2.0.0",
     "body-parser": "^1.15.2",
+    "cli": "^1.0.1",
     "co": "^4.6.0",
     "co-express": "^2.0.0",
     "connect-multiparty": "^2.0.0",

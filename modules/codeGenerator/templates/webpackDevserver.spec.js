@@ -66,7 +66,7 @@ module.exports = {
 				})
 			})
 			it('should execute successfully and start the devserver if all parameters are correct, webpackConfigType is react, configProfile is not set and buildForClientModules is set correctly', function() {
-				this.timeout(20000)
+				this.timeout(30000)
 				return co(function*() {
 					let siteIndexJSFilePath = path.join(config.clientModulesPath, 'site/index.js'),
 						fd = yield fs.open(siteIndexJSFilePath, 'w')
@@ -84,7 +84,7 @@ module.exports = {
 				})
 			})
 			it('should execute successfully and start the devserver if all parameters are correct, webpackConfigType is react, configProfile is set and valid and buildForClientModules is set correctly', function() {
-				this.timeout(20000)
+				this.timeout(30000)
 				return co(function*() {
 					let siteIndexJSFilePath = path.join(config.clientModulesPath, 'site/index.js'),
 						fd = yield fs.open(siteIndexJSFilePath, 'w')

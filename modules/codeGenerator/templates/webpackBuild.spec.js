@@ -90,7 +90,7 @@ module.exports = {
 				})
 			})
 			it('should execute successfully build the main.js file if all parameters are correct, webpackConfigType is react, configProfile is not set and buildForClientModules is set correctly', function() {
-				this.timeout(20000)
+				this.timeout(30000)
 				return co(function*() {
 					let siteMainJSFilePath = path.join(config.clientModulesPublicPath, 'site/main.js'),
 						siteIndexJSFilePath = path.join(config.clientModulesPath, 'site/index.js'),
@@ -105,7 +105,7 @@ module.exports = {
 				})
 			})
 			it('should execute successfully build the main.js file if all parameters are correct, webpackConfigType is react, configProfile is set and valid and buildForClientModules is set correctly', function() {
-				this.timeout(20000)
+				this.timeout(30000)
 				return co(function*() {
 					let siteMainJSFilePath = path.join(config.clientModulesPublicPath, 'site/main.js'),
 						siteIndexJSFilePath = path.join(config.clientModulesPath, 'site/index.js'),
