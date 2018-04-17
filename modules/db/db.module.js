@@ -1,8 +1,11 @@
 'use strict'
+/**
+ * The db module. Contains the DBModule class.
+ * @module dbModule
+ */
 
 const
 	co = require('co'),
-	{findVertexByIdDFS} = require('../toolbelt'),
 	fs = require('fs-extra'),
 	path = require('path'),
 	pd = require('pretty-data').pd,
@@ -10,23 +13,82 @@ const
 	spec = require('./db.module.spec'),
 	ssh = require('ssh2-promise')
 
+/**
+ * The DBModule class. This class connects to the database, loads all db components, creates associations and synchronizes the db tables. After it's fully loaded, it contains all dbComponents under its components key.
+ * @class DBModule
+ */
 class DBModule {
+	/**
+	 * Creates an instance of DBModule and sets various class properties, such as the config, generalStore and sequelize, as well as the test methods (defined in the accompanying .spec.js file) and the component defaults.
+	 * @param {object} config The project config object.
+	 * @see module:configModule
+	 * @param {object} logger An instance of the Logger class.
+	 * @param {object} generalStore An instance of the GeneralStore class.
+	 * @param {object} tokenManager An instance of the TokenManager class.
+	 * @memberof DBModule
+	 */
 	constructor(config, logger, generalStore, tokenManager) {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
+		/**
+		 * The project config object.
+		 * @type {object}
+		 */
 		this.config = config
+		/**
+		 * The db config. It's a shortcut to the "db" sub-object of the project config object.
+		 * @type {object}
+		 */
 		this.moduleConfig = config.db
+		/**
+		 * The order of tables in which rows are to be inserted when doing a full database sync.
+		 * @type {string[]}
+		 */
 		this.seedingOrder = config.db.seedingOrder
+		/**
+		 * An instance of the Logger class.
+		 * @type {Logger}
+		 */
 		this.logger = logger
+		/**
+		 * An instance of the GeneralStore class.
+		 * @type {GeneralStore}
+		 */
 		this.generalStore = generalStore
+		/**
+		 * An instance of the TokenManager class.
+		 * @type {TokenManager}
+		 */
 		this.tokenManager = tokenManager
+		/**
+		 * An object, containing all dbComponents.
+		 * @type {Object.<string, BaseDBComponent>}
+		 */
 		this.components = {}
+		/**
+		 * An object containing settings for how to parse upper to lower camel case and vice versa.
+		 * @type {object}
+		 */
 		this.fieldCaseMap = null
+		/**
+		 * A Sequelize object.
+		 * @type {Sequelize}
+		 */
 		this.Sequelize = null
+		/**
+		 * A Sequelize instance.
+		 * @type {object}
+		 */
 		this.sequelize = null
 	}
 
+	/**
+	 * Connects to the db server and database, based on the provided config.
+	 * @param {boolean} mockMode If set to true, the method will try to connect to the mockDatabase from the config (if set) and set instance.runningInMockMode to true.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
+	 * @memberof DBModule
+	 */
 	connectToDB(mockMode) {
 		let instance = this
 		return co(function*() {
@@ -35,9 +97,11 @@ class DBModule {
 
 			if (dbType === 'postgreSQL') {
 				let databaseName = postgreSQL.database
-				if (mockMode && postgreSQL.mockDatabase) {
+				if (mockMode) {
 					instance.runningInMockMode = true
-					databaseName = postgreSQL.mockDatabase
+					if (postgreSQL.mockDatabase) {
+						databaseName = postgreSQL.mockDatabase
+					}
 				}
 				if (postgreSQL.useSSH) {
 					console.log('Establishing SSH tunnel...')
@@ -78,6 +142,11 @@ class DBModule {
 		})
 	}
 
+	/**
+	 * Loads all db components in the provided folder, along with their .spec.js test files. Loads the filedCaseMap from the db folder, if it exists. Also sets the db property for each component.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
+	 * @memberof DBModule
+	 */
 	loadComponents() {
 		let instance = this
 		return co(function*() {
@@ -131,6 +200,11 @@ class DBModule {
 		})
 	}
 
+	/**
+	 * Executes the base-db.component's associate method and generates the seeding order for the whole db module. Also sets the db property for each component.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
+	 * @memberof DBModule
+	 */
 	createAssociations() {
 		let instance = this
 		return co(function*() {
@@ -176,6 +250,11 @@ class DBModule {
 		})
 	}
 
+	/**
+	 * Sets the db property for each component, while at the same removing the particular component from each dbComponent's db.components to avoid circularization.
+	 * @returns {void}
+	 * @memberof DBModule
+	 */
 	setDBInComponents() {
 		let {components} = this
 		for (const componentName in components) {
@@ -187,6 +266,12 @@ class DBModule {
 		}
 	}
 
+	/**
+	 * Sets a list of properties to all dbComponents.
+	 * @param {object} properties An object whose properties will be set to each component in instance.components.
+	 * @returns {void}
+	 * @memberof DBModule
+	 */
 	setComponentsProperties(properties) {
 		if (!properties || (typeof properties !== 'object')) {
 			throw {customMessage: 'Invalid properties object provided.'}

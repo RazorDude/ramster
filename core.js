@@ -41,8 +41,8 @@ const
 class Core {
 	/**
 	 * Creates an instance of Core. Sets the config and test methods (defined in the accompanying .spec.js file) as class properties. Sets the "modules" property to an empty object.
-	 * @param {any} config A ramster config object.
-	 * @see module:config
+	 * @param {object} config A ramster config object.
+	 * @see module:configModule
 	 * @memberof Core
 	 */
 	constructor(config) {
@@ -59,7 +59,7 @@ class Core {
 
 	/**
 	 * Loads the logger (error loger, Loger class), generalStore (redis store), tokenManager and codeGenerator, and sets them as class properties.
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof Core
 	 */
 	loadDependencies() {
@@ -77,7 +77,7 @@ class Core {
 	/**
 	 * Creates an instance of the DBModule and sets it as a property of coreInstance.modules. Creates the db connection, triggers the loading of the db components and runs the associations setup. Also executes full (forced) Sequelize sync in mock mode.
 	 * @param {boolean} mockMode A flag which determines whether the method should run in "live" or "mock" mode (used in unit testing).
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof Core
 	 */
 	loadDB(mockMode) {
@@ -99,7 +99,7 @@ class Core {
 	/**
 	 * Creates an instance of ramster's Emails class or the provided CustomMailClient class (if coreInstance.config.emails.customModulePath is provided). It then sets the class instance to the mailClient property of coreInstance.modules.db.
 	 * @param {boolean} mockMode A flag which determines whether the method should run in "live" or "mock" mode (used in unit testing).
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof Core
 	 */
 	loadMailClient(mockMode) {
@@ -123,7 +123,7 @@ class Core {
 
 	/**
 	 * Creates an instance of ramster's Migrations class and sets it as a property of coreInstance.modules.db.
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {void}
 	 * @memberof Core
 	 */
 	loadMigrations() {
@@ -135,7 +135,7 @@ class Core {
 
 	/**
 	 * Creates an instance of the ClientModule for each client module in the specified clients folder and sets them it as properties of coreInstance.modules.clients. Triggers the loading of each module's components.
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof Core
 	 */
 	loadClients() {
@@ -162,7 +162,7 @@ class Core {
 
 	/**
 	 * Creates an instance of the APIModule for each api module in the specified apis folder and sets them it as properties of coreInstance.modules.apis. Triggers the loading of each module's components.
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof Core
 	 */
 	loadAPIs() {
@@ -188,7 +188,7 @@ class Core {
 
 	/**
 	 * Loads the cronJobs module, starts all cronJobs and sets the module to coreInstance.modules.cronJobs.
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {void}
 	 * @memberof Core
 	 */
 	loadCRONJobs() {
@@ -221,7 +221,7 @@ class Core {
 
 	/**
 	 * Creates a redis session store and starts the servers for all client and api modules, as well as the migrations module api, if the config requires it.
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof Core
 	 */
 	listen() {

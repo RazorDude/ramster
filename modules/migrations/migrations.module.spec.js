@@ -12,63 +12,48 @@ module.exports = {
 		describe('migrations', function() {
 			// it('should execute testListen successfully', function() {
 			// 	instance.testListen()
-			// 	assert(true)
 			// })
 			it('should execute testGetFullTableData successfully', function() {
 				instance.testGetFullTableData()
-				assert(true)
 			})
 			it('should execute testGetTableLayout successfully', function() {
 				instance.testGetTableLayout()
-				assert(true)
 			})
 			it('should execute testRemoveAllTables successfully', function() {
 				instance.testRemoveAllTables()
-				assert(true)
 			})
 			it('should execute testRunQueryFromColumnData successfully', function() {
 				instance.testRunQueryFromColumnData()
-				assert(true)
 			})
 			it('should execute testEscapeRecursively successfully', function() {
 				instance.testEscapeRecursively()
-				assert(true)
 			})
 			it('should execute testPrepareDataObjectForQuery successfully', function() {
 				instance.testPrepareDataObjectForQuery()
-				assert(true)
 			})
 			it('should execute testGetLinearArrayFromDependencyGraph successfully', function() {
 				instance.testGetLinearArrayFromDependencyGraph()
-				assert(true)
 			})
 			it('should execute testPrepareColumnData successfully', function() {
 				instance.testPrepareColumnData()
-				assert(true)
 			})
 			it('should execute testInsertData successfully', function() {
 				instance.testInsertData()
-				assert(true)
 			})
 			it('should execute testSync successfully', function() {
 				instance.testSync()
-				assert(true)
 			})
 			it('should execute testGenerateSeed successfully', function() {
 				instance.testGenerateSeed()
-				assert(true)
 			})
 			it('should execute testSeed successfully', function() {
 				instance.testSeed()
-				assert(true)
 			})
 			it('should execute testGenerateBackup successfully', function() {
 				instance.testGenerateBackup()
-				assert(true)
 			})
 			it('should execute testInsertStaticData successfully', function() {
 				instance.testInsertStaticData()
-				assert(true)
 			})
 		})
 	},
@@ -87,7 +72,6 @@ module.exports = {
 			it('should execute successfully', function() {
 				return co(function*() {
 					yield instance.getFullTableData()
-					assert(true)
 					return true
 				})
 			})
@@ -99,7 +83,6 @@ module.exports = {
 			it('should execute successfully', function() {
 				return co(function*() {
 					yield instance.getTableLayout()
-					assert(true)
 					return true
 				})
 			})
@@ -111,20 +94,16 @@ module.exports = {
 			it('should execute successfully', function() {
 				return co(function*() {
 					let fullTableData = null
-					try {
-						yield instance.sequelize.transaction((t) => {
-							return co(function*() {
-								yield instance.removeAllTables(t)
-								fullTableData = yield instance.getFullTableData(t)
-								throw {customMessage: 'fakeError'}
-							})
+					yield instance.sequelize.transaction((t) => {
+						return co(function*() {
+							yield instance.removeAllTables(t)
+							fullTableData = yield instance.getFullTableData(t)
+							t.rollback()
 						})
-					} catch(e) {
-						if (!e || (e.customMessage !== 'fakeError')) {
-							throw e
-						}
-					}
-					assert(fullTableData && Object.keys(fullTableData).length === 0)
+					})
+					assert(fullTableData, `bad value ${fullTableData} for fullTableData, expected it to exist`)
+					let keysLength = Object.keys(fullTableData).length
+					assert.strictEqual(keysLength, 0, `bad value ${keysLength} for keysLength, expected 0`)
 					return true
 				})
 			})
@@ -141,9 +120,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid queryInterface object provided.')
+						if (e && (e.customMessage === 'Invalid queryInterface object provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -153,9 +136,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface)
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid tableName string provided.')
+						if (e && (e.customMessage === 'Invalid tableName string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -165,9 +152,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, '')
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid tableName string provided.')
+						if (e && (e.customMessage === 'Invalid tableName string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -177,9 +168,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, 'userTypes')
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'At table "userTypes": invalid inserts object provided.')
+						if (e && (e.customMessage === 'At table "userTypes": invalid inserts object provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -189,9 +184,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {})
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'At table "userTypes": inserts.columns must be a non-empty array.')
+						if (e && (e.customMessage === 'At table "userTypes": inserts.columns must be a non-empty array.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -201,9 +200,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: []})
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'At table "userTypes": inserts.columns must be a non-empty array.')
+						if (e && (e.customMessage === 'At table "userTypes": inserts.columns must be a non-empty array.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -213,9 +216,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id']})
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'At table "userTypes": inserts.values must be an array.')
+						if (e && (e.customMessage === 'At table "userTypes": inserts.values must be an array.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -225,9 +232,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id'], values: []}, 'dummyTransaction', {deleteTableContents: 'blabla'})
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'At table "userTypes": if provided, deleteTableContents must be an array.')
+						if (e && (e.customMessage === 'At table "userTypes": if provided, deleteTableContents must be an array.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -237,9 +248,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id'], values: ['wrongItem']})
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'At table "userTypes", item no. 0: inserts.values items must be arrays.')
+						if (e && (e.customMessage === 'At table "userTypes", item no. 0: inserts.values items must be arrays.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -249,9 +264,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id'], values: [[1, 2]]})
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'At table "userTypes", item no. 0: the number of fields in this item does not match the number of columns in inserts.columns.')
+						if (e && (e.customMessage === 'At table "userTypes", item no. 0: the number of fields in this item does not match the number of columns in inserts.columns.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -261,9 +280,13 @@ module.exports = {
 					try {
 						yield instance.runQueryFromColumnData(queryInterface, 'userTypes', {columns: ['id'], values: [[]]})
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'At table "userTypes", item no. 0: the number of fields in this item does not match the number of columns in inserts.columns.')
+						if (e && (e.customMessage === 'At table "userTypes", item no. 0: the number of fields in this item does not match the number of columns in inserts.columns.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -271,26 +294,21 @@ module.exports = {
 				return co(function*() {
 					let now = moment.utc().valueOf(),
 						data = null
-					try {
-						yield instance.sequelize.transaction((t) => {
-							return co(function*() {
-								yield instance.runQueryFromColumnData(queryInterface, 
-									'userTypes', {
-										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
-										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
-									},
-									t
-								)
-								data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
-								throw {customMessage: 'fakeError'}
-							})
+					yield instance.sequelize.transaction((t) => {
+						return co(function*() {
+							yield instance.runQueryFromColumnData(queryInterface,
+								'userTypes', {
+									columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+									values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
+								},
+								t
+							)
+							data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
+							t.rollback()
 						})
-					} catch(e) {
-						if (!e || (e.customMessage !== 'fakeError')) {
-							throw e
-						}
-					}
-					assert(data && (data.length > 0))
+					})
+					assert(data, `bad value ${data} for data, expected it to exist`)
+					assert(data.length > 0, `bad value ${data.length} for data.length, expected > 0`)
 					return true
 				})
 			})
@@ -298,27 +316,22 @@ module.exports = {
 				return co(function*() {
 					let now = moment.utc().valueOf(),
 						data = null
-					try {
-						yield instance.sequelize.transaction((t) => {
-							return co(function*() {
-								yield instance.runQueryFromColumnData(queryInterface, 
-									'userTypes', {
-										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
-										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
-									},
-									t,
-									{deleteTableContents: ['userTypes']}
-								)
-								data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
-								throw {customMessage: 'fakeError'}
-							})
+					yield instance.sequelize.transaction((t) => {
+						return co(function*() {
+							yield instance.runQueryFromColumnData(queryInterface, 
+								'userTypes', {
+									columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+									values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
+								},
+								t,
+								{deleteTableContents: ['userTypes']}
+							)
+							data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
+							t.rollback()
 						})
-					} catch(e) {
-						if (!e || (e.customMessage !== 'fakeError')) {
-							throw e
-						}
-					}
-					assert(data && (data.length > 0))
+					})
+					assert(data, `bad value ${data} for data, expected it to exist`)
+					assert(data.length > 0, `bad value ${data.length} for data.length, expected > 0`)
 					return true
 				})
 			})
@@ -326,27 +339,22 @@ module.exports = {
 				return co(function*() {
 					let now = moment.utc().valueOf(),
 						data = null
-					try {
-						yield instance.sequelize.transaction((t) => {
-							return co(function*() {
-								yield instance.runQueryFromColumnData(queryInterface, 
-									'userTypes', {
-										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
-										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
-									},
-									t,
-									{dontSetIdSequence: true}
-								)
-								data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
-								throw {customMessage: 'fakeError'}
-							})
+					yield instance.sequelize.transaction((t) => {
+						return co(function*() {
+							yield instance.runQueryFromColumnData(queryInterface, 
+								'userTypes', {
+									columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+									values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
+								},
+								t,
+								{dontSetIdSequence: true}
+							)
+							data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
+							t.rollback()
 						})
-					} catch(e) {
-						if (!e || (e.customMessage !== 'fakeError')) {
-							throw e
-						}
-					}
-					assert(data && (data.length > 0))
+					})
+					assert(data, `bad value ${data} for data, expected it to exist`)
+					assert(data.length > 0, `bad value ${data.length} for data.length, expected > 0`)
 					return true
 				})
 			})
@@ -354,27 +362,22 @@ module.exports = {
 				return co(function*() {
 					let now = moment.utc().valueOf(),
 						data = null
-					try {
-						yield instance.sequelize.transaction((t) => {
-							return co(function*() {
-								yield instance.runQueryFromColumnData(queryInterface, 
-									'userTypes', {
-										columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
-										values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
-									},
-									t,
-									{deleteTableContents: ['userTypes'], dontSetIdSequence: true}
-								)
-								data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
-								throw {customMessage: 'fakeError'}
-							})
+					yield instance.sequelize.transaction((t) => {
+						return co(function*() {
+							yield instance.runQueryFromColumnData(queryInterface, 
+								'userTypes', {
+									columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+									values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
+								},
+								t,
+								{deleteTableContents: ['userTypes'], dontSetIdSequence: true}
+							)
+							data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
+							t.rollback()
 						})
-					} catch(e) {
-						if (!e || (e.customMessage !== 'fakeError')) {
-							throw e
-						}
-					}
-					assert(data && (data.length > 0))
+					})
+					assert(data, `bad value ${data} for data, expected it to exist`)
+					assert(data.length > 0, `bad value ${data.length} for data.length, expected > 0`)
 					return true
 				})
 			})
@@ -392,35 +395,36 @@ module.exports = {
 				} catch(e) {
 					didThrowAnError = true
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, 'no error was thrown')
 			})
 			it('should execute successfully if all parameters are correct', function() {
 				let escapedObject = instance.escapeRecursively(queryInterface, {
-					testProperty: [
-						'someString',
-						'otherString"', {
-							innerObject: {stringy: 'test', misterArray: [true, false, 1, 'yay', null, undefined, 'foo']}
-						}
-					],
-					bar: {q: 'test'},
-					test: null
-				})
-				assert(
-					(escapedObject.testProperty instanceof Array) &&
-					(escapedObject.testProperty[0] === 'someString') &&
-					(escapedObject.testProperty[1] === 'otherString"') &&
-					(escapedObject.testProperty[2].innerObject.stringy === 'test') &&
-					(escapedObject.testProperty[2].innerObject.misterArray instanceof Array) &&
-					(escapedObject.testProperty[2].innerObject.misterArray[0] === true) &&
-					(escapedObject.testProperty[2].innerObject.misterArray[1] === false) &&
-					(escapedObject.testProperty[2].innerObject.misterArray[2] === 1) &&
-					(escapedObject.testProperty[2].innerObject.misterArray[3] === 'yay') &&
-					(escapedObject.testProperty[2].innerObject.misterArray[4] === null) &&
-					(escapedObject.testProperty[2].innerObject.misterArray[5] === undefined) &&
-					(escapedObject.testProperty[2].innerObject.misterArray[6] === 'foo') &&
-					(escapedObject.bar.q === 'test') &&
-					(escapedObject.test === null)
-				)
+						testProperty: [
+							'someString',
+							'otherString"', {
+								innerObject: {stringy: 'test', misterArray: [true, false, 1, 'yay', null, undefined, 'foo']}
+							}
+						],
+						bar: {q: 'test'},
+						test: null
+					}),
+					tp = escapedObject.testProperty,
+					maValuesShouldBe = [true, false, 1, 'yay', null, undefined, 'foo']
+				assert(tp instanceof Array, `bad value ${tp} for escapedObject.testProperty, expected an array`)
+				assert.strictEqual(tp[0], 'someString', `bad value ${tp[0]} for escapedObject.testProperty[0], expected someString`)
+				assert.strictEqual(tp[1], 'someString', `bad value ${tp[1]} for escapedObject.testProperty[1], expected otherString"`)
+				let {stringy, misterArray} = tp[2].innerObject
+				assert.strictEqual(stringy, 'test', `bad value ${stringy} for escapedObject.testProperty[2].innerObject.stringy, expected test`)
+				assert(misterArray instanceof Array, `bad value ${misterArray} for escapedObject.testProperty[2].innerObject.misterArray, expected an array`)
+				for (const i in misterArray) {
+					const maItem = misterArray[i],
+						itemShouldBe = maValuesShouldBe[i]
+					assert.strictEqual(maItem[i], itemShouldBe[i], `bad value ${maItem[i]} for escapedObject.testProperty[2].innerObject.misterArray[${i}], expected ${itemShouldBe[i]}`)
+				}
+				assert.strictEqual(escapedObject.bar.q, 'test', `bad value ${escapedObject.bar.q} for escapedObject.bar.q, expected test`)
+				assert.strictEqual(tp[0], 'someString', `bad value ${tp[0]} for escapedObject.testProperty[0], expected someString`)
+				assert.strictEqual(test, 'test', `bad value ${test} for test, expected test`)
+				assert.strictEqual(escapedObject.test, null, `bad value ${escapedObject.test} for escapedObject.test, expected test`)
 			})
 		})
 	},
@@ -433,7 +437,11 @@ module.exports = {
 				try {
 					instance.prepareDataObjectForQuery()
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid tableLayout array provided.')
+					if (e && (e.customMessage === 'Invalid tableLayout array provided.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
 				assert(didThrowAnError)
 			})
@@ -442,9 +450,13 @@ module.exports = {
 				try {
 					instance.prepareDataObjectForQuery(['testColumn'])
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid dataObject provided.')
+					if (e && (e.customMessage === 'Invalid dataObject provided.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, 'no error was thrown')
 			})
 			it('should execute successfully if all parameters are correct', function() {
 				let {columns, values} = instance.prepareDataObjectForQuery(['testProperty', 'bar', 'test', 'doesNotExistInTheObjectProperty'], {
@@ -459,24 +471,6 @@ module.exports = {
 						doesNotExistInTheTableColumn: 'definitelyYes'
 					}),
 					parsedTestProperty = JSON.parse(values[0])
-				// console.log(columns.length === 3)
-				// console.log(values.length === 3)
-				// console.log(columns[0] === 'testProperty')
-				// console.log(columns[1] === 'bar')
-				// console.log(columns[2] === 'test')
-				// console.log(parsedTestProperty instanceof Array)
-				// console.log(parsedTestProperty[0] === 'someString')
-				// console.log(parsedTestProperty[1] === 'otherString"')
-				// console.log(parsedTestProperty[2].innerObject.stringy === 'test')
-				// console.log(parsedTestProperty[2].innerObject.misterArray instanceof Array)
-				// console.log(parsedTestProperty[2].innerObject.misterArray[0] === true)
-				// console.log(parsedTestProperty[2].innerObject.misterArray[2] === 1)
-				// console.log(parsedTestProperty[2].innerObject.misterArray[3] === 'yay')
-				// console.log(parsedTestProperty[2].innerObject.misterArray[4] === null)
-				// console.log(parsedTestProperty[2].innerObject.misterArray[5] === null)
-				// console.log(parsedTestProperty[2].innerObject.misterArray[6] === 'foo')
-				// console.log(JSON.parse(values[1]).q === 'test')
-				// console.log(values[2] === null)
 				assert(
 					(columns.length === 3) &&
 					(values.length === 3) &&
@@ -510,7 +504,11 @@ module.exports = {
 				try {
 					instance.getLinearArrayFromDependencyGraph()
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid dependencyGraph object provided.')
+					if (e && (e.customMessage === 'Invalid dependencyGraph object provided.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
 				assert(didThrowAnError)
 			})
@@ -519,9 +517,13 @@ module.exports = {
 				try {
 					instance.getLinearArrayFromDependencyGraph({1: {}})
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'At vertex id 1: invalid data object.')
+					if (e && (e.customMessage === 'At vertex id 1: invalid data object.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, 'no error was thrown')
 			})
 			it('should execute successfully if all parameters are correct', function() {
 				let dependencyGraph = {
@@ -576,36 +578,52 @@ module.exports = {
 				try {
 					instance.prepareColumnData()
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid data array provided.')
+					if (e && (e.customMessage === 'Invalid data array provided.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, 'no error was thrown')
 			})
 			it('should throw an error with the correct message if tableLayout is not an array', function() {
 				let didThrowAnError = false
 				try {
 					instance.prepareColumnData([])
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid tableLayout array provided.')
+					if (e && (e.customMessage === 'Invalid tableLayout array provided.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, 'no error was thrown')
 			})
 			it('should throw an error with the correct message if sameTablePrimaryKey is not a string', function() {
 				let didThrowAnError = false
 				try {
 					instance.prepareColumnData([], [], null)
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid sameTablePrimaryKey string provided.')
+					if (e && (e.customMessage === 'Invalid sameTablePrimaryKey string provided.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, 'no error was thrown')
 			})
 			it('should throw an error with the correct message if sameTablePrimaryKey an empty string', function() {
 				let didThrowAnError = false
 				try {
 					instance.prepareColumnData([], [], '')
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid sameTablePrimaryKey string provided.')
+					if (e && (e.customMessage === 'Invalid sameTablePrimaryKey string provided.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, 'no error was thrown')
 			})
 			it('should execute successfully if all parameters are correct and sameTablePimaryKey is undefined', function() {
 				let preparedData = instance.prepareColumnData(
@@ -635,7 +653,6 @@ module.exports = {
 					}
 					for (const j in columns) {
 						if (columns[j] !== columns[j]) {
-							console.log('====> fails here 1')
 							assert(false)
 							return true
 						}
@@ -656,7 +673,6 @@ module.exports = {
 						}
 					}
 				}
-				assert(true)
 			})
 			it('should execute successfully if all parameters are correct and sameTablePimaryKey is set', function() {
 				let preparedData = instance.prepareColumnData(
@@ -717,7 +733,6 @@ module.exports = {
 						}
 					}
 				}
-				assert(true)
 			})
 		})
 	},
@@ -732,9 +747,13 @@ module.exports = {
 					try {
 						yield instance.insertData()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid data object provided.')
+						if (e && (e.customMessage === 'Invalid data object provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -887,7 +906,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.syncHistoryPath = originalPath
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -918,9 +937,13 @@ module.exports = {
 					try {
 						yield instance.generateSeed()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid seedFileName string provided.')
+						if (e && (e.customMessage === 'Invalid seedFileName string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -935,7 +958,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.seedFilesPath = originalPath
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -965,9 +988,13 @@ module.exports = {
 					try {
 						yield instance.seed()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid seedFolderName string provided.')
+						if (e && (e.customMessage === 'Invalid seedFolderName string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -977,9 +1004,13 @@ module.exports = {
 					try {
 						yield instance.seed('someFolder')
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid seedFileName string provided.')
+						if (e && (e.customMessage === 'Invalid seedFileName string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -991,7 +1022,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -1028,7 +1059,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.backupPath = originalPath
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -1064,7 +1095,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.staticDataPath = originalPath
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})
@@ -1079,7 +1110,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.staticDataPath = originalPath
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error was thrown')
 					return true
 				})
 			})

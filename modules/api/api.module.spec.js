@@ -78,7 +78,6 @@ module.exports = {
 				}
 			it('should execute testSetDefaultsBeforeRequest successfully', function() {
 				instance.testSetDefaultsBeforeRequest(req, res, next)
-				assert(true)
 			})
 		})
 	},
@@ -92,12 +91,10 @@ module.exports = {
 					yield (new Promise((resolve, reject) => {
 						instance.setDefaultsBeforeRequest()(req, res, next.bind(next, resolve))
 					}))
-					assert(
-						(next.fail === false) &&
-						(req.locals.error === null) &&
-						(req.locals.errorStatus === 500) &&
-						(req.locals.originalUrl === '/someRoute')
-					)
+					assert.strictEqual(next.fail, false, `bad value ${next.fail} for next.fail, expected false`)
+					assert.strictEqual(req.locals.error, null, `bad value ${req.locals.error} for req.locals.error, expected null`)
+					assert.strictEqual(req.locals.errorStatus, 500, `bad value ${req.locals.errorStatus} for req.locals.errorStatus, expected 500`)
+					assert.strictEqual(req.locals.originalUrl, '/someRoute', `bad value ${req.locals.originalUrl} for req.locals.originalUrl, expected '/someRoute'`)
 					return true
 				})
 			})

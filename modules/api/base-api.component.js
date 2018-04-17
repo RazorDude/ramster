@@ -1,7 +1,7 @@
 'use strict'
 /**
  * The base-api.component module. Contains the BaseAPIComponent class.
- * @module core
+ * @module baseApiComponent
  */
 
 const
@@ -18,8 +18,8 @@ const
 class BaseAPIComponent extends BaseServerComponent {
 	/**
 	 * Creates an instance of BaseAPIComponent. Sets test methods (defined in the accompanying .spec.js file) as class properties and calls the parent constructor.
-	 * @param {any} data The options to pass to BaseServerComponent.
-	 * @see module:data
+	 * @param {object} data The options to pass to BaseServerComponent.
+	 * @see module:apiModule
 	 * @memberof BaseAPIComponent
 	 */
 	constructor(data) {

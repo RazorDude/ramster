@@ -13,19 +13,15 @@ module.exports = {
 		describe('core.modules.db', function() {
 			it('should execute testConnectToDB successfully', function() {
 				instance.testConnectToDB()
-				assert(true)
 			})
 			it('should execute testLoadComponents successfully', function() {
 				instance.testLoadComponents()
-				assert(true)
 			})
 			it('should execute testCreateAssociations successfully', function() {
 				instance.testCreateAssociations()
-				assert(true)
 			})
 			it('should execute testSetComponentsProperties successfully', function() {
 				instance.testSetComponentsProperties()
-				assert(true)
 			})
 		})
 	},
@@ -42,10 +38,14 @@ module.exports = {
 					try {
 						yield instance.connectToDB()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid dbType.')
+						if (e && (e.customMessage === 'Invalid dbType.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
 					changeableInstance.config.db.dbType = originalConfig.db.dbType
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -59,10 +59,14 @@ module.exports = {
 						try {
 							yield instance.connectToDB()
 						} catch(e) {
-							didThrowAnError = e && (e.name === 'SequelizeHostNotFoundError')
+							if (e && (e.name === 'SequelizeHostNotFoundError')) {
+								didThrowAnError = true
+							} else {
+								throw e
+							}
 						}
 						postgreSQLConfig.host = originalPostgreSQLConfig.host
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -73,10 +77,14 @@ module.exports = {
 						try {
 							yield instance.connectToDB()
 						} catch(e) {
-							didThrowAnError = e && (e.name === 'RangeError')
+							if (e && (e.name === 'RangeError')) {
+								didThrowAnError = true
+							} else {
+								throw e
+							}
 						}
 						postgreSQLConfig.port = originalPostgreSQLConfig.port
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -87,10 +95,14 @@ module.exports = {
 						try {
 							yield instance.connectToDB()
 						} catch(e) {
-							didThrowAnError = e && (e.name === 'SequelizeConnectionError')
+							if (e && (e.name === 'SequelizeConnectionError')) {
+								didThrowAnError = true
+							} else {
+								throw e
+							}
 						}
 						postgreSQLConfig.user = originalPostgreSQLConfig.user
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -101,12 +113,15 @@ module.exports = {
 						try {
 							yield instance.connectToDB()
 						} catch(e) {
-							// console.log(e)
-							didThrowAnError = e && (e.name === 'SequelizeConnectionError')
+							if (e && (e.name === 'SequelizeConnectionError')) {
+								didThrowAnError = true
+							} else {
+								throw e
+							}
 						}
 						
 						postgreSQLConfig.password = originalPostgreSQLConfig.password
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -117,24 +132,27 @@ module.exports = {
 						try {
 							yield instance.connectToDB()
 						} catch(e) {
-							didThrowAnError = e && (e.name === 'SequelizeConnectionError')
+							if (e && (e.name === 'SequelizeConnectionError')) {
+								didThrowAnError = true
+							} else {
+								throw e
+							}
 						}
 						postgreSQLConfig.database = originalPostgreSQLConfig.database
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
 				it('should execute successfully if all paramters are correct and mockMode is set to true', function() {
 					return co(function*() {
 						yield instance.connectToDB(true)
-						assert(instance.runningInMockMode)
+						assert.strictEqual(instance.runningInMockMode, true, `bad value ${instance.runningInMockMode} for instance.runningInMockMode, expected true`)
 						return true
 					})
 				})
 				it('should execute successfully if all paramters are correct and mockMode is not set to true', function() {
 					return co(function*() {
 						yield instance.connectToDB()
-						assert(true)
 						return true
 					})
 				})
@@ -157,7 +175,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.db.modulePath = originalConfig.db.modulePath
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -171,7 +189,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.db.modulePath = originalConfig.db.modulePath
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -185,7 +203,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.db.modulePath = originalConfig.db.modulePath
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -201,10 +219,14 @@ module.exports = {
 					try {
 						yield instance.loadComponents()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === `DB module component "${componentName}" loaded, does not have a valid model.`)
+						if (e && (e.customMessage === `DB module component "${componentName}" loaded, does not have a valid model.`)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
 					yield fs.remove(componentPath)
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -230,56 +252,44 @@ module.exports = {
 						}
 					}
 					yield fs.remove(componentPath)
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
 			it('should execute successfully if all paramters are correct and doSync isn\'t enabled', function() {
 				return co(function*() {
 					yield instance.loadComponents()
-					assert(true)
 					return true
 				})
 			})
 			it('should have loaded all components after it has executed successfully', function() {
 				return co(function*() {
 					const components = instance.components
-					let moduleDirData = yield fs.readdir(moduleConfig.modulePath),
-						allLoaded = true
+					let moduleDirData = yield fs.readdir(moduleConfig.modulePath)
 					for (const i in moduleDirData) {
 						let componentName = moduleDirData[i]
-						if ((componentName.indexOf('.') === -1) && !components[componentName]){
-							allLoaded = false
-							break
+						if (componentName.indexOf('.') === -1){
+							assert(components[componentName], `expected component ${componentName} to exist, got ${components[componentName]}`)
 						}
 					}
-					assert(allLoaded)
 					return true
 				})
 			})
 			it('should have set the correct componentName for all components after it has executed successfully', function() {
 				const components = instance.components
-				let allHaveCorrectComponentNames = true
 				for (const componentName in components) {
 					const component = components[componentName]
-					if (!component.componentName || (component.componentName !== componentName)) {
-						allHaveCorrectComponentNames = false
-						break
-					}
+					assert.strictEqual(component.componentName, componentName, `bad value ${componentName.componentName} for componentName, expected ${componentName}`)
 				}
-				assert(allHaveCorrectComponentNames)
 			})
 			it('should have set the db property, with the component removed individually to avoid circularization, for all components after it has executed successfully', function() {
 				const components = instance.components
-				let allHaveTheValidDBProperty = true
 				for (const componentName in components) {
 					const component = components[componentName]
-					if (!component.db || component.db.components[componentName]) {
-						allHaveTheValidDBProperty = false
-						break
-					}
+					assert(component.db, `expected component.db to exist, got ${component.db}`)
+					const typeOf = component.db.components[componentName]
+					assert.strictEqual(typeOf, undefined, `bad value ${typeOf} for typeof component.db.components[componentName], expected unefined`)
 				}
-				assert(allHaveTheValidDBProperty)
 			})
 			it('should have loaded the fieldCaseMap successfully, if a valid one was present in the module directory', function() {
 				return co(function*() {
@@ -294,7 +304,7 @@ module.exports = {
 							break
 						}
 					}
-					assert(hasFieldCaseMap)
+					assert.strictEqual(hasFieldCaseMap, true, 'no fieldCaseMap loaded')
 					return true
 				})
 			})
@@ -309,21 +319,15 @@ module.exports = {
 			it('should execute successfully if all paramters are correct and doSync is enabled', function() {
 				return co(function*() {
 					yield instance.createAssociations()
-					assert(true)
 					return true
 				})
 			})
 			it('should have generated the correct seeding order', function() {
 				const seedingOrder = instance.seedingOrder
 				let correctSeedingOrder = ['globalConfig', 'moduleCategories', 'modules', 'moduleAccessPoints', 'userTypes', 'users']
-				// console.log(correctSeedingOrder, seedingOrder)
 				for (const i in correctSeedingOrder) {
-					if (correctSeedingOrder[i] !== seedingOrder[i]) {
-						assert(false)
-						return
-					}
+					assert.strictEqual(seedingOrder[i], correctSeedingOrder[i], `bad value ${seedingOrder[i]} at index ${i}, expected ${correctSeedingOrder[i]}`)
 				}
-				assert(true)
 			})
 		})
 	},
@@ -338,22 +342,22 @@ module.exports = {
 				try {
 					instance.setComponentsProperties()
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid properties object provided.')
+					if (e && (e.customMessage === 'Invalid properties object provided.')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert.strictEqual(didThrowAnError, true, 'no error thrown')
 			})
 			it('should set the provided properties to all components correctly', function() {
 				const components = instance.components
-				let allHaveTheCorrectProperties = true
 				instance.setComponentsProperties({test1: 'correct', test2: 'properties'})
 				for (const componentName in components) {
 					const component = components[componentName]
-					if ((component.test1 !== 'correct') || (component.test2 !== 'properties')) {
-						allHaveTheCorrectProperties = false
-						break
-					}
+					assert.strictEqual(component.test1, 'correct', `bad value ${component.test1} for component.test1, expected 'correct'`)
+					assert.strictEqual(component.test2, 'properties', `bad value ${component.test2} for component.test2, expected 'properties'`)
 				}
-				assert(allHaveTheCorrectProperties)
 			})
 		})
 	}

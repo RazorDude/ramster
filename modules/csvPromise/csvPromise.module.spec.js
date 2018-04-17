@@ -11,11 +11,9 @@ module.exports = {
 		describe('csvPromise', function() {
 			it('should execute testParse successfully', function() {
 				instance.testParse()
-				assert(true)
 			})
 			it('should execute testStringify successfully', function() {
 				instance.testStringify()
-				assert(true)
 			})
 		})
 	},
@@ -28,38 +26,29 @@ module.exports = {
 					try {
 						yield instance.parse()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid data string provided.')
+						if (e && (e.customMessage === 'Invalid data string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
 			it('should execute successfully if all paramters are correct and the delimiter is the default one (",")', function() {
 				return co(function*() {
 					let data = [['id', 'name', 'description'], ['1', 'Test Name 1', 'Test description 1'], ['2', 'Test Name 2', 'Test description 2'], ['3', 'Test Name 3', 'Test description 3']],
-						parsedData = yield instance.parse(`id,name,description\r\n1,Test Name 1,Test description 1\r\n2,Test Name 2,Test description 2\r\n3,Test Name 3,Test description 3\r\n`),
-						dataIsGood = true
+						parsedData = yield instance.parse(`id,name,description\r\n1,Test Name 1,Test description 1\r\n2,Test Name 2,Test description 2\r\n3,Test Name 3,Test description 3\r\n`)
 					for (const i in parsedData) {
 						const parsedDataRow = parsedData[i],
 							dataRow = data[i]
-						if (!(dataRow instanceof Array) || !(parsedDataRow instanceof Array)) {
-							dataIsGood = false
-							break
-						}
+						assert(dataRow instanceof Array, `no reference data array with index ${i} exits`)
+						assert(parsedDataRow instanceof Array, `expected the parsed data at row ${i} to be an array`)
 						for (const j in parsedDataRow) {
-							if (parsedDataRow[j] !== dataRow[j]) {
-								// for (const k in parsedDataRow[j]) {
-								// 	console.log(parsedDataRow[j][k], dataRow[j][k])
-								// }
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(parsedDataRow[j], dataRow[j], `bad value ${parsedDataRow[j]} for column index ${j} at row ${i}, expected ${dataRow[j]}`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -69,29 +58,16 @@ module.exports = {
 						parsedData = yield instance.parse(
 							`id,name,description\r\n1,Test Name 1,Test description 1\r\n2,Test Name 2,Test description 2\r\n3,Test Name 3,Test description 3\r\n`,
 							{delimiter: ','}
-						),
-						dataIsGood = true
+						)
 					for (const i in parsedData) {
 						const parsedDataRow = parsedData[i],
 							dataRow = data[i]
-						if (!(dataRow instanceof Array) || !(parsedDataRow instanceof Array)) {
-							dataIsGood = false
-							break
-						}
+						assert(dataRow instanceof Array, `no reference data array with index ${i} exits`)
+						assert(parsedDataRow instanceof Array, `expected the parsed data at row ${i} to be an array`)
 						for (const j in parsedDataRow) {
-							if (parsedDataRow[j] !== dataRow[j]) {
-								// for (const k in parsedDataRow[j]) {
-								// 	console.log(parsedDataRow[j][k], dataRow[j][k])
-								// }
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(parsedDataRow[j], dataRow[j], `bad value ${parsedDataRow[j]} for column index ${j} at row ${i}, expected ${dataRow[j]}`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -101,29 +77,16 @@ module.exports = {
 						parsedData = yield instance.parse(
 							`id;name;description\r\n1;Test Name 1;Test description 1\r\n2;Test Name 2;Test description 2\r\n3;Test Name 3;Test description 3\r\n`,
 							{delimiter: ';'}
-						),
-						dataIsGood = true
+						)
 					for (const i in parsedData) {
 						const parsedDataRow = parsedData[i],
 							dataRow = data[i]
-						if (!(dataRow instanceof Array) || !(parsedDataRow instanceof Array)) {
-							dataIsGood = false
-							break
-						}
+						assert(dataRow instanceof Array, `no reference data array with index ${i} exits`)
+						assert(parsedDataRow instanceof Array, `expected the parsed data at row ${i} to be an array`)
 						for (const j in parsedDataRow) {
-							if (parsedDataRow[j] !== dataRow[j]) {
-								// for (const k in parsedDataRow[j]) {
-								// 	console.log(parsedDataRow[j][k], dataRow[j][k])
-								// }
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(parsedDataRow[j], dataRow[j], `bad value ${parsedDataRow[j]} for column index ${j} at row ${i}, expected ${dataRow[j]}`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -138,9 +101,13 @@ module.exports = {
 					try {
 						yield instance.stringify()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid data array provided.')
+						if (e && (e.customMessage === 'Invalid data array provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})

@@ -1,7 +1,7 @@
 'use strict'
 /**
  * The base-client.component module. It contains the BaseClientComponent class.
- * @module base-client.component
+ * @module baseClientComponent
  */
 
 const
@@ -20,8 +20,8 @@ const
 class BaseClientComponent extends BaseServerComponent {
 	/**
 	 * Creates an instance of BaseClientComponent. Sets test methods (defined in the accompanying .spec.js file) and calls the parent constructor.
-	 * @param {any} data The options to pass to BaseServerComponent.
-	 * @see module:data
+	 * @param {object} data The options to pass to BaseServerComponent.
+	 * @see module:clientModule
 	 * @memberof BaseClientComponent
 	 */
 	constructor(data) {
@@ -33,9 +33,9 @@ class BaseClientComponent extends BaseServerComponent {
 
 	/**
 	 * Performs a check of the data contained in a file being prepared for import. Gives data about whether it matches the template, its contets and the column list, among others.
-	 * @param {any} inputFileName The name of the input file as it was uploaded in the globalUploadPath.
-	 * @param {any} delimiter The delimiter to parse the csv file with. Can be ',' or ';'. It's ';' by default, unless specified otherwise in the config.
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @param {string} inputFileName The name of the input file as it was uploaded in the globalUploadPath.
+	 * @param {string} delimiter The delimiter to parse the csv file with. Can be ',' or ';'. It's ';' by default, unless specified otherwise in the config.
+	 * @returns {Promise<object>} A promise which wraps a generator function.
 	 * @memberof BaseClientComponent
 	 */
 	importFileCheck(inputFileName, delimiter) {

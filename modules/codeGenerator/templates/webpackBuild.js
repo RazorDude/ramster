@@ -38,6 +38,7 @@ co(function* () {
 		moduleConfig.clientPath = path.join(config.clientModulesPublicSourcesPath, moduleName)
 		moduleConfig.publicPath = path.join(config.clientModulesPublicPath, moduleName)
 		moduleConfig.nodeModulesPath = path.join(__dirname, 'node_modules')
+		moduleConfig.mode = 'production'
 		let webpackConfig = getWebpackConfig(moduleConfig, config.name)
 		if (!webpackConfig.plugins) {
 			webpackConfig.plugins = []

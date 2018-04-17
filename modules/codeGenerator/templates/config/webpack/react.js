@@ -15,6 +15,7 @@ module.exports = (config, name) => {
 		include = [includePath]
 
 	return {
+		model: config.mode,
 		devtool: 'source-map',
 		entry: [
 			'@babel/polyfill',

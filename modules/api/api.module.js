@@ -1,7 +1,7 @@
 'use strict'
 /**
  * The api module. Contains the APIModule class.
- * @module api.module
+ * @module apiModule
  */
 
 const
@@ -24,11 +24,11 @@ const
 class APIModule extends BaseServerModule {
 	/**
 	 * Creates an instance of APIModule. Sets the config and test methods (defined in the accompanying .spec.js file) as class properties and passes the moduleName, type and options to the parent class constructor.
-	 * @param {any} config A ramster config object.
-	 * @see module:config
+	 * @param {object} config A ramster config object.
+	 * @see module:configModule
 	 * @param {string} moduleName The name of the module. Ususally passed automatically by coreInstance.loadAPIs.
 	 * @see module:core
-	 * @param {any} options The options object for the BaseServerModule parent.
+	 * @param {object} options The options object for the BaseServerModule parent.
 	 * @see module:baseServerModule
 	 * @memberof APIModule
 	 */
@@ -61,7 +61,7 @@ class APIModule extends BaseServerModule {
 
 	/**
 	 * Sets up an expressJs server and mounts all routes from all components, then starts the server.
-	 * @returns {Promise} A promise which wraps a generator function.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof APIModule
 	 */
 	mountRoutes() {

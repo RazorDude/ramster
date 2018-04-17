@@ -11,75 +11,57 @@ module.exports = {
 		describe('codeGenerator', function() {
 			it('should execute testBuildLayoutFile successfully', function() {
 				instance.testBuildLayoutFile()
-				assert(true)
 			})
 			it('should execute testCheckConfig successfully', function() {
 				instance.testCheckConfig()
-				assert(true)
 			})
 			it('should execute testCheckOutputPath successfully', function() {
 				instance.testCheckOutputPath()
-				assert(true)
 			})
 			it('should execute testGenerateConfigFile successfully', function() {
 				instance.testGenerateConfigFile()
-				assert(true)
 			})
 			it('should execute testGenerateIndexConfigFile successfully', function() {
 				instance.testGenerateIndexConfigFile()
-				assert(true)
 			})
 			it('should execute testGenerateCommonConfigFile successfully', function() {
 				instance.testGenerateCommonConfigFile()
-				assert(true)
 			})
 			it('should execute testGenerateProfileConfigFile successfully', function() {
 				instance.testGenerateProfileConfigFile()
-				assert(true)
 			})
 			it('should execute testGenerateProfileConfigFile successfully', function() {
 				instance.testGenerateProfileConfigFile()
-				assert(true)
 			})
 			it('should execute testGenerateImagesRedirectNGINXConfig successfully', function() {
 				instance.testGenerateImagesRedirectNGINXConfig()
-				assert(true)
 			})
 			it('should execute testGenerateNGINXConfig successfully', function() {
 				instance.testGenerateNGINXConfig()
-				assert(true)
 			})
 			it('should execute testGenerateWebpackConfig successfully', function() {
 				instance.testGenerateWebpackConfig()
-				assert(true)
 			})
 			it('should execute testGenerateWebpackBuildTools successfully', function() {
 				instance.testGenerateWebpackBuildTools()
-				assert(true)
 			})
 			it('should execute testGenerateProjectMainFile successfully', function() {
 				instance.testGenerateProjectMainFile()
-				assert(true)
 			})
 			it('should execute testGenerateGitignore successfully', function() {
 				instance.testGenerateGitignore()
-				assert(true)
 			})
 			it('should execute testGenerateFolders successfully', function() {
 				instance.testGenerateFolders()
-				assert(true)
 			})
 			it('should execute testGenerateLayoutFile successfully', function() {
 				instance.testGenerateLayoutFile()
-				assert(true)
 			})
 			it('should execute testGenerateBlankProject successfully', function() {
 				instance.testGenerateBlankProject()
-				assert(true)
 			})
 			it('should execute testGenerateBasicProject successfully', function() {
 				instance.testGenerateBasicProject()
-				assert(true)
 			})
 		})
 	},
@@ -94,7 +76,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -108,11 +90,10 @@ module.exports = {
 							yield fs.remove(outputPath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'no file was generated')
 						return false
 					}
 					// yield fs.remove(outputPath)
-					assert(true)
 					return true
 				})
 			})
@@ -122,40 +103,41 @@ module.exports = {
 		const instance = this
 		describe('codeGenerator.checkConfig', function() {
 			it('should return true if the config is an object and is not null', function() {
-				assert(instance.checkConfig({}))
+				assert.strictEqual(instance.checkConfig({}), true, 'еxpected true from checkConfig')
 			})
 			it('should throw an error if the config is null or not an object', function() {
-				let threwAnError = false
+				let didThrowAnError = false
 				try {
 					instance.checkConfig()
 				} catch (e) {
-					threwAnError = true
+					didThrowAnError = true
 				}
-				assert(threwAnError)
+				assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 			})
 			it('should return true if the sub-config for the provided client module is an object and is not null', function() {
-				assert(instance.checkConfig({clients: {test: {}}}, {clientModuleName: 'test'}))
+				let result = instance.checkConfig({clients: {test: {}}}, {clientModuleName: 'test'})
+				assert.strictEqual(result, true, `bad return value ${result}, expected true`)
 			})
 			it('should throw an error if the config does not have sub-config for the provided client module', function() {
-				let threwAnError = false
+				let didThrowAnError = false
 				try {
 					instance.checkConfig({}, {clientModuleName: 'test'})
 				} catch (e) {
-					threwAnError = true
+					didThrowAnError = true
 				}
-				assert(threwAnError)
+				assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 			})
 			it('should return true if the sub-config for the provided api module is an object and is not null', function() {
 				assert(instance.checkConfig({apis: {test: {}}}, {apiModuleName: 'test'}))
 			})
 			it('should throw an error if the config does not have sub-config for the provided api module', function() {
-				let threwAnError = false
+				let didThrowAnError = false
 				try {
 					instance.checkConfig({}, {apiModuleName: 'test'})
 				} catch (e) {
-					threwAnError = true
+					didThrowAnError = true
 				}
-				assert(threwAnError)
+				assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 			})
 		})
 	},
@@ -170,7 +152,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -182,12 +164,15 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
 			it('should return true if the sub-config for the provided api module is an object and is not null', function() {
-				assert(instance.checkOutputPath(__dirname))
+				return co(function*() {
+					assert.strictEqual(yield instance.checkOutputPath(__dirname), true, 'expected true from checkOutputPath')
+					return true
+				})
 			})
 		})
 	},
@@ -204,11 +189,10 @@ module.exports = {
 							yield fs.remove(path.join(__dirname, './test'))
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'did not generate a file')
 						return false
 					}
 					yield fs.remove(path.join(__dirname, './test'))
-					assert(true)
 					return true
 				})
 			})
@@ -222,11 +206,10 @@ module.exports = {
 							yield fs.remove(outputPath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'did not generate a file')
 						return false
 					}
 					yield fs.remove(outputPath)
-					assert(true)
 					return true
 				})
 			})
@@ -245,11 +228,10 @@ module.exports = {
 							yield fs.remove(outputPath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'did not generate a file')
 						return false
 					}
 					yield fs.remove(outputPath)
-					assert(true)
 					return true
 				})
 			})
@@ -268,11 +250,10 @@ module.exports = {
 							yield fs.remove(outputPath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'did not generate a file')
 						return false
 					}
 					yield fs.remove(outputPath)
-					assert(true)
 					return true
 				})
 			})
@@ -289,7 +270,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -303,11 +284,10 @@ module.exports = {
 							yield fs.remove(path.join(__dirname, './test'))
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'did not generate a file')
 						return false
 					}
 					yield fs.remove(path.join(__dirname, './test'))
-					assert(true)
 					return true
 				})
 			})
@@ -327,11 +307,10 @@ module.exports = {
 							yield fs.remove(outputFilePath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'did not generate a file')
 						return false
 					}
 					yield fs.remove(outputFilePath)
-					assert(true)
 					return true
 				})
 			})
@@ -349,7 +328,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -364,7 +343,7 @@ module.exports = {
 						yield fs.remove(configFilePath)
 					} catch (e) {
 					}
-					assert(isAFile)
+					assert.strictEqual(isAFile, true, `bad value ${isAFile} for the isFile check, expected true`)
 					return true
 				})
 			})
@@ -381,7 +360,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = e && (e.customMessage === 'Invalid webpack config type.')
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -396,11 +375,10 @@ module.exports = {
 							yield fs.remove(outputFilePath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'no file was generated')
 						return false
 					}
 					yield fs.remove(outputFilePath)
-					assert(true)
 					return true
 				})
 			})
@@ -421,7 +399,7 @@ module.exports = {
 							yield fs.remove(devserverOutputFilePath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'no file was generated')
 						return false
 					}
 					fileData = yield fs.lstat(builOutputFilePath)
@@ -430,12 +408,11 @@ module.exports = {
 							yield fs.remove(builOutputFilePath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'no file was generated')
 						return false
 					}
 					yield fs.remove(devserverOutputFilePath)
 					yield fs.remove(builOutputFilePath)
-					assert(true)
 					return true
 				})
 			})
@@ -455,11 +432,10 @@ module.exports = {
 							yield fs.remove(outputFilePath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'no file was generated')
 						return false
 					}
 					yield fs.remove(outputFilePath)
-					assert(true)
 					return true
 				})
 			})
@@ -479,11 +455,10 @@ module.exports = {
 							yield fs.remove(outputFilePath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'no file was generated')
 						return false
 					}
 					yield fs.remove(outputFilePath)
-					assert(true)
 					return true
 				})
 			})
@@ -510,20 +485,17 @@ module.exports = {
 							{path: path.join(outputPath, 'public'), type: false},
 							{path: path.join(outputPath, 'storage/importTemplates'), type: false},
 							{path: path.join(outputPath, 'storage/tmp'), type: false}
-						],
-						dataIsGood = true
+						]
 					yield instance.generateFolders(outputPath)
 					for (const i in outputPaths) {
 						let item = outputPaths[i],
-							itemData = yield fs.lstat(item.path)
-						if (itemData.isFile() !== item.type) {
-							console.log(`Bad value for isFile - expected ${item.type} for item no. ${i}.`)
-							dataIsGood = false
-							break
+							itemData = yield fs.lstat(item.path),
+							isFile = itemData.isFile()
+						if (isFile !== item.type) {
+							assert.strictEqual(isFile, item.type, `bad value ${isFile} for the isFile check for item no. ${i}, expected ${item.type}`)
 						}
 					}
 					yield fs.remove(outputPath)
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -543,11 +515,10 @@ module.exports = {
 							yield fs.remove(outputFilePath)
 						} catch (e) {
 						}
-						assert(false)
+						assert(false, 'no file generated')
 						return false
 					}
 					yield fs.remove(outputFilePath)
-					assert(true)
 					return true
 				})
 			})
@@ -581,20 +552,17 @@ module.exports = {
 							{path: path.join(outputPath, 'public'), type: false},
 							{path: path.join(outputPath, 'storage/importTemplates'), type: false},
 							{path: path.join(outputPath, 'storage/tmp'), type: false}
-						],
-						dataIsGood = true
+						]
 					yield instance.generateBlankProject(outputPath)
 					for (const i in outputPaths) {
 						let item = outputPaths[i],
-							itemData = yield fs.lstat(item.path)
-						if (itemData.isFile() !== item.type) {
-							console.log(`Bad value for isFile - expected ${item.type} for item no. ${i}.`)
-							dataIsGood = false
-							break
+							itemData = yield fs.lstat(item.path),
+							isFile = itemData.isFile()
+						if (isFile !== item.type) {
+							assert.strictEqual(isFile, item.type, `bad value ${isFile} for the isFile check for item no. ${i}, expected ${item.type}`)
 						}
 					}
 					yield fs.remove(outputPath)
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -649,20 +617,17 @@ module.exports = {
 							{path: path.join(outputPath, 'public/site'), type: false},
 							{path: path.join(outputPath, 'storage/importTemplates'), type: false},
 							{path: path.join(outputPath, 'storage/tmp'), type: false},
-						],
-						dataIsGood = true
+						]
 					yield instance.generateBasicProject(outputPath)
 					for (const i in outputPaths) {
 						let item = outputPaths[i],
-							itemData = yield fs.lstat(item.path)
-						if (itemData.isFile() !== item.type) {
-							console.log(`Bad value for isFile - expected ${item.type} for item no. ${i}.`)
-							dataIsGood = false
-							break
+							itemData = yield fs.lstat(item.path),
+							isFile = itemData.isFile()
+						if (isFile !== item.type) {
+							assert.strictEqual(isFile, item.type, `bad value ${isFile} for the isFile check for item no. ${i}, expected ${item.type}`)
 						}
 					}
 					yield fs.remove(outputPath)
-					assert(dataIsGood)
 					return true
 				})
 			})

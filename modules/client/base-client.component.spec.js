@@ -7,46 +7,24 @@ const
 
 const
 	assertImportFileCheckOutput = (result, matchesTemplateShouldBe, resultColumnsShouldBe, templateColumnsShouldBe, fileDataShouldBe) => {
-		let dataIsGood = true
-		if (result.matchesTemplate !== matchesTemplateShouldBe) {
-			console.log(`Bad output: matches template equals ${result.matchesTemplate}, rather than ${matchesTemplateShouldBe}.`)
-			dataIsGood = false
+		assert.strictEqual(result.matchesTemplate, matchesTemplateShouldBe, `bad value ${result.matchesTemplate} for matchesTemplate, expected ${matchesTemplateShouldBe}`)
+		for (const i in resultColumnsShouldBe) {
+			const columnNameShouldBe = resultColumnsShouldBe[i],
+				columnNameIs = result.columns[i]
+			assert.strictEqual(columnNameIs, columnNameShouldBe, `bad value ${columnNameIs} for input file column at index ${i}, expected '${columnNameShouldBe}'`)
 		}
-		if (dataIsGood) {
-			for (const i in resultColumnsShouldBe) {
-				if (resultColumnsShouldBe[i] !== result.columns[i]) {
-					console.log(`Bad output: invalid input file column "${result.columns[i]}" at index ${i}.`)
-					dataIsGood = false
-					break
-				}
+		for (const i in templateColumnsShouldBe) {
+			const columnNameShouldBe = templateColumnsShouldBe[i],
+				columnNameIs = result.templateColumns[i]
+			assert.strictEqual(columnNameIs, columnNameShouldBe, `bad value ${columnNameIs} for template column at index ${i}, expected '${columnNameShouldBe}'`)
+		}
+		for (const i in fileDataShouldBe) {
+			const row = fileDataShouldBe[i],
+				fileRow = result.fileData[i]
+			for (const j in row) {
+				assert.strictEqual(fileRow[j], row[j], `bad value ${fileRow[j]} in the input file at column index ${j}, row index ${i}; expected ${row[j]}`)
 			}
 		}
-		if (dataIsGood) {
-			for (const i in templateColumnsShouldBe) {
-				if (templateColumnsShouldBe[i] !== result.templateColumns[i]) {
-					console.log(`Bad output: invalid template column "${result.templateColumns[i]}" at index ${i}.`)
-					dataIsGood = false
-					break
-				}
-			}
-		}
-		if (dataIsGood) {
-			for (const i in fileDataShouldBe) {
-				const row = fileDataShouldBe[i],
-					fileRow = result.fileData[i]
-				for (const j in row) {
-					if (row[j] !== fileRow[j]) {
-						console.log(`Bad output: invalid input file column value "${fileRow[j]}" at column index ${j}, row index ${i}.`)
-						dataIsGood = false
-						break
-					}
-				}
-				if (!dataIsGood) {
-					break
-				}
-			}
-		}
-		return dataIsGood
 	}
 
 module.exports = {
@@ -126,19 +104,15 @@ module.exports = {
 		describe('base-client.component', function() {
 			it('should execute testImportFileCheck successfully', function() {
 				instance.testImportFileCheck()
-				assert(true)
 			})
 			it('should execute testReadList successfully', function() {
 				instance.testReadList(req, res, next)
-				assert(true)
 			})
 			it('should execute testCheckImportFile successfully', function() {
 				instance.testCheckImportFile(req, res, next)
-				assert(true)
 			})
 			it('should execute testImportFile successfully', function() {
 				instance.testImportFile(req, res, next)
-				assert(true)
 			})
 		})
 	},
@@ -156,7 +130,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -173,7 +147,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -184,7 +158,7 @@ module.exports = {
 					yield fs.writeFile(fd, `col0,col1,col2`)
 					yield fs.close(fd)
 					let result = yield instance.importFileCheck('testFile.csv', ';')
-					assert(assertImportFileCheckOutput(
+					assertImportFileCheckOutput(
 						result,
 						false,
 						['col0,col1,col2'],
@@ -192,7 +166,7 @@ module.exports = {
 							['row0val0,row0val1,row0val2'],
 							['row1val0,row1val1,row1val2']
 						]
-					))
+					)
 					return true
 				})
 			})
@@ -203,7 +177,7 @@ module.exports = {
 					yield fs.writeFile(fd, `col0,col1`)
 					yield fs.close(fd)
 					let result = yield instance.importFileCheck('testFile.csv', ',')
-					assert(assertImportFileCheckOutput(
+					assertImportFileCheckOutput(
 						result,
 						false,
 						['col0', 'col1', 'col2'],
@@ -211,7 +185,7 @@ module.exports = {
 							['row0val0', 'row0val1', 'row0val2'],
 							['row1val0', 'row1val1', 'row1val2']
 						]
-					))
+					)
 					return true
 				})
 			})
@@ -222,7 +196,7 @@ module.exports = {
 					yield fs.writeFile(fd, `col0,col1,col2`)
 					yield fs.close(fd)
 					let result = yield instance.importFileCheck('testFile.csv', ',')
-					assert(assertImportFileCheckOutput(
+					assertImportFileCheckOutput(
 						result,
 						true,
 						['col0', 'col1', 'col2'],
@@ -230,7 +204,7 @@ module.exports = {
 							['row0val0', 'row0val1', 'row0val2'],
 							['row1val0', 'row1val1', 'row1val2']
 						]
-					))
+					)
 					return true
 				})
 			})
@@ -243,11 +217,16 @@ module.exports = {
 			dbComponents = db.components
 		let changeableInstance = this
 		describe('base-client.component.readList', function() {
-			it('should execute successfully and return the found object and save the search data if all paramteres are correct and saveSearchData is set to true', function() {
+			before(function() {
 				return co(function*() {
 					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
 					yield dbComponents.users.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', status: true})
 					delete req.locals.error
+					return true
+				})
+			})
+			it('should execute successfully and return the found object and save the search data if all paramteres are correct and saveSearchData is set to true', function() {
+				return co(function*() {
 					req.user = {id: 1}
 					req.query = {filters: {id: 2}, saveSearchData: true}
 					yield (new Promise((resolve, reject) => {
@@ -259,25 +238,17 @@ module.exports = {
 					}
 					let returnedData = res.response.jsonBody,
 						result = returnedData.results[0],
-						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
-						savedSearchData = JSON.parse(yield module.generalStore.getStoredEntry(`userId-1-searchComponent-users-savedSearchData`)),
-						dataIsGood = true
+						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
+						savedSearchData = JSON.parse(yield module.generalStore.getStoredEntry(`userId-1-searchComponent-users-savedSearchData`))
 					for (const key in item) {
-						if (result[key] !== item[key]) {
-							console.log(`Bad value '${result[key]}' for field "${key}".`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(result[key], item[key], `bad value ${result[key]} for field "${key}", expected ${item[key]}`)
 					}
-					assert(
-						dataIsGood &&
-						(savedSearchData.filters.id === 2) &&
-						(returnedData.results.length === 1) &&
-						(returnedData.page === 1) &&
-						(returnedData.perPage === 10) &&
-						(returnedData.totalPages === 1) &&
-						(returnedData.more === false)
-					)
+					assert.strictEqual(savedSearchData.filters.id, 2, `bad value ${savedSearchData.filters.id} for savedSearchData.filters.id, expected 2`)
+					assert.strictEqual(returnedData.results.length, 1, `bad value ${returnedData.results.length} for returnedData.results.length, expected 1`)
+					assert.strictEqual(returnedData.page, 1, `bad value ${returnedData.page} for returnedData.page, expected 1`)
+					assert.strictEqual(returnedData.perPage, 10, `bad value ${returnedData.perPage} for returnedData.perPage, expected 10`)
+					assert.strictEqual(returnedData.totalPages, 1, `bad value ${returnedData.totalPages} for returnedData.totalPages, expected 1`)
+					assert.strictEqual(returnedData.more, false, `bad value ${returnedData.more} for returnedData.more, expected false`)
 					return true
 				})
 			})
@@ -295,28 +266,20 @@ module.exports = {
 					}
 					let returnedData = res.response.jsonBody,
 						result = returnedData.results[0],
-						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
-						dataIsGood = true
+						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true}
 					for (const key in item) {
-						if (result[key] !== item[key]) {
-							console.log(`Bad value '${result[key]}' for field "${key}".`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(result[key], item[key], `bad value ${result[key]} for field "${key}", expected ${item[key]}`)
 					}
-					assert(
-						dataIsGood &&
-						(returnedData.savedSearchData.filters.id === 2) &&
-						(returnedData.results.length === 1) &&
-						(returnedData.page === 1) &&
-						(returnedData.perPage === 10) &&
-						(returnedData.totalPages === 1) &&
-						(returnedData.more === false)
-					)
+					assert.strictEqual(returnedData.savedSearchData.filters.id, 2, `bad value ${returnedData.savedSearchData.filters.id} for returnedData.savedSearchData.filters.id, expected 2`)
+					assert.strictEqual(returnedData.results.length, 1, `bad value ${returnedData.results.length} for returnedData.results.length, expected 1`)
+					assert.strictEqual(returnedData.page, 1, `bad value ${returnedData.page} for returnedData.page, expected 1`)
+					assert.strictEqual(returnedData.perPage, 10, `bad value ${returnedData.perPage} for returnedData.perPage, expected 10`)
+					assert.strictEqual(returnedData.totalPages, 1, `bad value ${returnedData.totalPages} for returnedData.totalPages, expected 1`)
+					assert.strictEqual(returnedData.more, false, `bad value ${returnedData.more} for returnedData.more, expected false`)
 					return true
 				})
 			})
-			it('should clean up users and userTypes after it finishes testing', function() {
+			after(function() {
 				return co(function*() {
 					yield db.sequelize.query(`
 						delete from "userTypes";
@@ -324,7 +287,6 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					assert(true)
 					return true
 				})
 			})
@@ -345,7 +307,7 @@ module.exports = {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						wrap(instance.checkImportFile())(req, res, next.bind(next, resolve))
 					}))
-					assert(req.locals.error)
+					assert(req.locals.error, 'no error was thrown')
 					return true
 				})
 			})
@@ -361,7 +323,7 @@ module.exports = {
 					if (req.locals.error) {
 						throw req.locals.error
 					}
-					assert(assertImportFileCheckOutput(
+					assertImportFileCheckOutput(
 						res.response.jsonBody,
 						true,
 						['col0', 'col1', 'col2'],
@@ -369,7 +331,7 @@ module.exports = {
 							['row0val0', 'row0val1', 'row0val2'],
 							['row1val0', 'row1val1', 'row1val2']
 						]
-					))
+					)
 					return true
 				})
 			})
@@ -390,14 +352,15 @@ module.exports = {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						wrap(instance.importFile())(req, res, next.bind(next, resolve))
 					}))
-					assert(req.locals.error)
+					assert(req.locals.error, 'no error was thrown')
 					return true
 				})
 			})
 			it('should throw an error with the correct message if the input file does does not contain any data', function() {
 				return co(function*() {
 					let fileName = 'testFile.csv',
-						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w')
+						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w'),
+						messageShouldBe = 'Invalid data string provided.'
 					yield fs.writeFile(fd, '')
 					yield fs.close(fd)
 					delete req.locals.error
@@ -407,7 +370,12 @@ module.exports = {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						wrap(instance.importFile())(req, res, next.bind(next, resolve))
 					}))
-					assert(req.locals.error && (req.locals.error.customMessage === 'Invalid data string provided.'))
+					assert(req.locals.error, 'no error was thrown')
+					assert.strictEqual(
+						req.locals.error.customMessage,
+						messageShouldBe,
+						`bad value ${req.locals.error.message} for the thrown error message, expected '${messageShouldBe}'`
+					)
 					return true
 				})
 			})
@@ -437,30 +405,22 @@ module.exports = {
 							{id: 2, typeId: 2, firstName: 'updatedFN2', lastName: 'thisIsTheNewShit2', email: 'email2Updated@ramster.com', status: true},
 							{id: 3, typeId: 2, firstName: 'fn3', lastName: 'thisIsTheNewShit2', email: 'email3@ramster.com', status: true}
 						],
-						users = yield dbComponent.model.findAll({order: [['id', 'asc']]}),
-						dataIsGood = true
+						users = yield dbComponent.model.findAll({order: [['id', 'asc']]})
 					for (const i in usersShouldBe) {
 						const item = usersShouldBe[i],
 							user = users[i].dataValues
 						for (const key in item) {
-							if (item[key] !== user[key]) {
-								console.log(`Bad value '${user[key]}' for field "${key}" in item no. ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(user[key], item[key], `bad value ${user[key]} for field "${key}" in item no. ${i}, expected ${item[key]}`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
 			it('should throw an error if the csv file does not match the template and the columns are not mapped in the body', function() {
 				return co(function*() {
 					let fileName = 'testFile.csv',
-						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w')
+						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w'),
+						messageShouldBe = 'The file does not match the template and not all columns have been mapped.'
 					yield fs.writeFile(fd, 'id,typeId,firstNameTest,lastname,emailTest,password,status\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
 					yield fs.close(fd)
 					delete req.locals.error
@@ -470,7 +430,12 @@ module.exports = {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						wrap(instance.importFile())(req, res, next.bind(next, resolve))
 					}))
-					assert(req.locals.error && (req.locals.error.customMessage === 'The file does not match the template and not all columns have been mapped.'))
+					assert(req.locals.error, 'no error was thrown')
+					assert.strictEqual(
+						req.locals.error.customMessage,
+						messageShouldBe,
+						`bad value ${req.locals.error.message} for the thrown error message, expected '${messageShouldBe}'`
+					)
 					return true
 				})
 			})
@@ -500,27 +465,18 @@ module.exports = {
 							{id: 2, typeId: 2, firstName: 'updatedFN2', lastName: 'thisIsTheNewShit2', email: 'email2Updated@ramster.com', status: true},
 							{id: 3, typeId: 2, firstName: 'fn3', lastName: 'thisIsTheNewShit2', email: 'email3@ramster.com', status: true}
 						],
-						users = yield dbComponent.model.findAll({order: [['id', 'asc']]}),
-						dataIsGood = true
+						users = yield dbComponent.model.findAll({order: [['id', 'asc']]})
 					for (const i in usersShouldBe) {
 						const item = usersShouldBe[i],
 							user = users[i].dataValues
 						for (const key in item) {
-							if (item[key] !== user[key]) {
-								console.log(`Bad value '${user[key]}' for field "${key}" in item no. ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(user[key], item[key], `bad value ${user[key]} for field "${key}" in item no. ${i}, expected ${item[key]}`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
-			it('should clean up the files, users and userTypes after it finishes testing', function() {
+			after(function() {
 				return co(function*() {
 					yield fs.unlink(path.join(config.globalUploadPath, 'testFile.csv'))
 					yield fs.unlink(path.join(config.globalStoragePath, 'importTemplates/users.csv'))
@@ -530,7 +486,6 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					assert(true)
 					return true
 				})
 			})

@@ -13,19 +13,15 @@ module.exports = {
 		describe('generalStore', function() {
 			it('should execute testCreateClient successfully', function() {
 				instance.testCreateClient()
-				assert(true)
 			})
 			it('should execute testStoreEntry successfully', function() {
 				instance.testStoreEntry(entryKey, entryValue)
-				assert(true)
 			})
 			it('should execute testGetStoredEntry successfully', function() {
 				instance.testGetStoredEntry(entryKey, entryValue)
-				assert(true)
 			})
 			it('should execute testRemoveEntry successfully', function() {
 				instance.testRemoveEntry(entryKey, entryValue)
-				assert(true)
 			})
 		})
 	},
@@ -35,7 +31,6 @@ module.exports = {
 			it('should create a client successfully', function() {
 				return co(function*() {
 					yield instance.createClient()
-					assert(true)
 					return true
 				})
 			})
@@ -83,7 +78,6 @@ module.exports = {
 			it('should execute successfully if all parameters are correct', function() {
 				return co(function*() {
 					yield instance.storeEntry(entryKey, entryValue)
-					assert(true)
 					return true
 				})
 			})
@@ -153,7 +147,6 @@ module.exports = {
 			})
 			it('should execute successfully if all parameters are correct', function() {
 				return co(function*() {yield instance.removeEntry(entryKey)
-					assert(true)
 					return true
 				})
 			})

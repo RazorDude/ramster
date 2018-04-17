@@ -1,7 +1,7 @@
 'use strict'
 /**
  * The client.component module. It contains the ClientModule class.
- * @module client.component
+ * @module clientComponent
  */
 
 
@@ -28,14 +28,14 @@ const
  */
 class ClientModule extends BaseServerModule {
 	/**
-	 * Creates an instance of APIModule. Sets the config and test methods (defined in the accompanying .spec.js file) as class properties and passes the moduleName, type and options to the parent class constructor.
-	 * @param {any} config A ramster config object.
-	 * @see module:config
+	 * Creates an instance of ClientModule. Sets the config and test methods (defined in the accompanying .spec.js file) as class properties and passes the moduleName, type and options to the parent class constructor.
+	 * @param {object} config A ramster config object.
+	 * @see module:configModule
 	 * @param {string} moduleName The name of the module. Ususally passed automatically by coreInstance.loadAPIs.
 	 * @see module:core
-	 * @param {any} options The options object for the BaseServerModule parent.
+	 * @param {object} options The options object for the BaseServerModule parent.
 	 * @see module:baseServerModule
-	 * @memberof APIModule
+	 * @memberof ClientModule
 	 */
 	constructor(config, moduleName, options) {
 		super(config, moduleName, 'client', options)

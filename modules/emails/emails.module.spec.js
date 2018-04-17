@@ -22,9 +22,13 @@ module.exports = {
 					try {
 						yield instance.sendEmail()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid templateName string provided.')
+						if (e && (e.customMessage === 'Invalid templateName string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error thrown')
 					return true
 				})
 			})
@@ -34,9 +38,13 @@ module.exports = {
 					try {
 						yield instance.sendEmail('')
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid templateName string provided.')
+						if (e && (e.customMessage === 'Invalid templateName string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error thrown')
 					return true
 				})
 			})
@@ -46,9 +54,13 @@ module.exports = {
 					try {
 						yield instance.sendEmail('sample')
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid "to" email string provided.')
+						if (e && (e.customMessage === 'Invalid "to" email string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error thrown')
 					return true
 				})
 			})
@@ -58,9 +70,13 @@ module.exports = {
 					try {
 						yield instance.sendEmail('sample', '')
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid "to" email string provided.')
+						if (e && (e.customMessage === 'Invalid "to" email string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error thrown')
 					return true
 				})
 			})
@@ -70,9 +86,13 @@ module.exports = {
 					try {
 						yield instance.sendEmail('sample', 'admin@ramster.com')
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid subject string provided.')
+						if (e && (e.customMessage === 'Invalid subject string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error thrown')
 					return true
 				})
 			})
@@ -82,9 +102,13 @@ module.exports = {
 					try {
 						yield instance.sendEmail('sample', 'admin@ramster.com', '')
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === 'Invalid subject string provided.')
+						if (e && (e.customMessage === 'Invalid subject string provided.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error thrown')
 					return true
 				})
 			})
@@ -94,9 +118,13 @@ module.exports = {
 					try {
 						yield instance.sendEmail('sample', 'admin@ramster.com', 'testSubject')
 					} catch(e) {
-						didThrowAnError = e && ((e.message === 'Unauthorized') || (e.code === 'ENOTFOUND'))
+						if (e && ((e.message === 'Unauthorized') || (e.code === 'ENOTFOUND'))) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
-					assert(didThrowAnError)
+					assert(didThrowAnError, 'no error thrown')
 					return true
 				})
 			})

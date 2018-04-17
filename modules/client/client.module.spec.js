@@ -78,7 +78,6 @@ module.exports = {
 				}
 			it('should execute testSetDefaultsBeforeRequest successfully', function() {
 				instance.testSetDefaultsBeforeRequest(req, res, next)
-				assert(true)
 			})
 		})
 	},
@@ -99,11 +98,11 @@ module.exports = {
 						setDefaultsBeforeRequest()(req, res, next.bind(next, resolve))
 					}))
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
-					assert(res.response.statusCode === 404)
+					assert.strictEqual(res.response.statusCode, 404, `bad value ${res.response.statusCode} res.response.statusCode, expected 404`)
 					return true
 				})
 			})
-			it('should execute successfully and return 404 if the route is not found, only notFoundRedirectRoutes.default is set and the user is not authenticated', function() {
+			it('should execute successfully, return 302 and redirect to the correct route if the route is not found, only notFoundRedirectRoutes.default is set and the user is not authenticated', function() {
 				return co(function*() {
 					req.originalUrl = '/notFoundRoute'
 					req.isAuthenticated = () => false
@@ -114,14 +113,12 @@ module.exports = {
 					}))
 					delete req.isAuthenticated
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
-					assert(
-						(res.response.statusCode === 302) &&
-						(res.response.redirectRoute === '/testRoute')
-					)
+					assert.strictEqual(res.response.statusCode, 302, `bad value ${res.response.statusCode} res.response.statusCode, expected 302`)
+					assert.strictEqual(res.response.redirectRoute, '/testRoute', `bad value ${res.response.redirectRoute} for res.response.redirectRoute, expected '/testRoute'`)
 					return true
 				})
 			})
-			it('should execute successfully and return 404 if the route is not found, only notFoundRedirectRoutes.default is set and the user is authenticated', function() {
+			it('should execute successfully, return 302 and redirect to the correct route if the route is not found, only notFoundRedirectRoutes.default is set and the user is authenticated', function() {
 				return co(function*() {
 					req.originalUrl = '/notFoundRoute'
 					req.isAuthenticated = () => true
@@ -132,14 +129,12 @@ module.exports = {
 					}))
 					delete req.isAuthenticated
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
-					assert(
-						(res.response.statusCode === 302) &&
-						(res.response.redirectRoute === '/testRoute')
-					)
+					assert.strictEqual(res.response.statusCode, 302, `bad value ${res.response.statusCode} res.response.statusCode, expected 302`)
+					assert.strictEqual(res.response.redirectRoute, '/testRoute', `bad value ${res.response.redirectRoute} for res.response.redirectRoute, expected '/testRoute'`)
 					return true
 				})
 			})
-			it('should execute successfully and return 404 if the route is not found, notFoundRedirectRoutes.authenticated is set and the user is authenticated', function() {
+			it('should execute successfully, return 302 and redirect to the correct route if the route is not found, notFoundRedirectRoutes.authenticated is set and the user is authenticated', function() {
 				return co(function*() {
 					req.originalUrl = '/notFoundRoute'
 					req.isAuthenticated = () => true
@@ -150,10 +145,8 @@ module.exports = {
 					}))
 					delete req.isAuthenticated
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
-					assert(
-						(res.response.statusCode === 302) &&
-						(res.response.redirectRoute === '/authenticatedTestRoute')
-					)
+					assert.strictEqual(res.response.statusCode, 302, `bad value ${res.response.statusCode} res.response.statusCode, expected 302`)
+					assert.strictEqual(res.response.redirectRoute, '/authenticatedTestRoute', `bad value ${res.response.redirectRoute} for res.response.redirectRoute, expected '/authenticatedTestRoute'`)
 					return true
 				})
 			})
@@ -174,7 +167,7 @@ module.exports = {
 					moduleConfig.layoutRoutes = originalModuleConfig.layoutRoutes
 					moduleConfig.nonLayoutDirectRoutes = originalModuleConfig.nonLayoutDirectRoutes
 					delete changeableInstance.paths
-					assert(res.response.statusCode === 401)
+					assert.strictEqual(res.response.statusCode, 401, `bad value ${res.response.statusCode} res.response.statusCode, expected 401`)
 					return true
 				})
 			})
@@ -202,11 +195,11 @@ module.exports = {
 					moduleConfig.redirectUnauthorizedPagesToNotFound = originalModuleConfig.redirectUnauthorizedPagesToNotFound
 					delete changeableInstance.paths
 					delete changeableInstance.layoutRoutes
-					assert(res.response.statusCode === 401)
+					assert.strictEqual(res.response.statusCode, 401, `bad value ${res.response.statusCode} res.response.statusCode, expected 401`)
 					return true
 				})
 			})
-			it('should execute successfully and return 302 if the user is not authenticated, the route is not anonymous, the route is a layout one and unauthorizedPageRedirectRoute is set', function() {
+			it('should execute successfully, return 302 and redirect to the correct route if the user is not authenticated, the route is not anonymous, the route is a layout one and unauthorizedPageRedirectRoute is set', function() {
 				return co(function*() {
 					delete moduleConfig.anonymousAccessRoutes
 					delete moduleConfig.layoutRoutes
@@ -230,14 +223,16 @@ module.exports = {
 					moduleConfig.redirectUnauthorizedPagesToNotFound = originalModuleConfig.redirectUnauthorizedPagesToNotFound
 					delete changeableInstance.paths
 					delete changeableInstance.layoutRoutes
-					assert(
-						(res.response.statusCode === 302) &&
-						(res.response.redirectRoute === '/unauthrozidPageRedirectRoute')
+					assert.strictEqual(res.response.statusCode, 302, `bad value ${res.response.statusCode} res.response.statusCode, expected 404`)
+					assert.strictEqual(
+						res.response.redirectRoute,
+						'/unauthrozidPageRedirectRoute',
+						`bad value ${res.response.redirectRoute} for res.response.redirectRoute, expected '/unauthrozidPageRedirectRoute'`
 					)
 					return true
 				})
 			})
-			it('should execute successfully and return 302 if the user is not authenticated, the route is not anonymous, the route is a layout one, unauthorizedPageRedirectRoute is not set and redirectUnauthorizedPagesToNotFound is true', function() {
+			it('should execute successfully, return 302 and redirect to the correct route if the user is not authenticated, the route is not anonymous, the route is a layout one, unauthorizedPageRedirectRoute is not set and redirectUnauthorizedPagesToNotFound is true', function() {
 				return co(function*() {
 					delete moduleConfig.anonymousAccessRoutes
 					delete moduleConfig.layoutRoutes
@@ -263,10 +258,8 @@ module.exports = {
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
 					delete changeableInstance.paths
 					delete changeableInstance.layoutRoutes
-					assert(
-						(res.response.statusCode === 302) &&
-						(res.response.redirectRoute === '/testRoute')
-					)
+					assert.strictEqual(res.response.statusCode, 302, `bad value ${res.response.statusCode} res.response.statusCode, expected 302`)
+					assert.strictEqual(res.response.redirectRoute, '/testRoute', `bad value ${res.response.redirectRoute} for res.response.redirectRoute, expected '/testRoute'`)
 					return true
 				})
 			})
@@ -283,12 +276,10 @@ module.exports = {
 					delete req.isAuthenticated
 					moduleConfig.anonymousAccessRoutes = originalModuleConfig.anonymousAccessRoutes
 					delete changeableInstance.paths
-					assert(
-						(next.fail === false) &&
-						(req.locals.error === null) &&
-						(req.locals.errorStatus === 500) &&
-						(req.locals.originalUrl === '/unathorizedRoute')
-					)
+					assert.strictEqual(next.fail, false, `bad value ${next.fail} for next.fail, expected false`)
+					assert.strictEqual(req.locals.error, null, `bad value ${req.locals.error} for req.locals.error, expected null`)
+					assert.strictEqual(req.locals.errorStatus, 500, `bad value ${req.locals.errorStatus} for req.locals.errorStatus, expected 500`)
+					assert.strictEqual(req.locals.originalUrl, '/unathorizedRoute', `bad value ${req.locals.originalUrl} for req.locals.originalUrl, expected '/unathorizedRoute'`)
 					return true
 				})
 			})
