@@ -42,6 +42,7 @@
 	- *BREAKING* - verifyToken is now in the format verifyToken(token, secret), rather than verifyToken({token, secret}).
 	- *BREAKING* - createToken is now in the format createToken(type, userData, secret, moduleName[, expiresInMinutes]), rather than createToken({type, userId, userData, secret, moduleName, expiresInMinutes}).
 	- *BREAKING* - deleteToken is now in the format deleteTokens(userId, moduleName), rather than deleteTokens({userId, moduleName}).
+	- *BREAKING* - validate now returns a generator function.
 	- Added extra validations for the input parameters in all methods.
 	- Made some consistency and deprecation fixes.
 	- Fixed numerous errors in the refresh token functionality (validate method).

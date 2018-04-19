@@ -1,4 +1,8 @@
 'use strict'
+/**
+ * The base-server.module module. Contains the BaseServerModule class.
+ * @module baseServerModuleModule
+ */
 
 const
 	co = require('co'),
@@ -9,25 +13,96 @@ const
 	path = require('path'),
 	spec = require('./base-server.module.spec')
 
+/**
+ * The base class for server (client and api) modules. It loads the module components and set some pre- and post-route method defaults.
+ * @class BaseServerModule
+ */
 class BaseServerModule {
-	constructor(config, moduleName, moduleType, {db, logger, generalStore, tokenManager}) {
+	/**
+	 * Creates an instance of BaseServerModule.
+	 * @param {object} config The project config object.
+	 * @see module:configModule
+	 * @param {string} moduleName The name of the module.
+	 * @param {string} moduleType The type of the module. Can be 'client' or 'api'.
+	 * @param {object} options An object containing additonal properties.
+	 * @param {object} options.db An instance of the DBModule class.
+	 * @param {object} options.logger An instance of the Logger class.
+	 * @param {object} options.generalStore An instance of the GeneralStore class.
+	 * @param {object} options.tokenManager An instance of the TokenManager class
+	 * @memberof BaseServerModule
+	 */
+	constructor(config, moduleName, moduleType, options) {
+		const {db, logger, generalStore, tokenManager} = options
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
+		/**
+		 * The project config object.
+		 * @type {object}
+		 */
 		this.config = config
+		/**
+		 * The name of the module.
+		 * @type {string}
+		 */
 		this.moduleName = moduleName
+		/**
+		 * The type of the module.
+		 * @type {string}
+		 */
 		this.moduleType = moduleType
+		/**
+		 * The module config object. This is a sub-object of the project config object, specifically config[`${moduleType}`s][moduleName].
+		 * @type {object}
+		 */
 		this.moduleConfig = config[`${moduleType}s`][moduleName]
+		/**
+		 * The list of instances of all baseServerComponents for this module.
+		 * @type {Object.<string, object>}
+		 */
 		this.components = {}
+		/**
+		 * A passportJS instance.
+		 * @type {object}
+		 */
 		this.passport = passport
+		/**
+		 * An instance of the DBModule class.
+		 * @type {object}
+		 */
 		this.db = db
+		/**
+		 * An instance of the Logger class.
+		 * @type {object}
+		 */
 		this.logger = logger
+		/**
+		 * An instance of the GeneralStore class.
+		 * @type {object}
+		 */
 		this.generalStore = generalStore
+		/**
+		 * An instance of the GeneralStore class.
+		 * @type {object}
+		 */
 		this.tokenManager = tokenManager
+		/**
+		 * A key-value map of how to parse fields between upper and lower camelCase.
+		 * @type {object[]>}
+		 */
 		this.fieldCaseMap = null
+		/**
+		 * A list of expressJS-style methods to execute prior to all other methods.
+		 * @type {object[]}
+		 */
 		this.precursorMethods = null
 	}
 
+	/**
+	 * Loads all server components in the related folder and their tests. Sets the module as a property of each one, while dereferecing the component from the module's components object to avoid circularization. Runs the setup method for each component that has one.
+	 * @returns {Promise<boolean>} A promise wrapping a generator function.
+	 * @memberof BaseServerModule
+	 */
 	loadComponents() {
 		let instance = this,
 			{config, moduleType, moduleName} = this
@@ -89,6 +164,11 @@ class BaseServerModule {
 		})
 	}
 
+	/**
+	 * Sets the module as a property of each component, while dereferecing the component from the module's components object to avoid circularization. Sets the dbComponent for each component, if any.
+	 * @returns {void}
+	 * @memberof BaseServerModule
+	 */
 	setModuleInComponents() {
 		let {components} = this
 		for (const componentName in components) {
@@ -104,6 +184,11 @@ class BaseServerModule {
 		}
 	}
 
+	/**
+	 * Sets up CORS-related headers and passess the request forward.
+	 * @returns {function} An expressJS-style function to be mounted in the server router.
+	 * @memberof BaseServerModule
+	 */
 	accessControlAllowOrigin() {
 		const {moduleConfig} = this
 		return function (req, res, next) {
@@ -118,6 +203,14 @@ class BaseServerModule {
 		}
 	}
 
+	/**
+	 * Changes the field case of all variables in a container recursively, based on a provided fieldCaseChangeMap.
+	 * @param {object} container The object containing the data and the field keys to be changed.
+	 * @param {object} fieldCaseMap The rules by which to do the change.
+	 * @param {object} fieldCaseChangeSettings (optional) Additional settings for the field change method.
+	 * @returns {function} An expressJS-style function to be mounted in the server router.
+	 * @memberof BaseServerModule
+	 */
 	changeFieldCase(container, fieldCaseMap, fieldCaseChangeSettings) {
 		const instance = this
 		return function (req, res, next) {
@@ -133,6 +226,11 @@ class BaseServerModule {
 		}
 	}
 
+	/**
+	 * Does error and not-found-route handling. Used to commonly handle such cases across all server modules.
+	 * @returns {function} An expressJS-style function to be mounted in the server router.
+	 * @memberof BaseServerModule
+	 */
 	handleNextAfterRoutes() {
 		const instance = this,
 			{moduleName, moduleConfig, config} = this,

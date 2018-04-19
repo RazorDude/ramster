@@ -15,7 +15,7 @@ const
 	fs = require('fs-extra'),
 	path = require('path'),
 	{spawn} = require('child_process'),
-	toolbeltSpec = require('./modules/toolbelt/index.spec')
+	toolbeltSpec = require('./modules/toolbelt/toolbelt.module.spec')
 
 module.exports = {
 	testMe: function() {
@@ -53,10 +53,9 @@ module.exports = {
 			it('should execute testGeneralStore successfully', function() {
 				instance.testGeneralStore()
 			})
-			// it('should execute testTokenManager successfully', function() {
-			// 	instance.testTokenManager()
-			// 	assert(true)
-			// })
+			it('should execute testTokenManager successfully', function() {
+				instance.testTokenManager()
+			})
 			it('should execute testCodeGenerator successfully', function() {
 				instance.testCodeGenerator()
 			})
@@ -661,7 +660,6 @@ module.exports = {
 			it('should execute loadDependencies successfully', function() {
 				return co(function*() {
 					yield instance.loadDependencies()
-					assert(true)
 					return true
 				})
 			})
@@ -705,7 +703,6 @@ module.exports = {
 			it('should execute successfully if all parameters and configuration variables are correct', function() {
 				return co(function*() {
 					yield instance.loadDB()
-					assert(true)
 					return true
 				})
 			})
@@ -717,14 +714,12 @@ module.exports = {
 			it.skip('should execute loadMailClient successfully if all parameters and a custom emails module is used', function() {
 				return co(function*() {
 					yield instance.loadMailClient()
-					assert(true)
 					return true
 				})
 			})
 			it('should execute loadMailClient successfully if all parameters and a custom emails module is not used', function() {
 				return co(function*() {
 					yield instance.loadMailClient()
-					assert(true)
 					return true
 				})
 			})
@@ -764,7 +759,6 @@ module.exports = {
 			it('should execute successfully if all parameters and configuration variables are correct', function() {
 				return co(function*() {
 					yield instance.loadClients()
-					assert(true)
 					return true
 				})
 			})
@@ -776,7 +770,6 @@ module.exports = {
 			it('should execute successfully if all parameters and configuration variables are correct', function() {
 				return co(function*() {
 					yield instance.loadAPIs()
-					assert(true)
 					return true
 				})
 			})
@@ -850,7 +843,6 @@ module.exports = {
 			it('should execute successfully if all parameters and configuration variables are correct', function() {
 				return co(function*() {
 					yield instance.listen()
-					assert(true)
 					return true
 				})
 			})

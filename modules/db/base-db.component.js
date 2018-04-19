@@ -29,8 +29,8 @@ class BaseDBComponent {
 		 * @typedef baseDBComponentDefaultsObject
 		 * @property {string} orderBy The default column name to order database searches by.
 		 * @property {string} orderDirection The default direction to order database seraches in.
-		 * @property {integer} page The default page of results to show in paginated calls.
-		 * @property {integer} perPage The default number of results to show per page in paginated calls.
+		 * @property {number} page The default page of results to show in paginated calls. Must be a non-zero integer.
+		 * @property {number} perPage The default number of results to show per page in paginated calls. Must be a non-zero integer.
 		 */
 		this.defaults = {
 			orderBy: 'id',

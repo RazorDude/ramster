@@ -94,11 +94,11 @@ module.exports = {
 			it('should execute successfully', function() {
 				return co(function*() {
 					let fullTableData = null
-					yield instance.sequelize.transaction((t) => {
+					yield instance.sequelize.transaction().then((t) => {
 						return co(function*() {
 							yield instance.removeAllTables(t)
 							fullTableData = yield instance.getFullTableData(t)
-							t.rollback()
+							return t.rollback()
 						})
 					})
 					assert(fullTableData, `bad value ${fullTableData} for fullTableData, expected it to exist`)
@@ -126,7 +126,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -294,7 +294,7 @@ module.exports = {
 				return co(function*() {
 					let now = moment.utc().valueOf(),
 						data = null
-					yield instance.sequelize.transaction((t) => {
+					yield instance.sequelize.transaction().then((t) => {
 						return co(function*() {
 							yield instance.runQueryFromColumnData(queryInterface,
 								'userTypes', {
@@ -304,7 +304,7 @@ module.exports = {
 								t
 							)
 							data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
-							t.rollback()
+							return t.rollback()
 						})
 					})
 					assert(data, `bad value ${data} for data, expected it to exist`)
@@ -316,7 +316,7 @@ module.exports = {
 				return co(function*() {
 					let now = moment.utc().valueOf(),
 						data = null
-					yield instance.sequelize.transaction((t) => {
+					yield instance.sequelize.transaction().then((t) => {
 						return co(function*() {
 							yield instance.runQueryFromColumnData(queryInterface, 
 								'userTypes', {
@@ -327,7 +327,7 @@ module.exports = {
 								{deleteTableContents: ['userTypes']}
 							)
 							data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
-							t.rollback()
+							return t.rollback()
 						})
 					})
 					assert(data, `bad value ${data} for data, expected it to exist`)
@@ -339,7 +339,7 @@ module.exports = {
 				return co(function*() {
 					let now = moment.utc().valueOf(),
 						data = null
-					yield instance.sequelize.transaction((t) => {
+					yield instance.sequelize.transaction().then((t) => {
 						return co(function*() {
 							yield instance.runQueryFromColumnData(queryInterface, 
 								'userTypes', {
@@ -350,7 +350,7 @@ module.exports = {
 								{dontSetIdSequence: true}
 							)
 							data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
-							t.rollback()
+							return t.rollback()
 						})
 					})
 					assert(data, `bad value ${data} for data, expected it to exist`)
@@ -362,7 +362,7 @@ module.exports = {
 				return co(function*() {
 					let now = moment.utc().valueOf(),
 						data = null
-					yield instance.sequelize.transaction((t) => {
+					yield instance.sequelize.transaction().then((t) => {
 						return co(function*() {
 							yield instance.runQueryFromColumnData(queryInterface, 
 								'userTypes', {
@@ -373,7 +373,7 @@ module.exports = {
 								{deleteTableContents: ['userTypes'], dontSetIdSequence: true}
 							)
 							data = (yield sequelize.query(`select * from "userTypes" where "id"=1500;`, {transaction: t}))[0]
-							t.rollback()
+							return t.rollback()
 						})
 					})
 					assert(data, `bad value ${data} for data, expected it to exist`)
@@ -395,7 +395,7 @@ module.exports = {
 				} catch(e) {
 					didThrowAnError = true
 				}
-				assert(didThrowAnError, 'no error was thrown')
+				assert(didThrowAnError, true, 'no error was thrown')
 			})
 			it('should execute successfully if all parameters are correct', function() {
 				let escapedObject = instance.escapeRecursively(queryInterface, {
@@ -412,18 +412,18 @@ module.exports = {
 					maValuesShouldBe = [true, false, 1, 'yay', null, undefined, 'foo']
 				assert(tp instanceof Array, `bad value ${tp} for escapedObject.testProperty, expected an array`)
 				assert.strictEqual(tp[0], 'someString', `bad value ${tp[0]} for escapedObject.testProperty[0], expected someString`)
-				assert.strictEqual(tp[1], 'someString', `bad value ${tp[1]} for escapedObject.testProperty[1], expected otherString"`)
+				assert.strictEqual(tp[1], 'otherString"', `bad value ${tp[1]} for escapedObject.testProperty[1], expected otherString"`)
 				let {stringy, misterArray} = tp[2].innerObject
 				assert.strictEqual(stringy, 'test', `bad value ${stringy} for escapedObject.testProperty[2].innerObject.stringy, expected test`)
 				assert(misterArray instanceof Array, `bad value ${misterArray} for escapedObject.testProperty[2].innerObject.misterArray, expected an array`)
 				for (const i in misterArray) {
 					const maItem = misterArray[i],
 						itemShouldBe = maValuesShouldBe[i]
-					assert.strictEqual(maItem[i], itemShouldBe[i], `bad value ${maItem[i]} for escapedObject.testProperty[2].innerObject.misterArray[${i}], expected ${itemShouldBe[i]}`)
+					assert.strictEqual(maItem, itemShouldBe, `bad value ${maItem} for escapedObject.testProperty[2].innerObject.misterArray[${i}], expected ${itemShouldBe}`)
 				}
 				assert.strictEqual(escapedObject.bar.q, 'test', `bad value ${escapedObject.bar.q} for escapedObject.bar.q, expected test`)
 				assert.strictEqual(tp[0], 'someString', `bad value ${tp[0]} for escapedObject.testProperty[0], expected someString`)
-				assert.strictEqual(test, 'test', `bad value ${test} for test, expected test`)
+				assert.strictEqual(escapedObject.bar.q, 'test', `bad value ${escapedObject.bar.q} for escapedObject.bar.q, expected test`)
 				assert.strictEqual(escapedObject.test, null, `bad value ${escapedObject.test} for escapedObject.test, expected test`)
 			})
 		})
@@ -443,7 +443,7 @@ module.exports = {
 						throw e
 					}
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, true, 'no error was thrown')
 			})
 			it('should throw an error with the correct message if dataObject is not an object', function() {
 				let didThrowAnError = false
@@ -470,28 +470,29 @@ module.exports = {
 						test: null,
 						doesNotExistInTheTableColumn: 'definitelyYes'
 					}),
-					parsedTestProperty = JSON.parse(values[0])
-				assert(
-					(columns.length === 3) &&
-					(values.length === 3) &&
-					(columns[0] === 'testProperty') &&
-					(columns[1] === 'bar') &&
-					(columns[2] === 'test') &&
-					(parsedTestProperty instanceof Array) &&
-					(parsedTestProperty[0] === 'someString') &&
-					(parsedTestProperty[1] === 'otherString"') &&
-					(parsedTestProperty[2].innerObject.stringy === 'test') &&
-					(parsedTestProperty[2].innerObject.misterArray instanceof Array) &&
-					(parsedTestProperty[2].innerObject.misterArray[0] === true) &&
-					(parsedTestProperty[2].innerObject.misterArray[1] === false) &&
-					(parsedTestProperty[2].innerObject.misterArray[2] === 1) &&
-					(parsedTestProperty[2].innerObject.misterArray[3] === 'yay') &&
-					(parsedTestProperty[2].innerObject.misterArray[4] === null) &&
-					(parsedTestProperty[2].innerObject.misterArray[5] === null) && // yes, json.stringfy transforms undefined to null in array objects
-					(parsedTestProperty[2].innerObject.misterArray[6] === 'foo') &&
-					(JSON.parse(values[1]).q === 'test') &&
-					(values[2] === null)
-				)
+					tp = JSON.parse(values[0]),
+					columnsShouldBe = ['testProperty', 'bar', 'test'],
+					maValuesShouldBe = [true, false, 1, 'yay', null, null, 'foo']
+				assert.strictEqual(columns.length, 3, `bad value ${columns.length} for columns.length, expected 3`)
+				assert.strictEqual(values.length, 3, `bad value ${values.length} for values.length, expected 3`)
+				for (const i in columns) {
+					const cv = columns[i],
+						cvShouldBe = columnsShouldBe[i]
+					assert.strictEqual(cv[i], cvShouldBe[i], `bad value ${cv[i]} for columns[${i}], expected ${cvShouldBe[i]}`)
+				}
+				assert(tp instanceof Array, `bad value ${tp} for values[0].testProperty, expected an array`)
+				assert.strictEqual(tp[0], 'someString', `bad value ${tp[0]} for values[0].testProperty[0], expected someString`)
+				assert.strictEqual(tp[1], 'otherString"', `bad value ${tp[1]} for values[0].testProperty[1], expected otherString"`)
+				let {stringy, misterArray} = tp[2].innerObject
+				assert.strictEqual(stringy, 'test', `bad value ${stringy} for values[0].testProperty[2].innerObject.stringy, expected test`)
+				assert(misterArray instanceof Array, `bad value ${misterArray} for values[0].testProperty[2].innerObject.misterArray, expected an array`)
+				for (const i in misterArray) {
+					const maItem = misterArray[i],
+						itemShouldBe = maValuesShouldBe[i]
+					assert.strictEqual(maItem, itemShouldBe, `bad value ${maItem} for values[0].testProperty[2].innerObject.misterArray[${i}], expected ${itemShouldBe}`)
+				}
+				assert.strictEqual(JSON.parse(values[1]).q, 'test', `bad value ${JSON.parse(values[1]).q} for JSON.parse(values[1]).q, expected test`)
+				assert.strictEqual(values[2], null, `bad value ${values[2]} for values[2], expected null`)
 			})
 		})
 	},
@@ -510,7 +511,7 @@ module.exports = {
 						throw e
 					}
 				}
-				assert(didThrowAnError)
+				assert(didThrowAnError, true, 'no error was thrown')
 			})
 			it('should throw an error with the correct message if a dependencyGraph vertex does not contain a data object', function() {
 				let didThrowAnError = false
@@ -553,19 +554,12 @@ module.exports = {
 							}
 						}
 					},
-					linearArray = instance.getLinearArrayFromDependencyGraph(dependencyGraph),
-					dataIsGood = true
-				if (linearArray.length < 9) {
-					assert(false)
-					return true
-				}
+					linearArray = instance.getLinearArrayFromDependencyGraph(dependencyGraph)
+				assert.strictEqual(linearArray.length, 9, `bad value ${linearArray.length} for linearArray.length, expected 9`)
 				for (const i in linearArray) {
-					if (linearArray[i].id !== (parseInt(i, 10)) + 1) {
-						dataIsGood = false
-						break
-					}
+					const idShouldBe = parseInt(i, 10) + 1
+					assert.strictEqual(linearArray[i].id, idShouldBe, `bad value ${linearArray[i].id} for linearArray[i].id, expected "${idShouldBe}`)
 				}
-				assert(dataIsGood)
 			})
 		})
 	},
@@ -584,7 +578,7 @@ module.exports = {
 						throw e
 					}
 				}
-				assert(didThrowAnError, 'no error was thrown')
+				assert(didThrowAnError, true, 'no error was thrown')
 			})
 			it('should throw an error with the correct message if tableLayout is not an array', function() {
 				let didThrowAnError = false
@@ -647,30 +641,13 @@ module.exports = {
 				for (const i in keys) {
 					const stringifiedColumns = keys[i],
 						{columns, values} = preparedData[stringifiedColumns]
-					if (stringifiedColumns !== stringifiedColumnsShouldEqual[i]) {
-						assert(false)
-						return true
-					}
-					for (const j in columns) {
-						if (columns[j] !== columns[j]) {
-							assert(false)
-							return true
-						}
-					}
-					if (values.length !== valuesLengthShouldBe[i]) {
-						assert(false)
-						return true
-					}
+					assert.strictEqual(stringifiedColumns, stringifiedColumnsShouldEqual[i], `bad value ${stringifiedColumns} for stringifiedColumns, expected ${stringifiedColumnsShouldEqual[i]}`)
+					assert.strictEqual(values.length, valuesLengthShouldBe[i], `bad value ${values.length} for values.length, expected ${valuesLengthShouldBe[i]}`)
 					for (const j in values) {
-						const item = values[j]
-						if (item.length !== columns.length) {
-							assert(false)
-							return true
-						}
-						if (item[0] !== idColumnShouldBe[i][j]) {
-							assert(false)
-							return true
-						}
+						const item = values[j],
+							idShouldBe = idColumnShouldBe[i][j]
+						assert.strictEqual(item.length, columns.length, `bad value ${item.length} for item.length, expected ${columns.length}`)
+						assert.strictEqual(item[0], idShouldBe, `bad value ${item[0]} for item[0], expected ${idShouldBe}`)
 					}
 				}
 			})
@@ -701,36 +678,16 @@ module.exports = {
 					],
 					valuesLengthShouldBe = [3, 1, 1, 1, 1, 1, 1],
 					idColumnShouldBe = [[1, 2, 3], [4], [5], [6], [7], [8], [9]]
-				if (!(preparedData instanceof Array)) {
-					assert(false)
-					return true
-				}
+				assert(preparedData instanceof Array, `bad value ${preparedData} for preparedData, expected an array`)
 				for (const i in preparedData) {
 					const {columns, stringifiedColumns, values} = preparedData[i]
-					if (stringifiedColumns !== stringifiedColumnsShouldEqual[i]) {
-						assert(false)
-						return true
-					}
-					for (const j in columns) {
-						if (columns[j] !== columns[j]) {
-							assert(false)
-							return true
-						}
-					}
-					if (values.length !== valuesLengthShouldBe[i]) {
-						assert(false)
-						return true
-					}
+					assert.strictEqual(stringifiedColumns, stringifiedColumnsShouldEqual[i], `bad value ${stringifiedColumns} for stringifiedColumns, expected ${stringifiedColumnsShouldEqual[i]}`)
+					assert.strictEqual(values.length, valuesLengthShouldBe[i], `bad value ${values.length} for values.length, expected ${valuesLengthShouldBe[i]}`)
 					for (const j in values) {
-						const item = values[j]
-						if (item.length !== columns.length) {
-							assert(false)
-							return true
-						}
-						if (item[0] !== idColumnShouldBe[i][j]) {
-							assert(false)
-							return true
-						}
+						const item = values[j],
+							idShouldBe = idColumnShouldBe[i][j]
+						assert.strictEqual(item.length, columns.length, `bad value ${item.length} for item.length, expected ${columns.length}`)
+						assert.strictEqual(item[0], idShouldBe, `bad value ${item[0]} for item[0], expected ${idShouldBe}`)
 					}
 				}
 			})
@@ -753,7 +710,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -803,23 +760,16 @@ module.exports = {
 						const user = data.users[i],
 							userFromDB = userList[userIdIndexMap[user.id]]
 						for (const fieldName in user) {
-							if (userFromDB[fieldName] !== user[fieldName]) {
-								assert(false)
-								return true
-							}
+							assert.strictEqual(userFromDB[fieldName], user[fieldName], `bad value ${userFromDB[fieldName]} for userFromDB[fieldName] expected ${user[fieldName]}`)
 						}
 					}
 					for (const i in data.userTypes) {
 						const userType = data.userTypes[i],
 							userTypeFromDB = userTypeList[userTypeIdIndexMap[userType.id]]
 						for (const fieldName in userType) {
-							if (userTypeFromDB[fieldName] !== userType[fieldName]) {
-								assert(false)
-								return true
-							}
+							assert.strictEqual(userTypeFromDB[fieldName], userType[fieldName], `bad value ${userTypeFromDB[fieldName]} for userTypeFromDB[fieldName] expected ${userType[fieldName]}`)
 						}
 					}
-					assert(true)
 					return true
 				})
 			})
@@ -868,23 +818,16 @@ module.exports = {
 						const user = data.users[i],
 							userFromDB = userList[userIdIndexMap[user.id]]
 						for (const fieldName in user) {
-							if (userFromDB[fieldName] !== user[fieldName]) {
-								assert(false)
-								return true
-							}
+							assert.strictEqual(userFromDB[fieldName], user[fieldName], `bad value ${userFromDB[fieldName]} for userFromDB[fieldName] expected ${user[fieldName]}`)
 						}
 					}
 					for (const i in data.userTypes) {
 						const userType = data.userTypes[i],
 							userTypeFromDB = userTypeList[userTypeIdIndexMap[userType.id]]
 						for (const fieldName in userType) {
-							if (userTypeFromDB[fieldName] !== userType[fieldName]) {
-								assert(false)
-								return true
-							}
+							assert.strictEqual(userTypeFromDB[fieldName], userType[fieldName], `bad value ${userTypeFromDB[fieldName]} for userTypeFromDB[fieldName] expected ${userType[fieldName]}`)
 						}
 					}
-					assert(true)
 					return true
 				})
 			})
@@ -906,21 +849,20 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.syncHistoryPath = originalPath
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
 			it('should execute successfully and generate a preSync file if all parameters are correct', function() {
 				return co(function*() {
-					let currentDirData = yield fs.readdir(config.migrations.syncHistoryPath),
-						wasSuccessful = false
+					let currentDirData = yield fs.readdir(config.migrations.syncHistoryPath)
 					yield instance.sync()
-					wasSuccessful = currentDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					let newLength = (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					assert(newLength > currentDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentDirData.length}`)
 					try {
 						yield fs.emptyDir(config.migrations.syncHistoryPath)
 					} catch(e) {
 					}
-					assert(wasSuccessful)
 					return true
 				})
 			})
@@ -943,7 +885,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -958,21 +900,20 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.seedFilesPath = originalPath
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
 			it('should execute successfully and generate a preSync file if all parameters are correct', function() {
 				return co(function*() {
-					let currentSeedFilesDirData = yield fs.readdir(config.migrations.seedFilesPath),
-						wasSuccessful = false
+					let currentSeedFilesDirData = yield fs.readdir(config.migrations.seedFilesPath)
 					yield instance.generateSeed('ramsterTestSeedFile')
-					wasSuccessful = currentSeedFilesDirData.length !== (yield fs.readdir(config.migrations.seedFilesPath)).length
+					let newLength = (yield fs.readdir(config.migrations.seedFilesPath)).length
+					assert(newLength > currentSeedFilesDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentSeedFilesDirData.length}`)
 					try {
 						yield fs.emptyDir(config.migrations.syncHistoryPath)
 					} catch(e) {
 					}
-					assert(wasSuccessful)
 					return true
 				})
 			})
@@ -994,7 +935,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -1010,7 +951,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -1022,22 +963,21 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
 			it('should execute successfully and generate a preSeed file if all parameters are correct', function() {
 				return co(function*() {
-					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
-						wasSuccessful = false
+					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath)
 					yield instance.seed('seedFiles', 'ramsterTestSeedFile')
-					wasSuccessful = currentSyncHistoryDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					let newLength = (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					assert(newLength > currentSyncHistoryDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentSyncHistoryDirData.length}`)
 					try {
 						yield fs.emptyDir(config.migrations.syncHistoryPath)
 						yield fs.remove(path.join(config.migrations.seedFilesPath, 'ramsterTestSeedFile.json'))
 					} catch(e) {
 					}
-					assert(wasSuccessful)
 					return true
 				})
 			})
@@ -1059,21 +999,20 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.backupPath = originalPath
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
 			it('should execute successfully and generate a backup file if all parameters are correct', function() {
 				return co(function*() {
-					let currentBackupDirData = yield fs.readdir(config.migrations.backupPath),
-						wasSuccessful = false
+					let currentBackupDirData = yield fs.readdir(config.migrations.backupPath)
 					yield instance.generateBackup()
-					wasSuccessful = currentBackupDirData.length !== (yield fs.readdir(config.migrations.backupPath)).length
+					let newLength = (yield fs.readdir(config.migrations.backupPath)).length
+					assert(newLength > currentBackupDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentBackupDirData.length}`)
 					try {
 						yield fs.emptyDir(config.migrations.backupPath)
 					} catch(e) {
 					}
-					assert(wasSuccessful)
 					return true
 				})
 			})
@@ -1095,7 +1034,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.staticDataPath = originalPath
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
@@ -1110,40 +1049,38 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.migrations.staticDataPath = originalPath
-					assert(didThrowAnError, 'no error was thrown')
+					assert(didThrowAnError, true, 'no error was thrown')
 					return true
 				})
 			})
 			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct and no staticData fileName is provided', function() {
 				return co(function*() {
-					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
-						wasSuccessful = false
+					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath)
 					yield instance.insertStaticData()
-					wasSuccessful = currentSyncHistoryDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					let newLength = (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					assert(newLength > currentSyncHistoryDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentSyncHistoryDirData.length}`)
 					try {
 						yield fs.emptyDir(config.migrations.syncHistoryPath)
 					} catch(e) {
 					}
-					assert(wasSuccessful)
 					return true
 				})
 			})
 			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct and a staticData fileName is provided', function() {
 				return co(function*() {
 					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
-						wasSuccessful = false,
 						testFilePath = path.join(config.migrations.staticDataPath, 'staticDataTest.json'),
 						fd = yield fs.open(testFilePath, 'w')
 					yield fs.write(fd, yield fs.readFile(path.join(config.migrations.staticDataPath, 'staticData.json')))
 					yield fs.close(fd)
 					yield instance.insertStaticData('staticDataTest')
-					wasSuccessful = currentSyncHistoryDirData.length !== (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					let newLength = (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					assert(newLength > currentSyncHistoryDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentSyncHistoryDirData.length}`)
 					try {
 						yield fs.emptyDir(config.migrations.syncHistoryPath)
 						yield fs.remove(testFilePath)
 					} catch(e) {
 					}
-					assert(wasSuccessful)
 					return true
 				})
 			})

@@ -14,7 +14,7 @@ module.exports = {
 						moduleName: 'mobile',
 						moduleType: 'client'
 					},
-					headers: {}
+					queryValues: {}
 				},
 				res = {
 					headers: {},
@@ -80,23 +80,18 @@ module.exports = {
 				}
 			it('should execute testLoadComponents successfully', function() {
 				instance.testLoadComponents()
-				assert(true)
 			})
 			it('should execute testSetModuleInComponents successfully', function() {
 				instance.testSetModuleInComponents()
-				assert(true)
 			})
 			it('should execute testAccessControlAllowOrigin successfully', function() {
 				instance.testAccessControlAllowOrigin(req, res, next)
-				assert(true)
 			})
 			it('should execute testChangeFieldCase successfully', function() {
 				instance.testChangeFieldCase(req, res, next)
-				assert(true)
 			})
 			it('should execute testHandleNextAfterRoutes successfully', function() {
 				instance.testHandleNextAfterRoutes(req, res, next)
-				assert(true)
 			})
 		})
 	},
@@ -116,7 +111,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.clientModulesPath = originalConfig.clientModulesPath
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -130,7 +125,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.clientModulesPath = originalConfig.clientModulesPath
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -144,7 +139,7 @@ module.exports = {
 						didThrowAnError = true
 					}
 					changeableInstance.config.clientModulesPath = originalConfig.clientModulesPath
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -163,74 +158,61 @@ module.exports = {
 					try {
 						yield instance.loadComponents()
 					} catch(e) {
-						didThrowAnError = e && (e.customMessage === `Invalid spec file for "${instance.moduleName}" client module component "${componentName}".`)
+						if (e && (e.customMessage === `Invalid spec file for "${instance.moduleName}" client module component "${componentName}".`)) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
 					}
 					yield fs.remove(componentPath)
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
 			it('should execute successfully if all paramters are correct', function() {
 				return co(function*() {
 					yield instance.loadComponents()
-					assert(true)
 					return true
 				})
 			})
 			it('should have loaded all components after it has executed successfully', function() {
 				return co(function*() {
 					const components = instance.components
-					let moduleDirData = yield fs.readdir(path.join(config.clientModulesPath, instance.moduleName)),
-						allLoaded = true
+					let moduleDirData = yield fs.readdir(path.join(config.clientModulesPath, instance.moduleName))
 					for (const i in moduleDirData) {
 						let componentName = moduleDirData[i]
-						if ((componentName.indexOf('.') === -1) && !components[componentName]){
-							allLoaded = false
-							break
+						if (componentName.indexOf('.') === -1) {
+							assert(components[componentName], `bad value ${components[componentName]} for component ${componentName}, expected it to exist`)
 						}
 					}
-					assert(allLoaded)
 					return true
 				})
 			})
 			it('should have set the correct componentName for all components after it has executed successfully', function() {
 				const components = instance.components
-				let allHaveCorrectComponentNames = true
 				for (const componentName in components) {
 					const component = components[componentName]
-					if (!component.componentName || (component.componentName !== componentName)) {
-						allHaveCorrectComponentNames = false
-						break
-					}
+					assert.strictEqual(component.componentName, componentName, `bad value ${component.componentName} for the component name, expected ${componentName}`)
 				}
-				assert(allHaveCorrectComponentNames)
 			})
 			it('should have set the module property, with the component removed individually to avoid circularization, for all components after it has executed successfully', function() {
 				const components = instance.components
-				let allHaveTheValidModuleProperty = true
 				for (const componentName in components) {
 					const component = components[componentName]
-					if (!component.module || component.module.components[componentName]) {
-						allHaveTheValidModuleProperty = false
-						break
-					}
+					assert(component.module, `bad value ${component.module} for component.module, expected it to exist`)
+					let typeOfThisComponent = typeof component.module.components[componentName]
+					assert.strictEqual(typeOfThisComponent, 'undefined', `bad value ${typeOfThisComponent} for typeof component.module.components[componentName], expected undefined`)
 				}
-				assert(allHaveTheValidModuleProperty)
 			})
 			it('should have loaded the fieldCaseMap successfully, if a valid one was present in the module directory', function() {
 				return co(function*() {
-					let moduleDirData = yield fs.readdir(path.join(config.clientModulesPath, instance.moduleName)),
-						hasFieldCaseMap = true
+					let moduleDirData = yield fs.readdir(path.join(config.clientModulesPath, instance.moduleName))
 					for (const i in moduleDirData) {
 						let componentName = moduleDirData[i]
 						if (componentName === 'fieldCaseMap.js') {
-							if (!instance.fieldCaseeMap) {
-								hasFieldCaseMap = false
-							}
-							break
+							assert(instance.fieldCaseMap, `bad value ${instance.fieldCaseMap} for instance.fieldCaseMap, expected it to exist`)
 						}
 					}
-					assert(hasFieldCaseMap)
 					return true
 				})
 			})
@@ -241,19 +223,17 @@ module.exports = {
 		let {components} = this
 		describe('base-server.module.setModuleInComponents', function() {
 			it('should have set the module property, with the component removed individually to avoid circularization, for all components after it has executed successfully', function() {
-				let allHaveTheValidModuleProperty = true
 				for (const componentName in components) {
 					delete components[componentName].module
 				}
 				instance.setModuleInComponents()
 				for (const componentName in components) {
 					const component = components[componentName]
-					if (!component.module || component.module.components[componentName] || (component.db.components[componentName] && !component.dbComponent)) {
-						allHaveTheValidModuleProperty = false
-						break
-					}
+					assert(component.module, `bad value ${component.module} for component.module, expected it to exist`)
+					let typeOfThisComponent = typeof component.module.components[componentName]
+					assert.strictEqual(typeOfThisComponent, undefined, `bad value ${typeOfThisComponent} for typeof component.module.components[componentName], expected undefined`)
+					assert(component.dbComponent, `bad value ${component.dbComponent} for component.dbComponent, expected it to exist`)
 				}
-				assert(allHaveTheValidModuleProperty)
 			})
 		})
 	},
@@ -277,13 +257,17 @@ module.exports = {
 						accessControlAllowOrigin()(req, res, next.bind(next, resolve))
 					}))
 					moduleConfig.allowOrigins = originalModuleConfig.allowOrigins
-					assert(
-						(next.fail === null) &&
-						(res.response.statusCode === 200) &&
-						(res.headers['Access-Control-Allow-Origin'] === 'testAllowOrigins') &&
-						(res.headers['Access-Control-Allow-Headers'] === 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent') &&
-						(res.headers['Allow'] === 'OPTIONS, GET, POST, PUT, PATCH, DELETE')
-					)
+					assert.strictEqual(next.fail, null, `bad value ${next.fail} for next.fail, expected null`)
+					assert.strictEqual(res.response.statusCode, 200, `bad value ${res.response.statusCode} for res.response.statusCode, expected 200`)
+					const headersShouldBe = {
+						'Access-Control-Allow-Origin': 'testAllowOrigins',
+						'Access-Control-Allow-Headers': 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent',
+						Allow: 'OPTIONS, GET, POST, PUT, PATCH, DELETE'
+					}
+					let headers = res.headers
+					for (const key in headers) {
+						assert.strictEqual(headers[key], headersShouldBe[key], `bad value ${headers[key]} for headers[key], expected ${headersShouldBe[key]}`)
+					}
 					return true
 				})
 			})
@@ -300,12 +284,16 @@ module.exports = {
 						accessControlAllowOrigin()(req, res, next.bind(next, resolve))
 					}))
 					moduleConfig.allowOrigins = originalModuleConfig.allowOrigins
-					assert(
-						(next.fail === false) &&
-						(res.headers['Access-Control-Allow-Origin'] === 'testAllowOrigins') &&
-						(res.headers['Access-Control-Allow-Headers'] === 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent') &&
-						(res.headers['Allow'] === 'OPTIONS, GET, POST, PUT, PATCH, DELETE')
-					)
+					assert.strictEqual(next.fail, false, `bad value ${next.fail} for next.fail, expected false`)
+					const headersShouldBe = {
+						'Access-Control-Allow-Origin': 'testAllowOrigins',
+						'Access-Control-Allow-Headers': 'accept, accept-encoding, accept-language, authorization, connection, content-type, host, origin, referer, user-agent',
+						Allow: 'OPTIONS, GET, POST, PUT, PATCH, DELETE'
+					}
+					let headers = res.headers
+					for (const key in headers) {
+						assert.strictEqual(headers[key], headersShouldBe[key], `bad value ${headers[key]} for headers[key], expected ${headersShouldBe[key]}`)
+					}
 					return true
 				})
 			})
@@ -324,14 +312,17 @@ module.exports = {
 						res.end = res.endTemplate.bind(res, resolve)
 						changeFieldCase('query', fieldCaseMap, 'lower')(req, res, next.bind(next, resolve))
 					}))
-					const query = req.query
-					assert(
-						(next.fail === false) &&
-						(query.test1 === '1') &&
-						(query.test2 === '2') &&
-						(query.test3 === '3') &&
-						(query.test4 === '4')
-					)
+					const query = req.query,
+						queryShouldBe = {
+							test1: '1',
+							test2: '2',
+							test3: '3',
+							test4: '4'
+						}
+					assert.strictEqual(next.fail, false, `bad value ${next.fail} for next.fail, expected false`)
+					for (const key in query) {
+						assert.strictEqual(query[key], queryShouldBe[key], `bad value ${query[key]} for query[key], expected ${queryShouldBe[key]}`)
+					}
 					return true
 				})
 			})
@@ -343,14 +334,17 @@ module.exports = {
 						res.end = res.endTemplate.bind(res, resolve)
 						changeFieldCase('query', fieldCaseMap, 'upper')(req, res, next.bind(next, resolve))
 					}))
-					const query = req.query
-					assert(
-						(next.fail === false) &&
-						(query.Test1 === '1') &&
-						(query.Test2 === '2') &&
-						(query.Test3 === '3') &&
-						(query.Test4 === '4')
-					)
+					const query = req.query,
+						queryShouldBe = {
+							Test1: '1',
+							Test2: '2',
+							Test3: '3',
+							Test4: '4'
+						}
+					assert.strictEqual(next.fail, false, `bad value ${next.fail} for next.fail, expected false`)
+					for (const key in query) {
+						assert.strictEqual(query[key], queryShouldBe[key], `bad value ${query[key]} for query[${key}], expected ${queryShouldBe[key]}`)
+					}
 					return true
 				})
 			})
@@ -371,10 +365,8 @@ module.exports = {
 						handleNextAfterRoutes()(req, res)
 					}))
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
-					assert(
-						(res.response.statusCode === 404) &&
-						(res.response.jsonBody.error === 'Not found.')
-					)
+					assert.strictEqual(res.response.statusCode, 404, `bad value ${res.response.statusCode} for res.response.statusCode, expected 404`)
+					assert.strictEqual(res.response.jsonBody.error, 'Not found.', `bad value ${res.response.jsonBody.error} for res.response.jsonBody.error, expected Not found.`)
 					return true
 				})
 			})
@@ -389,10 +381,8 @@ module.exports = {
 					}))
 					delete req.isAuthenticated
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
-					assert(
-						(res.response.statusCode === 302) &&
-						(res.response.redirectRoute === '/testRoute')
-					)
+					assert.strictEqual(res.response.statusCode, 302, `bad value ${res.response.statusCode} for res.response.statusCode, expected 302`)
+					assert.strictEqual(res.response.redirectRoute, '/testRoute', `bad value ${res.response.redirectRoute} for res.response.redirectRoute, expected /testRoute`)
 					return true
 				})
 			})
@@ -407,10 +397,8 @@ module.exports = {
 					}))
 					delete req.isAuthenticated
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
-					assert(
-						(res.response.statusCode === 302) &&
-						(res.response.redirectRoute === '/testRoute')
-					)
+					assert.strictEqual(res.response.statusCode, 302, `bad value ${res.response.statusCode} for res.response.statusCode, expected 302`)
+					assert.strictEqual(res.response.redirectRoute, '/testRoute', `bad value ${res.response.redirectRoute} for res.response.redirectRoute, expected /testRoute`)
 					return true
 				})
 			})
@@ -425,10 +413,8 @@ module.exports = {
 					}))
 					delete req.isAuthenticated
 					moduleConfig.notFoundRedirectRoutes = originalModuleConfig.notFoundRedirectRoutes
-					assert(
-						(res.response.statusCode === 302) &&
-						(res.response.redirectRoute === '/authenticatedTestRoute')
-					)
+					assert.strictEqual(res.response.statusCode, 302, `bad value ${res.response.statusCode} for res.response.statusCode, expected 302`)
+					assert.strictEqual(res.response.redirectRoute, '/authenticatedTestRoute', `bad value ${res.response.redirectRoute} for res.response.redirectRoute, expected /authenticatedTestRoute`)
 					return true
 				})
 			})

@@ -13,47 +13,36 @@ module.exports = {
 		describe('toolbelt', function() {
 			it('should execute testArraySort successfully', function() {
 				instance.testArraySort()
-				assert(true)
 			})
 			it('should execute testChangeKeyCase successfully', function() {
 				instance.testChangeKeyCase()
-				assert(true)
 			})
 			it('should execute testCheckRoutes successfully', function() {
 				instance.testCheckRoutes()
-				assert(true)
 			})
 			it('should execute testEmptyToNull successfully', function() {
 				instance.testEmptyToNull()
-				assert(true)
 			})
 			it('should execute testFindVertexByIdDFS successfully', function() {
 				instance.testFindVertexByIdDFS()
-				assert(true)
 			})
 			it('should execute testGetFolderSize successfully', function() {
 				instance.testGetFolderSize()
-				assert(true)
 			})
 			it('should execute testGetNested successfully', function() {
 				instance.testGetNested()
-				assert(true)
 			})
 			it('should execute testGenerateRandomNumber successfully', function() {
 				instance.testGenerateRandomNumber()
-				assert(true)
 			})
 			it('should execute testGenerateRandomString successfully', function() {
 				instance.testGenerateRandomString()
-				assert(true)
 			})
 			it('should execute testParseDate successfully', function() {
 				instance.testParseDate()
-				assert(true)
 			})
 			it('should execute testSetNested successfully', function() {
 				instance.testSetNested()
-				assert(true)
 			})
 		})
 	},
@@ -557,27 +546,21 @@ module.exports = {
 		describe('toolbelt.setNested', function() {
 			it('should execute successfully and do nothing if the parent is undefined', function() {
 				setNested()
-				assert(true)
 			})
 			it('should execute successfully and do nothing if the parent is null', function() {
 				setNested(null)
-				assert(true)
 			})
 			it('should execute successfully and do nothing if the parent is not an object', function() {
 				setNested(1)
-				assert(true)
 			})
 			it('should execute successfully and do nothing if the field is not a string', function() {
 				setNested({})
-				assert(true)
 			})
 			it('should execute successfully and do nothing if the field is an empty string', function() {
 				setNested({}, '')
-				assert(true)
 			})
 			it('should execute successfully and do nothing if the field does not exist in the parent', function() {
 				setNested({}, 'test.test1')
-				assert(true)
 			})
 			it('should execute successfully and set the field\'s value if all parameters are correct', function() {
 				let parent = {

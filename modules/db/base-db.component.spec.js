@@ -101,7 +101,7 @@ module.exports = {
 				assert.strictEqual(model.hasOneAssociations.length, 0, `bad value ${model.hasOneAssociations.length} for model.hasOneAssociations.length, expected 0`)
 				assert.strictEqual(model.hasManyAssociations.length, 0, `bad value ${model.hasManyAssociations.length} for model.hasManyAssociations.length, expected 0`)
 				assert.strictEqual(model.belongsToManyAssociations.length, 0, `bad value ${model.belongsToManyAssociations.length} for model.belongsToManyAssociations.length, expected 0`)
-				assert.strictEqual(instance.dependencyMap.length, 0, `bad value ${instance.dependencyMap.length} for instance.dependencyMap.length, expected 0`)
+				assert.strictEqual(Object.keys(instance.dependencyMap).length, 4, `bad value ${Object.keys(instance.dependencyMap).length} for Object.keys(instance.dependencyMap).length, expected 4`)
 			})
 			it('should throw an error with the correct message if an association type is not of the allowed ones (belongsTo, hasOne, hasMany, belongsToMany)', function() {
 				let didThrowAnError = false
@@ -707,7 +707,7 @@ module.exports = {
 				assert.strictEqual(firstItem.include[0].attributes[1], 'name', `Bad value ${firstItem.include[0].attributes[1]} for firstItem.include[0].attributes[1], expected name.`)
 				assert.strictEqual(secondItem.where.id, 3, `Bad value ${secondItem.where.id} for secondItem.where.id, expected 3.`)
 				assert.strictEqual(secondItem.order[0][0].model, 'testComponent3Model', `Bad value ${secondItem.order[0][0].model} for secondItem.order[0][0].model, expected testComponent3Model.`)
-				assert.strictEqual(secondItem.order[0][0].as, 'testComponent3', `Bad value ${secondItem.order[0][0].as} for secondItem.order[0][0].as, expected testComponent3.`)
+				assert.strictEqual(secondItem.order[0][0].as, 'test3', `Bad value ${secondItem.order[0][0].as} for secondItem.order[0][0].as, expected test3.`)
 				assert.strictEqual(secondItem.order[0][1], 'id', `Bad value ${secondItem.order[0][1]} for secondItem.order[0][1], expected id.`)
 				assert.strictEqual(secondItem.order[0][2], 'asc', `Bad value ${secondItem.order[0][2]} for secondItem.order[0][2], expected asc.`)
 			})
@@ -773,7 +773,7 @@ module.exports = {
 				let test3RelationAttributes = instance.relations.test3.attributes
 				assert.strictEqual(test3RelationAttributes[0], 'id', `Bad value ${test3RelationAttributes[0]} for test3RelationAttributes[0], expected id.`)
 				assert.strictEqual(test3RelationAttributes[1], 'name', `Bad value ${test3RelationAttributes[1]} for test3RelationAttributes[1], expected name.`)
-				assert.strictEqual(instance.relations.test3ButWithADiffreentAlias.where.id, '1', `Bad value ${instance.relations.test3ButWithADiffreentAlias.where.id} for instance.relations.test3ButWithADiffreentAlias.where.id, expected 1.`)
+				assert.strictEqual(instance.relations.test3ButWithADiffreentAlias.where.id, 1, `Bad value ${instance.relations.test3ButWithADiffreentAlias.where.id} for instance.relations.test3ButWithADiffreentAlias.where.id, expected 1.`)
 			})
 		})
 	},
@@ -1062,24 +1062,22 @@ module.exports = {
 		let changeableInstance = this
 		describe('baseDBComponent.create', function() {
 			it('should execute successfully and create a new db entry correctly if all parameters are correct', function() {
-				return co(function*() {
-					yield sequelize.transaction((t) => co(function*() {
-						let item = {id: 3, name: 'testName', description: 'testDescription'}
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.create(item, {transaction: t})
-						let createdItem = (yield instance.model.findOne({where: {id: 3}, transaction: t})).dataValues
-						for (const i in item) {
-							assert.strictEqual(createdItem[i], item[i], `Bad value ${createdItem[i]} for field "${i}", expected ${item[i]}.`)
-						}
-						delete changeableInstance.model
-						t.rollback()
-					}))
-					return true
-				})
+				return sequelize.transaction().then((t) => co(function*() {
+					let item = {id: 3, name: 'testName', description: 'testDescription'}
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.create(item, {transaction: t})
+					let createdItem = (yield instance.model.findOne({where: {id: 3}, transaction: t})).dataValues
+					for (const i in item) {
+						assert.strictEqual(createdItem[i], item[i], `Bad value ${createdItem[i]} for field "${i}", expected ${item[i]}.`)
+					}
+					delete changeableInstance.model
+					return t.rollback()
+				}))
+				return true
 			})
 		})
 	},
@@ -1089,28 +1087,25 @@ module.exports = {
 		let changeableInstance = this
 		describe('baseDBComponent.bulkCreate', function() {
 			it('should execute successfully and create the new db entries correctly if all parameters are correct', function() {
-				return co(function*() {
-					yield sequelize.transaction((t) => co(function*() {
-						let items = [{id: 3, name: 'testName', description: 'testDescription'}, {id: 4, name: 'testName4', description: 'testDescription4'}]
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.bulkCreate(items, {transaction: t})
-						let createdItems = yield instance.model.findAll({where: {id: [3, 4]}, transaction: t})
-						for (const i in items) {
-							const item = items[i],
-								createdItem = createdItems[i].dataValues
-							for (const j in item) {
-								assert.strictEqual(createdItem[j], item[j], `Bad value '${createdItem[j]}' for field "${j}" for item no. ${i}.`)
-							}
+				return sequelize.transaction().then((t) => co(function*() {
+					let items = [{id: 3, name: 'testName', description: 'testDescription'}, {id: 4, name: 'testName4', description: 'testDescription4'}]
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.bulkCreate(items, {transaction: t})
+					let createdItems = yield instance.model.findAll({where: {id: [3, 4]}, transaction: t})
+					for (const i in items) {
+						const item = items[i],
+							createdItem = createdItems[i].dataValues
+						for (const j in item) {
+							assert.strictEqual(createdItem[j], item[j], `Bad value '${createdItem[j]}' for field "${j}" for item no. ${i}.`)
 						}
-						delete changeableInstance.model
-						t.rollback()
-					}))
-					return true
-				})
+					}
+					delete changeableInstance.model
+					return t.rollback()
+				}))
 			})
 		})
 	},
@@ -1137,77 +1132,75 @@ module.exports = {
 				})
 			})
 			it('should execute successfully and read a db entry correctly if all parameters are correct', function() {
-				return co(function*() {
-					yield sequelize.transaction((t) => co(function*() {
-						let item = {id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
-							test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
-							test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						changeableInstance.searchFields = [
-							{field: 'id'},
-							{field: '$test2.name$'},
-							{field: '$test2.test3.description$'}
-						]
-						changeableInstance.associationsConfig = {
-							test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
-						}
-						changeableInstance.relationsConfig = {
-							test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
-						}
-						changeableInstance.db = {
-							components: {
-								testComponent2: {
-									model: sequelize.define('test2Model', {
-										name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-										description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									}),
-									associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
-									dependencyMap: {associationKeys: ['test3']}
-								},
-								test3: {
-									model: sequelize.define('test3Model', {
-										name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-										description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									}),
-									dependencyMap: {associationKeys: []}
-								}
+				return sequelize.transaction().then((t) => co(function*() {
+					let item = {id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
+						test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
+						test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					changeableInstance.searchFields = [
+						{field: 'id'},
+						{field: '$test2.name$'},
+						{field: '$test2.test3.description$'}
+					]
+					changeableInstance.associationsConfig = {
+						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
+					}
+					changeableInstance.relationsConfig = {
+						test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
+					}
+					changeableInstance.db = {
+						components: {
+							testComponent2: {
+								model: sequelize.define('test2Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}),
+								associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
+								dependencyMap: {associationKeys: ['test3']}
+							},
+							test3: {
+								model: sequelize.define('test3Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}),
+								dependencyMap: {associationKeys: []}
 							}
 						}
-						changeableInstance.associate()
-						changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
-						changeableInstance.mapRelations()
-						yield sequelize.sync({force: true, transaction: t})
-						yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
-						yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
-						yield instance.create(item, {transaction: t})
-						let createdItem = (yield instance.read({
-								filters: {
-									id: 1,
-									'$test2.name$': 'test2Name',
-									'$test2.test3.description$': 'test3Description'
-								},
-								transaction: t
-							})).dataValues,
-							createdTest2Item = createdItem.test2.dataValues,
-							createdTest3Item = createdTest2Item.test3.dataValues
-						for (const i in item) {
-							assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, expected ${item[i]}.`)
-						}
-						for (const i in test2Item) {
-							assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the test2Item, expected ${test2Item[i]}.`)
-						}
-						for (const i in test3Item) {
-							assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the test3Item, expected ${test3Item[i]}.`)
-						}
-						delete changeableInstance.model
-						delete changeableInstance.db
-						t.rollback()
-					}))
-					return true
-				})
+					}
+					changeableInstance.associate()
+					changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
+					changeableInstance.mapRelations()
+					yield sequelize.sync({force: true, transaction: t})
+					yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
+					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+					yield instance.create(item, {transaction: t})
+					let createdItem = (yield instance.read({
+							filters: {
+								id: 1,
+								'$test2.name$': 'test2Name',
+								'$test2.test3.description$': 'test3Description'
+							},
+							transaction: t
+						})).dataValues,
+						createdTest2Item = createdItem.test2.dataValues,
+						createdTest3Item = createdTest2Item.test3.dataValues
+					for (const i in item) {
+						assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, expected ${item[i]}.`)
+					}
+					for (const i in test2Item) {
+						assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the test2Item, expected ${test2Item[i]}.`)
+					}
+					for (const i in test3Item) {
+						assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the test3Item, expected ${test3Item[i]}.`)
+					}
+					delete changeableInstance.model
+					delete changeableInstance.db
+					return t.rollback()
+				}))
+				return true
 			})
 		})
 	},
@@ -1234,175 +1227,170 @@ module.exports = {
 				})
 			})
 			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are no relReadKeys', function() {
-				return co(function*() {
-					yield sequelize.transaction((t) => co(function*() {
-						let items = [
-								{id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
-								{id: 2, test2Id: 1, name: 'test2Name', description: 'test2Description'},
-								{id: 3, test2Id: 1, name: 'test3Name', description: 'test3Description'}
-							],
-							test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
-							test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						changeableInstance.searchFields = [
-							{field: 'id'},
-							{field: '$test2.name$', like: '-%'},
-							{field: '$test2.test3.description$', like: '-%'}
-						]
-						changeableInstance.associationsConfig = {
-							test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
-						}
-						changeableInstance.relationsConfig = {
-							test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
-						}
-						changeableInstance.db = {
-							components: {
-								testComponent2: {
-									model: sequelize.define('test2Model', {
-										name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-										description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									}),
-									associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
-									dependencyMap: {associationKeys: ['test3']}
-								},
-								test3: {
-									model: sequelize.define('test3Model', {
-										name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-										description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									}),
-									dependencyMap: {associationKeys: []}
-								}
-							}
-						}
-						changeableInstance.associate()
-						changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
-						changeableInstance.mapRelations()
-						yield sequelize.sync({force: true, transaction: t})
-						yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
-						yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
-						yield instance.bulkCreate(items, {transaction: t})
-						let createdItemsData = yield instance.readList({
-							filters: {
-								id: [1, 2, 3],
-								'$test2.name$': 'test',
-								'$test2.test3.description$': 'test'
+				return sequelize.transaction().then((t) => co(function*() {
+					let items = [
+							{id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
+							{id: 2, test2Id: 1, name: 'test2Name', description: 'test2Description'},
+							{id: 3, test2Id: 1, name: 'test3Name', description: 'test3Description'}
+						],
+						test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
+						test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					changeableInstance.searchFields = [
+						{field: 'id'},
+						{field: '$test2.name$', like: '-%'},
+						{field: '$test2.test3.description$', like: '-%'}
+					]
+					changeableInstance.associationsConfig = {
+						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
+					}
+					changeableInstance.relationsConfig = {
+						test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
+					}
+					changeableInstance.db = {
+						components: {
+							testComponent2: {
+								model: sequelize.define('test2Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}),
+								associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
+								dependencyMap: {associationKeys: ['test3']}
 							},
-							orderDirection: 'asc',
-							transaction: t
-						})
-						for (const index in createdItemsData.results) {
-							let item = items[index],
-								createdItem = createdItemsData.results[index].dataValues,
-								createdTest2Item = createdItem.test2.dataValues,
-								createdTest3Item = createdTest2Item.test3.dataValues
-							for (const i in item) {
-								assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, index ${index}, expected ${item[i]}.`)
-							}
-							for (const i in test2Item) {
-								assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the main test2Item, index ${index}, expected ${test2Item[i]}.`)
-							}
-							for (const i in test3Item) {
-								assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the main test3Item, index ${index}, expected ${test3Item[i]}.`)
+							test3: {
+								model: sequelize.define('test3Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}),
+								dependencyMap: {associationKeys: []}
 							}
 						}
-						assert.strictEqual(createdItemsData.page, 1, `Bad value ${createdItemsData.page} for createdItemsData.page, expected 1.`)
-						assert.strictEqual(createdItemsData.perPage, 10, `Bad value ${createdItemsData.perPage} for createdItemsData.perPage, expected 10.`)
-						assert.strictEqual(createdItemsData.totalPages, 1, `Bad value ${createdItemsData.totalPages} for createdItemsData.totalPages, expected 1.`)
-						assert.strictEqual(createdItemsData.more, false, `Bad value ${createdItemsData.more} for createdItemsData.more, expected false.`)
-						delete changeableInstance.model
-						delete changeableInstance.db
-						t.rollback()
-					}))
-					return true
-				})
+					}
+					changeableInstance.associate()
+					changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
+					changeableInstance.mapRelations()
+					yield sequelize.sync({force: true, transaction: t})
+					yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
+					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+					yield instance.bulkCreate(items, {transaction: t})
+					let createdItemsData = yield instance.readList({
+						filters: {
+							id: [1, 2, 3],
+							'$test2.name$': 'test',
+							'$test2.test3.description$': 'test'
+						},
+						orderDirection: 'asc',
+						transaction: t
+					})
+					for (const index in createdItemsData.results) {
+						let item = items[index],
+							createdItem = createdItemsData.results[index].dataValues,
+							createdTest2Item = createdItem.test2.dataValues,
+							createdTest3Item = createdTest2Item.test3.dataValues
+						for (const i in item) {
+							assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, index ${index}, expected ${item[i]}.`)
+						}
+						for (const i in test2Item) {
+							assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the main test2Item, index ${index}, expected ${test2Item[i]}.`)
+						}
+						for (const i in test3Item) {
+							assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the main test3Item, index ${index}, expected ${test3Item[i]}.`)
+						}
+					}
+					assert.strictEqual(createdItemsData.page, 1, `Bad value ${createdItemsData.page} for createdItemsData.page, expected 1.`)
+					assert.strictEqual(createdItemsData.perPage, 10, `Bad value ${createdItemsData.perPage} for createdItemsData.perPage, expected 10.`)
+					assert.strictEqual(createdItemsData.totalPages, 1, `Bad value ${createdItemsData.totalPages} for createdItemsData.totalPages, expected 1.`)
+					assert.strictEqual(createdItemsData.more, false, `Bad value ${createdItemsData.more} for createdItemsData.more, expected false.`)
+					delete changeableInstance.model
+					delete changeableInstance.db
+					return t.rollback()
+				}))
 			})
 			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are relReadKeys', function() {
-				return co(function*() {
-					yield sequelize.transaction((t) => co(function*() {
-						let items = [
-								{id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
-								{id: 2, test2Id: 1, name: 'test2Name', description: 'test2Description'},
-								{id: 3, test2Id: 1, name: 'test3Name', description: 'test3Description'}
-							],
-							test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
-							test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						changeableInstance.searchFields = [
-							{field: 'id'},
-							{field: '$test2.name$', like: '-%'},
-							{field: '$test2.test3.description$', like: '-%'}
-						]
-						changeableInstance.associationsConfig = {
-							test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
-						}
-						changeableInstance.relationsConfig = {
-							test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
-						}
-						changeableInstance.db = {
-							components: {
-								testComponent2: {
-									model: sequelize.define('test2Model', {
-										name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-										description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									}),
-									associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
-									dependencyMap: {associationKeys: ['test3']}
-								},
-								test3: {
-									model: sequelize.define('test3Model', {
-										name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-										description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									}),
-									dependencyMap: {associationKeys: []}
-								}
-							}
-						}
-						changeableInstance.associate()
-						changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
-						changeableInstance.mapRelations()
-						yield sequelize.sync({force: true, transaction: t})
-						yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
-						yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
-						yield instance.bulkCreate(items, {transaction: t})
-						let createdItemsData = yield instance.readList({
-							filters: {
-								id: [1, 2, 3]
+				return sequelize.transaction().then((t) => co(function*() {
+					let items = [
+							{id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
+							{id: 2, test2Id: 1, name: 'test2Name', description: 'test2Description'},
+							{id: 3, test2Id: 1, name: 'test3Name', description: 'test3Description'}
+						],
+						test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
+						test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					changeableInstance.searchFields = [
+						{field: 'id'},
+						{field: '$test2.name$', like: '-%'},
+						{field: '$test2.test3.description$', like: '-%'}
+					]
+					changeableInstance.associationsConfig = {
+						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
+					}
+					changeableInstance.relationsConfig = {
+						test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
+					}
+					changeableInstance.db = {
+						components: {
+							testComponent2: {
+								model: sequelize.define('test2Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}),
+								associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
+								dependencyMap: {associationKeys: ['test3']}
 							},
-							relReadKeys: {test2: true},
-							orderDirection: 'asc',
-							transaction: t
-						})
-						for (const index in createdItemsData.results) {
-							let item = items[index],
-								createdItem = createdItemsData.results[index].dataValues,
-								createdTest2Item = createdItem.test2.dataValues,
-								createdTest3Item = createdTest2Item.test3.dataValues
-							for (const i in item) {
-								assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, index ${index}, expected ${item[i]}.`)
-							}
-							for (const i in test2Item) {
-								assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the main test2Item, index ${index}, expected ${test2Item[i]}.`)
-							}
-							for (const i in test3Item) {
-								assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the main test3Item, index ${index}, expected ${test3Item[i]}.`)
+							test3: {
+								model: sequelize.define('test3Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}),
+								dependencyMap: {associationKeys: []}
 							}
 						}
-						assert.strictEqual(createdItemsData.page, 1, `Bad value ${createdItemsData.page} for createdItemsData.page, expected 1.`)
-						assert.strictEqual(createdItemsData.perPage, 10, `Bad value ${createdItemsData.perPage} for createdItemsData.perPage, expected 10.`)
-						assert.strictEqual(createdItemsData.totalPages, 1, `Bad value ${createdItemsData.totalPages} for createdItemsData.totalPages, expected 1.`)
-						assert.strictEqual(createdItemsData.more, false, `Bad value ${createdItemsData.more} for createdItemsData.more, expected false.`)
-						delete changeableInstance.model
-						delete changeableInstance.db
-						t.rollback()
-					}))
-					return true
-				})
+					}
+					changeableInstance.associate()
+					changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
+					changeableInstance.mapRelations()
+					yield sequelize.sync({force: true, transaction: t})
+					yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
+					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+					yield instance.bulkCreate(items, {transaction: t})
+					let createdItemsData = yield instance.readList({
+						filters: {
+							id: [1, 2, 3]
+						},
+						relReadKeys: {test2: true},
+						orderDirection: 'asc',
+						transaction: t
+					})
+					for (const index in createdItemsData.results) {
+						let item = items[index],
+							createdItem = createdItemsData.results[index].dataValues,
+							createdTest2Item = createdItem.test2.dataValues,
+							createdTest3Item = createdTest2Item.test3.dataValues
+						for (const i in item) {
+							assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, index ${index}, expected ${item[i]}.`)
+						}
+						for (const i in test2Item) {
+							assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the main test2Item, index ${index}, expected ${test2Item[i]}.`)
+						}
+						for (const i in test3Item) {
+							assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the main test3Item, index ${index}, expected ${test3Item[i]}.`)
+						}
+					}
+					assert.strictEqual(createdItemsData.page, 1, `Bad value ${createdItemsData.page} for createdItemsData.page, expected 1.`)
+					assert.strictEqual(createdItemsData.perPage, 10, `Bad value ${createdItemsData.perPage} for createdItemsData.perPage, expected 10.`)
+					assert.strictEqual(createdItemsData.totalPages, 1, `Bad value ${createdItemsData.totalPages} for createdItemsData.totalPages, expected 1.`)
+					assert.strictEqual(createdItemsData.more, false, `Bad value ${createdItemsData.more} for createdItemsData.more, expected false.`)
+					delete changeableInstance.model
+					delete changeableInstance.db
+					return t.rollback()
+				}))
+				return true
 			})
 		})
 	},
@@ -1428,25 +1416,23 @@ module.exports = {
 				})
 			})
 			it('should execute successfully and update a db entry correctly if all parameters are correct', function() {
-				return co(function*() {
-					yield sequelize.transaction((t) => co(function*() {
-						let item = {name: 'testNameUpdated', description: 'testDescriptionUpdated'}
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.create({id: 3, name: 'testName', description: 'testDescription'}, {transaction: t})
-						yield instance.update({dbObject: item, where: {id: 3}, transaction: t})
-						let updatedItem = (yield instance.model.findOne({where: {id: 3}, transaction: t})).dataValues
-						for (const i in item) {
-							assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}", expected ${item[i]}.`)
-						}
-						delete changeableInstance.model
-						t.rollback()
-					}))
-					return true
-				})
+				return sequelize.transaction().then((t) => co(function*() {
+					let item = {name: 'testNameUpdated', description: 'testDescriptionUpdated'}
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.create({id: 3, name: 'testName', description: 'testDescription'}, {transaction: t})
+					yield instance.update({dbObject: item, where: {id: 3}, transaction: t})
+					let updatedItem = (yield instance.model.findOne({where: {id: 3}, transaction: t})).dataValues
+					for (const i in item) {
+						assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}", expected ${item[i]}.`)
+					}
+					delete changeableInstance.model
+					return t.rollback()
+				}))
+				return true
 			})
 		})
 	},
@@ -1471,39 +1457,36 @@ module.exports = {
 				})
 			})
 			it('should execute successfully create and update the list of db entries correctly if all parameters are correct', function() {
-				return co(function*() {
-					changeableInstance.db = {sequelize}
-					yield sequelize.transaction((t) => co(function*() {
-						let items = [
-							{id: 1, name: 'testName1Updated', description: 'testDescription1Updated'},
-							{id: 2, name: 'testName2Updated', description: 'testDescription2Updated'},
-							{name: 'testName3Created', description: 'testDescription3Created'}
-						]
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.bulkCreate([
-								{name: 'testName1', description: 'testDescription1'},
-								{name: 'testName2', description: 'testDescription2'}
-							],
-							{transaction: t}
-						)
-						yield instance.bulkUpsert(items, {transaction: t})
-						let updatedItems = yield instance.model.findAll({orderBy: [['id', 'asc']], transaction: t})
-						for (const index in updatedItems) {
-							const updatedItem = updatedItems[index].dataValues,
-								item = items[index]
-							for (const i in item) {
-								assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}" in item no. ${index}, expected ${item[i]}.`)
-							}
+				changeableInstance.db = {sequelize}
+				return sequelize.transaction().then((t) => co(function*() {
+					let items = [
+						{id: 1, name: 'testName1Updated', description: 'testDescription1Updated'},
+						{id: 2, name: 'testName2Updated', description: 'testDescription2Updated'},
+						{name: 'testName3Created', description: 'testDescription3Created'}
+					]
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.bulkCreate([
+							{name: 'testName1', description: 'testDescription1'},
+							{name: 'testName2', description: 'testDescription2'}
+						],
+						{transaction: t}
+					)
+					yield instance.bulkUpsert(items, {transaction: t})
+					let updatedItems = yield instance.model.findAll({orderBy: [['id', 'asc']], transaction: t})
+					for (const index in updatedItems) {
+						const updatedItem = updatedItems[index].dataValues,
+							item = items[index]
+						for (const i in item) {
+							assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}" in item no. ${index}, expected ${item[i]}.`)
 						}
-						delete changeableInstance.model
-						throw 'fakeError'
-					}))
-					return true
-				})
+					}
+					delete changeableInstance.model
+					return t.rollback()
+				}))
 			})
 		})
 	},
@@ -1513,182 +1496,167 @@ module.exports = {
 		let changeableInstance = this
 		describe('baseDBComponent.delete', function() {
 			it('should throw an error with the correct message if checkForRelatedModels is set to true and an item has dependent items', function() {
-				return co(function*() {
-					let didThrowAnError = false
-					yield sequelize.transaction((t) => co(function*() {
-						let item = {id: 1, name: 'test1Name', description: 'test1Description'},
-							test2Item = {id: 1, test1Id: 1, name: 'test2Name', description: 'test2Description'}
-						changeableInstance.componentName = 'test1Component'
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						changeableInstance.associationsConfig = {
-							test2: {type: 'hasMany', componentName: 'testComponent2', foreignKey: 'test1Id'}
-						}
-						changeableInstance.relationsConfig = {}
-						changeableInstance.db = {
-							components: {
-								testComponent2: {
-									model: sequelize.define('test2Model', {
-										name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-										description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									}),
-									dependencyMap: {associationKeys: []}
-								}
+				return sequelize.transaction().then((t) => co(function*() {
+					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
+						test2Item = {id: 1, test1Id: 1, name: 'test2Name', description: 'test2Description'},
+						didThrowAnError = false
+					changeableInstance.componentName = 'test1Component'
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					changeableInstance.associationsConfig = {
+						test2: {type: 'hasMany', componentName: 'testComponent2', foreignKey: 'test1Id'}
+					}
+					changeableInstance.relationsConfig = {}
+					changeableInstance.db = {
+						components: {
+							testComponent2: {
+								model: sequelize.define('test2Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}),
+								dependencyMap: {associationKeys: []}
 							}
 						}
-						changeableInstance.searchFields = [
-							{field: 'id'},
-							{field: '$test2.name$'}
-						]
-						changeableInstance.associate()
-						changeableInstance.mapRelations()
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.create(item, {transaction: t})
-						yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
-						try {
-							yield instance.delete({id: 1, additionalFilters: {'$test2.name$': 'test2Name'}, checkForRelatedModels: true, transaction: t})
-						} catch(e) {
-							if (e && (e.customMessage === 'Cannot delete a "test1Component" item that has related "test2" items in the database.')) {
-								didThrowAnError = true
-							} else {
-								throw e
-							}
+					}
+					changeableInstance.searchFields = [
+						{field: 'id'},
+						{field: '$test2.name$'}
+					]
+					changeableInstance.associate()
+					changeableInstance.mapRelations()
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.create(item, {transaction: t})
+					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+					try {
+						yield instance.delete({id: 1, additionalFilters: {'$test2.name$': 'test2Name'}, checkForRelatedModels: true, transaction: t})
+					} catch(e) {
+						if (e && (e.customMessage === 'Cannot delete a "test1Component" item that has related "test2" items in the database.')) {
+							didThrowAnError = true
+						} else {
+							throw e
 						}
-						t.rollback()
-					}))
+					}
 					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-					return true
-				})
+					return t.rollback()
+				}))
 			})
 			it('should throw an error with the correct message if checkForRelatedModels is set to true and the item is system-critical', function() {
-				return co(function*() {
-					let didThrowAnError = false
-					yield sequelize.transaction((t) => co(function*() {
-						let item = {id: 1, name: 'test1Name', description: 'test1Description'},
-							test2Item = {id: 1, test1Id: 1, name: 'test2Name', description: 'test2Description'}
-						changeableInstance.systemCriticalIds = [1]
-						changeableInstance.componentName = 'test1Component'
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						changeableInstance.associationsConfig = {
-							test2: {type: 'hasMany', componentName: 'testComponent2', foreignKey: 'test1Id'}
-						}
-						changeableInstance.relationsConfig = {}
-						changeableInstance.db = {
-							components: {
-								testComponent2: {
-									model: sequelize.define('test2Model', {
-										name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-										description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									}),
-									dependencyMap: {associationKeys: []}
-								}
+				return sequelize.transaction().then((t) => co(function*() {
+					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
+						test2Item = {id: 1, test1Id: 1, name: 'test2Name', description: 'test2Description'},
+						didThrowAnError = false
+					changeableInstance.systemCriticalIds = [1]
+					changeableInstance.componentName = 'test1Component'
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					changeableInstance.associationsConfig = {
+						test2: {type: 'hasMany', componentName: 'testComponent2', foreignKey: 'test1Id'}
+					}
+					changeableInstance.relationsConfig = {}
+					changeableInstance.db = {
+						components: {
+							testComponent2: {
+								model: sequelize.define('test2Model', {
+									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}),
+								dependencyMap: {associationKeys: []}
 							}
 						}
-						changeableInstance.associate()
-						changeableInstance.mapRelations()
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.create(item, {transaction: t})
-						yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
-						try {
-							yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})
-						} catch(e) {
-							if (e && (e.customMessage === 'Cannot delete the "test1Component" item with id 1 - it is system-critical.')) {
-								didThrowAnError = true
-							} else {
-								throw e
-							}
+					}
+					changeableInstance.associate()
+					changeableInstance.mapRelations()
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.create(item, {transaction: t})
+					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+					try {
+						yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})
+					} catch(e) {
+						if (e && (e.customMessage === 'Cannot delete the "test1Component" item with id 1 - it is system-critical.')) {
+							didThrowAnError = true
+						} else {
+							throw e
 						}
-						t.rollback()
-					}))
+					}
 					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-					return true
-				})
+					return t.rollback()
+				}))
 			})
 			it('should throw an error with the correct message if checkForRelatedModels is not set to true and the item is system-critical', function() {
-				return co(function*() {
-					let didThrowAnError = false
-					yield sequelize.transaction((t) => co(function*() {
-						let item = {id: 1, name: 'test1Name', description: 'test1Description'}
-						changeableInstance.systemCriticalIds = [1]
-						changeableInstance.componentName = 'test1Component'
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.create(item, {transaction: t})
-						try {
-							yield instance.delete({id: 1, transaction: t})
-						} catch(e) {
-							if (e && (e.customMessage === 'Cannot delete the "test1Component" item with id 1 - it is system-critical.')) {
-								didThrowAnError = true
-							} else {
-								throw e
-							}
+				return sequelize.transaction().then((t) => co(function*() {
+					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
+						didThrowAnError = false
+					changeableInstance.systemCriticalIds = [1]
+					changeableInstance.componentName = 'test1Component'
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.create(item, {transaction: t})
+					try {
+						yield instance.delete({id: 1, transaction: t})
+					} catch(e) {
+						if (e && (e.customMessage === 'Cannot delete the "test1Component" item with id 1 - it is system-critical.')) {
+							didThrowAnError = true
+						} else {
+							throw e
 						}
-						t.rollback()
-					}))
+					}
 					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-					return true
-				})
+					return t.rollback()
+				}))
 			})
 			it('should execute successfully delete a db entry correctly if all parameters are correct and no additionalFilters are provided', function() {
-				return co(function*() {
-					let deletedCount = 0
-					yield sequelize.transaction((t) => co(function*() {
-						let item = {id: 1, name: 'test1Name', description: 'test1Description'}
-						delete changeableInstance.systemCriticalIds
-						changeableInstance.componentName = 'test1Component'
-						changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						})
-						changeableInstance.associationsConfig = {}
-						changeableInstance.relationsConfig = {}
-						changeableInstance.db = {components: {}}
-						changeableInstance.associate()
-						changeableInstance.mapRelations()
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.create(item, {transaction: t})
-						deletedCount = (yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})).deleted
-						t.rollback()
-					}))
+				return sequelize.transaction().then((t) => co(function*() {
+					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
+						deletedCount = 0
+					delete changeableInstance.systemCriticalIds
+					changeableInstance.componentName = 'test1Component'
+					changeableInstance.model = sequelize.define('test1Model', {
+						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+					})
+					changeableInstance.associationsConfig = {}
+					changeableInstance.relationsConfig = {}
+					changeableInstance.db = {components: {}}
+					changeableInstance.associate()
+					changeableInstance.mapRelations()
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.create(item, {transaction: t})
+					deletedCount = (yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})).deleted
 					assert.strictEqual(deletedCount, 1, `bad value ${deletedCount} for deletedCount, expected 1`)
-					return true
-				})
+					return t.rollback()
+				}))
 			})
 			it('should execute successfully delete a db entry correctly if all parameters are correct and additionalFilters are provided', function() {
-				return co(function*() {
-					let deletedCount = 0
-					yield sequelize.transaction((t) => co(function*() {
-						let item = {id: 1, name: 'test1Name', description: 'test1Description'}
-						delete changeableInstance.systemCriticalIds
-						changeableInstance.componentName = 'test1Component'
-						changeableInstance.model = sequelize.define('test1Model', {
-								name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							}, {
-								paranoid: true
-							}
-						)
-						changeableInstance.associationsConfig = {}
-						changeableInstance.relationsConfig = {}
-						changeableInstance.db = {components: {}}
-						changeableInstance.associate()
-						changeableInstance.mapRelations()
-						yield sequelize.sync({force: true, transaction: t})
-						yield instance.create(item, {transaction: t})
-						deletedCount = (yield instance.delete({id: 1, additionalFilters: {id: 15, deletedAt: null}, checkForRelatedModels: true, transaction: t})).deleted
-						t.rollback()
-					}))
+				return sequelize.transaction().then((t) => co(function*() {
+					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
+						deletedCount = 0
+					delete changeableInstance.systemCriticalIds
+					changeableInstance.componentName = 'test1Component'
+					changeableInstance.model = sequelize.define('test1Model', {
+							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						}, {
+							paranoid: true
+						}
+					)
+					changeableInstance.associationsConfig = {}
+					changeableInstance.relationsConfig = {}
+					changeableInstance.db = {components: {}}
+					changeableInstance.associate()
+					changeableInstance.mapRelations()
+					yield sequelize.sync({force: true, transaction: t})
+					yield instance.create(item, {transaction: t})
+					deletedCount = (yield instance.delete({id: 1, additionalFilters: {id: 15, deletedAt: null}, checkForRelatedModels: true, transaction: t})).deleted
 					assert.strictEqual(deletedCount, 1, `bad value ${deletedCount} for deletedCount, expected 1`)
-					return true
-				})
+					return t.rollback()
+				}))
 			})
 		})
 	}

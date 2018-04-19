@@ -287,8 +287,8 @@ module.exports = {
 				for (const componentName in components) {
 					const component = components[componentName]
 					assert(component.db, `expected component.db to exist, got ${component.db}`)
-					const typeOf = component.db.components[componentName]
-					assert.strictEqual(typeOf, undefined, `bad value ${typeOf} for typeof component.db.components[componentName], expected unefined`)
+					const typeOf = typeof component.db.components[componentName]
+					assert.strictEqual(typeOf, 'undefined', `bad value ${typeOf} for typeof component.db.components[componentName], expected unefined`)
 				}
 			})
 			it('should have loaded the fieldCaseMap successfully, if a valid one was present in the module directory', function() {

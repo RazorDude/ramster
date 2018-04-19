@@ -127,7 +127,7 @@ class APIModule extends BaseServerModule {
 				let component = components[i]
 				component.routes.forEach((routeData, index) => {
 					if (moduleConfig.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
-						instance.router[routeData.method](routeData.path, instance.tokenManager.validate(), wrap(component[routeData.func](routeData.options || {})))
+						instance.router[routeData.method](routeData.path, wrap(instance.tokenManager.validate()), wrap(component[routeData.func](routeData.options || {})))
 						return
 					}
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))

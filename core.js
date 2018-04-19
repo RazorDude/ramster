@@ -1,7 +1,7 @@
 'use strict'
 /**
  * The core module. Contains the Core class.
- * @module core
+ * @module coreModule
  */
 
 // external dependencies

@@ -83,39 +83,30 @@ module.exports = {
 		describe('base-server.component', function() {
 			it('should execute testDecodeQueryValues successfully', function() {
 				instance.testDecodeQueryValues()
-				assert(true)
 			})
 			it('should execute testSetRoutes successfully', function() {
 				instance.testSetRoutes()
-				assert(true)
 			})
 			it('should execute testAccessFilter successfully', function() {
 				instance.testAccessFilter(req, res, next)
-				assert(true)
 			})
 			it('should execute testCreate successfully', function() {
 				instance.testCreate(req, res, next)
-				assert(true)
 			})
 			it('should execute testRead successfully', function() {
 				instance.testRead(req, res, next)
-				assert(true)
 			})
 			it('should execute testReadList successfully', function() {
 				instance.testReadList(req, res, next)
-				assert(true)
 			})
 			it('should execute testReadSelectList successfully', function() {
 				instance.testReadSelectList(req, res, next)
-				assert(true)
 			})
 			it('should execute testBulkUpsert successfully', function() {
 				instance.testBulkUpsert(req, res, next)
-				assert(true)
 			})
 			it('should execute testDelete successfully', function() {
 				instance.testDelete(req, res, next)
-				assert(true)
 			})
 		})
 	},
@@ -124,55 +115,47 @@ module.exports = {
 		let {components} = this
 		describe('base-server.component.decodeQueryValues', function() {
 			it('should execute successfully and return null if the provided object is undefined', function() {
-				assert(instance.decodeQueryValues() === null)
+				let result = instance.decodeQueryValues()
+				assert.strictEqual(result, null, `bad value ${result} for result, expected null`)
 			})
 			it('should execute successfully and return the provided item as-is, if it is null', function() {
-				assert(instance.decodeQueryValues(null) === null)
+				let result = instance.decodeQueryValues(null)
+				assert.strictEqual(result, null, `bad value ${result} for result, expected null`)
 			})
 			it('should execute successfully and return the provided item as-is, if it is a string', function() {
-				assert(instance.decodeQueryValues('test') === 'test')
+				let result = instance.decodeQueryValues('test')
+				assert.strictEqual(result, 'test', `bad value ${result} for result, expected test`)
 			})
 			it('should execute successfully and return the provided item as-is, if it is a number', function() {
-				assert(instance.decodeQueryValues(12) === 12)
+				let result = instance.decodeQueryValues(12)
+				assert.strictEqual(result, 12, `bad value ${result} for result, expected 12`)
 			})
 			it('should execute successfully and return the provided item as-is, if it is a boolean', function() {
-				assert(instance.decodeQueryValues(true) === true)
+				let result = instance.decodeQueryValues(true)
+				assert.strictEqual(result, true, `bad value ${result} for result, expected true`)
 			})
 			it('should execute successfully and return the decoded object', function() {
 				let decodedObject = instance.decodeQueryValues({
-					justAKey: 'testValue',
-					[encodeURIComponent('AKey&ASpecialValue%')]: {
-						12: true,
-						a: encodeURIComponent('some%test&123=6059testValue'),
-						b: [1, 2, 3, 4, encodeURIComponent('Te&s=%t')]
-					}
-				})
-				// console.log(
-				// 	decodedObject.justAKey === 'testValue',
-				// 	typeof decodedObject['AKey&ASpecialValue%'] === 'object',
-				// 	!(decodedObject['AKey&ASpecialValue%'] instanceof Array),
-				// 	decodedObject['AKey&ASpecialValue%']['12'] === true,
-				// 	decodedObject['AKey&ASpecialValue%'].a === 'some%test&123=6059testValue',
-				// 	decodedObject['AKey&ASpecialValue%'].b instanceof Array,
-				// 	decodedObject['AKey&ASpecialValue%'].b[0] === 1,
-				// 	decodedObject['AKey&ASpecialValue%'].b[1] === 2,
-				// 	decodedObject['AKey&ASpecialValue%'].b[2] === 3,
-				// 	decodedObject['AKey&ASpecialValue%'].b[3] === 4,
-				// 	decodedObject['AKey&ASpecialValue%'].b[4] === 'Te&s=%t'
-				// )
-				assert(
-					(decodedObject.justAKey === 'testValue') &&
-					(typeof decodedObject['AKey&ASpecialValue%'] === 'object') &&
-					!(decodedObject['AKey&ASpecialValue%'] instanceof Array) &&
-					(decodedObject['AKey&ASpecialValue%']['12'] === true) &&
-					(decodedObject['AKey&ASpecialValue%'].a === 'some%test&123=6059testValue') &&
-					(decodedObject['AKey&ASpecialValue%'].b instanceof Array) &&
-					(decodedObject['AKey&ASpecialValue%'].b[0] === 1) &&
-					(decodedObject['AKey&ASpecialValue%'].b[1] === 2) &&
-					(decodedObject['AKey&ASpecialValue%'].b[2] === 3) &&
-					(decodedObject['AKey&ASpecialValue%'].b[3] === 4) &&
-					(decodedObject['AKey&ASpecialValue%'].b[4] === 'Te&s=%t')
-				)
+						justAKey: 'testValue',
+						[encodeURIComponent('AKey&ASpecialValue%')]: {
+							12: true,
+							a: encodeURIComponent('some%test&123=6059testValue'),
+							b: [1, 2, 3, 4, encodeURIComponent('Te&s=%t')]
+						}
+					}),
+					innerObject = decodedObject['AKey&ASpecialValue%'],
+					innerObjectB = innerObject.b,
+					innerObjectBValuesShouldBe = [1, 2, 3, 4, 'Te&s=%t']
+				assert.strictEqual(decodedObject.justAKey, 'testValue', `bad value ${decodedObject.justAKey} for decodedObject.justAKey, expected testValue`)
+				assert.strictEqual(typeof innerObject, 'object', `bad value ${typeof innerObject} for typeof innerObject, expected object`)
+				assert.strictEqual(innerObject instanceof Array, false, `bad value ${innerObject instanceof Array} for innerObject instanceof Array, expected false`)
+				assert.strictEqual(innerObject.a, 'some%test&123=6059testValue', `bad value ${innerObject.a} for innerObject.a, expected some%test&123=6059testValue`)
+				assert.strictEqual(innerObjectB instanceof Array, true, `bad value ${innerObjectB instanceof Array} for innerObjectB instanceof Array, expected true`)
+				for (const i in innerObjectB) {
+					const isValue = innerObjectB[i],
+						sbValue = innerObjectBValuesShouldBe[i]
+					assert.strictEqual(isValue, sbValue, `bad value ${isValue} for innerObjectB[${i}], expected ${sbValue}`)
+				}
 			})
 		})
 	},
@@ -183,7 +166,9 @@ module.exports = {
 			it('should execute successfully and set this.routes to an empty array if no routes are provided', function() {
 				delete changeableInstance.routes
 				instance.setRoutes({})
-				assert((instance.routes instanceof Array) && !instance.routes.length)
+				let isArray = instance.routes instanceof Array
+				assert.strictEqual(isArray, true, `bad value ${isArray} for isArray, expected true`)
+				assert.strictEqual(instance.routes.length, 0, `bad value ${instance.routes.length} for instance.routes.length, expected 0`)
 			})
 			it('should throw an error with the correct message if a route method is not valid', function() {
 				delete changeableInstance.routes
@@ -194,9 +179,13 @@ module.exports = {
 				try {
 					instance.setRoutes({routes})
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid HTTP method "getty" for route "/test0" in component "users".')
+					if (e && (e.customMessage === 'Invalid HTTP method "getty" for route "/test0" in component "users".')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert.strictEqual(didThrowAnError, true, 'no error thrown')
 			})
 			it('should throw an error with the correct message if a route func does not exist in the component', function() {
 				delete changeableInstance.routes
@@ -207,9 +196,13 @@ module.exports = {
 				try {
 					instance.setRoutes({routes})
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Method "func0" (GET route to "/test0") does not exist in component "users".')
+					if (e && (e.customMessage === 'Method "func0" (GET route to "/test0") does not exist in component "users".')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert.strictEqual(didThrowAnError, true, 'no error thrown')
 			})
 			it('should throw an error with the correct message if an additionalDefaultRoute method is invalid', function() {
 				delete changeableInstance.routes
@@ -222,9 +215,13 @@ module.exports = {
 						}
 					})
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Invalid HTTP method "posty" for route "/additionalDefaultRoute1" in component "users".')
+					if (e && (e.customMessage === 'Invalid HTTP method "posty" for route "/additionalDefaultRoute1" in component "users".')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert.strictEqual(didThrowAnError, true, 'no error thrown')
 			})
 			it('should throw an error with the correct message if an additionalDefaultRoute func does not exist in the component', function() {
 				delete changeableInstance.routes
@@ -237,9 +234,13 @@ module.exports = {
 						}
 					})
 				} catch(e) {
-					didThrowAnError = e && (e.customMessage === 'Method "additionalDefaultRouteFunc1" (POST route to "/additionalDefaultRoute1") does not exist in component "users".')
+					if (e && (e.customMessage === 'Method "additionalDefaultRouteFunc1" (POST route to "/additionalDefaultRoute1") does not exist in component "users".')) {
+						didThrowAnError = true
+					} else {
+						throw e
+					}
 				}
-				assert(didThrowAnError)
+				assert.strictEqual(didThrowAnError, true, 'no error thrown')
 			})
 			it('should execute successfully and set the routes as provided if no other options are passed, all parameters are correct and appendComponentNameToRoutes is not set', function() {
 				delete changeableInstance.routes
@@ -249,26 +250,24 @@ module.exports = {
 				changeableInstance.func3 = () => {}
 				changeableInstance.func4 = () => {}
 				let routes = [
-						{method: 'get', path: '/test0', func: 'func0'},
-						{method: 'post', path: '/test1', func: 'func1'},
-						{method: 'put', path: '/test2', func: 'func2'},
-						{method: 'patch', path: '/test3', func: 'func3'},
-						{method: 'delete', path: '/test4', func: 'func4'}
-					],
-					dataIsGood = true
+					{method: 'get', path: '/test0', func: 'func0'},
+					{method: 'post', path: '/test1', func: 'func1'},
+					{method: 'put', path: '/test2', func: 'func2'},
+					{method: 'patch', path: '/test3', func: 'func3'},
+					{method: 'delete', path: '/test4', func: 'func4'}
+				]
 				instance.setRoutes({routes})
 				for (const i in routes) {
 					const processedRoute = instance.routes[i],
 						route = routes[i]
 					for (const key in route) {
-						if (route[key] !== processedRoute[key]) {
-							console.log(`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}" (index ${i}), component "users"`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(
+							processedRoute[key],
+							route[key],
+							`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}", index ${i}, component "users", expected ${route[key]}`
+						)
 					}
 				}
-				assert(dataIsGood)
 			})
 			it('should execute successfully, set the provided routes and the specified default routes, if all paramteres are correct and appendComponentNameToRoutes is not set', function() {
 				delete changeableInstance.routes
@@ -297,7 +296,6 @@ module.exports = {
 						{method: 'post', path: '/users/additionalDefaultRoute1', func: 'additionalDefaultRouteFunc1'},
 						{method: 'patch', path: '/users/additionalDefaultRoute2', func: 'additionalDefaultRouteFunc2'}
 					]
-					dataIsGood = true
 				instance.setRoutes({
 					addDefaultRoutes: [
 						'create',
@@ -322,47 +320,36 @@ module.exports = {
 					const processedRoute = instance.routes[i],
 						route = routes[i]
 					for (const key in route) {
-						if (route[key] !== processedRoute[key]) {
-							console.log(`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}" (index ${i}), component "users".`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(
+							processedRoute[key],
+							route[key],
+							`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}", index ${i}, component "users", expected ${route[key]}`
+						)
 					}
 				}
-				if (dataIsGood) {
-					let length = instance.routes.length
-					for (let i = 5; i < length; i++) {
-						const processedRoute = instance.routes[i],
-							route = defaultRoutesShouldBe[i - 5]
-						for (const key in route) {
-							if (route[key] !== processedRoute[key]) {
-								console.log(`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}" (index ${i}), component "users".`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
-						}
-					}
-					if (dataIsGood) {
-						for (const i in instance.addedDefaultRoutes) {
-							const processedRoute = instance.addedDefaultRoutes[i],
-								route = defaultRoutesShouldBe[i]
-							for (const key in route) {
-								if (route[key] !== processedRoute[key]) {
-									console.log(`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}" (index ${i}), component "users".`)
-									dataIsGood = false
-									break
-								}
-							}
-							if (!dataIsGood) {
-								break
-							}
-						}
+				let length = instance.routes.length
+				for (let i = 5; i < length; i++) {
+					const processedRoute = instance.routes[i],
+						route = defaultRoutesShouldBe[i - 5]
+					for (const key in route) {
+						assert.strictEqual(
+							processedRoute[key],
+							route[key],
+							`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}", index ${i}, component "users", expected ${route[key]}`
+						)
 					}
 				}
-				assert(dataIsGood)
+				for (const i in instance.addedDefaultRoutes) {
+					const processedRoute = instance.addedDefaultRoutes[i],
+						route = defaultRoutesShouldBe[i]
+					for (const key in route) {
+						assert.strictEqual(
+							processedRoute[key],
+							route[key],
+							`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}", index ${i}, component "users", expected ${route[key]}`
+						)
+					}
+				}
 			})
 			it('should execute successfully, set the provided routes and the specified default routes, if all paramteres are correct and appendComponentNameToRoutes is set to true', function() {
 				delete changeableInstance.routes
@@ -391,7 +378,6 @@ module.exports = {
 						{method: 'post', path: '/users/additionalDefaultRoute1', func: 'additionalDefaultRouteFunc1'},
 						{method: 'patch', path: '/users/additionalDefaultRoute2', func: 'additionalDefaultRouteFunc2'}
 					]
-					dataIsGood = true
 				instance.setRoutes({
 					addDefaultRoutes: [
 						'create',
@@ -418,41 +404,36 @@ module.exports = {
 						route = routes[i]
 					route.path = `/users${route.path}`
 					for (const key in route) {
-						if (route[key] !== processedRoute[key]) {
-							console.log(`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}" (index ${i}), component "users".`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(
+							processedRoute[key],
+							route[key],
+							`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}", index ${i}, component "users", expected ${route[key]}`
+						)
 					}
 				}
-				if (dataIsGood) {
-					let length = instance.routes.length
-					for (let i = 5; i < length; i++) {
-						const processedRoute = instance.routes[i],
-							route = defaultRoutesShouldBe[i - 5]
-						for (const key in route) {
-							if (route[key] !== processedRoute[key]) {
-								console.log(`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}" (index ${i}), component "users".`)
-								dataIsGood = false
-								break
-							}
-						}
-					}
-					if (dataIsGood) {
-						for (const i in instance.addedDefaultRoutes) {
-							const processedRoute = instance.addedDefaultRoutes[i],
-								route = defaultRoutesShouldBe[i]
-							for (const key in route) {
-								if (route[key] !== processedRoute[key]) {
-									console.log(`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}" (index ${i}), component "users".`)
-									dataIsGood = false
-									break
-								}
-							}
-						}
+				let length = instance.routes.length
+				for (let i = 5; i < length; i++) {
+					const processedRoute = instance.routes[i],
+						route = defaultRoutesShouldBe[i - 5]
+					for (const key in route) {
+						assert.strictEqual(
+							processedRoute[key],
+							route[key],
+							`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}", index ${i}, component "users", expected ${route[key]}`
+						)
 					}
 				}
-				assert(dataIsGood)
+				for (const i in instance.addedDefaultRoutes) {
+					const processedRoute = instance.addedDefaultRoutes[i],
+						route = defaultRoutesShouldBe[i]
+					for (const key in route) {
+						assert.strictEqual(
+							processedRoute[key],
+							route[key],
+							`Bad value "${processedRoute[key]}" for key "${key}" in route path "${route.path}", index ${i}, component "users", expected ${route[key]}`
+						)
+					}
+				}
 			})
 		})
 	},
@@ -466,10 +447,8 @@ module.exports = {
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter())(req, res, next.bind(next, resolve))
 					}))
-					assert(
-						(req.locals.error.status === 401) &&
-						(req.locals.error.customMessage === 'Unauthorized.')
-					)
+					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
 					return true
 				})
 			})
@@ -479,10 +458,8 @@ module.exports = {
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter())(req, res, next.bind(next, resolve))
 					}))
-					assert(
-						(req.locals.error.status === 401) &&
-						(req.locals.error.customMessage === 'Unauthorized.')
-					)
+					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
 					return true
 				})
 			})
@@ -492,10 +469,8 @@ module.exports = {
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter())(req, res, next.bind(next, resolve))
 					}))
-					assert(
-						(req.locals.error.status === 401) &&
-						(req.locals.error.customMessage === 'Unauthorized.')
-					)
+					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
 					return true
 				})
 			})
@@ -505,10 +480,8 @@ module.exports = {
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [2], next: () => {}}))(req, res, next.bind(next, resolve))
 					}))
-					assert(
-						(req.locals.error.status === 401) &&
-						(req.locals.error.customMessage === 'Unauthorized.')
-					)
+					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
 					return true
 				})
 			})
@@ -518,10 +491,8 @@ module.exports = {
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: () => {}, requireAllAPs: true}))(req, res, next.bind(next, resolve))
 					}))
-					assert(
-						(req.locals.error.status === 401) &&
-						(req.locals.error.customMessage === 'Unauthorized.')
-					)
+					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
 					return true
 				})
 			})
@@ -531,7 +502,7 @@ module.exports = {
 					let result = yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
 					}))
-					assert(result.success === true)
+					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
 					return true
 				})
 			})
@@ -541,7 +512,7 @@ module.exports = {
 					let result = yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: function*(){resolve({success: true})}, requireAllAPs: true}))(req, res, next.bind(next, resolve))
 					}))
-					assert(result.success === true)
+					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
 					return true
 				})
 			})
@@ -573,20 +544,14 @@ module.exports = {
 						throw req.locals.error
 					}
 					let result = res.response.jsonBody.result.dataValues,
-						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
-						dataIsGood = true
+						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true}
 					for (const key in item) {
-						if (result[key] !== item[key]) {
-							console.log(`Bad value '${result[key]}' for field "${key}".`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(result[key], item[key], `Bad value ${result[key]} for field "${key}", expected ${item[key]}.`)
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
-			it('should clean up users and userTypes after it finishes testing', function() {
+			after(function() {
 				return co(function*() {
 					yield db.sequelize.query(`
 						delete from "userTypes";
@@ -594,7 +559,6 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					assert(true)
 					return true
 				})
 			})
@@ -620,20 +584,14 @@ module.exports = {
 						throw req.locals.error
 					}
 					let result = res.response.jsonBody.result,
-						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
-						dataIsGood = true
+						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true}
 					for (const key in item) {
-						if (result[key] !== item[key]) {
-							console.log(`Bad value '${result[key]}' for field "${key}".`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(result[key], item[key], `Bad value ${result[key]} for field "${key}", expected ${item[key]}.`)
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
-			it('should clean up users and userTypes after it finishes testing', function() {
+			after(function() {
 				return co(function*() {
 					yield db.sequelize.query(`
 						delete from "userTypes";
@@ -641,7 +599,6 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					assert(true)
 					return true
 				})
 			})
@@ -668,27 +625,19 @@ module.exports = {
 					}
 					let returnedData = res.response.jsonBody,
 						result = returnedData.results[0],
-						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
-						dataIsGood = true
+						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true}
 					for (const key in item) {
-						if (result[key] !== item[key]) {
-							console.log(`Bad value '${result[key]}' for field "${key}".`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(result[key], item[key], `Bad value ${result[key]} for field "${key}", expected ${item[key]}.`)
 					}
-					assert(
-						dataIsGood &&
-						(returnedData.results.length === 1) &&
-						(returnedData.page === 1) &&
-						(returnedData.perPage === 10) &&
-						(returnedData.totalPages === 1) &&
-						(returnedData.more === false)
-					)
+					assert.strictEqual(returnedData.results.length, 1, `Bad value ${returnedData.results.length} for returnedData.results.length, expected 1.`)
+					assert.strictEqual(returnedData.page, 1, `Bad value ${returnedData.page} for returnedData.page, expected 1.`)
+					assert.strictEqual(returnedData.perPage, 10, `Bad value ${returnedData.perPage} for returnedData.perPage, expected 10.`)
+					assert.strictEqual(returnedData.totalPages, 1, `Bad value ${returnedData.totalPages} for returnedData.totalPages, expected 1.`)
+					assert.strictEqual(returnedData.more, false, `Bad value ${returnedData.more} for returnedData.more, expected false.`)
 					return true
 				})
 			})
-			it('should clean up users and userTypes after it finishes testing', function() {
+			after(function() {
 				return co(function*() {
 					yield db.sequelize.query(`
 						delete from "userTypes";
@@ -696,7 +645,6 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					assert(true)
 					return true
 				})
 			})
@@ -730,23 +678,14 @@ module.exports = {
 							{value: 2, text: 'fn1'},
 							{value: 3, text: 'fn2'},
 							{value: 4, text: 'fn3'}
-						],
-						dataIsGood = true
+						]
 					for (const i in resultsShouldBe) {
 						const sbItem = resultsShouldBe[i],
 							item = results[i]
 						for (const key in sbItem) {
-							if (sbItem[key] !== item[key]) {
-								console.log(`Bad value '${item[key]}' for field "${key}" in item index ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(item[key], sbItem[key], `Bad value ${item[key]} for field "${key}", expected ${sbItem[key]}.`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -766,23 +705,14 @@ module.exports = {
 							{value: 2, text: 'prefixfn1suffix'},
 							{value: 3, text: 'prefixfn2suffix'},
 							{value: 4, text: 'prefixfn3suffix'}
-						],
-						dataIsGood = true
+						]
 					for (const i in resultsShouldBe) {
 						const sbItem = resultsShouldBe[i],
 							item = results[i]
 						for (const key in sbItem) {
-							if (sbItem[key] !== item[key]) {
-								console.log(`Bad value '${item[key]}' for field "${key}" in item index ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(item[key], sbItem[key], `Bad value ${item[key]} for field "${key}", expected ${sbItem[key]}.`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -802,23 +732,14 @@ module.exports = {
 							{value: 2, text: 'prefixfn1 ln1 suffix'},
 							{value: 3, text: 'prefixfn2 ln2 suffix'},
 							{value: 4, text: 'prefixfn3 ln3 suffix'}
-						],
-						dataIsGood = true
+						]
 					for (const i in resultsShouldBe) {
 						const sbItem = resultsShouldBe[i],
 							item = results[i]
 						for (const key in sbItem) {
-							if (sbItem[key] !== item[key]) {
-								console.log(`Bad value '${item[key]}' for field "${key}" in item index ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(item[key], sbItem[key], `Bad value ${item[key]} for field "${key}", expected ${sbItem[key]}.`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -838,23 +759,14 @@ module.exports = {
 							{value: 2, text: 'prefixfn1 ln1 suffix'},
 							{value: 3, text: 'prefixfn2 ln2 suffix'},
 							{value: 4, text: 'prefixfn3 ln3 suffix'}
-						],
-						dataIsGood = true
+						]
 					for (const i in resultsShouldBe) {
 						const sbItem = resultsShouldBe[i],
 							item = results[i]
 						for (const key in sbItem) {
-							if (sbItem[key] !== item[key]) {
-								console.log(`Bad value '${item[key]}' for field "${key}" in item index ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(item[key], sbItem[key], `Bad value ${item[key]} for field "${key}", expected ${sbItem[key]}.`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -874,23 +786,14 @@ module.exports = {
 							{value: 2, text: 'prefixfn1 ln1 suffix'},
 							{value: 3, text: 'prefixfn2 ln2 suffix'},
 							{value: 4, text: 'prefixfn3 ln3 suffix'}
-						],
-						dataIsGood = true
+						]
 					for (const i in resultsShouldBe) {
 						const sbItem = resultsShouldBe[i],
 							item = results[i]
 						for (const key in sbItem) {
-							if (sbItem[key] !== item[key]) {
-								console.log(`Bad value '${item[key]}' for field "${key}" in item index ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(item[key], sbItem[key], `Bad value ${item[key]} for field "${key}", expected ${sbItem[key]}.`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -910,23 +813,14 @@ module.exports = {
 							{value: 4, text: 'prefixfn3 ln3 suffix'},
 							{value: 3, text: 'prefixfn2 ln2 suffix'},
 							{value: 2, text: 'prefixfn1 ln1 suffix'}
-						],
-						dataIsGood = true
+						]
 					for (const i in resultsShouldBe) {
 						const sbItem = resultsShouldBe[i],
 							item = results[i]
 						for (const key in sbItem) {
-							if (sbItem[key] !== item[key]) {
-								console.log(`Bad value '${item[key]}' for field "${key}" in item index ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(item[key], sbItem[key], `Bad value ${item[key]} for field "${key}", expected ${sbItem[key]}.`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -946,23 +840,14 @@ module.exports = {
 							{value: 2, text: 'prefixfn1, ln1, suffix'},
 							{value: 3, text: 'prefixfn2, ln2, suffix'},
 							{value: 4, text: 'prefixfn3, ln3, suffix'}
-						],
-						dataIsGood = true
+						]
 					for (const i in resultsShouldBe) {
 						const sbItem = resultsShouldBe[i],
 							item = results[i]
 						for (const key in sbItem) {
-							if (sbItem[key] !== item[key]) {
-								console.log(`Bad value '${item[key]}' for field "${key}" in item index ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(item[key], sbItem[key], `Bad value ${item[key]} for field "${key}", expected ${sbItem[key]}.`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -982,27 +867,18 @@ module.exports = {
 							{value: 2, text: 'prefix Yes, ln1, suffix'},
 							{value: 3, text: 'prefix Yes, ln2, suffix'},
 							{value: 4, text: 'prefix Yes, ln3, suffix'}
-						],
-						dataIsGood = true
+						]
 					for (const i in resultsShouldBe) {
 						const sbItem = resultsShouldBe[i],
 							item = results[i]
 						for (const key in sbItem) {
-							if (sbItem[key] !== item[key]) {
-								console.log(`Bad value '${item[key]}' for field "${key}" in item index ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(item[key], sbItem[key], `Bad value ${item[key]} for field "${key}", expected ${sbItem[key]}.`)
 						}
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
-			it('should clean up users and userTypes after it finishes testing', function() {
+			after(function() {
 				return co(function*() {
 					yield db.sequelize.query(`
 						delete from "userTypes";
@@ -1010,7 +886,6 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					assert(true)
 					return true
 				})
 			})
@@ -1042,16 +917,12 @@ module.exports = {
 					}
 					let result = res.response.jsonBody,
 						resultItem = result[1][0],
-						item = {id: 2, typeId: 2, firstName: 'updatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', status: false},
-						dataIsGood = true
+						item = {id: 2, typeId: 2, firstName: 'updatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', status: false}
 					for (const key in item) {
-						if (resultItem[key] !== item[key]) {
-							console.log(`Bad value '${resultItem[key]}' for field "${key}".`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(resultItem[key], item[key], `Bad value ${resultItem[key]} for field "${key}", expected ${item[key]}.`)
 					}
-					assert(dataIsGood && (result.length === 2) && (result[1].length === 1))
+					assert.strictEqual(result.length, 2, `Bad value ${result.length} for result.length, expected 2.`)
+					assert.strictEqual(result[1].length, 1, `Bad value ${result[1].length} for result[1].length, expected 1.`)
 					return true
 				})
 			})
@@ -1075,27 +946,19 @@ module.exports = {
 						items = [
 							{id: 2, typeId: 2, firstName: 'properlyUpdatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
 							{id: 3, typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', status: true}
-						],
-						dataIsGood = true
+						]
 					for (const i in items) {
 						const item = items[i],
 							resultItem = resultItems[i].dataValues
 						for (const key in item) {
-							if (resultItem[key] !== item[key]) {
-								console.log(`Bad value '${resultItem[key]}' for field "${key}" in item no. ${i}.`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (!dataIsGood) {
-							break
+							assert.strictEqual(resultItem[key], item[key], `Bad value ${resultItem[key]} for field "${key}" in item no. ${i}, expected ${item[key]}.`)
 						}
 					}
-					assert(dataIsGood && (result.success === true))
+					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
 					return true
 				})
 			})
-			it('should clean up users and userTypes after it finishes testing', function() {
+			after(function() {
 				return co(function*() {
 					yield db.sequelize.query(`
 						delete from "userTypes";
@@ -1103,7 +966,6 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					assert(true)
 					return true
 				})
 			})
@@ -1132,13 +994,13 @@ module.exports = {
 						throw req.locals.error
 					}
 					let result = res.response.jsonBody,
-						resultItem = yield dbComponent.model.findOne({where: {id: 2}}),
-						dataIsGood = true
-					assert((resultItem === null) && (result.success === true))
+						resultItem = yield dbComponent.model.findOne({where: {id: 2}})
+					assert.strictEqual(resultItem, null, `bad value ${resultItem} for resultItem, expected null`)
+					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
 					return true
 				})
 			})
-			it('should clean up users and userTypes after it finishes testing', function() {
+			after(function() {
 				return co(function*() {
 					yield db.sequelize.query(`
 						delete from "userTypes";
@@ -1146,7 +1008,6 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					assert(true)
 					return true
 				})
 			})
