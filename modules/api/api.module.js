@@ -49,7 +49,9 @@ class APIModule extends BaseServerModule {
 			{config, moduleConfig, moduleName} = this
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0]
-			console.log(`[${moduleName} API]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
+			if (req.method.toLowerCase() !== 'get') {
+				console.log(`[${moduleName} API]`, originalUrl, 'BODY Params: ', JSON.stringify(req.body || {}))
+			}
 			req.locals = {
 				error: null,
 				errorStatus: 500,

@@ -26,6 +26,7 @@
     "express": "^4.14.0",
     "express-session": "^1.14.1",
     "fs-extra": "^5.0.0",
+    "glob": "^7.1.2",
     "handlebars": "^4.0.11",
     "jsonwebtoken": "^8.1.1",
     "mocha-eslint": "^4.1.0",
@@ -66,7 +67,7 @@
     "test-local": "node ./test/generateStuff.js && mocha ./test/test.js",
     "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools",
     "fullTest-local": "node ./test/generateStuff.js && mocha ./test/test.js && mocha ./test/index.js --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools",
-    "fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools"
+    "fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools --testLint"
   },
   "devDependencies": {
     "@babel/core": "^7.0.0-beta.42",

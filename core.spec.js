@@ -92,6 +92,9 @@ module.exports = {
 			it('should execute testListen successfully', function() {
 				instance.testListen()
 			})
+			it('should execute runLintTests successfully', function() {
+				instance.runLintTests(__dirname, `{,!(node_modules)/**/}*.js`, ['test/public'])
+			})
 		})
 	},
 	testConfig: function() {

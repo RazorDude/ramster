@@ -10,7 +10,8 @@ module.exports = {
 		describe('client.module', function() {
 			let req = {
 					headers: {},
-					connection: {}
+					connection: {},
+					method: ''
 				},
 				res = {
 					headers: {},

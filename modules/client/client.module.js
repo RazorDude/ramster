@@ -54,8 +54,11 @@ class ClientModule extends BaseServerModule {
 			{moduleName, moduleConfig, config} = this
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0],
-				cookies = new Cookies(req, res)
-			console.log(`[${moduleName} client]`, originalUrl, 'POST Params: ', JSON.stringify(req.body || {}))
+				cookies = new Cookies(req, res),
+				isGet = req.method.toLowerCase() === 'get'
+			if (!isGet) {
+				console.log(`[${moduleName} client]`, originalUrl, 'BODY Params: ', JSON.stringify(req.body || {}))
+			}
 
 			if (!checkRoutes(originalUrl, instance.paths)) {
 				const notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
@@ -68,7 +71,7 @@ class ClientModule extends BaseServerModule {
 			}
 			if (!req.isAuthenticated() && (!(moduleConfig.anonymousAccessRoutes instanceof Array) || !checkRoutes(originalUrl, moduleConfig.anonymousAccessRoutes))) {
 				if (
-					((instance.layoutRoutes instanceof Array) && checkRoutes(originalUrl, instance.layoutRoutes) && (req.method.toLowerCase() === 'get')) ||
+					((instance.layoutRoutes instanceof Array) && checkRoutes(originalUrl, instance.layoutRoutes) && isGet) ||
 					((moduleConfig.nonLayoutDirectRoutes instanceof Array) && checkRoutes(originalUrl, moduleConfig.nonLayoutDirectRoutes))
 				) {
 					cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})

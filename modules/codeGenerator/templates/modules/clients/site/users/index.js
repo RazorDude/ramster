@@ -1,4 +1,8 @@
 'use strict'
+/**
+ * The usersSiteClientComponentModule. Contains the UsersClientSiteComponent class.
+ * @module usersSiteClientComponentModule
+ */
 
 const
 	{BaseClientComponent} = require('ramster'),
@@ -14,8 +18,16 @@ const
 			res(true)
 		})
 	})
-
-class Component extends BaseClientComponent {
+/**
+ * The UsersClientSiteComponent class. Contains routes and logic for rendering the layout.html file.
+ * @class UsersClientSiteComponent
+ */
+class UsersClientSiteComponent extends BaseClientComponent {
+	/**
+	 * Creates and instance of UsersClientSiteComponent.
+	 * @param {string} componentName Automatically set by ramster when loading the module & component.
+	 * @memberof UsersClientSiteComponent
+	 */
 	constructor(componentName) {
 		super({
 			componentName,
@@ -40,7 +52,11 @@ class Component extends BaseClientComponent {
 		})
 	}
 
-	// this method does not have separate tests in the spec file, but its full functionality is extensively tested in the login method's spec
+	/**
+	 * Does an initial post-load component set-up, in this case - sets up the passportJS login flow. This method does not have separate tests in the spec file, but its full functionality is extensively tested in the login method's spec
+	 * @returns {void}
+	 * @memberof UsersClientSiteComponent
+	 */
 	setup() {
 		// login setup
 		const instance = this,
@@ -80,6 +96,11 @@ class Component extends BaseClientComponent {
 		}))
 	}
 
+	/**
+	 * Logs the user in, creating an express session.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	login() {
 		const instance = this
 		return function* (req, res, next) {
@@ -134,6 +155,11 @@ class Component extends BaseClientComponent {
 		}
 	}
 
+	/**
+	 * Logs the user out, deleting the express session.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	logout() {
 		return function* (req, res, next) {
 			try {
@@ -146,6 +172,11 @@ class Component extends BaseClientComponent {
 		}
 	}
 
+	/**
+	 * Gets the current logged in user's data, if logged in.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	getLoggedInUserData() {
 		const instance = this,
 			generalStore = this.module.generalStore
@@ -183,6 +214,11 @@ class Component extends BaseClientComponent {
 		}
 	}
 
+	/**
+	 * Checks whether an email address is in use.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	checkEmail() {
 		const instance = this
 		return function* (req, res, next) {
@@ -196,6 +232,11 @@ class Component extends BaseClientComponent {
 		}
 	}
 
+	/**
+	 * Triggers the sendPasswordReset functionality of db.components.users.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	sendPasswordResetRequest() {
 		const instance = this
 		return function* (req, res, next) {
@@ -209,6 +250,11 @@ class Component extends BaseClientComponent {
 		}
 	}
 
+	/**
+	 * Triggers the sendEmailUpdateRequest functionality of db.components.users.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	sendEmailUpdateRequest() {
 		const instance = this
 		return function* (req, res, next) {
@@ -223,6 +269,11 @@ class Component extends BaseClientComponent {
 		}
 	}
 
+	/**
+	 * Triggers the updatePassword functionality of db.components.users.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	updatePassword() {
 		const instance = this
 		return function* (req, res, next) {
@@ -236,6 +287,11 @@ class Component extends BaseClientComponent {
 		}
 	}
 
+	/**
+	 * Triggers the updateEmail functionality of db.components.users.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	updateEmail() {
 		const instance = this
 		return function* (req, res, next) {
@@ -249,6 +305,11 @@ class Component extends BaseClientComponent {
 		}
 	}
 
+	/**
+	 * Triggers the updateProfile functionality of db.components.users.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof UsersClientSiteComponent
+	 */
 	updateProfile() {
 		const instance = this
 		return function* (req, res, next) {
@@ -263,4 +324,4 @@ class Component extends BaseClientComponent {
 	}
 }
 
-module.exports = Component
+module.exports = UsersClientSiteComponent

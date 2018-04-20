@@ -8,6 +8,7 @@
 - Renamed index.js to core.js. Added a new index.js file that exports everything like the old one used to.
 - Moved the whole project from optimist to yargs.
 - Added valid JSDoc comments everywhere.
+- Added the ability to run ESLint tests.
 - Config changes:
 	- *BREAKING* - renamed globalPublicPath to clientModulesPublicPath.
 	- *BREAKING* - renamed mountGlobalStorage to mountGlobalStorageInWebserver.

@@ -6,8 +6,11 @@
 
 // external dependencies
 const
+	assert = require('assert'),
 	co = require('co'),
+	{CLIEngine} = require('eslint'),
 	CronJob = require('cron').CronJob,
+	glob = require('glob'),
 	expressSession = require('express-session'),
 	fs = require('fs-extra'),
 	merge = require('deepmerge'),
@@ -425,6 +428,69 @@ class Core {
 						}
 					}
 					return true
+				})
+			})
+		})
+	}
+
+	/**
+	 * Run an ESLint check of all files in the rootPath, based on the .eslintrc file in the script CWD, the provided root path and provided pattern.
+	 * @param {string} rootPath The folder containing the files to test.
+	 * @param {string} pattern The pattern by which to match files.
+	 * @param {string[]} postMatchIgnore A list of paths to ignore post-match, since I can't get glob's "ignore" to work.
+	 * @returns {void}
+	 * @memberof Core
+	 */
+	runLintTests(rootPath, pattern, postMatchIgnore) {
+		const instance = this
+		let results = []
+		describe(`ESLint tests for root path ${rootPath}`, function() {
+			before(function() {
+				this.timeout(10000)
+				return co(function*() {
+					let paths = yield (new Promise((resolve, reject) => glob(
+						path.join(rootPath, pattern),
+						// {ignore: ['node_modules']},
+						(err, matches) => err ? reject(err) : resolve(matches)
+					)))
+					if (paths.length && (postMatchIgnore instanceof Array)) {
+						let pathsToIgnore = [],
+							actualPaths = []
+						postMatchIgnore.forEach((p, index) => {
+							pathsToIgnore.push(path.join(rootPath, p).replace(/\\/g, '/'))
+						})
+						paths.forEach((p, index) => {
+							let ignored = false
+							for (const i in pathsToIgnore) {
+								if (p.replace(pathsToIgnore[i], '').length !== p.length) {
+									ignored = true
+									break
+								}
+							}
+							if (ignored) {
+								return
+							}
+							actualPaths.push(p)
+						})
+						paths = actualPaths
+					}
+					const engine = new CLIEngine({
+						envs: ['node', 'mocha'],
+						useEslintrc: true
+					})
+					results = engine.executeOnFiles(paths).results
+					return true
+				})
+			})
+			it('should run the tests for all paths', function() {
+				describe('ESLint tests beginning...', function() {
+					results.forEach((e, i) => {
+						const {filePath, messages} = e
+						it(`should execute successfully and confirm that the file at ${filePath} is linted correctly`, function() {
+							let firstMessage = messages[0] || {}
+							assert.strictEqual(messages.length, 0, `Error on lines ${firstMessage.line}-${firstMessage.endLine}: ${firstMessage.message}`)
+						})
+					})
 				})
 			})
 		})

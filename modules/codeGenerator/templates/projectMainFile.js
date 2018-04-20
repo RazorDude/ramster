@@ -28,6 +28,9 @@ if (argv.runTests) {
 		testAPIs: (argv.testAPIs === 'true') || (argv.testAPIs === true) ? true : argv.testAPIs,
 		testWebpackBuildTools: (argv.testWebpackBuildTools === 'true') || (argv.testWebpackBuildTools === true)
 	})
+	if (argv.testLint === 'true') {
+		ramster.runLintTests(__dirname, `{,!(node_modules)/**/}*.js`, 'public')
+	}
 } else {
 	co(function*() {
 		yield ramster.loadDependencies()

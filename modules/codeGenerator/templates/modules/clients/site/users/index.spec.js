@@ -4,6 +4,38 @@ const
 	co = require('co'),
 	request = require('request-promise-native')
 
+const checkUserData = (permissionsData, accessPoints, alwaysAccessibleModules) => {
+	for (const i in accessPoints) {
+		const ap = accessPoints[i],
+			pd = permissionsData[ap.moduleId],
+			pdText = permissionsData[ap.module.name.replace(/\s/g, '')]
+		assert(pd, `Missing permissions data object for module id ${ap.moduleId} (by id).`)
+		assert.notStrictEqual(pd.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
+		assert(pd.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
+		assert(pdText, `Missing permissions data object for module id ${ap.moduleId} (by name).`)
+		assert.notStrictEqual(pdText.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object, ids array).`)
+		assert(pdText.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
+	}
+	for (const i in alwaysAccessibleModules) {
+		const module = alwaysAccessibleModules[i],
+			aps = module.accessPoints,
+			pd = permissionsData[module.id],
+			pdText = permissionsData[module.name.replace(/\s/g, '')]
+		assert(pd, `Missing permissions data object for always accessible module id ${module.id} (by id).`)
+		assert(pdText, `Missing permissions data object for always accessible module id ${module.id} (by name).`)
+		for (const j in aps) {
+			const ap = aps[j]
+			assert.notStrictEqual(pd.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (ids array).`)
+			assert(pd.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (text object).`)
+			assert.notStrictEqual(pdText.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (ids array).`)
+			assert(
+				pdText.text[`can${ap.name.replace(/\s/g, '')}`],
+				`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (text object).`
+			)
+		}
+	}
+}
+
 module.exports = {
 	testLogin: function() {
 		const instance = this,
@@ -31,7 +63,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -52,7 +84,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -74,7 +106,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -97,7 +129,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -119,85 +151,25 @@ module.exports = {
 								include: [{
 									model: userTypes.model,
 									as: 'type',
-									include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+									include: [{
+										model: moduleAccessPoints.model, as: 'accessPoints',
+										include: [{model: modules.model, as: 'module', attributes: ['name']}]
+									}]
 								}]
 							}),
 							alwaysAccessibleModules = yield modules.model.findAll({
 								where: {alwaysAccessible: true},
 								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
-							}),
-							dataIsGood = true
-						if (!userFromMethod) {
-							console.log('The method did not return the user.')
-							dataIsGood = false
-						}
-						if (dataIsGood && !userFromMethod.permissionsData) {
-							console.log('The method did not return the user\'s permissions data.')
-							dataIsGood = false
-						}
-						if (dataIsGood) {
-							const permissionsData = userFromMethod.permissionsData,
-								accessPoints = userFromDB.type.accessPoints
-							for (const i in accessPoints) {
-								const ap = accessPoints[i],
-									pd = permissionsData[ap.moduleId]
-								if (!pd) {
-									console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
-									dataIsGood = false
-									break
-								}
-								if (pd.ids.indexOf(ap.id) === -1) {
-									console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
-									dataIsGood = false
-									break
-								}
-								if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-									console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
-									dataIsGood = false
-									break
-								}
-							}
-							if (dataIsGood) {
-								for (const i in alwaysAccessibleModules) {
-									const m = alwaysAccessibleModules[i],
-										aps = m.accessPoints,
-										pd = permissionsData[m.id]
-									if (!pd) {
-										console.log(`Missing permissions data object for always accessible module id ${m.id}.`)
-										dataIsGood = false
-										break
-									}
-									for (const j in aps) {
-										const ap = aps[j]
-										if (pd.ids.indexOf(ap.id) === -1) {
-											console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (ids array).`)
-											dataIsGood = false
-											break
-										}
-										if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-											console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (text object).`)
-											dataIsGood = false
-											break
-										}
-									}
-									if (!dataIsGood) {
-										break
-									}
-								}
-							}
-						}
-						if (dataIsGood && (typeof userFromMethod.password !== 'undefined')) {
-							console.log('The method did not delete the user\'s password from the returned object.')
-							dataIsGood = false
-						}
-						if (dataIsGood && (!result.headers['set-cookie'])) {
-							console.log('The method did not return a set-cookie header.')
-							dataIsGood = false
-						}
-						if (dataIsGood) {
-							sessionCookie = result.headers['set-cookie']
-						}
-						assert(dataIsGood)
+							})
+						assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
+						const permissionsData = userFromMethod.permissionsData,
+							accessPoints = userFromDB.type.accessPoints
+						assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
+						checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+						let typeOfPassword = typeof userFromMethod.password
+						assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
+						assert(result.headers['set-cookie'], `expected result.headers['set-cookie'] to exist, got undefined`)
+						sessionCookie = result.headers['set-cookie']
 						return true
 					})
 				})
@@ -221,7 +193,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -252,7 +224,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -297,7 +269,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -318,7 +290,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -339,7 +311,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -362,7 +334,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -385,7 +357,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -407,7 +379,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -430,7 +402,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -451,92 +423,27 @@ module.exports = {
 								include: [{
 									model: userTypes.model,
 									as: 'type',
-									include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+									include: [{
+										model: moduleAccessPoints.model, as: 'accessPoints',
+										include: [{model: modules.model, as: 'module', attributes: ['name']}]
+									}]
 								}]
 							}),
 							alwaysAccessibleModules = yield modules.model.findAll({
 								where: {alwaysAccessible: true},
 								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
-							}),
-							dataIsGood = true
-						if (!userFromMethod) {
-							console.log('The method did not return the user.')
-							dataIsGood = false
-						}
-						if (dataIsGood && !userFromMethod.permissionsData) {
-							console.log('The method did not return the user\'s permissions data.')
-							dataIsGood = false
-						}
-						if (dataIsGood) {
-							const permissionsData = userFromMethod.permissionsData,
-								accessPoints = userFromDB.type.accessPoints
-							for (const i in accessPoints) {
-								const ap = accessPoints[i],
-									pd = permissionsData[ap.moduleId]
-								if (!pd) {
-									console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
-									dataIsGood = false
-									break
-								}
-								if (pd.ids.indexOf(ap.id) === -1) {
-									console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
-									dataIsGood = false
-									break
-								}
-								if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-									console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
-									dataIsGood = false
-									break
-								}
-							}
-							if (dataIsGood) {
-								for (const i in alwaysAccessibleModules) {
-									const m = alwaysAccessibleModules[i],
-										aps = m.accessPoints,
-										pd = permissionsData[m.id]
-									if (!pd) {
-										console.log(`Missing permissions data object for always accessible module id ${m.id}.`)
-										dataIsGood = false
-										break
-									}
-									for (const j in aps) {
-										const ap = aps[j]
-										if (pd.ids.indexOf(ap.id) === -1) {
-											console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (ids array).`)
-											dataIsGood = false
-											break
-										}
-										if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-											console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (text object).`)
-											dataIsGood = false
-											break
-										}
-									}
-									if (!dataIsGood) {
-										break
-									}
-								}
-							}
-						}
-						if (dataIsGood && (typeof userFromMethod.password !== 'undefined')) {
-							console.log('The method did not delete the user\'s password from the returned object.')
-							dataIsGood = false
-						}
-						if (dataIsGood && (!result.headers['set-cookie'])) {
-							console.log('The method did not return a set-cookie header.')
-							dataIsGood = false
-						}
-						if (dataIsGood) {
-							token = JSON.parse(yield generalStore.getStoredEntry('user-1-dbLoginToken'))
-							if (token.alreadyUsedForLogin !== true) {
-								console.log('Failed to set the alreadyUsedForLogin field in the token data.')
-								dataIsGood = false
-							}
-						}
-						if (dataIsGood) {
-							sessionCookie = result.headers['set-cookie']
-						}
-						assert(dataIsGood)
+							})
+						assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
+						const permissionsData = userFromMethod.permissionsData,
+							accessPoints = userFromDB.type.accessPoints
+						assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
+						checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+						let typeOfPassword = typeof userFromMethod.password
+						assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
+						assert(result.headers['set-cookie'], `expected result.headers['set-cookie'] to exist, got undefined`)
+						token = JSON.parse(yield generalStore.getStoredEntry('user-1-dbLoginToken'))
+						assert.strictEqual(token.alreadyUsedForLogin, true, `bad value ${token.alreadyUsedForLogin} for token.alreadyUsedForLogin, expected true`)
+						sessionCookie = result.headers['set-cookie']
 						return true
 					})
 				})
@@ -560,7 +467,7 @@ module.exports = {
 								throw e
 							}
 						}
-						assert(didThrowAnError)
+						assert.strictEqual(didThrowAnError, true, 'no error thrown')
 						return true
 					})
 				})
@@ -601,23 +508,23 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
 			it('should execute successfully and redirect the user to /login if the user is logged in', function() {
 				return co(function*() {
 					let result = yield request({
-						method: 'get',
-						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/logout`,
-						headers: {cookie: sessionCookie},
-						json: true,
-						resolveWithFullResponse: true
-					})
-					assert(
-						(result.request.headers.referer === `http://127.0.0.1:${moduleConfig.serverPort}/users/logout`) &&
-						(result.request.href === `http://127.0.0.1:${moduleConfig.serverPort}/login`)
-					)
+							method: 'get',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/logout`,
+							headers: {cookie: sessionCookie},
+							json: true,
+							resolveWithFullResponse: true
+						}),
+						refererShouldBe = `http://127.0.0.1:${moduleConfig.serverPort}/users/logout`,
+						hrefShouldBe = `http://127.0.0.1:${moduleConfig.serverPort}/login`
+					assert.strictEqual(result.request.headers.referer, refererShouldBe, `bad value ${result.request.headers.referer} for result.request.headers.referer, expected ${refererShouldBe}`)
+					assert.strictEqual(result.request.href, hrefShouldBe, `bad value ${result.request.href} for result.request.href, expected ${hrefShouldBe}`)
 					return true
 				})
 			})
@@ -650,7 +557,7 @@ module.exports = {
 						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/loggedInUserData`,
 						json: true
 					})
-					assert(user === null)
+					assert.strictEqual(user, null, `bad value ${user} for user, expected null`)
 					return true
 				})
 			})
@@ -667,78 +574,23 @@ module.exports = {
 							include: [{
 								model: userTypes.model,
 								as: 'type',
-								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+								include: [{
+									model: moduleAccessPoints.model, as: 'accessPoints',
+									include: [{model: modules.model, as: 'module', attributes: ['name']}]
+								}]
 							}]
 						}),
 						alwaysAccessibleModules = yield modules.model.findAll({
 							where: {alwaysAccessible: true},
 							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
-						}),
-						dataIsGood = true
-					if (!userFromMethod) {
-						console.log('The method did not return the user.')
-						dataIsGood = false
-					}
-					if (dataIsGood && !userFromMethod.permissionsData) {
-						console.log('The method did not return the user\'s permissions data.')
-						dataIsGood = false
-					}
-					if (dataIsGood) {
-						const permissionsData = userFromMethod.permissionsData,
-							accessPoints = userFromDB.type.accessPoints
-						for (const i in accessPoints) {
-							const ap = accessPoints[i],
-								pd = permissionsData[ap.moduleId]
-							if (!pd) {
-								console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
-								dataIsGood = false
-								break
-							}
-							if (pd.ids.indexOf(ap.id) === -1) {
-								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
-								dataIsGood = false
-								break
-							}
-							if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (dataIsGood) {
-							for (const i in alwaysAccessibleModules) {
-								const m = alwaysAccessibleModules[i],
-									aps = m.accessPoints,
-									pd = permissionsData[m.id]
-								if (!pd) {
-									console.log(`Missing permissions data object for always accessible module id ${m.id}.`)
-									dataIsGood = false
-									break
-								}
-								for (const j in aps) {
-									const ap = aps[j]
-									if (pd.ids.indexOf(ap.id) === -1) {
-										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (ids array).`)
-										dataIsGood = false
-										break
-									}
-									if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (text object).`)
-										dataIsGood = false
-										break
-									}
-								}
-								if (!dataIsGood) {
-									break
-								}
-							}
-						}
-					}
-					if (dataIsGood && (typeof userFromMethod.password !== 'undefined')) {
-						console.log('The method did not delete the user\'s password from the returned object.')
-						dataIsGood = false
-					}
-					assert(true)
+						})
+					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
+					const permissionsData = userFromMethod.permissionsData,
+						accessPoints = userFromDB.type.accessPoints
+					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
+					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					let typeOfPassword = typeof userFromMethod.password
+					assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
 					return true
 				})
 			})
@@ -756,82 +608,25 @@ module.exports = {
 							include: [{
 								model: userTypes.model,
 								as: 'type',
-								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+								include: [{
+									model: moduleAccessPoints.model, as: 'accessPoints',
+									include: [{model: modules.model, as: 'module', attributes: ['name']}]
+								}]
 							}]
 						}),
 						alwaysAccessibleModules = yield modules.model.findAll({
 							where: {alwaysAccessible: true},
 							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
 						}),
-						dataIsGood = true
-					if (!userFromMethod) {
-						console.log('The method did not return the user.')
-						dataIsGood = false
-					}
-					if (dataIsGood && !userFromMethod.permissionsData) {
-						console.log('The method did not return the user\'s permissions data.')
-						dataIsGood = false
-					}
-					if (dataIsGood) {
-						const permissionsData = userFromMethod.permissionsData,
-							accessPoints = userFromDB.type.accessPoints
-						for (const i in accessPoints) {
-							const ap = accessPoints[i],
-								pd = permissionsData[ap.moduleId]
-							if (!pd) {
-								console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
-								dataIsGood = false
-								break
-							}
-							if (pd.ids.indexOf(ap.id) === -1) {
-								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
-								dataIsGood = false
-								break
-							}
-							if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (dataIsGood) {
-							for (const i in alwaysAccessibleModules) {
-								const m = alwaysAccessibleModules[i],
-									aps = m.accessPoints,
-									pd = permissionsData[m.id]
-								if (!pd) {
-									console.log(`Missing permissions data object for always accessible module id ${m.id}.`)
-									dataIsGood = false
-									break
-								}
-								for (const j in aps) {
-									const ap = aps[j]
-									if (pd.ids.indexOf(ap.id) === -1) {
-										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (ids array).`)
-										dataIsGood = false
-										break
-									}
-									if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (text object).`)
-										dataIsGood = false
-										break
-									}
-								}
-								if (!dataIsGood) {
-									break
-								}
-							}
-						}
-					}
-					if (dataIsGood && (typeof userFromMethod.password !== 'undefined')) {
-						console.log('The method did not delete the user\'s password from the returned object.')
-						dataIsGood = false
-					}
-					if (dataIsGood && ((yield generalStore.getStoredEntry(`db-userTypeId-${userFromDB.typeId}-permissionsUpdated`)) !== null)) {
-						console.log('The method did not remove the permissionsUpdated flag.')
-						dataIsGood = false
-					}
-					assert(true)
+						permissionsUpdatedFlag = yield generalStore.getStoredEntry(`db-userTypeId-${userFromDB.typeId}-permissionsUpdated`)
+					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
+					const permissionsData = userFromMethod.permissionsData,
+						accessPoints = userFromDB.type.accessPoints
+					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
+					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					let typeOfPassword = typeof userFromMethod.password
+					assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
+					assert.strictEqual(permissionsUpdatedFlag, null, `bad value ${permissionsUpdatedFlag} for permissionsUpdatedFlag, expected null`)
 					return true
 				})
 			})
@@ -849,90 +644,27 @@ module.exports = {
 							include: [{
 								model: userTypes.model,
 								as: 'type',
-								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+								include: [{
+									model: moduleAccessPoints.model, as: 'accessPoints',
+									include: [{model: modules.model, as: 'module', attributes: ['name']}]
+								}]
 							}]
 						}),
 						alwaysAccessibleModules = yield modules.model.findAll({
 							where: {alwaysAccessible: true},
 							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
 						}),
-						permissionsUpdatedFlag = yield generalStore.getStoredEntry(`db-userTypeId-${userFromDB.typeId}-permissionsUpdated`),
-						dataIsGood = true
-					if (!userFromMethod) {
-						console.log('The method did not return the user.')
-						dataIsGood = false
-					}
-					if (dataIsGood && !userFromMethod.permissionsData) {
-						console.log('The method did not return the user\'s permissions data.')
-						dataIsGood = false
-					}
-					if (dataIsGood) {
-						const permissionsData = userFromMethod.permissionsData,
-							accessPoints = userFromDB.type.accessPoints
-						for (const i in accessPoints) {
-							const ap = accessPoints[i],
-								pd = permissionsData[ap.moduleId]
-							if (!pd) {
-								console.log(`Missing permissions data object for module id ${ap.moduleId}.`)
-								dataIsGood = false
-								break
-							}
-							if (pd.ids.indexOf(ap.id) === -1) {
-								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
-								dataIsGood = false
-								break
-							}
-							if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-								console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
-								dataIsGood = false
-								break
-							}
-						}
-						if (dataIsGood) {
-							for (const i in alwaysAccessibleModules) {
-								const m = alwaysAccessibleModules[i],
-									aps = m.accessPoints,
-									pd = permissionsData[m.id]
-								if (!pd) {
-									console.log(`Missing permissions data object for always accessible module id ${m.id}.`)
-									dataIsGood = false
-									break
-								}
-								for (const j in aps) {
-									const ap = aps[j]
-									if (pd.ids.indexOf(ap.id) === -1) {
-										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (ids array).`)
-										dataIsGood = false
-										break
-									}
-									if (!pd.text[`can${ap.name.replace(/\s/g, '')}`]) {
-										console.log(`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${m.id} (text object).`)
-										dataIsGood = false
-										break
-									}
-								}
-								if (!dataIsGood) {
-									break
-								}
-							}
-						}
-					}
-					if (dataIsGood && (typeof userFromMethod.password !== 'undefined')) {
-						console.log('The method did not delete the user\'s password from the returned object.')
-						dataIsGood = false
-					}
-					if (dataIsGood && (permissionsUpdatedFlag === null)) {
-						console.log('The method did not update the permissionsUpdated flag correctly, it removed it instead.')
-						dataIsGood = false
-					}
-					if (dataIsGood) {
-						permissionsUpdatedFlag = JSON.parse(permissionsUpdatedFlag)
-						if (!(permissionsUpdatedFlag instanceof Array) || (permissionsUpdatedFlag.length !== 1) || (permissionsUpdatedFlag.indexOf(1) !== -1)) {
-							console.log('The method did not update the permissionsUpdated flag correctly.')
-							dataIsGood = false
-						}
-					}
-					assert(true)
+						permissionsUpdatedFlag = JSON.parse(yield generalStore.getStoredEntry(`db-userTypeId-${userFromDB.typeId}-permissionsUpdated`))
+					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
+					const permissionsData = userFromMethod.permissionsData,
+						accessPoints = userFromDB.type.accessPoints
+					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
+					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					let typeOfPassword = typeof userFromMethod.password
+					assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
+					assert(permissionsUpdatedFlag instanceof Array, `bad value ${permissionsUpdatedFlag} for permissionsUpdatedFlag, expected an array`)
+					assert.strictEqual(permissionsUpdatedFlag.length, 1, `bad value ${permissionsUpdatedFlag.length} for permissionsUpdatedFlag.length, expected 1`)
+					assert.strictEqual(permissionsUpdatedFlag.indexOf(1), -1, `bad value ${permissionsUpdatedFlag.indexOf(1)} for permissionsUpdatedFlag.indexOf(1), expected -1`)
 					return true
 				})
 			})
@@ -964,7 +696,7 @@ module.exports = {
 						qs: {email: encodeURIComponent('admin@ramster.com')},
 						json: true
 					})
-					assert(result.emailInUse === true)
+					assert.strictEqual(result.emailInUse, true, `bad value ${result.emailInUse} for result.emailInUse, expected true`)
 					return true
 				})
 			})
@@ -977,7 +709,7 @@ module.exports = {
 						qs: {email: encodeURIComponent('admin@ramster.com')},
 						json: true
 					})
-					assert(result.emailInUse === true)
+					assert.strictEqual(result.emailInUse, true, `bad value ${result.emailInUse} for result.emailInUse, expected true`)
 					return true
 				})
 			})
@@ -989,7 +721,7 @@ module.exports = {
 						qs: {email: encodeURIComponent('admin.not.in.use@ramster.com')},
 						json: true
 					})
-					assert(result.emailInUse === false)
+					assert.strictEqual(result.emailInUse, false, `bad value ${result.emailInUse} for result.emailInUse, expected false`)
 					return true
 				})
 			})
@@ -1002,7 +734,7 @@ module.exports = {
 						qs: {email: encodeURIComponent('admin.not.in.use@ramster.com')},
 						json: true
 					})
-					assert(result.emailInUse === false)
+					assert.strictEqual(result.emailInUse, false, `bad value ${result.emailInUse} for result.emailInUse, expected false`)
 					return true
 				})
 			})
@@ -1035,7 +767,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1047,21 +779,10 @@ module.exports = {
 						qs: {email: encodeURIComponent('admin@ramster.com')},
 						json: true
 					})
-					let tokenData = JSON.parse(yield generalStore.getStoredEntry('user-1-dbLoginToken')),
-						dataIsGood = true
-					if (!tokenData) {
-						console.log('The method did not set the token data object correctly.')
-						dataIsGood = false
-					}
-					if (dataIsGood && !tokenData.token) {
-						console.log('The method did not set the token correctly.')
-						dataIsGood = false
-					}
-					if (dataIsGood && (tokenData.alreadyUsedForLogin !== false)) {
-						console.log('The method did not set the alreadyUsedForLogin property to false.')
-						dataIsGood = false
-					}
-					assert(dataIsGood)
+					let tokenData = JSON.parse(yield generalStore.getStoredEntry('user-1-dbLoginToken'))
+					assert(tokenData, `bad value ${tokenData} for tokenData, expected it to exist`)
+					assert(tokenData.token, `bad value ${tokenData.token} for tokenData.token, expected it to exist`)
+					assert.strictEqual(tokenData.alreadyUsedForLogin, false, `bad value ${tokenData.alreadyUsedForLogin} for tokenData.alreadyUsedForLogin, expected false`)
 					return true
 				})
 			})
@@ -1103,7 +824,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1117,25 +838,11 @@ module.exports = {
 						json: true
 					})
 					let user = yield instance.dbComponent.model.findOne({where: {id: 1}}),
-						tokenData = JSON.parse(yield generalStore.getStoredEntry('user-1-dbLoginToken')),
-						dataIsGood = true
-					if (user.unconfirmedEmail !== 'admintest@ramster.com') {
-						console.log('The method did not set the uncofirmed email correctly.')
-						dataIsGood = false
-					}
-					if (dataIsGood && !tokenData) {
-						console.log('The method did not set the token data object correctly.')
-						dataIsGood = false
-					}
-					if (dataIsGood && !tokenData.token) {
-						console.log('The method did not set the token correctly.')
-						dataIsGood = false
-					}
-					if (dataIsGood && (tokenData.alreadyUsedForLogin !== false)) {
-						console.log('The method did not set the alreadyUsedForLogin property to false.')
-						dataIsGood = false
-					}
-					assert(dataIsGood)
+						tokenData = JSON.parse(yield generalStore.getStoredEntry('user-1-dbLoginToken'))
+					assert.strictEqual(user.unconfirmedEmail, 'admintest@ramster.com', `bad value ${user.unconfirmedEmail} for user.unconfirmedEmail, expected admintest@ramster.com`)
+					assert(tokenData, `bad value ${tokenData} for tokenData, expected it to exist`)
+					assert(tokenData.token, `bad value ${tokenData.token} for tokenData.token, expected it to exist`)
+					assert.strictEqual(tokenData.alreadyUsedForLogin, false, `bad value ${tokenData.alreadyUsedForLogin} for tokenData.alreadyUsedForLogin, expected false`)
 					return true
 				})
 			})
@@ -1178,7 +885,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1200,7 +907,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1223,7 +930,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1272,7 +979,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1288,17 +995,9 @@ module.exports = {
 						json: true
 					})
 					let user = yield instance.dbComponent.model.scope('full').findOne({where: {id: 1}, attributes: ['password']}),
-						tokenData = yield generalStore.getStoredEntry('user-1-dbLoginToken'),
-						dataIsGood = true
-					if (!bcryptjs.compareSync('testPassword1234', user.password)) {
-						console.log('The method did not update the password correctly.')
-						dataIsGood = false
-					}
-					if (dataIsGood && (tokenData !== null)) {
-						console.log('The method did not remove the token.')
-						dataIsGood = false
-					}
-					assert(dataIsGood)
+						tokenData = yield generalStore.getStoredEntry('user-1-dbLoginToken')
+					assert(bcryptjs.compareSync('testPassword1234', user.password), 'The method did not update the password correctly.')
+					assert.strictEqual(tokenData, null, `bad value ${tokenData} for tokenData, expected null`)
 					return true
 				})
 			})
@@ -1312,7 +1011,7 @@ module.exports = {
 						json: true
 					})
 					let user = yield instance.dbComponent.model.scope('full').findOne({where: {id: 1}, attributes: ['password']})
-					assert(bcryptjs.compareSync('testPassword4321', user.password))
+					assert(bcryptjs.compareSync('testPassword4321', user.password), 'The metod did not update the password correctly.')
 					return true
 				})
 			})
@@ -1330,7 +1029,7 @@ module.exports = {
 					} catch(e) {
 						didThrowAnError = true
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1352,7 +1051,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1395,7 +1094,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1417,7 +1116,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1440,7 +1139,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1483,21 +1182,10 @@ module.exports = {
 						json: true
 					})
 					let user = yield instance.dbComponent.model.scope('full').findOne({where: {id: 1}, attributes: ['email', 'unconfirmedEmail']}),
-						tokenData = yield generalStore.getStoredEntry('user-1-dbLoginToken'),
-						dataIsGood = true
-					if (user.email !== 'admintest@ramster.com') {
-						console.log('The method did not update the email correctly.')
-						dataIsGood = false
-					}
-					if (dataIsGood && (user.unconfirmedEmail !== null)) {
-						console.log('The method did not update set the unconfirmedEmail to null.')
-						dataIsGood = false
-					}
-					if (dataIsGood && (tokenData !== null)) {
-						console.log('The method did not remove the token.')
-						dataIsGood = false
-					}
-					assert(dataIsGood)
+						tokenData = yield generalStore.getStoredEntry('user-1-dbLoginToken')
+					assert.strictEqual(user.email, 'admintest@ramster.com', `bad value ${user.email} for user.email, expected admintest@ramster.com`)
+					assert.strictEqual(user.unconfirmedEmail, null, `bad value ${user.unconfirmedEmail} for user.unconfirmedEmail, expected null`)
+					assert.strictEqual(tokenData, null, `bad value ${tokenData} for tokenData, expected null`)
 					return true
 				})
 			})
@@ -1544,7 +1232,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -1558,17 +1246,11 @@ module.exports = {
 							json: true
 						}),
 						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admin@ramster.com', phone: '+359888777666', gender: 'other', status: true}
-						dataIsGood = true
 					for (const i in userShouldBe) {
 						const sbField = userShouldBe[i],
 							isField = user[i]
-						if (sbField !== isField) {
-							console.log(`Bad value '${isField}' for field "${i}", expected '${sbField}'.`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(isField, sbField, `Bad value '${isField}' for field "${i}", expected '${sbField}'.`)
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
