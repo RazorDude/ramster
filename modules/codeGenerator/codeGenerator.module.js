@@ -404,7 +404,7 @@ class CodeGenerator {
 
 	/**
 	 * Generates a layout_<configProfile>.pug for a client module, based on the provided configProfile arg.
-	 * @param {string} outputPath The path to the folder in which the generated flders will be put. Must be a valid and accessible directory.
+	 * @param {string} outputPath The path to the folder in which the generated folders will be put. Must be a valid and accessible directory.
 	 * @param {string} configProfile The name of the config profile, whose template is to be used. An error will be thrown if it does not exist.
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof CodeGenerator
@@ -424,8 +424,31 @@ class CodeGenerator {
 	}
 
 	/**
+	 * Generates a .d.ts file from a sequelize model and puts it in the specified folder.
+	 * @param {string} outputPath The path to the folder in which the generated file will be put. Must be a valid and accessible directory.
+	 * @param {object} model The sequelize model to take the data from.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
+	 * @memberof CodeGenerator
+	 */
+	// generateTypescriptModel(outputPath, model) {
+	// 	const instance = this
+	// 	return co(function*() {
+	// 		if ((typeof outputPath !== 'string') || !outputPath.length) {
+	// 			throw {customMessage: 'The outputPath argument must be a non-empty string.'}
+	// 		}
+	// 		yield instance.checkOutputPath(outputPath)
+	// 		let dataToWrite = ``
+	// 		console.log(instance.modules.db.components.users.model.tableAttributes)
+	// 		let outputFile = yield fs.open(path.join(outputPath, 'model.d.ts'), 'w')
+	// 		yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/clients/site/layout_${configProfile || 'local'}.pug`)))
+	// 		yield fs.close(outputFile)
+	// 		return true
+	// 	})
+	// }
+
+	/**
 	 * Generates a project using the "blank" template, based on the provided configProfile arg. The "blank" template contains all the project's directory structure, the "index", "common" and "profile" project config files, the project main file and the webpack build tools.
-	 * @param {string} outputPath The path to the folder in which the generated flders will be put. Must be a valid and accessible directory.
+	 * @param {string} outputPath The path to the folder in which the generated folders will be put. Must be a valid and accessible directory.
 	 * @param {string} configProfile The name of the config profile, whose template is to be used. An error will be thrown if it does not exist.
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof CodeGenerator
@@ -460,7 +483,7 @@ class CodeGenerator {
 	 * - a staticData file and a mockStaticData file, containing basic example data for the above functionality
 	 * - an empty cronJobs module
 	 * - eslintrc, jsbeautifyrc and pug-lintrc
-	 * @param {string} outputPath The path to the folder in which the generated flders will be put. Must be a valid and accessible directory.
+	 * @param {string} outputPath The path to the folder in which the generated folders will be put. Must be a valid and accessible directory.
 	 * @param {string} configProfile The name of the config profile, whose template is to be used. An error will be thrown if it does not exist.
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof CodeGenerator
