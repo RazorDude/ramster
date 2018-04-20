@@ -193,7 +193,11 @@ class BaseDBComponent {
 			if (!targetAssociation) {
 				throw {customMessage: `At "${sourceComponentName}": the component does not have an association named "${associationName}".`}
 			}
-			const targetComponent = components[targetAssociation.componentName || associationName]
+			let targetComponentName = targetAssociation.componentName || associationName,
+				targetComponent = components[targetComponentName]
+			if (targetComponentName === sourceComponentName) {
+				targetComponent = sourceComponent
+			}
 			relationObject = {model: targetComponent.model, as: associationName, required: required === true}
 			if (attributes) {
 				if (!(attributes instanceof Array) || !attributes.length) {
@@ -276,8 +280,11 @@ class BaseDBComponent {
 		for (const alias in associationsConfig) {
 			const itemData = associationsConfig[alias],
 				targetModelName = itemData.componentName || alias,
-				targetComponent = components[targetModelName],
 				relationConfig = relationsConfig[alias]
+			let targetComponent = components[targetModelName]
+			if (targetModelName === componentName) {
+				targetComponent = this
+			}
 			if (relationConfig && (typeof relationConfig === 'object')) {
 				if (!relationConfig.associationName) {
 					relationConfig.associationName = alias

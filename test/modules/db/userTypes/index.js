@@ -1,7 +1,7 @@
 'use strict'
 /**
- * The userTypessDBComponentModule. Contains the UserTypesDBComponent class.
- * @module userTypessDBComponentModule
+ * The userTypesDBComponentModule. Contains the UserTypesDBComponent class.
+ * @module userTypesDBComponentModule
  */
 
 const

@@ -52,6 +52,13 @@ co(function*() {
 		}
 	}
 
+	let pathToESLintRC = path.join(__dirname, '../.eslintrc')
+	try {
+		yield fs.lstat(pathToESLintRC)
+	} catch(e) {
+		yield fs.copyFile(path.join(__dirname, '.eslintrc'), pathToESLintRC)
+	}
+
 	return true
 }).then((res) => process.exit(0), (err) => {
 	console.log(err)
