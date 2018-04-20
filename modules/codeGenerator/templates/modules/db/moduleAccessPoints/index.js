@@ -1,9 +1,23 @@
 'use strict'
+/**
+ * The moduleAccessPointsDBComponentModule. Contains the ModuleAccessPointsDBComponent class.
+ * @module moduleAccessPointsDBComponentModule
+ */
 
 const
 	{BaseDBComponent} = require('ramster')
 
-class Component extends BaseDBComponent {
+/**
+ * The ModuleAccessPointsDBComponent class. Contains the sequelize db model and the business logic for the moduleAccessPoints. ModuleAccessPoints are assigned to userTypes and filtered in the server module's accessFilter method, effectively creating a modular, role-based permissions system.
+ * @class ModuleAccessPointsDBComponent
+ */
+class ModuleAccessPointsDBComponent extends BaseDBComponent {
+	/**
+	 * Creates an instance of ModuleAccessPointsDBComponent.
+	 * @param {object} sequelize An instance of Sequelize.
+	 * @param {object} Sequelize A Sequelize static object.
+	 * @memberof ModuleAccessPointsDBComponent
+	 */
 	constructor(sequelize, Sequelize) {
 		super()
 
@@ -41,4 +55,4 @@ class Component extends BaseDBComponent {
 	}
 }
 
-module.exports = Component
+module.exports = ModuleAccessPointsDBComponent

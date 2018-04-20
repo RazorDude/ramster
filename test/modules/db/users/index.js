@@ -1,4 +1,8 @@
 'use strict'
+/**
+ * The usersDBComponentModule. Contains the UsersDBComponent class.
+ * @module usersDBComponentModule
+ */
 
 const
 	{BaseDBComponent, toolbelt} = require('../../../../index'),
@@ -8,7 +12,17 @@ const
 	merge = require('deepmerge'),
 	moment = require('moment')
 
-class Component extends BaseDBComponent {
+/**
+ * The UsersDBComponent class. Contains the sequelize db model and the business logic for the users. User items are central to the whole platform.
+ * @class UsersDBComponent
+ */
+class UsersDBComponent extends BaseDBComponent {
+	/**
+	 * Creates an instance of UsersDBComponent.
+	 * @param {object} sequelize An instance of Sequelize.
+	 * @param {object} Sequelize A Sequelize static object.
+	 * @memberof UsersDBComponent
+	 */
 	constructor(sequelize, Sequelize) {
 		super()
 
@@ -75,6 +89,10 @@ class Component extends BaseDBComponent {
 			}
 		}
 
+		/**
+		 * An array, containing the fields allowed for update in the updateProfile method.
+		 * @type {string[]}
+		 */
 		this.profileUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
 
 		this.searchFields = [
@@ -94,6 +112,12 @@ class Component extends BaseDBComponent {
 		]
 	}
 
+	/**
+	 * Returns a user's data, with his permissions mapped in a permissionsData object.
+	 * @param {Object.<string, any>} filters An object, containing the fields to find the user by. Must be valid instance.searchFields items.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with the user object, containing a permissionsData object.
+	 * @memberof UsersDBComponent
+	 */
 	getUserWithPermissionsData(filters) {
 		const instance = this,
 			{userTypes, moduleAccessPoints, modules} = this.db.components
@@ -162,8 +186,17 @@ class Component extends BaseDBComponent {
 		})
 	}
 
-	login({email, password}) {
-		const instance = this,
+	/**
+	 * Finds a user by email and compares his password with the provided one. If successfull, updates his lastLogin field, removes his dbLoginToken and returns his data.
+	 * @param {Object.<string, string>} options The data object containing the email and password.
+	 * @param {string} options.email The user's email.
+	 * @param {string} options.password The user's password.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with the user object, containing a permissionsData object.
+	 * @memberof UsersDBComponent
+	 */
+	login(options) {
+		const {email, password} = options,
+			instance = this,
 			dbComponents = this.db.components
 		return co(function*() {
 			let user = yield instance.getUserWithPermissionsData({email})
@@ -183,6 +216,12 @@ class Component extends BaseDBComponent {
 		})
 	}
 
+	/**
+	 * Finds a user by dbLoginToken and validates the token. If successfull, updates the user's lastLogin field, removes his dbLoginToken and returns his data.
+	 * @param {string} token The user's dbLoginToken.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with the user object, containing a permissionsData object.
+	 * @memberof UsersDBComponent
+	 */
 	tokenLogin(token) {
 		const instance = this,
 			generalStore = this.db.generalStore
@@ -222,6 +261,12 @@ class Component extends BaseDBComponent {
 		})
 	}
 
+	/**
+	 * Finds a user by email, creates a dbLoginToken and sends a "forgotten password" to the user's email, with a link for loggin in with the token.
+	 * @param {string} email The user's email.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with {success: true}.
+	 * @memberof UsersDBComponent
+	 */
 	sendPasswordResetRequest(email) {
 		const instance = this,
 			db = this.db
@@ -246,8 +291,17 @@ class Component extends BaseDBComponent {
 		})
 	}
 
-	sendEmailUpdateRequest({id, newEmail}) {
-		const instance = this,
+	/**
+	 * Finds a user by id, creates a dbLoginToken, sets his unconfirmedEmail field to the provided newEmail and sends an "confirm email update" email to the user's email, with a link for loggin in with the token.
+	 * @param {Object.<string, number|string>} options The data object containing the user id and newEmail.
+	 * @param {number} options.id The user's id.
+	 * @param {string} options.newEmail The user's new email.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with {success: true}.
+	 * @memberof UsersDBComponent
+	 */
+	sendEmailUpdateRequest(options) {
+		const {id, newEmail} = options,
+			instance = this,
 			db = this.db
 		return co(function*() {
 			let user = yield instance.model.update({unconfirmedEmail: newEmail}, {where: {id}, returning: true})
@@ -269,8 +323,19 @@ class Component extends BaseDBComponent {
 		})
 	}
 
-	updatePassword({id, passwordResetToken, currentPassword, newPassword}) {
-		const instance = this,
+	/**
+	 * Finds a user by id and updates his password to the provided newPassword if the provided currentPassword or dbLoginToken are correct.
+	 * @param {Object.<string, number|string>} options The data object containing the user id, token and/or passwords.
+	 * @param {number} options.id The user's id.
+	 * @param {string} options.passwordResetToken The user's new dbLoginToken.
+	 * @param {string} options.currentPassword The user's current password.
+	 * @param {string} options.newPassword The user's new password.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with {success: true}.
+	 * @memberof UsersDBComponent
+	 */
+	updatePassword(options) {
+		const {id, passwordResetToken, currentPassword, newPassword} = options,
+			instance = this,
 			{generalStore, tokenManager} = this.db
 		return co(function*() {
 			let user = yield instance.model.scope('full').findOne({where: {id}})
@@ -308,8 +373,17 @@ class Component extends BaseDBComponent {
 		})
 	}
 
-	updateEmail({id, token}) {
-		const instance = this,
+	/**
+	 * Finds a user by id and sets his current email to his previously set unconfirmedEmail field if the provided dbLoginToken is correct.
+	 * @param {Object.<string, number|string>} options The data object containing the user id and token.
+	 * @param {number} options.id The user's id.
+	 * @param {string} options.token The user's new dbLoginToken.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with {success: true}.
+	 * @memberof UsersDBComponent
+	 */
+	updateEmail(options) {
+		const {id, token} = options,
+			instance = this,
 			db = this.db
 		return co(function*() {
 			let user = yield instance.model.findOne({where: {id}})
@@ -350,6 +424,12 @@ class Component extends BaseDBComponent {
 		})
 	}
 
+	/**
+	 * Updates the user's profile data
+	 * @param {Object.<string, any>} data The data object containing the user id and profile fields to update. See the component's profileUpdateFields array for more info.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with the updated user object.
+	 * @memberof UsersDBComponent
+	 */
 	updateProfile(data) {
 		const instance = this
 		return co(function*() {
@@ -368,4 +448,4 @@ class Component extends BaseDBComponent {
 	}
 }
 
-module.exports = Component
+module.exports = UsersDBComponent

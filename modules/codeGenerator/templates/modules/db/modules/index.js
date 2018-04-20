@@ -1,9 +1,23 @@
 'use strict'
+/**
+ * The modulesDBComponentModule. Contains the ModulesDBComponent class.
+ * @module modulesDBComponentModule
+ */
 
 const
 	{BaseDBComponent} = require('ramster')
 
-class Component extends BaseDBComponent {
+/**
+ * The ModulesDBComponent class. Contains the sequelize db model and the business logic for the modules. Modules are system entities which are used to logically group server components and restrict access to them. They are also used in the front-end as menu items if needed, creating dynamic, perimission-based menus, rather than hardcoded ones.
+ * @class ModulesDBComponent
+ */
+class ModulesDBComponent extends BaseDBComponent {
+	/**
+	 * Creates an instance of ModulesDBComponent.
+	 * @param {object} sequelize An instance of Sequelize.
+	 * @param {object} Sequelize A Sequelize static object.
+	 * @memberof ModulesDBComponent
+	 */
 	constructor(sequelize, Sequelize) {
 		super()
 
@@ -55,4 +69,4 @@ class Component extends BaseDBComponent {
 	}
 }
 
-module.exports = Component
+module.exports = ModulesDBComponent

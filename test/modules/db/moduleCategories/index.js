@@ -1,9 +1,23 @@
 'use strict'
+/**
+ * The moduleCategoriesDBComponentModule. Contains the ModuleCategoriesDBComponent class.
+ * @module moduleCategoriesDBComponentModule
+ */
 
 const
 	{BaseDBComponent} = require('../../../../index')
 
-class Component extends BaseDBComponent {
+/**
+ * The ModuleCategoriesDBComponent class. Contains the sequelize db model and the business logic for the moduleCategories. ModuleCategory items are used to visually group system modules for display in menus in a dynamic, non-hardcoded way.
+ * @class ModuleCategoriesDBComponent
+ */
+class ModuleCategoriesDBComponent extends BaseDBComponent {
+	/**
+	 * Creates an instance of ModuleCategoriesDBComponent.
+	 * @param {object} sequelize An instance of Sequelize.
+	 * @param {object} Sequelize A Sequelize static object.
+	 * @memberof ModuleCategoriesDBComponent
+	 */
 	constructor(sequelize, Sequelize) {
 		super()
 
@@ -41,4 +55,4 @@ class Component extends BaseDBComponent {
 	}
 }
 
-module.exports = Component
+module.exports = ModuleCategoriesDBComponent

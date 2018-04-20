@@ -18,7 +18,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -34,7 +34,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -43,17 +43,11 @@ module.exports = {
 					yield instance.update({dbObject: {name: 'The God'}, where: {id: 1}})
 					let userType = yield instance.model.findOne({where: {id: 1}}),
 						userTypeShouldBe = {id: 1, name: 'The God', description: 'God user', status: true}
-						dataIsGood = true
 					for (const i in userTypeShouldBe) {
 						const sbField = userTypeShouldBe[i],
 							isField = userType[i]
-						if (sbField !== isField) {
-							console.log(`Bad value '${isField}' for field "${i}", expected '${sbField}'.`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(isField, sbField, `Bad value '${isField}' for field "${i}", expected '${sbField}'.`)
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -62,17 +56,11 @@ module.exports = {
 					yield instance.update({dbObject: {name: 'Inactive Regular', status: false}, where: {id: 2}})
 					let userType = yield instance.model.findOne({where: {id: 2}}),
 						userTypeShouldBe = {id: 2, name: 'Inactive Regular', description: 'Regular user', status: false}
-						dataIsGood = true
 					for (const i in userTypeShouldBe) {
 						const sbField = userTypeShouldBe[i],
 							isField = userType[i]
-						if (sbField !== isField) {
-							console.log(`Bad value '${isField}' for field "${i}", expected '${sbField}'.`)
-							dataIsGood = false
-							break
-						}
+						assert.strictEqual(isField, sbField, `Bad value '${isField}' for field "${i}", expected '${sbField}'.`)
 					}
-					assert(dataIsGood)
 					return true
 				})
 			})
@@ -94,7 +82,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -110,7 +98,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -124,17 +112,10 @@ module.exports = {
 								{model: db.components.users.model, as: 'users', attributes: ['id']}
 							]
 						}),
-						permissionsUpdatedFlag = JSON.parse(yield db.generalStore.getStoredEntry('db-userTypeId-2-permissionsUpdated')),
-						dataIsGood = true
-					if (userType.accessPoints.length !== 4) {
-						console.log('The method failed to update the access points correctly.')
-						dataIsGood = false
-					}
-					if (dataIsGood && (!(permissionsUpdatedFlag instanceof Array) || (userType.users.length !== permissionsUpdatedFlag.length))) {
-						console.log('The method failed to set the perimissions update flag in the general store corrrectly.')
-						dataIsGood = false
-					}
-					assert(dataIsGood)
+						permissionsUpdatedFlag = JSON.parse(yield db.generalStore.getStoredEntry('db-userTypeId-2-permissionsUpdated'))
+					assert.strictEqual(userType.accessPoints.length, 4, `bad value ${userType.accessPoints.length} for userType.accessPoints.length, expected 4`)
+					assert(permissionsUpdatedFlag instanceof Array, `bad value ${permissionsUpdatedFlag} for permissionsUpdatedFlag, expected an array`)
+					assert.strictEqual(permissionsUpdatedFlag.length, userType.users.length, `bad value ${permissionsUpdatedFlag.length} for permissionsUpdatedFlag.length, expected ${userType.users.length}`)
 					return true
 				})
 			})
@@ -156,7 +137,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -172,7 +153,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -188,7 +169,7 @@ module.exports = {
 							throw e
 						}
 					}
-					assert(didThrowAnError)
+					assert.strictEqual(didThrowAnError, true, 'no error thrown')
 					return true
 				})
 			})
@@ -196,17 +177,9 @@ module.exports = {
 				return co(function*() {
 					yield instance.delete({id: 3})
 					let userType = yield instance.model.findOne({where: {id: 3}}),
-						accessPoints = yield db.sequelize.query('select "userTypeId" from "userTypeModuleAccessPoints" where "userTypeId" = 3 limit 1;'),
-						dataIsGood = true
-					if (userType) {
-						console.log('The method failed to delete the user type.')
-						dataIsGood = false
-					}
-					if (dataIsGood && accessPoints[0].length){
-						console.log('THe method faield to delete the user type module access points.')
-						dataIsGood = false
-					}
-					assert(dataIsGood)
+						accessPoints = yield db.sequelize.query('select "userTypeId" from "userTypeModuleAccessPoints" where "userTypeId" = 3 limit 1;')
+					assert.strictEqual(userType, null, 'The method failed to delete the user type.')
+					assert.strictEqual(accessPoints[0].length, 0, `bad value ${accessPoints[0].length} for accessPoints[0].length, expected 0`)
 					return true
 				})
 			})

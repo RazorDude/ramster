@@ -8,7 +8,8 @@ module.exports = {
 		describe('db.globalConfig.getField', function() {
 			it('should return null if the field is not found', function() {
 				return co(function*() {
-					assert((yield instance.getField('suchAFieldDoesntExist')) === null)
+					let value = yield instance.getField('suchAFieldDoesntExist')
+					assert.strictEqual(value, null, `bad value ${value} for the field's suchAFieldDoesntExist value, expected null`)
 					return true
 				})
 			})
@@ -16,15 +17,7 @@ module.exports = {
 				return co(function*() {
 					let fieldFromMethod = yield instance.getField('testField'),
 						fieldFromDB = yield instance.model.findOne({where: {field: 'testField'}})
-					if (!fieldFromDB) {
-						throw {testError: 'Field not found in the database.'}
-					}
-					if (!fieldFromMethod) {
-						throw {testError: 'The method did not return the field.'}
-					}
-					if ((fieldFromDB.value !== fieldFromMethod)) {
-						throw {testError: `Bad value '${fieldFromMethod}', expected '${fieldFromDB.value}'`}
-					}
+					assert.strictEqual(fieldFromMethod, fieldFromDB.value, `bad value ${fieldFromMethod} for fieldFromMethod, expected ${fieldFromDB.value}`)
 					return true
 				})
 			})
@@ -35,8 +28,12 @@ module.exports = {
 		describe('db.globalConfig.getFields', function() {
 			it('should return an empty object if no fields are found', function() {
 				return co(function*() {
-					let result = yield instance.getFields(['suchAFieldDoesntExist'])
-					assert(result && (typeof result === 'object') && !Object.keys(result).length)
+					let result = yield instance.getFields(['suchAFieldDoesntExist']),
+						typeOfResult = typeof result
+					assert.strictEqual(typeOfResult, 'object', `bad value ${typeOfResult} for typeOfResult, expected object`)
+					assert.notStrictEqual(result, null, `bad value ${result} for result, expected it to be non-null`)
+					let resultKeysLength = Object.keys(result).length
+					assert.strictEqual(resultKeysLength, 0, `bad value ${resultKeysLength} for resultKeysLength, expected 0`)
 					return true
 				})
 			})
@@ -47,18 +44,10 @@ module.exports = {
 					if (!fieldsFromDB.length) {
 						throw {testError: 'Fields not found in the database.'}
 					}
-					if (!Object.keys(fieldsFromMethod).length) {
-						throw {testError: 'The method did not return any fields.'}
-					}
 					for (const i in fieldsFromDB) {
 						const fieldFromDB = fieldsFromDB[i].dataValues,
 							fieldFromMethod = fieldsFromMethod[fieldFromDB.field]
-						if (typeof fieldFromMethod === 'undefined') {
-							throw {testError: `The method did not return the "${fieldFromDB.field}" field.`}
-						}
-						if (fieldFromMethod !== fieldFromDB.value) {
-							throw {testError: `Bad value '${fieldFromMethod}' for field "${fieldFromDB.field}".`}
-						}
+						assert.strictEqual(fieldFromMethod, fieldFromDB.value, `bad value ${fieldFromMethod} for ${fieldFromDB.field}, expected ${fieldFromDB.value}`)
 					}
 					return true
 				})
