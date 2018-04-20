@@ -144,6 +144,14 @@ class BaseDBComponent {
 					}
 					associationOptionsObject[key] = value
 				}
+				// self association
+				if (targetComponentName === componentName) {
+					// create the association
+					model[itemData.type](model, associationOptionsObject)
+					dependencyMap[typeConfig.dependencyCategory].push(targetComponentName)
+					dependencyMap.associationKeys.push(alias)
+					continue
+				}
 				const targetComponent = components[targetComponentName]
 				if (!targetComponent) {
 					throw {customMessage: `At "${componentName}" component, relation "${alias}": invalid target component name - "${targetComponentName}".`}
