@@ -424,27 +424,46 @@ class CodeGenerator {
 	}
 
 	/**
-	 * Generates a .d.ts file from a sequelize model and puts it in the specified folder.
+	 * Generates a dbComponentName.model.d.ts file from a ramster dbComponent and puts it in the specified folder.
 	 * @param {string} outputPath The path to the folder in which the generated file will be put. Must be a valid and accessible directory.
-	 * @param {object} model The sequelize model to take the data from.
+	 * @param {object} dbComponent The ramster dbComponent to take the data from.
+	 * @param {object} Sequelize A static sequelize object to take dataTypes from.
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof CodeGenerator
 	 */
-	// generateTypescriptModel(outputPath, model) {
-	// 	const instance = this
-	// 	return co(function*() {
-	// 		if ((typeof outputPath !== 'string') || !outputPath.length) {
-	// 			throw {customMessage: 'The outputPath argument must be a non-empty string.'}
-	// 		}
-	// 		yield instance.checkOutputPath(outputPath)
-	// 		let dataToWrite = ``
-	// 		console.log(instance.modules.db.components.users.model.tableAttributes)
-	// 		let outputFile = yield fs.open(path.join(outputPath, 'model.d.ts'), 'w')
-	// 		yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/clients/site/layout_${configProfile || 'local'}.pug`)))
-	// 		yield fs.close(outputFile)
-	// 		return true
-	// 	})
-	// }
+	generateTypescriptModel(outputPath, dbComponent, Sequelize) {
+		const instance = this,
+			{sequelizeToTSTypeMap} = this
+		return co(function*() {
+			if ((typeof outputPath !== 'string') || !outputPath.length) {
+				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
+			}
+			if ((typeof dbComponent !== 'object') || (dbComponent === null) || !dbComponent.model) {
+				throw {customMessage: 'The dbComponent must a be a valid ramster dbComponent object.'}
+			}
+			yield instance.checkOutputPath(outputPath)
+			const attributes = dbComponent.model.attributes
+			let dataToWrite = `module.exports = {\n`
+			for (const attrName in attributes) {
+				const attrData = attributes[attrName]
+				dataToWrite += `${attrName}: `
+				if (attrData.type === Sequelize.ENUM) {
+					
+				} else if (attrData.type === Sequelize.ARRAY) {
+
+				} else {
+
+				}
+				dataToWrite += ',\n'
+			}
+			dataToWrite = dataToWrite.substr(0, dataToWrite.length - 2)
+			dataToWrite += '\n}\n'
+			let outputFile = yield fs.open(path.join(outputPath, `${dbComponent.componentName}.model.d.ts`), 'w')
+			yield fs.writeFile(outputFile, dataToWrite)
+			yield fs.close(outputFile)
+			return true
+		})
+	}
 
 	/**
 	 * Generates a project using the "blank" template, based on the provided configProfile arg. The "blank" template contains all the project's directory structure, the "index", "common" and "profile" project config files, the project main file and the webpack build tools.
@@ -485,10 +504,11 @@ class CodeGenerator {
 	 * - eslintrc, jsbeautifyrc and pug-lintrc
 	 * @param {string} outputPath The path to the folder in which the generated folders will be put. Must be a valid and accessible directory.
 	 * @param {string} configProfile The name of the config profile, whose template is to be used. An error will be thrown if it does not exist.
+	 * @param {string} webpackConfigType (optional) The webpack config type to generate, defaults to 'react' if not provided. Can be 'react' or 'angular'.
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof CodeGenerator
 	 */
-	generateBasicProject(outputPath, configProfile) {
+	generateBasicProject(outputPath, configProfile, webpackConfigType) {
 		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
@@ -506,7 +526,7 @@ class CodeGenerator {
 			yield fs.copy(path.join(__dirname, 'templates/modules/emails/templates/resetPassword.pug'), path.join(outputPath, 'modules/emails/templates/resetPassword.pug'))
 			yield fs.copy(path.join(__dirname, 'templates/modules/emails/templates/updateEmail.pug'), path.join(outputPath, 'modules/emails/templates/updateEmail.pug'))
 			yield fs.mkdirp(path.join(outputPath, 'config/webpack'))
-			yield instance.generateWebpackConfig(path.join(outputPath, 'config/webpack'), 'react')
+			yield instance.generateWebpackConfig(path.join(outputPath, 'config/webpack'), webpackConfigType || 'react')
 			yield instance.generateLayoutFile(path.join(outputPath, 'clients/site'), configProfile)
 			yield fs.copy(path.join(__dirname, 'templates/clients/site/index.js'), path.join(outputPath, 'clients/site/index.js'))
 			yield fs.mkdirp(path.join(outputPath, 'public/site'))

@@ -129,7 +129,7 @@ class BaseClientComponent extends BaseServerComponent {
 						savedSearchData = JSON.parse(savedSearchData)
 					}
 				} else if (query.saveSearchData) {
-					if (!query.filters && (typeof query.filters !== 'object')) {
+					if (!query.filters || (typeof query.filters !== 'object')) {
 						throw {customMessage: 'No filters provided.'}
 					}
 					yield module.generalStore.storeEntry(`userId-${currentUser.id}-searchComponent-${searchComponentName}-savedSearchData`, JSON.stringify(query))
@@ -209,7 +209,7 @@ class BaseClientComponent extends BaseServerComponent {
 							item[column] = row[cIndex]
 						})
 						addFields.forEach((fieldData, fIndex) => {
-							item[fieldData.fieldName] = fieldData.getValue(item)
+							item[fieldData.fieldName] = fieldData.getValue(item, req.user)
 						})
 						data.push(emptyToNull(item))
 					})

@@ -96,7 +96,8 @@ module.exports = (config, name) => {
 				sourceMap: false,
 				uglifyOptions: {
 					mangle: true,
-					compress: true
+					compress: true,
+					comments: false
 				}
 			}),
 			new webpack.DefinePlugin({
