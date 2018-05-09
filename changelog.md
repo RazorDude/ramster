@@ -146,7 +146,7 @@
 		- *BREAKING* - data should now be in the format {filters, relReadKeys, exactMatch, page, perPage, readAll, orderBy, orderDirection, transaction}, where filters are required.
 		- Added transaction support - pass {transaction: t} to data to make use of this functionality.
 		- Reworked the method to make use of the new getWhereObjects and getRelationObjects methods.
-		- Added the ability to get readAll results without filters. Set ``allowNoFiltersOnReadListReadAll`` to true in the component constructor.
+		- Removed the mandatory filters object requirement for readList.
 		- Added the ability to get the list comprised of only ids for all DB items and their related DB items. Use the ``idsModeOnly`` search option for this.
 	- Added a bulkUpdate method, used to update multiple objects one by one in the same transactions.
 	- Changes in the delete method:

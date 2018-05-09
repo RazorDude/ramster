@@ -1209,23 +1209,23 @@ module.exports = {
 			{sequelize, Sequelize} = this
 		let changeableInstance = this
 		describe('baseDBComponent.readList', function() {
-			it('should throw an error with the correct message if no filters are provided', function() {
-				return co(function*() {
-					changeableInstance.relReadKeys = []
-					let didThrowAnError = false
-					try {
-						yield instance.readList({})
-					} catch(e) {
-						if (e && (e.customMessage === 'No filters provided.')) {
-						didThrowAnError = true
-					} else {
-						throw e
-					}
-					}
-					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-					return true
-				})
-			})
+			// it('should throw an error with the correct message if no filters are provided', function() {
+			// 	return co(function*() {
+			// 		changeableInstance.relReadKeys = []
+			// 		let didThrowAnError = false
+			// 		try {
+			// 			yield instance.readList({})
+			// 		} catch(e) {
+			// 			if (e && (e.customMessage === 'No filters provided.')) {
+			// 			didThrowAnError = true
+			// 		} else {
+			// 			throw e
+			// 		}
+			// 		}
+			// 		assert.strictEqual(didThrowAnError, true, 'no error was thrown')
+			// 		return true
+			// 	})
+			// })
 			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are no relReadKeys', function() {
 				return sequelize.transaction().then((t) => co(function*() {
 					let items = [

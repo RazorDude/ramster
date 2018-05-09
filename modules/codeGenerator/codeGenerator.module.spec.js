@@ -6,7 +6,7 @@ const
 	fs = require('fs-extra')
 
 module.exports = {
-	testMe: function() {
+	testMe: function(ramster) {
 		const instance = this
 		describe('codeGenerator', function() {
 			it('should execute testBuildLayoutFile successfully', function() {
@@ -57,6 +57,9 @@ module.exports = {
 			it('should execute testGenerateLayoutFile successfully', function() {
 				instance.testGenerateLayoutFile()
 			})
+			// it('should execute testGenerateTypescriptModels successfully', function(ramster) {
+			// 	instance.testGenerateTypescriptModels()
+			// })
 			it('should execute testGenerateBlankProject successfully', function() {
 				instance.testGenerateBlankProject()
 			})
@@ -519,6 +522,35 @@ module.exports = {
 						return false
 					}
 					yield fs.remove(outputFilePath)
+					return true
+				})
+			})
+		})
+	},
+	testGenerateTypescriptModels: function(ramster) {
+		const instance = this
+		let outputPath = path.join(__dirname, 'test/clients/site/models')
+		describe('codeGenerator.generateTypescriptModels', function() {
+			before(function() {
+				return co(function*() {
+					yield fs.mkdirp(outputPath)
+					return true
+				})
+			})
+			it('should execute successfully if all parameters are correct', function() {
+				return co(function*() {
+					yield instance.generateTypescriptModels(outputPath)
+					let fileData = yield fs.lstat(outputFilePath)
+					if (!fileData.isFile()) {
+						assert(false, 'no file generated')
+						return false
+					}
+					return true
+				})
+			})
+			after(function() {
+				return co(function*() {
+					yield fs.remove(outputPath)
 					return true
 				})
 			})

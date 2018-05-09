@@ -110,6 +110,16 @@ class BaseDBComponent {
 		 */
 		this.searchFields = undefined
 		/**
+		 * A map of all associations the component has.
+		 * @type {baseDBComponentDependencyMap}
+		 * @typedef baseDBComponentDependencyMap
+		 * @property {string[]} slaveOf The names of the components that the component is in a belongsTo association.
+		 * @property {string[]} masterOf The names of the components that the component is in a hasOne or hasMany association.
+		 * @property {string[]} equalWith The names of the components that the component is in a belongsToMany association.
+		 * @property {string[]} associationKeys The full list of association keys (aliases) for this component.
+		 */
+		this.dependencyMap = undefined
+		/**
 		 * The currently initialized instance of the DBModule.
 		 * @type {DBModule}
 		 */
@@ -649,9 +659,9 @@ class BaseDBComponent {
 				{where, requiredRelationsData} = instance.getWhereObjects(data.filters || {}, (data.exactMatch instanceof Array) && data.exactMatch || []),
 				includeQueryData = instance.getRelationObjects(data.relReadKeys || {}, requiredRelationsData)
 			if (!Object.keys(where).length) {
-				if (!data.readAll || !instance.allowNoFiltersOnReadListReadAll) {
-					throw {customMessage: 'No filters provided.'}
-				}
+				// if (!data.readAll || !instance.allowNoFiltersOnReadListReadAll) {
+				// 	throw {customMessage: 'No filters provided.'}
+				// }
 				where = {}
 			}
 			let readListOptions = {

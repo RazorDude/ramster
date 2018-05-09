@@ -37,9 +37,70 @@ class CodeGenerator {
 		}
 		/**
 		 * An array containing class method names for which a project config is required to execute sucessfuly.
-		 * @member {string[]}
+		 * @type {string[]}
 		 */
 		this.configRequiredForMethods = ['buildLayoutFile', 'generateNGINXConfig']
+		/**
+		 * A map of PostgreSQL data types to typescript data types.
+		 * @type {Object.<string, string>}
+		 */
+		this.pgToTSMap = {
+			bigint: 'number',
+			int8: 'number',
+			bigserial: 'number',
+			serial8: 'number',
+			bit: 'string',
+			varbit: 'string',
+			boolean: 'boolean',
+			bool: 'boolean',
+			box: 'object',
+			bytea: 'object',
+			character: 'string',
+			char: 'string',
+			'character varying': 'string',
+			varchar: 'string',
+			cidr: 'object',
+			cirle: 'object',
+			date: 'string',
+			'double precision': 'number',
+			'float8': 'number',
+			inet: 'string',
+			integer: 'number',
+			int: 'number',
+			int4: 'number',
+			interval: 'string',
+			json: 'string',
+			jsonb: 'object',
+			line: 'object',
+			lseg: 'object',
+			macaddr: 'string',
+			money: 'number',
+			numeric: 'number',
+			decimal: 'number',
+			path: 'object',
+			pg_lsn: 'number',
+			point: 'object',
+			polygon: 'object',
+			real: 'number',
+			float8: 'number',
+			smallint: 'number',
+			int2: 'number',
+			smallserial: 'number',
+			serial2: 'number',
+			serial: 'number',
+			serial4: 'number',
+			text: 'string',
+			time: 'string',
+			timetz: 'string',
+			timestamp: 'string',
+			timestamptz: 'string',
+			tsquery: 'string',
+			tsvector: 'string',
+			txid_snapshot: 'string',
+			uuid: 'string',
+			xml: 'string',
+			'user-defined': 'string'
+		}
 	}
 
 	/**
@@ -424,43 +485,57 @@ class CodeGenerator {
 	}
 
 	/**
-	 * Generates a dbComponentName.model.d.ts file from a ramster dbComponent and puts it in the specified folder.
+	 * Generates a dbComponentName.model.d.ts files for each of a ramster's instance db.components' table and sequelize association data and puts them in the specified folder.
 	 * @param {string} outputPath The path to the folder in which the generated file will be put. Must be a valid and accessible directory.
-	 * @param {object} dbComponent The ramster dbComponent to take the data from.
-	 * @param {object} Sequelize A static sequelize object to take dataTypes from.
+	 * @param {object} db An instance of ramster's db module.
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof CodeGenerator
 	 */
-	generateTypescriptModel(outputPath, dbComponent, Sequelize) {
+	generateTypescriptModels(outputPath, db) {
 		const instance = this,
-			{sequelizeToTSTypeMap} = this
+			{pgToTSMap} = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
 			}
-			if ((typeof dbComponent !== 'object') || (dbComponent === null) || !dbComponent.model) {
-				throw {customMessage: 'The dbComponent must a be a valid ramster dbComponent object.'}
+			if (!dbComponents instanceof Array) {
+				throw {customMessage: 'The dbComponents arg must a be a valid array of ramster dbComponent objects.'}
 			}
 			yield instance.checkOutputPath(outputPath)
-			const attributes = dbComponent.model.attributes
-			let dataToWrite = `module.exports = {\n`
-			for (const attrName in attributes) {
-				const attrData = attributes[attrName]
-				dataToWrite += `${attrName}: `
-				if (attrData.type === Sequelize.ENUM) {
-					
-				} else if (attrData.type === Sequelize.ARRAY) {
-
-				} else {
-
+			// get the table layouts and column types
+			const {components, sequelize} = db,
+				rawTableData = yield sequelize.query(`select column_name, data_type, table_name from information_schema.columns;`)
+			let tableData = {}
+			rawTableData.forEach((row, index) => {
+				let tData = tableData[row.table_name]
+				if (!tData) {
+					tData = {}
+					tableData[row.table_name] = tData
 				}
-				dataToWrite += ',\n'
+				tData[row.column_name] = pgToTSMap[row.data_type.toLowerCase()] || 'any'
+			})
+			for (const i in components) {
+				const dbComponent = components[i]
+				if ((typeof dbComponent !== 'object') || (dbComponent === null) || !dbComponent.model) {
+					throw {customMessage: `The item at index ${i} is not a valid ramster dbComponent object.`}
+				}
+				const columns = tableData[dbComponent.model.getTableName()]
+				// write the column types data
+				let dataToWrite = `module.exports = {\n`
+				for (const colName in columns) {
+					dataToWrite += `	${colName}: ${columns[colName]},\n`
+					// dataToWrite += ',\n'
+				}
+				dbComponent.relReadKeys.forEach((key, index) => {
+					dataToWrite += `	${key}: any,\n`
+				})
+				dataToWrite = dataToWrite.substr(0, dataToWrite.length - 2)
+				dataToWrite += '\n}\n'
+				// save the file
+				let outputFile = yield fs.open(path.join(outputPath, `${dbComponent.componentName}.model.d.ts`), 'w')
+				yield fs.writeFile(outputFile, dataToWrite)
+				yield fs.close(outputFile)
 			}
-			dataToWrite = dataToWrite.substr(0, dataToWrite.length - 2)
-			dataToWrite += '\n}\n'
-			let outputFile = yield fs.open(path.join(outputPath, `${dbComponent.componentName}.model.d.ts`), 'w')
-			yield fs.writeFile(outputFile, dataToWrite)
-			yield fs.close(outputFile)
 			return true
 		})
 	}
