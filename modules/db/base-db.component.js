@@ -650,14 +650,18 @@ class BaseDBComponent {
 	readList(data) {
 		const instance = this
 		return co(function*() {
-			let order = [
-					[data.orderBy || instance.defaults.orderBy, data.orderDirection || instance.defaults.orderDirection]
-				],
+			let order = [],
 				page = data.page ? parseInt(data.page, 10) : instance.defaults.page,
 				perPage = data.perPage ? parseInt(data.perPage, 10) : instance.defaults.perPage,
 				more = false,
 				{where, requiredRelationsData} = instance.getWhereObjects(data.filters || {}, (data.exactMatch instanceof Array) && data.exactMatch || []),
 				includeQueryData = instance.getRelationObjects(data.relReadKeys || {}, requiredRelationsData)
+			if (data.orderBy instanceof Array) {
+				const orderDirection = data.orderDirection || instance.defaults.orderDirection
+				data.orderBy.forEach((item, index) => order.push([item, orderDirection]))
+			} else {
+				order.push([data.orderBy || instance.defaults.orderBy, data.orderDirection || instance.defaults.orderDirection])
+			}
 			if (!Object.keys(where).length) {
 				// if (!data.readAll || !instance.allowNoFiltersOnReadListReadAll) {
 				// 	throw {customMessage: 'No filters provided.'}
@@ -744,6 +748,8 @@ class BaseDBComponent {
 							results = yield instance.model.findAll(goodStuff)
 						}
 					}
+				} else {
+					throw e
 				}
 			}
 			if (results.length === (perPage + 1)) {
