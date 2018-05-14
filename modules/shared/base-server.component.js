@@ -333,7 +333,7 @@ class BaseServerComponent {
 							}
 							text += value
 							if (concatenateWith instanceof Array) {
-								lastConcatenator = (concatenateWith[i] || ' ')
+								lastConcatenator = (concatenateWith[fIndex] || ' ')
 								text += lastConcatenator
 							} else {
 								text += concatenateWith
