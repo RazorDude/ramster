@@ -720,8 +720,10 @@ class BaseDBComponent {
 			try {
 				results = yield instance.model.findAll(readListOptions)
 			} catch(e) {
-				if (e && e.original && e.original.error &&
-					(e.original.error.indexOf('missing FROM-clause item for table') !== -1) &&
+				if (e && e.message && (
+						(e.message.indexOf('missing FROM-clause item for table') !== -1) ||
+						(e.message.indexOf('missing FROM-clause entry for table') !== -1)
+					) &&
 					((typeof readListOptions.offset !== 'undefined') || (typeof readListOptions.limit !== 'undefined'))
 				) {
 					let {limit, offset, ...goodStuff} = readListOptions
