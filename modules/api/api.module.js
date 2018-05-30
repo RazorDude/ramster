@@ -5,6 +5,7 @@
  */
 
 const
+	BaseApiComponent = require('./base-api.component'),
 	BaseServerModule = require('../shared/base-server.module'),
 	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
@@ -37,6 +38,11 @@ class APIModule extends BaseServerModule {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
+		/**
+		 * An object, containing all api server components.
+		 * @type {Object.<string, BaseApiComponent>}
+		 */
+		this.components = {}
 	}
 
 	/**

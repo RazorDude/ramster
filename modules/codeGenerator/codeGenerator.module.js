@@ -7,7 +7,9 @@
 const
 	co = require('co'),
 	fs = require('fs-extra'),
+	glob = require('glob'),
 	handlebars = require('handlebars'),
+	jsdoc2md = require('jsdoc-to-markdown'),
 	path = require('path'),
 	pug = require('pug'),
 	spec = require('./codeGenerator.module.spec')
@@ -428,6 +430,70 @@ class CodeGenerator {
 			let outputFile = yield fs.open(path.join(outputPath, `.gitignore`), 'w')
 			yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/gitignore`)))
 			yield fs.close(outputFile)
+			return true
+		})
+	}
+
+	/**
+	 * Generates markdown docs from the jsdoc in all files that match the provided options.
+	 * @param {string} inputPath The folder containing the files to test.
+	 * @param {string} pattern The pattern by which to match files.
+	 * @param {string} outputPath The folder to put the generated files into.
+	 * @param {string[]} postMatchIgnore A list of paths to ignore post-match, since I can't get glob's "ignore" to work.
+	 * @returns {Promise<boolean>} A promise which wraps a generator function.
+	 * @memberof CodeGenerator
+	 */
+	generateDocs(inputPath, pattern, outputPath, postMatchIgnore) {
+		const instance = this
+		return co(function*() {
+			if ((typeof outputPath !== 'string') || !outputPath.length) {
+				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
+			}
+			yield instance.checkOutputPath(outputPath)
+			const normalizedInputPath = path.normalize(inputPath)
+			let paths = yield (new Promise((resolve, reject) => glob(
+					path.join(normalizedInputPath, pattern),
+					(err, matches) => err ? reject(err) : resolve(matches)
+				))),
+				fd = null
+			if (paths.length && (postMatchIgnore instanceof Array)) {
+				let pathsToIgnore = [],
+					actualPaths = []
+				postMatchIgnore.forEach((p, index) => {
+					pathsToIgnore.push(path.join(normalizedInputPath, p).replace(/\\/g, '/'))
+				})
+				paths.forEach((p, index) => {
+					let ignored = false
+					for (const i in pathsToIgnore) {
+						if (p.replace(pathsToIgnore[i], '').length !== p.length) {
+							ignored = true
+							break
+						}
+					}
+					if (ignored) {
+						return
+					}
+					actualPaths.push(p)
+				})
+				paths = actualPaths
+			}
+			for (const i in paths) {
+				const inputFilePath = paths[i],
+					outputFilePath = path.normalize(inputFilePath).replace(normalizedInputPath, '').replace(/\.[^/.]+$/, '') + '.md'
+				let delimiter = '\\',
+					parentDirectory = outputFilePath.split(delimiter) // windows-style paths
+				if (parentDirectory.length <= 1) {
+					delimiter = '/'
+					parentDirectory = outputFilePath.split(delimiter) // unix-style paths
+				}
+				if (parentDirectory.length > 1) {
+					parentDirectory.pop()
+					yield fs.mkdirp(path.join(outputPath, parentDirectory.join(delimiter)))
+				}
+				fd = yield fs.open(path.join(outputPath, outputFilePath), 'w')
+				yield fs.writeFile(fd, yield jsdoc2md.render({files: inputFilePath}))
+				yield fs.close(fd)
+			}
 			return true
 		})
 	}

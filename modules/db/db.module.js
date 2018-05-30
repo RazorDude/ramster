@@ -5,13 +5,17 @@
  */
 
 const
+	BaseDBComponent = require('./base-db.component'),
 	co = require('co'),
 	fs = require('fs-extra'),
+	GeneralStore = require('../generalStore/generalStore.module'),
+	Logger = require('../errorLogger/errorLogger.module'),
 	path = require('path'),
 	pd = require('pretty-data').pd,
 	Sequelize = require('sequelize'),
 	spec = require('./db.module.spec'),
-	ssh = require('ssh2-promise')
+	ssh = require('ssh2-promise'),
+	TokenManager = require('../tokenManager/tokenManager.module')
 
 /**
  * The DBModule class. This class connects to the database, loads all db components, creates associations and synchronizes the db tables. After it's fully loaded, it contains all dbComponents under its components key.
@@ -22,9 +26,9 @@ class DBModule {
 	 * Creates an instance of DBModule and sets various class properties, such as the config, generalStore and sequelize, as well as the test methods (defined in the accompanying .spec.js file) and the component defaults.
 	 * @param {object} config The project config object.
 	 * @see module:configModule
-	 * @param {object} logger An instance of the Logger class.
-	 * @param {object} generalStore An instance of the GeneralStore class.
-	 * @param {object} tokenManager An instance of the TokenManager class.
+	 * @param {Logger} logger An instance of the Logger class.
+	 * @param {GeneralStore} generalStore An instance of the GeneralStore class.
+	 * @param {TokenManager} tokenManager An instance of the TokenManager class.
 	 * @memberof DBModule
 	 */
 	constructor(config, logger, generalStore, tokenManager) {
@@ -78,7 +82,7 @@ class DBModule {
 		this.Sequelize = null
 		/**
 		 * A Sequelize instance.
-		 * @type {object}
+		 * @type {Sequelize}
 		 */
 		this.sequelize = null
 	}

@@ -6,8 +6,10 @@
 
 const
 	co = require('co'),
+	DBModule = require('./db.module'),
 	merge = require('deepmerge'),
 	moment = require('moment'),
+	Sequelize = require('sequelize'),
 	spec = require('./base-db.component.spec')
 
 /**
@@ -42,7 +44,8 @@ class BaseDBComponent {
 		 * The list of keyword operators to check and parse when escaping objects for filters. Anything not included in this list will be skipped.
 		 * @type {string[]}
 		 */
-		this.allowedFilterKeywordOperators = ['$and', '$not', '$gt', '$gte', '$lt', '$lte']
+		this.allowedFilterKeywordOperators = ['$and', '$gt', '$gte', '$lt', '$lte', '$not', '$or']
+		this.allowedFilterContainerKeys = ['$or']
 		/**
 		 * The default settings for bulding associations. They describe the required keys and the dependency category of which association type. The keys are the association types - belongsTo, hasOne, hasMany and belongsToMany.
 		 * @type {Object.<string, baseDBComponentAssociationDefaultsObject>}
@@ -73,7 +76,7 @@ class BaseDBComponent {
 		this.componentName = undefined
 		/**
 		 * The sequelize model for the component.
-		 * @type {object}
+		 * @type {Sequelize.Model}
 		 */
 		this.model = undefined
 		/**

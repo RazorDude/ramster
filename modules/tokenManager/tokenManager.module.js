@@ -6,11 +6,13 @@
 
 const
 	co = require('co'),
+	GeneralStore = require('../generalStore/generalStore.module'),
+	Logger = require('../errorLogger/errorLogger.module'),
 	jwt = require('jsonwebtoken'),
 	spec = require('./tokenManager.module.spec')
 
 /**
- * This class is used to create, validate and delete jwt tokens.
+ * This class is used to create, validate and delete JWTs.
  * @class TokenManager
  */
 class TokenManager{
@@ -18,8 +20,8 @@ class TokenManager{
 	 * Creates an instance of TokenManager.
 	 * @param {object} config The project config object.
 	 * @see module:configModule
-	 * @param {object} generalStore An instance of the GeneralStore class.
-	 * @param {object} errorLogger An instance of the Logger class.
+	 * @param {GeneralStore} generalStore An instance of the GeneralStore class.
+	 * @param {Logger} errorLogger An instance of the Logger class.
 	 * @memberof TokenManager
 	 */
 	constructor(config, generalStore, errorLogger) {
@@ -33,12 +35,12 @@ class TokenManager{
 		this.config = config
 		/**
 		 * An instance of the GeneralStore class.
-		 * @type {object}
+		 * @type {GeneralStore}
 		 */
 		this.generalStore = generalStore
 		/**
 		 * An instance of the Logger class.
-		 * @type {object}
+		 * @type {Logger}
 		 */
 		this.errorLogger = errorLogger
 	}

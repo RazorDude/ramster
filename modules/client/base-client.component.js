@@ -6,6 +6,7 @@
 
 const
 	BaseServerComponent = require('../shared/base-server.component'),
+	ClientModule = require('./client.module'),
 	co = require('co'),
 	csv = new (require('../csvPromise'))(),
 	{emptyToNull} = require('../toolbelt'),
@@ -29,6 +30,11 @@ class BaseClientComponent extends BaseServerComponent {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
+		/**
+		 * The currently initialized instance of the ClientModule.
+		 * @type {ClientModule}
+		 */
+		this.module = undefined
 	}
 
 	/**

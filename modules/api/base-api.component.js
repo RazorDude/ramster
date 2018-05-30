@@ -5,6 +5,7 @@
  */
 
 const
+	ApiModule = require('./api.module'),
 	BaseServerComponent = require('../shared/base-server.component'),
 	co = require('co'),
 	fs = require('fs'),
@@ -27,6 +28,11 @@ class BaseAPIComponent extends BaseServerComponent {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
+		/**
+		 * The currently initialized instance of the ApiModule.
+		 * @type {ApiModule}
+		 */
+		this.module = undefined
 	}
 }
 

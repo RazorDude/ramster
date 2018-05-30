@@ -5,13 +5,18 @@
  */
 
 const
+	BaseServerComponent = require('./base-server.component'),
 	co = require('co'),
 	{changeKeyCase} = require('../toolbelt'),
+	DBModule = require('../db/db.module'),
 	fs = require('fs-extra'),
+	GeneralStore = require('../generalStore/generalStore.module'),
+	Logger = require('../errorLogger/errorLogger.module'),
 	merge = require('deepmerge'),
 	passport = require('passport'),
 	path = require('path'),
-	spec = require('./base-server.module.spec')
+	spec = require('./base-server.module.spec'),
+	TokenManager = require('../tokenManager/tokenManager.module')
 
 /**
  * The base class for server (client and api) modules. It loads the module components and set some pre- and post-route method defaults.
@@ -25,10 +30,10 @@ class BaseServerModule {
 	 * @param {string} moduleName The name of the module.
 	 * @param {string} moduleType The type of the module. Can be 'client' or 'api'.
 	 * @param {object} options An object containing additonal properties.
-	 * @param {object} options.db An instance of the DBModule class.
-	 * @param {object} options.logger An instance of the Logger class.
-	 * @param {object} options.generalStore An instance of the GeneralStore class.
-	 * @param {object} options.tokenManager An instance of the TokenManager class
+	 * @param {DBModule} options.db An instance of the DBModule class.
+	 * @param {Logger} options.logger An instance of the Logger class.
+	 * @param {GeneralStore} options.generalStore An instance of the GeneralStore class.
+	 * @param {TokenManager} options.tokenManager An instance of the TokenManager class
 	 * @memberof BaseServerModule
 	 */
 	constructor(config, moduleName, moduleType, options) {
@@ -58,37 +63,37 @@ class BaseServerModule {
 		this.moduleConfig = config[`${moduleType}s`][moduleName]
 		/**
 		 * The list of instances of all baseServerComponents for this module.
-		 * @type {Object.<string, object>}
+		 * @type {Object.<string, BaseServerComponent>}
 		 */
 		this.components = {}
 		/**
 		 * A passportJS instance.
-		 * @type {object}
+		 * @type {passport}
 		 */
 		this.passport = passport
 		/**
 		 * An instance of the DBModule class.
-		 * @type {object}
+		 * @type {DBModule}
 		 */
 		this.db = db
 		/**
 		 * An instance of the Logger class.
-		 * @type {object}
+		 * @type {Logger}
 		 */
 		this.logger = logger
 		/**
 		 * An instance of the GeneralStore class.
-		 * @type {object}
+		 * @type {GeneralStore}
 		 */
 		this.generalStore = generalStore
 		/**
-		 * An instance of the GeneralStore class.
-		 * @type {object}
+		 * An instance of the TokenManager class.
+		 * @type {TokenManager}
 		 */
 		this.tokenManager = tokenManager
 		/**
 		 * A key-value map of how to parse fields between upper and lower camelCase.
-		 * @type {object[]>}
+		 * @type {object[]}
 		 */
 		this.fieldCaseMap = null
 		/**

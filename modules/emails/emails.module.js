@@ -12,7 +12,7 @@ const
 	spec = require('./emails.module.spec')
 
 /**
- * The Emails class. This class takes care of compiling email template files from .pug into .html and inserting local varibles, and sending emails afterwards.
+ * The Emails class. This class takes care of compiling email template files from .pug into .html, inserting local varibles and sending emails afterwards.
  * @class Emails
  */
 class Emails {

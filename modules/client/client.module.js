@@ -6,6 +6,7 @@
 
 
 const
+	BaseClientComponent = require('./base-client.component'),
 	BaseServerModule = require('../shared/base-server.module'),
 	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
@@ -42,6 +43,11 @@ class ClientModule extends BaseServerModule {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
+		/**
+		 * An object, containing all client server components.
+		 * @type {Object.<string, BaseClientComponent>}
+		 */
+		this.components = {}
 	}
 
 	/**

@@ -51,15 +51,18 @@ module.exports = {
 			it('should execute testGenerateGitignore successfully', function() {
 				instance.testGenerateGitignore()
 			})
+			it('should execute testGenerateDocs successfully', function() {
+				instance.testGenerateDocs()
+			})
 			it('should execute testGenerateFolders successfully', function() {
 				instance.testGenerateFolders()
 			})
 			it('should execute testGenerateLayoutFile successfully', function() {
 				instance.testGenerateLayoutFile()
 			})
-			// it('should execute testGenerateTypescriptModels successfully', function(ramster) {
-			// 	instance.testGenerateTypescriptModels()
-			// })
+			it('should execute testGenerateTypescriptModels successfully', function(ramster) {
+				instance.testGenerateTypescriptModels()
+			})
 			it('should execute testGenerateBlankProject successfully', function() {
 				instance.testGenerateBlankProject()
 			})
@@ -467,6 +470,129 @@ module.exports = {
 			})
 		})
 	},
+	testGenerateDocs: function() {
+		const instance = this
+		let inputPath = path.join(__dirname, './test/input'),
+			outputPath = path.join(__dirname, './test/output'),
+			fileList = ['topLevelTest.md', 'testFolder/firstLowerLevelTest.md', 'testFolder/innerTestFolder/secondLowerLevelTest.md']
+		describe('codeGenerator.generateDocs', function() {
+			before(function() {
+				return co(function*() {
+					yield fs.mkdirp(path.join(inputPath, 'testFolder/innerTestFolder'))
+					yield fs.mkdirp(path.join(inputPath, 'node_modules'))
+					yield fs.mkdirp(outputPath)
+					let fd = yield fs.open(path.join(inputPath, 'topLevelTest.js'), 'w')
+					yield fs.writeFile(fd, `
+						/**
+						 * The topLevelTest module. Contains the TopLevelTest class.
+						 * @module topLevelTestModule
+						 */
+						/**
+						 * The TopLevelTest class.
+						 * @class TopLevelTest
+						 */
+						class TopLevelTest {
+							/**
+							 * Does something.
+							 * @param {string} arg1 The first arg.
+							 * @param {number} arg2 The second arg.
+							 * @returns {void}
+							 * @memberof TopLevelTest
+							 */
+							testMethod(arg1, arg2) {}
+						}
+					`)
+					yield fs.close(fd)
+					fd = yield fs.open(path.join(inputPath, 'testFolder/firstLowerLevelTest.js'), 'w')
+					yield fs.writeFile(fd, `
+						/**
+						 * The firstLowerLevelTest module. Contains the FirstLowerLevelTest class.
+						 * @module firstLowerLevelTestModule
+						 */
+						/**
+						 * The FirstLowerLevelTest class.
+						 * @class FirstLowerLevelTest
+						 */
+						class FirstLowerLevelTest {
+							/**
+							 * Does something else.
+							 * @param {string} arg1 The first arg.
+							 * @param {number} arg2 The second arg.
+							 * @returns {void}
+							 * @memberof FirstLowerLevelTest
+							 */
+							testMethod2(arg1, arg2) {}
+						}
+					`)
+					yield fs.close(fd)
+					fd = yield fs.open(path.join(inputPath, 'testFolder/innerTestFolder/secondLowerLevelTest.js'), 'w')
+					yield fs.writeFile(fd, `
+						/**
+						 * The secondLowerLevelTest module. Contains the SecondLowerLevelTest class.
+						 * @module secondLowerLevelTestModule
+						 */
+						/**
+						 * The SecondLowerLevelTest class.
+						 * @class SecondLowerLevelTest
+						 */
+						class SecondLowerLevelTest {
+							/**
+							 * Does something else entirely.
+							 * @param {string} arg1 The first arg.
+							 * @param {number} arg2 The second arg.
+							 * @returns {void}
+							 * @memberof SecondLowerLevelTest
+							 */
+							testMethod3(arg1, arg2) {}
+						}
+					`)
+					yield fs.close(fd)
+					fd = yield fs.open(path.join(inputPath, 'node_modules/shouldNotExist.js'), 'w')
+					yield fs.writeFile(fd, `
+						/**
+						 * The shouldNotExist module. Contains the ShouldNotExist class.
+						 * @module shouldNotExistModule
+						 */
+						/**
+						 * The ShouldNotExist class.
+						 * @class ShouldNotExist
+						 */
+						class ShouldNotExist {
+							/**
+							 * Does not actually do anything.
+							 * @param {string} arg1 The first arg.
+							 * @param {number} arg2 The second arg.
+							 * @returns {void}
+							 * @memberof ShouldNotExist
+							 */
+							testMethod4(arg1, arg2) {}
+						}
+					`)
+					yield fs.close(fd)
+					return true
+				})
+			})
+			it('should execute successfully if all parameters are correct', function() {
+				this.timeout(10000)
+				return co(function*() {
+					yield instance.generateDocs(inputPath, '**/*.js', outputPath, ['node_modules'])
+					for (const i in fileList) {
+						const pathToFile = path.join(outputPath, fileList[i])
+						let fileData = yield fs.lstat(pathToFile)
+						assert.strictEqual(fileData.isFile(), true, `expected ${pathToFile} to exist as a file`)
+					}
+					return true
+				})
+			})
+			after(function() {
+				return co(function*() {
+					yield fs.remove(inputPath)
+					yield fs.remove(outputPath)
+					return true
+				})
+			})
+		})
+	},
 	testGenerateFolders: function() {
 		const instance = this
 		describe('codeGenerator.generateFolders', function() {
@@ -528,33 +654,33 @@ module.exports = {
 		})
 	},
 	testGenerateTypescriptModels: function(ramster) {
-		const instance = this
-		let outputPath = path.join(__dirname, 'test/clients/site/models')
-		describe('codeGenerator.generateTypescriptModels', function() {
-			before(function() {
-				return co(function*() {
-					yield fs.mkdirp(outputPath)
-					return true
-				})
-			})
-			it('should execute successfully if all parameters are correct', function() {
-				return co(function*() {
-					yield instance.generateTypescriptModels(outputPath)
-					let fileData = yield fs.lstat(outputFilePath)
-					if (!fileData.isFile()) {
-						assert(false, 'no file generated')
-						return false
-					}
-					return true
-				})
-			})
-			after(function() {
-				return co(function*() {
-					yield fs.remove(outputPath)
-					return true
-				})
-			})
-		})
+		// const instance = this
+		// let outputPath = path.join(__dirname, 'test/clients/site/models')
+		// describe('codeGenerator.generateTypescriptModels', function() {
+		// 	before(function() {
+		// 		return co(function*() {
+		// 			yield fs.mkdirp(outputPath)
+		// 			return true
+		// 		})
+		// 	})
+		// 	it('should execute successfully if all parameters are correct', function() {
+		// 		return co(function*() {
+		// 			yield instance.generateTypescriptModels(outputPath)
+		// 			let fileData = yield fs.lstat(outputFilePath)
+		// 			if (!fileData.isFile()) {
+		// 				assert(false, 'no file generated')
+		// 				return false
+		// 			}
+		// 			return true
+		// 		})
+		// 	})
+		// 	after(function() {
+		// 		return co(function*() {
+		// 			yield fs.remove(outputPath)
+		// 			return true
+		// 		})
+		// 	})
+		// })
 	},
 	testGenerateBlankProject: function() {
 		const instance = this

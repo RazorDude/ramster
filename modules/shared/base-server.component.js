@@ -5,6 +5,8 @@
  */
 
 const
+	BaseDBComponent = require('../db/base-db.component'),
+	BaseServerModule = require('./base-server.module'),
 	co = require('co'),
 	{getNested} = require('../toolbelt'),
 	spec = require('./base-server.component.spec')
@@ -45,10 +47,15 @@ class BaseServerComponent {
 		 */
 		this.componentName = componentName
 		/**
-		 * A reference to the dbComponent related to this server component (if any). See the baseDBComponent docs for more info.
-		 * @type {object}
+		 * A reference to the dbComponent related to this server component (if any).
+		 * @type {BaseDBComponent}
 		 */
 		this.dbComponent = undefined
+		/**
+		 * The currently initialized instance of the BaseServerModule.
+		 * @type {BaseServerModule}
+		 */
+		this.module = undefined
 		this.setRoutes({addDefaultRoutes, additionalDefaultRoutes, appendComponentNameToRoutes, routes})
 	}
 
