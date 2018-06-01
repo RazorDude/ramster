@@ -136,13 +136,15 @@ class BaseClientComponent extends BaseServerComponent {
 					}
 				} else if (query.saveSearchData) {
 					if (!query.filters || (typeof query.filters !== 'object')) {
-						throw {customMessage: 'No filters provided.'}
+						// throw {customMessage: 'No filters provided.'}
+						query.filters = {}
 					}
 					yield module.generalStore.storeEntry(`userId-${currentUser.id}-searchComponent-${searchComponentName}-savedSearchData`, JSON.stringify(query))
 				}
 
 				if (!query.filters && (typeof query.filters !== 'object')) {
-					throw {customMessage: 'No filters provided.'}
+					// throw {customMessage: 'No filters provided.'}
+						query.filters = {}
 				}
 
 				// map original and static filters, if provided

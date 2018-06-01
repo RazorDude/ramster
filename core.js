@@ -45,7 +45,6 @@ class Core {
 	/**
 	 * Creates an instance of Core. Sets the config and test methods (defined in the accompanying .spec.js file) as class properties. Sets the "modules" property to an empty object.
 	 * @param {object} config A ramster config object.
-	 * @see module:configModule
 	 * @memberof Core
 	 */
 	constructor(config) {
