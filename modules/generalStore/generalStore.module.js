@@ -28,6 +28,19 @@ class GeneralStore {
 		 */
 		this.config = config
 		/**
+		 * Thee project-specific key to add to all other keys. Using this, we make sure we're not mixing up the data values with other project's store on a centralized redis server.
+		 * @type {string}
+		 */
+		this.projectKeyPrefix = ''
+		if (config.redis.addProjectKeyPrefixToHandles) {
+			if (config.projectName) {
+				this.projectKeyPrefix += `${config.projectName}-`
+			}
+			if (config.projectVersion) {
+				this.projectKeyPrefix += `v${config.projectVersion}-`
+			}
+		}
+		/**
 		 * An instance of the redis client, connected to a redis server.
 		 * @type {redis.RedisClient}
 		 */
@@ -67,7 +80,7 @@ class GeneralStore {
 				reject({customMessage: 'Invalid handle provided.'})
 				return
 			}
-			this.client.hget('general_store', handle, (err, reply) => {
+			this.client.hget('general_store', `${this.projectKeyPrefix }${handle}`, (err, reply) => {
 				if (err) {
 					reject(err)
 					return
@@ -94,7 +107,7 @@ class GeneralStore {
 				reject({customMessage: 'No entry value provided.'})
 				return
 			}
-			this.client.hset('general_store', handle, entry, (err, reply) => {
+			this.client.hset('general_store', `${this.projectKeyPrefix }${handle}`, entry, (err, reply) => {
 				if (err) {
 					reject(err)
 					return
@@ -116,7 +129,7 @@ class GeneralStore {
 				reject({customMessage: 'Invalid handle provided.'})
 				return
 			}
-			this.client.hdel('general_store', handle, (err, reply) => {
+			this.client.hdel('general_store', `${this.projectKeyPrefix }${handle}`, (err, reply) => {
 				if (err) {
 					reject(err)
 					return

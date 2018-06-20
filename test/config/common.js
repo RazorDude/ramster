@@ -16,6 +16,7 @@ module.exports = {
 	mountGlobalStorageInWebserver: true,
 	addDistToStaticConfigInWebserver: true,
 	csvFileDelimiter: ',',
+	redis: {addProjectKeyPrefixToHandles: true},
 	emails: {
 		emailServiceProvider: 'sendgrid',
 		sendgridApiKey: 'sg.key',

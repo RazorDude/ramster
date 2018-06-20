@@ -35,6 +35,7 @@
 - *BREAKING* - removed the loadModules method and broke it down into four separate ones - loadDB, loadMailClient, loadClients and loadAPIs. This way it's easier to debug and test the ramster initialization process.
 - The core module (ramster) now has a runTests method, which executes defined tests for all db, client and api modules' components.
 - Added tests and validations to the generalStore and errorLogger modules.
+- Added addProjectKeyPrefixToHandles to the config.redis object and the corresponding functionality to generalStore.
 - Moved the findVertexById method from the migrations module to the toolbelt and renamed it to findVertexByIdDFS.
 - tokenManager:
 	- *BREAKING* - the constructor is now in the format (config, generalStore, errorLogger), rather than ({generalStore}).
