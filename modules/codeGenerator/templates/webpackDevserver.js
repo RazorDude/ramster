@@ -13,7 +13,7 @@ const
 	listenPromise = (moduleName, moduleConfig, webpackConfig) => new Promise((resolve, reject) => {
 		new WebpackDevServer(webpack(webpackConfig), {
 			publicPath: webpackConfig.output.publicPath,
-			hot: true,
+			// hot: true,
 			historyApiFallback: true,
 			stats: {
 				colors: true

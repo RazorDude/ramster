@@ -63,7 +63,7 @@ module.exports = (config, name) => {
 					test: /\.jsx?$/,
 					include,
 					exclude: [],
-					use: ['babel-loader?cacheDirectory=false&plugins[]=@babel/plugin-transform-runtime&presets[]=@babel/preset-env&presets[]=@babel/preset-react']
+					use: ['babel-loader?cacheDirectory=false&plugins[]=@babel/plugin-transform-runtime&plugins[]=@babel/plugin-proposal-object-rest-spread&plugins[]=react-hot-loader/babel&presets[]=@babel/preset-env&presets[]=@babel/preset-react']
 				},
 				{
 					test: /\.json$/,
