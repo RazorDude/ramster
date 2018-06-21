@@ -181,8 +181,11 @@ class BaseDBComponent {
 	/**
 	 * Goes through the sourceComponent's relations config (the config arg), checks the validity of each relations item, creates new relations objects and adds them in an array. Triggers itself for each item, if it has an include.
 	 * @param {BaseDBComponent} sourceComponent The db component that the relations are being mapped for.
-	 * @param {object} config The relationsConfig for the sourceComponent.
-	 * @returns {void}
+	 * @param {Object} config The relationsConfig for the sourceComponent.
+	 * @typedef {Object} BaseDBComponentMapNestedRelationsReturnType
+	 * @property {Array<string[]>} order An array containing all ordering items; must be added to the parent container as a property
+	 * @property {Array<Object>} include The include array containing the mapped sequelize include items.
+	 * @returns {BaseDBComponentMapNestedRelationsReturnType} The mapped include array and the order array to add to the container.
 	 * @memberof BaseDBComponent
 	 */
 	mapNestedRelations(sourceComponent, config) {
@@ -195,7 +198,8 @@ class BaseDBComponent {
 		const components = this.db.components,
 			sourceComponentName = sourceComponent.componentName,
 			associationKeys = sourceComponent.dependencyMap.associationKeys
-		let mappedArray = []
+		let mappedArray = [],
+			mappedOrder = []
 		config.forEach((item, index) => {
 			const {associationName, required, attributes, where, order, include} = item,
 				targetAssociation = sourceComponent.associationsConfig[associationName]
@@ -234,13 +238,15 @@ class BaseDBComponent {
 				if (!(order instanceof Array) || !order.length) {
 					throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": the "order" object in the relation config must be a non-empty array.`}
 				}
-				let orderItemsAreArrayOfStrings = true,
-					actualOrder = JSON.parse(JSON.stringify(order))
-				for (const i in actualOrder) {
-					let orderItem = actualOrder[i]
+				let orderItemsAreArrayOfStrings = true
+				for (const i in order) {
+					let orderItem = order[i]
 					if (!(orderItem instanceof Array)) {
 						orderItemsAreArrayOfStrings = false
 						break
+					}
+					if (orderItem.length !== 2) {
+						throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": "order" object with invalid length provided in the relation config at index ${i}.`}
 					}
 					for (const j in orderItem) {
 						let innerOrderItem = orderItem[j]
@@ -249,32 +255,31 @@ class BaseDBComponent {
 							break
 						}
 					}
-					// order by model, field and direction (need for inner ordering queries)
-					if (orderItem.length === 3) {
-						let innerComponentName = orderItem[0],
-							innerComponent = components[innerComponentName]
-						if (!innerComponent) {
-							throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": no component named "${innerComponentName}" exists, cannot order results by it.`}
-						}
-						actualOrder[i][0] = {model: innerComponent.model, as: associationName}
-					} else if (orderItem.length !== 2) {
-						throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": "order" object with invalid length provided in the relation config.`}
+					if (!orderItemsAreArrayOfStrings) {
+						break
 					}
+					mappedOrder.push([{model: targetComponent.model, as: associationName}].concat(orderItem))
 				}
 				if (!orderItemsAreArrayOfStrings) {
 					throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": "order" object with invalid contents provided in the relation config.`}
 				}
-				relationObject.order = actualOrder
 			}
 			if (include) {
 				if (!(include instanceof Array) || !include.length) {
 					throw {customMessage: `At "${sourceComponentName}" component, relation "${associationName}": the "include" object in the relation config must be a non-empty array.`}
 				}
-				relationObject.include = this.mapNestedRelations(targetComponent, include)
+				const innerData = this.mapNestedRelations(targetComponent, include)
+				relationObject.include = innerData.include
+				if (innerData.order.length) {
+					if (!relationObject.order) {
+						relationObject.order = []
+					}
+					relationObject.order = relationObject.order.concat(innerData.order)
+				}
 			}
 			mappedArray.push(relationObject)
 		})
-		return mappedArray
+		return {order: mappedOrder, include: mappedArray}
 	}
 
 	/**
@@ -302,17 +307,19 @@ class BaseDBComponent {
 				if (!relationConfig.associationName) {
 					relationConfig.associationName = alias
 				}
-				relations[alias] = (this.mapNestedRelations(this, [relationConfig]))[0]
+				const relData = this.mapNestedRelations(this, [relationConfig])
+				relations[alias] = {order: relData.mappedOrder, includeItem: relData.include[0]}
 				delete relationsConfig[alias]
 				continue
 			}
-			relations[alias] = {model: targetComponent.model, as: alias}
+			relations[alias] = {order: [], includeItem: {model: targetComponent.model, as: alias}}
 		}
 		for (const alias in relationsConfig) {
 			if (relations[alias]) {
 				throw {customMessage: `At "${componentName}" component: duplicate relation "${alias}".`}
 			}
-			relations[alias] = (this.mapNestedRelations(this, [relationsConfig[alias]]))[0]
+			const relData = this.mapNestedRelations(this, [relationsConfig[alias]])
+			relations[alias] = {order: relData.mappedOrder, includeItem: relData.include[0]}
 		}
 		this.relReadKeys = Object.keys(relations)
 		this.relations = relations
@@ -485,8 +492,9 @@ class BaseDBComponent {
 		this.relReadKeys.forEach((key, index) => {
 			let relationData = requiredRelationsData[key]
 			if (relationData) {
+				const relConfig = this.relations[key]
 				let splitPath = relationData.path.split('.'),
-					includeItem = this.assignModelToDereferencedRelationRecursively(this.relations[key]),
+					includeItem = this.assignModelToDereferencedRelationRecursively(relConfig.includeItem),
 					relationItem = {include: [includeItem]},
 					currentItemName = this.componentName
 				// set required=true for all items in the path and set the filter values to the bottom one
@@ -501,10 +509,6 @@ class BaseDBComponent {
 							nextRelationItemFound = true
 							relationItem = thisItem
 							relationItem.required = true
-							if (relationItem.order) {
-								order = order.concat(relationItem.order)
-								delete relationItem.order
-							}
 							currentItemName = keyFromPath
 							if (pcIndex === (splitPath.length - 1) && (typeof relationData.field !== 'undefined')) {
 								relationItem.where = {[relationData.field]: relationData.value}
@@ -517,10 +521,17 @@ class BaseDBComponent {
 				})
 				// go through all keys on all levels in includeItem and set their models, as they were destroyed during JSON.parse(JSON.stringify())
 				include.push(includeItem)
+				if (relConfig.order && relConfig.order.length) {
+					order = order.concat(relConfig.order)
+				}
 				return
 			}
 			if (actualData[key]) {
-				include.push(this.assignModelToDereferencedRelationRecursively(this.relations[key]))
+				const relConfig = this.relations[key]
+				if (relConfig.order && relConfig.order.length) {
+					order = order.concat(relConfig.order)
+				}
+				include.push(this.assignModelToDereferencedRelationRecursively(relConfig.includeItem))
 			}
 		})
 		return {include, order}

@@ -535,7 +535,7 @@ module.exports = {
 						[{associationName: 'test2', order: [[]]}]
 					)
 				} catch(e) {
-					if (e && (e.customMessage === 'At "test1" component, relation "test2": "order" object with invalid length provided in the relation config.')) {
+					if (e && (e.customMessage === 'At "test1" component, relation "test2": "order" object with invalid length provided in the relation config at index 0.')) {
 						didThrowAnError = true
 					} else {
 						throw e
@@ -583,7 +583,7 @@ module.exports = {
 				}
 				assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 			})
-			it('should throw an error with the correct message if an order object is povided in an association, but one of its items has an invalid number of args (should be 2 or 3)', function() {
+			it('should throw an error with the correct message if an order object is povided in an association, but one of its items has an invalid number of args (should be 2)', function() {
 				let didThrowAnError = false
 				changeableInstance.db = db
 				try {
@@ -595,27 +595,7 @@ module.exports = {
 						[{associationName: 'test2', order: [['test']]}]
 					)
 				} catch(e) {
-					if (e && (e.customMessage === 'At "test1" component, relation "test2": "order" object with invalid length provided in the relation config.')) {
-						didThrowAnError = true
-					} else {
-						throw e
-					}
-				}
-				assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-			})
-			it('should throw an error with the correct message if an order object is povided in an association, but one of its items has 3 values and the first is not a valid component name', function() {
-				let didThrowAnError = false
-				changeableInstance.db = db
-				try {
-					instance.mapNestedRelations({
-							componentName: 'test1',
-							associationsConfig: {test2: {}},
-							dependencyMap: {}
-						},
-						[{associationName: 'test2', order: [['test0', 'test', 't']]}]
-					)
-				} catch(e) {
-					if (e && (e.customMessage === 'At "test1" component, relation "test2": no component named "test0" exists, cannot order results by it.')) {
+					if (e && (e.customMessage === 'At "test1" component, relation "test2": "order" object with invalid length provided in the relation config at index 0.')) {
 						didThrowAnError = true
 					} else {
 						throw e
@@ -663,9 +643,9 @@ module.exports = {
 				}
 				assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 			})
-			it('should execute successfully and return a valid mappedArray if all paramters are correct', function() {
+			it('should execute successfully and return valid order and include arrays if all paramters are correct', function() {
 				changeableInstance.db = db
-				let mappedArray = instance.mapNestedRelations({
+				let {order, include} = instance.mapNestedRelations({
 							componentName: 'test1',
 							associationsConfig: {
 								test2: {type: 'belongsTo', foreignKey: 'test2Id'},
@@ -673,8 +653,8 @@ module.exports = {
 							},
 							dependencyMap: {associationKeys: ['test2', 'test3']}
 						}, [
-							{associationName: 'test2', include: [{associationName: 'test5', required: true, attributes: ['id', 'name']}]},
-							{associationName: 'test3', where: {id: 3}, order: [['testComponent3', 'id', 'asc']]}
+							{associationName: 'test2', include: [{associationName: 'test5', required: true, attributes: ['id', 'name'], order: [['id', 'desc']]}]},
+							{associationName: 'test3', where: {id: 3}, order: [['id', 'asc']]}
 						]
 					),
 					topLevelMapShouldBe = [
@@ -685,11 +665,11 @@ module.exports = {
 						{model: 'testComponent5Model', as: 'test5', required: true}
 					]
 
-				const firstItem = mappedArray[0],
-					secondItem = mappedArray[1]
+				const firstItem = include[0],
+					secondItem = include[1]
 				for (const i in topLevelMapShouldBe) {
 					const tlmItem = topLevelMapShouldBe[i],
-						mapItem = mappedArray[i]
+						mapItem = include[i]
 					for (const j in tlmItem) {
 						assert.strictEqual(mapItem[j], tlmItem[j], `At item no. ${i}: bad property "${j}", set to ${mapItem[j]}, expected ${tlmItem}.`)
 					}
@@ -698,18 +678,20 @@ module.exports = {
 					const tlmItem = firstItemIncludeShouldBe[i],
 						mapItem = firstItem.include[i]
 					for (const j in tlmItem) {
-						if (tlmItem[j] !== mapItem[j]) {
-							assert.strictEqual(mapItem[j], tlmItem[j], `At first item include item no. ${i}: bad property "${j}", set to ${mapItem[j]}, expected ${tlmItem[j]}.`)
-						}
+						assert.strictEqual(mapItem[j], tlmItem[j], `At first item include item no. ${i}: bad property "${j}", set to ${mapItem[j]}, expected ${tlmItem[j]}.`)
 					}
 				}
 				assert.strictEqual(firstItem.include[0].attributes[0], 'id', `Bad value ${firstItem.include[0].attributes[0]} for firstItem.include[0].attributes[0], expected id.`)
 				assert.strictEqual(firstItem.include[0].attributes[1], 'name', `Bad value ${firstItem.include[0].attributes[1]} for firstItem.include[0].attributes[1], expected name.`)
 				assert.strictEqual(secondItem.where.id, 3, `Bad value ${secondItem.where.id} for secondItem.where.id, expected 3.`)
-				assert.strictEqual(secondItem.order[0][0].model, 'testComponent3Model', `Bad value ${secondItem.order[0][0].model} for secondItem.order[0][0].model, expected testComponent3Model.`)
-				assert.strictEqual(secondItem.order[0][0].as, 'test3', `Bad value ${secondItem.order[0][0].as} for secondItem.order[0][0].as, expected test3.`)
-				assert.strictEqual(secondItem.order[0][1], 'id', `Bad value ${secondItem.order[0][1]} for secondItem.order[0][1], expected id.`)
-				assert.strictEqual(secondItem.order[0][2], 'asc', `Bad value ${secondItem.order[0][2]} for secondItem.order[0][2], expected asc.`)
+				assert.strictEqual(firstItem.order[0][0].model, 'testComponent5Model', `Bad value ${firstItem.order[0][0].model} for firstItem.order[0][0].model, expected testComponent5Model.`)
+				assert.strictEqual(firstItem.order[0][0].as, 'test5', `Bad value ${firstItem.order[0][0].as} for firstItem.order[0][0].as, expected test5.`)
+				assert.strictEqual(firstItem.order[0][1], 'id', `Bad value ${firstItem.order[0][1]} for firstItem.order[0][1], expected id.`)
+				assert.strictEqual(firstItem.order[0][2], 'desc', `Bad value ${firstItem.order[0][2]} for firstItem.order[0][2], expected desc.`)
+				assert.strictEqual(order[0][0].model, 'testComponent3Model', `Bad value ${order[0][0].model} for order[0][0].model, expected testComponent3Model.`)
+				assert.strictEqual(order[0][0].as, 'test3', `Bad value ${order[0][0].as} for order[0][0].as, expected test3.`)
+				assert.strictEqual(order[0][1], 'id', `Bad value ${order[0][1]} for order[0][1], expected id.`)
+				assert.strictEqual(order[0][2], 'asc', `Bad value ${order[0][2]} for order[0][2], expected asc.`)
 			})
 		})
 	},
@@ -765,15 +747,16 @@ module.exports = {
 				assert.strictEqual(keysAre, keysShouldBe, `Bad keys ${keysAre} for the instance.realReadKeys object. expected ${keysShouldBe}.`)
 				for (const key in attributesShouldBe) {
 					const reqItem = attributesShouldBe[key],
-						relItem = instance.relations[key]
+						relItem = instance.relations[key],
+						relItemInclude = relItem.includeItem
 					for (const innerKey in reqItem) {
-						assert.strictEqual(relItem[innerKey], reqItem[innerKey], `Bad value ${relItem[innerKey]} for key "${innerKey}" in item "${key}", expected ${reqItem[innerKey]}.`)
+						assert.strictEqual(relItemInclude[innerKey], reqItem[innerKey], `Bad value ${relItemInclude[innerKey]} for key "${innerKey}" in item "${key}", expected ${reqItem[innerKey]}.`)
 					}
 				}
-				let test3RelationAttributes = instance.relations.test3.attributes
+				let test3RelationAttributes = instance.relations.test3.includeItem.attributes
 				assert.strictEqual(test3RelationAttributes[0], 'id', `Bad value ${test3RelationAttributes[0]} for test3RelationAttributes[0], expected id.`)
 				assert.strictEqual(test3RelationAttributes[1], 'name', `Bad value ${test3RelationAttributes[1]} for test3RelationAttributes[1], expected name.`)
-				assert.strictEqual(instance.relations.test3ButWithADiffreentAlias.where.id, 1, `Bad value ${instance.relations.test3ButWithADiffreentAlias.where.id} for instance.relations.test3ButWithADiffreentAlias.where.id, expected 1.`)
+				assert.strictEqual(instance.relations.test3ButWithADiffreentAlias.includeItem.where.id, 1, `Bad value ${instance.relations.test3ButWithADiffreentAlias.includeItem.where.id} for instance.relations.test3ButWithADiffreentAlias.includeItem.where.id, expected 1.`)
 			})
 		})
 	},
@@ -1002,7 +985,7 @@ module.exports = {
 					test4: {type: 'belongsTo', foreignKey: 'test4Id'}
 				}
 				changeableInstance.relationsConfig = {
-					test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]},
+					test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]},
 					test2ButWithADiffreentAlias: {associationName: 'test2', where: {id: 1}}
 				}
 				changeableInstance.db = {
@@ -1149,7 +1132,7 @@ module.exports = {
 						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
 					}
 					changeableInstance.relationsConfig = {
-						test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
+						test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]}
 					}
 					changeableInstance.db = {
 						components: {
@@ -1248,7 +1231,7 @@ module.exports = {
 						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
 					}
 					changeableInstance.relationsConfig = {
-						test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
+						test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]}
 					}
 					changeableInstance.db = {
 						components: {
@@ -1331,7 +1314,7 @@ module.exports = {
 						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
 					}
 					changeableInstance.relationsConfig = {
-						test2: {order: [['testComponent2', 'id', 'asc']], include: [{associationName: 'test3'}]}
+						test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]}
 					}
 					changeableInstance.db = {
 						components: {
