@@ -934,7 +934,9 @@ module.exports = {
 							id: 3,
 							someString: 'test1',
 							'$testRelation.innerTestRelation.nestedId$': 5,
-							anotherString: 'test2'
+							anotherString: 'test2',
+							$and: [{id: 15, someString: 'test2'}, {id: 16, someString: 'test3'}],
+							$or: [{id: 15, someString: 'test2'}, {id: 16, someString: 'test3'}]
 						},
 						['anotherString']
 					),
@@ -1164,7 +1166,8 @@ module.exports = {
 							filters: {
 								id: 1,
 								'$test2.name$': 'test2Name',
-								'$test2.test3.description$': 'test3Description'
+								'$test2.test3.description$': 'test3Description',
+								$and: [{id: [1,2,3,4]}, {$or: {'$test2.name$': 'test2Name'}}],
 							},
 							transaction: t
 						})).dataValues,

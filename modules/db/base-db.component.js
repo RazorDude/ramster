@@ -447,6 +447,26 @@ class BaseDBComponent {
 					this.setFilterValue(where, element, field, fieldValue, exactMatch)
 				}
 			})
+			if ((filters.$and instanceof Array) && (filters.$and.length)) {
+				where.$and = []
+				filters.$and.forEach((andItem, aIndex) => {
+					let whereObjects = this.getWhereObjects(andItem, exactMatch)
+					if (Object.keys(whereObjects.where).length) {
+						where.$and.push(whereObjects.where)
+						// if ()
+					}
+				})
+			}
+			if ((filters.$or instanceof Array) && (filters.$or.length)) {
+				where.$or = []
+				filters.$or.forEach(($orItem, oIndex) => {
+					let whereObjects = this.getWhereObjects($orItem, exactMatch)
+					if (Object.keys(whereObjects.where).length) {
+						where.$or.push(whereObjects.where)
+						// if ()
+					}
+				})
+			}
 		}
 		return {where, requiredRelationsData}
 	}
