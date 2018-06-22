@@ -183,7 +183,7 @@ class BaseDBComponent {
 	 * @param {BaseDBComponent} sourceComponent The db component that the relations are being mapped for.
 	 * @param {Object} config The relationsConfig for the sourceComponent.
 	 * @typedef {Object} BaseDBComponentMapNestedRelationsReturnType
-	 * @property {Array<string[]>} order An array containing all ordering items; must be added to the parent container as a property
+	 * @property {Array<string[]>} order An array containing all ordering items; must be added up with the parent container's model and association name up to the top level
 	 * @property {Array<Object>} include The include array containing the mapped sequelize include items.
 	 * @returns {BaseDBComponentMapNestedRelationsReturnType} The mapped include array and the order array to add to the container.
 	 * @memberof BaseDBComponent
@@ -274,7 +274,7 @@ class BaseDBComponent {
 					if (!relationObject.order) {
 						relationObject.order = []
 					}
-					relationObject.order = relationObject.order.concat(innerData.order)
+					mappedOrder = mappedOrder.concat(innerData.order.map((orderItem, oIndex) => [{model: targetComponent.model, as: associationName}].concat(orderItem)))
 				}
 			}
 			mappedArray.push(relationObject)
@@ -539,7 +539,6 @@ class BaseDBComponent {
 						throw {customMessage: `Invalid relation "${keyFromPath}" for "${currentItemName}".`}
 					}
 				})
-				// go through all keys on all levels in includeItem and set their models, as they were destroyed during JSON.parse(JSON.stringify())
 				include.push(includeItem)
 				if (relConfig.order && relConfig.order.length) {
 					order = order.concat(relConfig.order)
