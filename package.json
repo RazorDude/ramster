@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.0.0-beta.43",
+  "version": "1.0.0-beta.44",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -66,8 +66,8 @@
   },
   "scripts": {
     "fullTest-local": "node ./test/generateStuff.js && mocha ./test/test.js && mocha ./test/index.js --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools",
-	"fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools --testLint",
-	"generateProjectDocs": "node ./generateProjectDocs.js",
+    "fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools --testLint",
+    "generateProjectDocs": "node ./generateProjectDocs.js",
     "test-local": "node ./test/generateStuff.js && mocha ./test/test.js",
     "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools"
   },
@@ -81,11 +81,11 @@
     "@babel/runtime": "^7.0.0-beta.42",
     "babel-loader": "^8.0.0-beta.0",
     "css-loader": "^0.28.10",
-    "react-hot-loader": "^4.3.3",
     "json2-loader": "^0.1.0",
     "less": "^3.0.1",
     "less-loader": "^4.0.5",
     "node-sass": "^4.7.2",
+    "react-hot-loader": "^4.3.3",
     "sass-loader": "^6.0.6",
     "style-loader": "^0.20.2"
   },

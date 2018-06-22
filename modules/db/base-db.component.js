@@ -308,7 +308,7 @@ class BaseDBComponent {
 					relationConfig.associationName = alias
 				}
 				const relData = this.mapNestedRelations(this, [relationConfig])
-				relations[alias] = {order: relData.mappedOrder, includeItem: relData.include[0]}
+				relations[alias] = {order: relData.order, includeItem: relData.include[0]}
 				delete relationsConfig[alias]
 				continue
 			}
@@ -319,7 +319,7 @@ class BaseDBComponent {
 				throw {customMessage: `At "${componentName}" component: duplicate relation "${alias}".`}
 			}
 			const relData = this.mapNestedRelations(this, [relationsConfig[alias]])
-			relations[alias] = {order: relData.mappedOrder, includeItem: relData.include[0]}
+			relations[alias] = {order: relData.order, includeItem: relData.include[0]}
 		}
 		this.relReadKeys = Object.keys(relations)
 		this.relations = relations
