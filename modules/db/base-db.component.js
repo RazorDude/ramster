@@ -914,6 +914,9 @@ class BaseDBComponent {
 				})
 				let existingItems = (yield instance.readList(readListOptions)).results,
 					includedRelationNames = Object.keys(readListOptions.relReadKeys)
+				if (!existingItems.length) {
+					return {deleted: 0}
+				}
 				for (const i in existingItems) {
 					const item = (existingItems[i]).dataValues
 					if (systemCriticalIds.indexOf(item.id) !== -1) {
@@ -934,6 +937,9 @@ class BaseDBComponent {
 			if (systemCriticalIds.length) {
 				let existingItems = (yield instance.readList(readListOptions)).results,
 					idsToDelete = []
+				if (!existingItems.length) {
+					return {deleted: 0}
+				}
 				for (const i in existingItems) {
 					const item = (existingItems[i]).dataValues
 					if (systemCriticalIds.indexOf(item.id) !== -1) {
@@ -943,6 +949,15 @@ class BaseDBComponent {
 				}
 				deleteOptions.where.id = idsToDelete
 			}
+			let existingItems = (yield instance.readList(readListOptions)).results,
+				idsToDelete = []
+			if (!existingItems.length) {
+				return {deleted: 0}
+			}
+			for (const i in existingItems) {
+				idsToDelete.push((existingItems[i]).dataValues.id)
+			}
+			deleteOptions.where.id = idsToDelete
 			return {deleted: yield instance.model.destroy(deleteOptions)}
 		})
 	}

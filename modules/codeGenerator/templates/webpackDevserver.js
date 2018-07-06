@@ -38,7 +38,7 @@ co(function*() {
 	startForClientModules = startForClientModules.split(',')
 	for (const moduleName in config.clients) {
 		let moduleConfig = config.clients[moduleName]
-		if (!moduleConfig.startWebpackDevserver && (startForClientModules.indexof(moduleName) === -1)) {
+		if (!moduleConfig.startWebpackDevserver && (startForClientModules.indexOf(moduleName) === -1)) {
 			continue
 		}
 
