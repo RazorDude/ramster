@@ -568,7 +568,7 @@ class BaseDBComponent {
 	stripAndMapAttributesFromOptionsObjectRecursively(optionsObject) {
 		let attributesByPath = {nested: []}
 		if (optionsObject.attributes) {
-			attributesByPath.topLevel = JSON.parse(JSON.stringify(attributes))
+			attributesByPath.topLevel = JSON.parse(JSON.stringify(optionsObject.attributes))
 		}
 		optionsObject.attributes = ['id']
 		if (optionsObject.include) {
@@ -686,9 +686,12 @@ class BaseDBComponent {
 			let order = [],
 				page = data.page ? parseInt(data.page, 10) : instance.defaults.page,
 				perPage = data.perPage ? parseInt(data.perPage, 10) : instance.defaults.perPage,
+				totalPages = 1,
 				more = false,
 				{where, requiredRelationsData} = instance.getWhereObjects(data.filters || {}, (data.exactMatch instanceof Array) && data.exactMatch || []),
-				includeQueryData = instance.getRelationObjects(data.relReadKeys || {}, requiredRelationsData)
+				includeQueryData = instance.getRelationObjects(data.relReadKeys || {}, requiredRelationsData),
+				readAll = (data.readAll === true) || (data.readAll === 'true'),
+				idsOnlyMode = (data.idsOnlyMode === true) || (data.idsOnlyMode === 'true')
 			if (data.orderBy instanceof Array) {
 				const orderDirection = data.orderDirection || instance.defaults.orderDirection
 				data.orderBy.forEach((item, index) => order.push([item, orderDirection]))
@@ -696,7 +699,7 @@ class BaseDBComponent {
 				order.push([data.orderBy || instance.defaults.orderBy, data.orderDirection || instance.defaults.orderDirection])
 			}
 			if (!Object.keys(where).length) {
-				// if (!data.readAll || !instance.allowNoFiltersOnReadListReadAll) {
+				// if (!readAll || !instance.allowNoFiltersOnReadListReadAll) {
 				// 	throw {customMessage: 'No filters provided.'}
 				// }
 				where = {}
@@ -705,12 +708,10 @@ class BaseDBComponent {
 					where,
 					include: includeQueryData.include,
 					order: order.concat(includeQueryData.order)
-				},
-				countOptions = {where, include: includeQueryData.include}
+				}
 
 			if (data.transaction) {
 				readListOptions.transaction = data.transaction
-				countOptions.transaction = data.transaction
 			}
 			if (data.fields) {
 				readListOptions.attributes = data.fields
@@ -721,22 +722,19 @@ class BaseDBComponent {
 				} else {
 					readListOptions.where.id = {$not: data.excludeIdsFromSearch}
 				}
-				countOptions.where = readListOptions.where
 			}
 			if (!Object.keys(readListOptions.where).length) {
 				delete readListOptions.where
 			}
-			if (!Object.keys(countOptions.where).length) {
-				delete countOptions.where
-			}
 
-			let totalCount = yield instance.model.count(countOptions),
-				totalPages = 0
-			if (data.readAll) {
-				totalPages = 1
+			if (readAll) {
 				page = 1
-				perPage = totalCount
 			} else {
+				// nasty workaround for totalCount, as sequelize's select count doesn't work properly with associations
+				let countOptions = Object.assign({}, data)
+				countOptions.readAll = true
+				countOptions.idsOnlyMode = true
+				let totalCount = (yield instance.readList(countOptions)).perPage
 				totalPages = Math.ceil(totalCount / perPage)
 				if ((totalPages > 0) && (page > totalPages)) {
 					page = totalPages
@@ -745,11 +743,11 @@ class BaseDBComponent {
 				readListOptions.limit = perPage + 1
 			}
 
-			if (data.idsOnlyMode) {
+			if (idsOnlyMode) {
 				instance.stripAndMapAttributesFromOptionsObjectRecursively(readListOptions)
 			}
 			let results = []
-			// workaround for this Sequelize bug - https://github.com/sequelize/sequelize/issues/8602
+			// workaround for this Sequelize bug - https://github.com/sequelize/sequelize/issues/8602, moved to https://github.com/sequelize/sequelize/issues/9166
 			try {
 				results = yield instance.model.findAll(readListOptions)
 			} catch(e) {
@@ -760,7 +758,7 @@ class BaseDBComponent {
 					((typeof readListOptions.offset !== 'undefined') || (typeof readListOptions.limit !== 'undefined'))
 				) {
 					let {limit, offset, ...goodStuff} = readListOptions
-					if (data.idsOnlyMode) {
+					if (idsOnlyMode) {
 						let idResults = yield instance.model.findAll(goodStuff)
 						for (let i = offset; i <= limit; i++) {
 							if (!idResults[i]) {
@@ -787,7 +785,9 @@ class BaseDBComponent {
 					throw e
 				}
 			}
-			if (results.length === (perPage + 1)) {
+			if (readAll) {
+				perPage = results.length
+			} else if (results.length === (perPage + 1)) {
 				results.pop()
 				more = true
 			}
