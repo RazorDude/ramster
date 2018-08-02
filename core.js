@@ -61,14 +61,15 @@ class Core {
 
 	/**
 	 * Loads the logger (error loger, Loger class), generalStore (redis store), tokenManager and codeGenerator, and sets them as class properties.
+	 * @param {boolean} mockMode A flag which determines whether the method should run in "live" or "mock" mode (used in unit testing).
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof Core
 	 */
-	loadDependencies() {
+	loadDependencies(mockMode) {
 		let instance = this
 		return co(function*() {
 			instance.logger = new Logger(instance.config)
-			instance.generalStore = new GeneralStore(instance.config)
+			instance.generalStore = new GeneralStore(instance.config, mockMode)
 			yield instance.generalStore.createClient()
 			instance.tokenManager = new TokenManager(instance.config, instance.generalStore, instance.logger)
 			instance.codeGenerator = new CodeGenerator(instance.config)
@@ -283,7 +284,7 @@ class Core {
 			before(function() {
 				this.timeout(50000)
 				return co(function*() {
-					yield instance.loadDependencies()
+					yield instance.loadDependencies(true)
 					yield instance.loadDB(true)
 					if (config.emails) {
 						yield instance.loadMailClient(true)

@@ -16,9 +16,10 @@ class GeneralStore {
 	/**
 	 * Creates an instance of GeneralStore, sets the config and the test methods from the accompanying .spec.js file.
 	 * @param {object} config The project config object.
+	 * @param {boolean} mockMode A flag used to determine whether the system is running in test (mock) mode. If set to true and a mock prefix is provided in the redis config, it will be added to the prefix.
 	 * @memberof GeneralStore
 	 */
-	constructor(config) {
+	constructor(config, mockMode) {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
@@ -39,6 +40,9 @@ class GeneralStore {
 			if (config.projectVersion) {
 				this.projectKeyPrefix += `v${config.projectVersion}-`
 			}
+		}
+		if (mockMode && config.redis.mockModePrefix) {
+			this.projectKeyPrefix += config.redis.mockModePrefix
 		}
 		/**
 		 * An instance of the redis client, connected to a redis server.
