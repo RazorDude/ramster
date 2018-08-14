@@ -31,7 +31,8 @@ module.exports = {
 	},
 	redis: {
 		host: '127.0.0.1',
-		port: 6379
+		port: 6379,
+		mockModePrefix: 'mockMode'
 	},
 	migrations: {
 		serverPort: 1177

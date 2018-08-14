@@ -135,8 +135,12 @@ class DBModule {
 					}
 				)
 				console.log('Authenticating db...')
-				yield sequelize.authenticate()
-				console.log('DB authenticated...')
+				try {
+					yield sequelize.authenticate()
+					console.log('DB authenticated.')
+				} catch(e) {
+					console.log('DB failed to authenticate.', e)
+				}
 				instance.Sequelize = Sequelize
 				instance.sequelize = sequelize
 				return true

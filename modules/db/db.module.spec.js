@@ -52,97 +52,97 @@ module.exports = {
 			describeSuiteConditionally(moduleConfig.dbType === 'postgreSQL', 'postgreSQL dialect', function() {
 				const originalPostgreSQLConfig = originalConfig.postgreSQL
 				let postgreSQLConfig = changeableInstance.config.postgreSQL
-				it('should throw a SequelizeHostNotFoundError error if an invalid postgreSQL server host address is provided', function() {
-					return co(function*() {
-						let didThrowAnError = false
-						postgreSQLConfig.host = `absolutelyFakeHostAddress_${moment.utc().valueOf()}`
-						try {
-							yield instance.connectToDB()
-						} catch(e) {
-							if (e && (e.name === 'SequelizeHostNotFoundError')) {
-								didThrowAnError = true
-							} else {
-								throw e
-							}
-						}
-						postgreSQLConfig.host = originalPostgreSQLConfig.host
-						assert.strictEqual(didThrowAnError, true, 'no error thrown')
-						return true
-					})
-				})
-				it('should throw a RangeError error if an invalid postgreSQL server port is provided', function() {
-					return co(function*() {
-						let didThrowAnError = false
-						postgreSQLConfig.port = `absolutelyFakeServerPort_${moment.utc().valueOf()}`
-						try {
-							yield instance.connectToDB()
-						} catch(e) {
-							if (e && (e.name === 'RangeError')) {
-								didThrowAnError = true
-							} else {
-								throw e
-							}
-						}
-						postgreSQLConfig.port = originalPostgreSQLConfig.port
-						assert.strictEqual(didThrowAnError, true, 'no error thrown')
-						return true
-					})
-				})
-				it('should throw a SequelizeConnectionError error if an invalid postgreSQL user is provided for a running postgreSQL server on the provided host and port', function() {
-					return co(function*() {
-						let didThrowAnError = false
-						postgreSQLConfig.user = `absolutelyFakeUsername_${moment.utc().valueOf()}`
-						try {
-							yield instance.connectToDB()
-						} catch(e) {
-							if (e && (e.name === 'SequelizeConnectionError')) {
-								didThrowAnError = true
-							} else {
-								throw e
-							}
-						}
-						postgreSQLConfig.user = originalPostgreSQLConfig.user
-						assert.strictEqual(didThrowAnError, true, 'no error thrown')
-						return true
-					})
-				})
-				it.skip('should throw a SequelizeConnectionError error if an invalid postgreSQL password is provided for a running postgreSQL server on the provided host and port', function() {
-					return co(function*() {
-						let didThrowAnError = false
-						postgreSQLConfig.password = `absolutelyFakePassword_${moment.utc().valueOf()}`
-						try {
-							yield instance.connectToDB()
-						} catch(e) {
-							if (e && (e.name === 'SequelizeConnectionError')) {
-								didThrowAnError = true
-							} else {
-								throw e
-							}
-						}
+				// it('should throw a SequelizeHostNotFoundError error if an invalid postgreSQL server host address is provided', function() {
+				// 	return co(function*() {
+				// 		let didThrowAnError = false
+				// 		postgreSQLConfig.host = `absolutelyFakeHostAddress_${moment.utc().valueOf()}`
+				// 		try {
+				// 			yield instance.connectToDB()
+				// 		} catch(e) {
+				// 			if (e && (e.name === 'SequelizeHostNotFoundError')) {
+				// 				didThrowAnError = true
+				// 			} else {
+				// 				throw e
+				// 			}
+				// 		}
+				// 		postgreSQLConfig.host = originalPostgreSQLConfig.host
+				// 		assert.strictEqual(didThrowAnError, true, 'no error thrown')
+				// 		return true
+				// 	})
+				// })
+				// it('should throw a RangeError error if an invalid postgreSQL server port is provided', function() {
+				// 	return co(function*() {
+				// 		let didThrowAnError = false
+				// 		postgreSQLConfig.port = `absolutelyFakeServerPort_${moment.utc().valueOf()}`
+				// 		try {
+				// 			yield instance.connectToDB()
+				// 		} catch(e) {
+				// 			if (e && (e.name === 'RangeError')) {
+				// 				didThrowAnError = true
+				// 			} else {
+				// 				throw e
+				// 			}
+				// 		}
+				// 		postgreSQLConfig.port = originalPostgreSQLConfig.port
+				// 		assert.strictEqual(didThrowAnError, true, 'no error thrown')
+				// 		return true
+				// 	})
+				// })
+				// it('should throw a SequelizeConnectionError error if an invalid postgreSQL user is provided for a running postgreSQL server on the provided host and port', function() {
+				// 	return co(function*() {
+				// 		let didThrowAnError = false
+				// 		postgreSQLConfig.user = `absolutelyFakeUsername_${moment.utc().valueOf()}`
+				// 		try {
+				// 			yield instance.connectToDB()
+				// 		} catch(e) {
+				// 			if (e && (e.name === 'SequelizeConnectionError')) {
+				// 				didThrowAnError = true
+				// 			} else {
+				// 				throw e
+				// 			}
+				// 		}
+				// 		postgreSQLConfig.user = originalPostgreSQLConfig.user
+				// 		assert.strictEqual(didThrowAnError, true, 'no error thrown')
+				// 		return true
+				// 	})
+				// })
+				// it.skip('should throw a SequelizeConnectionError error if an invalid postgreSQL password is provided for a running postgreSQL server on the provided host and port', function() {
+				// 	return co(function*() {
+				// 		let didThrowAnError = false
+				// 		postgreSQLConfig.password = `absolutelyFakePassword_${moment.utc().valueOf()}`
+				// 		try {
+				// 			yield instance.connectToDB()
+				// 		} catch(e) {
+				// 			if (e && (e.name === 'SequelizeConnectionError')) {
+				// 				didThrowAnError = true
+				// 			} else {
+				// 				throw e
+				// 			}
+				// 		}
 						
-						postgreSQLConfig.password = originalPostgreSQLConfig.password
-						assert.strictEqual(didThrowAnError, true, 'no error thrown')
-						return true
-					})
-				})
-				it('should throw a SequelizeConnectionError error if an invalid postgreSQL database name is provided for a running postgreSQL server on the provided host and port', function() {
-					return co(function*() {
-						let didThrowAnError = false
-						postgreSQLConfig.database = `absolutelyFakeDatabaseName_${moment.utc().valueOf()}`
-						try {
-							yield instance.connectToDB()
-						} catch(e) {
-							if (e && (e.name === 'SequelizeConnectionError')) {
-								didThrowAnError = true
-							} else {
-								throw e
-							}
-						}
-						postgreSQLConfig.database = originalPostgreSQLConfig.database
-						assert.strictEqual(didThrowAnError, true, 'no error thrown')
-						return true
-					})
-				})
+				// 		postgreSQLConfig.password = originalPostgreSQLConfig.password
+				// 		assert.strictEqual(didThrowAnError, true, 'no error thrown')
+				// 		return true
+				// 	})
+				// })
+				// it('should throw a SequelizeConnectionError error if an invalid postgreSQL database name is provided for a running postgreSQL server on the provided host and port', function() {
+				// 	return co(function*() {
+				// 		let didThrowAnError = false
+				// 		postgreSQLConfig.database = `absolutelyFakeDatabaseName_${moment.utc().valueOf()}`
+				// 		try {
+				// 			yield instance.connectToDB()
+				// 		} catch(e) {
+				// 			if (e && (e.name === 'SequelizeConnectionError')) {
+				// 				didThrowAnError = true
+				// 			} else {
+				// 				throw e
+				// 			}
+				// 		}
+				// 		postgreSQLConfig.database = originalPostgreSQLConfig.database
+				// 		assert.strictEqual(didThrowAnError, true, 'no error thrown')
+				// 		return true
+				// 	})
+				// })
 				it('should execute successfully if all paramters are correct and mockMode is set to true', function() {
 					return co(function*() {
 						yield instance.connectToDB(true)
