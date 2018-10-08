@@ -10,8 +10,10 @@ const checkUserData = (permissionsData, accessPoints, alwaysAccessibleModules) =
 		const ap = accessPoints[i],
 			pd = displayModuleAccessPointIds[ap.displayModuleId]
 		assert(pd, `Missing permissions data object for displayModule id ${ap.displayModuleId}, access point id ${ap.id}.`)
-		assert(displayModuleNames[ap.displayModule.name], `Missing displayModule name for displayModule id ${ap.displayModuleId}, access point id ${ap.id}.`)
 		assert.notStrictEqual(pd.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
+		if (ap.displayModule) {
+			assert(displayModuleNames[ap.displayModule.name], `Missing displayModule name for displayModule id ${ap.displayModuleId}, access point id ${ap.id}.`)
+		}
 		assert(accessPointsById[ap.id], `Missing accessPoint data by id for the access point with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
 	}
 	for (const i in alwaysAccessibleModules) {

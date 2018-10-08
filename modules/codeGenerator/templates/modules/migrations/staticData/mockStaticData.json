@@ -1,4 +1,18 @@
 {
+	"accessPoints": {
+		"primaryKeys": ["id"],
+		"data": [
+			{"id": 1, "displayModuleId": 1, "name": "Dash Create", "description": "Dash Create", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 2, "displayModuleId": 1, "name": "Dash View", "description": "Dash View", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 3, "displayModuleId": 1, "name": "Dash Edit", "description": "Dash Edit", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 4, "displayModuleId": 1, "name": "Dash Delete", "description": "Dash Delete", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 5, "displayModuleId": 2, "name": "Module 2 Create", "description": "Module 2 Create", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 6, "displayModuleId": 2, "name": "Module 2 View", "description": "Module 2 View", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 7, "displayModuleId": 2, "name": "Module 2 Edit", "description": "Module 2 Edit", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 8, "displayModuleId": 2, "name": "Module 2 Delete", "description": "Module 2 Delete", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
+			{"id": 9, "displayModuleId": null, "name": "No Module View", "description": "No Module View", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
+		]
+	},
 	"globalConfigs": {
 		"primaryKeys": ["id"],
 		"data": [
@@ -11,19 +25,6 @@
 		"data": [
 			{"id": 1, "name": "Dashboard", "route": "/dashboard", "description": "Dashboard", "order": 0, "alwaysAccessible": false, "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
 			{"id": 2, "name": "Module 2", "route": "/module2", "description": "Module2", "order": 1, "alwaysAccessible": true, "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
-		]
-	},
-	"accessPoints": {
-		"primaryKeys": ["id"],
-		"data": [
-			{"id": 1, "displayModuleId": 1, "name": "Dash Create", "description": "Dash Create", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
-			{"id": 2, "displayModuleId": 1, "name": "Dash View", "description": "Dash View", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
-			{"id": 3, "displayModuleId": 1, "name": "Dash Edit", "description": "Dash Edit", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
-			{"id": 4, "displayModuleId": 1, "name": "Dash Delete", "description": "Dash Delete", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
-			{"id": 5, "displayModuleId": 2, "name": "Module 2 Create", "description": "Module 2 Create", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
-			{"id": 6, "displayModuleId": 2, "name": "Module 2 View", "description": "Module 2 View", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
-			{"id": 7, "displayModuleId": 2, "name": "Module 2 Edit", "description": "Module 2 Edit", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"},
-			{"id": 8, "displayModuleId": 2, "name": "Module 2 Delete", "description": "Module 2 Delete", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
 		]
 	},
 	"userTypes": {
@@ -48,6 +49,7 @@
 			{"accessPointId": 2, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
 			{"accessPointId": 3, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
 			{"accessPointId": 4, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
+			{"accessPointId": 9, "userTypeId": 1, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
 			{"accessPointId": 3, "userTypeId": 2, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
 			{"accessPointId": 4, "userTypeId": 2, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},
 			{"accessPointId": 7, "userTypeId": 2, "createdAt": "2018-01-01 00:00:00", "updatedAt": "2018-01-01 00:00:00"},

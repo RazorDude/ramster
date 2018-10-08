@@ -471,7 +471,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message and status if the user does not have access to the method', function() {
 				return co(function*() {
-					req.user = {type: {accessPoints: [{id: 1}]}}
+					req.user = {type: {accessPoints: [{id: 1, active: true}]}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [2], next: () => {}}))(req, res, next.bind(next, resolve))
 					}))
@@ -482,7 +482,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message and status if the user has access to less than all access points and requireAllAPs is set to true', function() {
 				return co(function*() {
-					req.user = {type: {accessPoints: [{id: 1}]}}
+					req.user = {type: {accessPoints: [{id: 1, active: true}]}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: () => {}, requireAllAPs: true}))(req, res, next.bind(next, resolve))
 					}))
@@ -493,7 +493,7 @@ module.exports = {
 			})
 			it('should execute successfully if the user has access to the route and requireAllAPs is set to false', function() {
 				return co(function*() {
-					req.user = {type: {accessPoints: [{id: 1}]}}
+					req.user = {type: {accessPoints: [{id: 1, active: true}]}}
 					req.locals.error = null
 					let result = yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -505,7 +505,7 @@ module.exports = {
 			})
 			it('should execute successfully if the user has access to the route and requireAllAPs is set to true', function() {
 				return co(function*() {
-					req.user = {type: {accessPoints: [{id: 1}, {id: 2}]}}
+					req.user = {type: {accessPoints: [{id: 1, active: true}, {id: 2, active: true}]}}
 					req.locals.error = null
 					let result = yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: function*(){resolve({success: true})}, requireAllAPs: true}))(req, res, next.bind(next, resolve))
@@ -517,7 +517,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the user data and requireAllAPs is not set', function() {
 				return co(function*() {
-					req.user = {type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -529,7 +529,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the request data and requireAllAPs is not set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -541,7 +541,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the user does not have one of the required userField values because there is no match with the field in the provided in the request data and requireAllAPs is not set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: 'otherValue'}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -553,7 +553,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the array provided in the request data and requireAllAPs is not set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: ['otherValue']}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -565,7 +565,7 @@ module.exports = {
 			})
 			it('should execute successfully if the user has one of the required userField vaues in the provided request data and setUserFieldValueIn is not set in the access point and requireAllAPs is not set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: 'someValue'}}
 					req.locals.error = null
 					let result = yield (new Promise((resolve, reject) => {
@@ -578,7 +578,7 @@ module.exports = {
 			})
 			it('should execute successfully if the user has one of the required userField vaues in the provided request data (as an array) and setUserFieldValueIn is not set in the access point and requireAllAPs is not set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: ['someValue']}}
 					req.locals.error = null
 					let result = yield (new Promise((resolve, reject) => {
@@ -591,7 +591,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the container that the userField value has to be set in does not exist in the request data and requireAllAPs is not set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: ['otherValue']}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -603,7 +603,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if one of the containers that the userField value has to be set in does not exist in the request data and requireAllAPs is not set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer[]someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer[]someField'}]}}
 					req.body = {someFieldContainer: {someField: ['otherValue']}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -615,7 +615,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the user data and requireAllAPs is set', function() {
 				return co(function*() {
-					req.user = {type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -627,7 +627,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the request data and requireAllAPs is set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -639,7 +639,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the user does not have one of the required userField values because there is no match with the field in the provided in the request data and requireAllAPs is set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: 'otherValue'}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -651,7 +651,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the array provided in the request data and requireAllAPs is set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: ['otherValue']}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -663,7 +663,7 @@ module.exports = {
 			})
 			it('should execute successfully if the user has one of the required userField vaues in the provided request data and setUserFieldValueIn is not set in the access point and requireAllAPs is set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: 'someValue'}}
 					req.locals.error = null
 					let result = yield (new Promise((resolve, reject) => {
@@ -676,7 +676,7 @@ module.exports = {
 			})
 			it('should execute successfully if the user has one of the required userField vaues in the provided request data (as an array) and setUserFieldValueIn is not set in the access point and requireAllAPs is set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: ['someValue']}}
 					req.locals.error = null
 					let result = yield (new Promise((resolve, reject) => {
@@ -689,7 +689,7 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if the container that the userField value has to be set in does not exist in the request data and requireAllAPs is set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer.someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer.someField'}]}}
 					req.body = {someFieldContainer: {someField: ['someValue']}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
@@ -701,13 +701,37 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if one of the containers that the userField value has to be set in does not exist in the request data and requireAllAPs is set', function() {
 				return co(function*() {
-					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer[]someField'}]}}
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, active: true, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer[]someField'}]}}
 					req.body = {someFieldContainer: {someField: ['someValue']}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
 					}))
 					assert.strictEqual(req.locals.error.customMessage, 'Could not set access-related field values in the request data object. Please check your data and try again.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Could not set access-related field values in the request data object. Please check your data and try again.`)
 					assert.strictEqual(req.locals.error.status, 400, `bad value ${req.locals.error.status} for req.locals.error.status, expected 400`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if all access points are inactive and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {type: {accessPoints: [{id: 1, active: false}]}}
+					req.body = {}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if one of the access points is inactive and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {type: {accessPoints: [{id: 1, active: false}]}}
+					req.body = {}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`)
 					return true
 				})
 			})

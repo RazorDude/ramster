@@ -1,3 +1,7 @@
+# 1.0.1
+- Fixed the user permissionsData-related errors for accessPoints not linked to displayModules.
+- Added code for stoping access to inactive accesspoints.
+
 # 1.0.0
 - Added a shields.io node version badge.
 - Added a shields.io npm package version badge.

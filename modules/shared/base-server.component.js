@@ -195,12 +195,12 @@ class BaseServerComponent {
 						allPresent = true,
 						nonePresent = true
 					userTypeAccessPoints.forEach((ap, index) => {
-						apIdMap[ap.id] = {index, hasuserFieldName: ap.userFieldName ? true : false}
+						apIdMap[ap.id] = {index, active: ap.active, hasuserFieldName: ap.userFieldName ? true : false}
 					})
 					// check for the existence of the access points themselves
 					for (const i in apIds) {
 						const apData = apIdMap[apIds[i]]
-						if (typeof apData === 'undefined') {
+						if ((typeof apData === 'undefined') || !apData.active) {
 							allPresent = false
 							break
 						}
@@ -222,7 +222,7 @@ class BaseServerComponent {
 						const ap = userTypeAccessPoints[apIndex],
 							userFieldValue = getNested(user, ap.userFieldName),
 							userFieldValueIsAnArray = (userFieldValue instanceof Array)
-						if (typeof userFieldValue === 'undefined') {
+						if ((typeof userFieldValue === 'undefined') || !ap.active) {
 							if (requireAllAPs) {
 								throw {customMessage: 'You do not have access to this resource.', status: 403}
 							}
@@ -315,7 +315,6 @@ class BaseServerComponent {
 						if (nonePresent) {
 							nonePresent = false
 						}
-						console.log('================>', req.body)
 					})
 					if (userFieldNameAPIndexes.length && nonePresent) {
 						throw {customMessage: 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', status: 403}

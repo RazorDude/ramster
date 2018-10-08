@@ -149,6 +149,12 @@ class UsersDBComponent extends BaseDBComponent {
 							permissionsData.displayModuleAccessPointIds[ap.displayModuleId].push(ap.id)
 						}
 						delete ap.displayModule
+					} else {
+						if (!permissionsData.displayModuleAccessPointIds.null) {
+							permissionsData.displayModuleAccessPointIds.null = [ap.id]
+						} else {
+							permissionsData.displayModuleAccessPointIds.null.push(ap.id)
+						}
 					}
 					if (!permissionsData.accessPointsById[ap.id]) {
 						permissionsData.accessPointsById[ap.id] = ap
