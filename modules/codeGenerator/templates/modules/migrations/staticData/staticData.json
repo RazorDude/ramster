@@ -8,7 +8,7 @@
 	"users": {
 		"primaryKeys": ["id"],
 		"data": [
-			{"id": 1, "typeId": 1, "firstName": "Admin", "lastName": "User", "email": "admin@ramster.com", "password": "1234", "status": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
+			{"id": 1, "typeId": 1, "firstName": "Admin", "lastName": "User", "email": "admin@ramster.com", "password": "1234", "active": true, "createdAt": "2017-08-01 00:00:00", "updatedAt": "2017-08-01 00:00:00"}
 		]
 	}
 }

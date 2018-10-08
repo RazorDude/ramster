@@ -44,19 +44,12 @@ class LayoutSiteClientComponent extends BaseClientComponent {
 	 * @memberof LayoutSiteClientComponent
 	 */
 	loadLayout() {
-		const instance = this,
-			{module} = this
+		const {module} = this
 		return function* (req, res, next) {
 			try {
 				if (req.isAuthenticated()) {
-					let permissionsData = req.user.permissionsData,
-						canViewDashboard = permissionsData.Dashboard.text.canView
 					if ((req.locals.originalUrl === '/') || (req.locals.originalUrl === '/login')) {
-						res.redirect(302, canViewDashboard ? '/dashboard' : '/mySettings')
-						return
-					}
-					if ((req.locals.originalUrl === '/dashboard') && !canViewDashboard) {
-						res.redirect(302, '/mySettings')
+						res.redirect(302, '/dashboard')
 						return
 					}
 				}

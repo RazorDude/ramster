@@ -39,7 +39,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully, redirect to "/dashboard" and return the layout.html file if the route is "/" and the user is logged in and can view the dashboard', function() {
+			it('should execute successfully, redirect to "/dashboard" and return the layout.html file if the route is "/" and the user is logged in', function() {
 				return co(function*() {
 					let result = yield request({
 							method: 'get',
@@ -68,7 +68,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully, redirect to "/dashboard" and return the layout.html file if the route is "/login" and the user is logged in and can view the dashboard', function() {
+			it('should execute successfully, redirect to "/dashboard" and return the layout.html file if the route is "/login" and the user is logged in', function() {
 				return co(function*() {
 					let result = yield request({
 							method: 'get',
@@ -78,21 +78,6 @@ module.exports = {
 						}),
 						hrefShouldBe = `http://127.0.0.1:${moduleConfig.serverPort}/dashboard`,
 						refererShouldBe = `http://127.0.0.1:${moduleConfig.serverPort}/login`
-					assert.strictEqual(result.request.href, hrefShouldBe, `bad value ${result.request.href} for result.request.href, expected ${hrefShouldBe}`)
-					assert.strictEqual(result.request.headers.referer, refererShouldBe, `bad value ${result.request.headers.referer} for result.request.headers.referer, expected ${refererShouldBe}`)
-					assert.strictEqual(result.body, layoutFileData, `bad value ${result.body} for result.body, expected the layoutFileData`)
-					return true
-				})
-			})
-			it('should execute successfully, redirect to "/login" and return the layout.html file if the route is "/dashboard" and the user is not logged in', function() {
-				return co(function*() {
-					let result = yield request({
-							method: 'get',
-							uri: `http://127.0.0.1:${moduleConfig.serverPort}/dashboard`,
-							resolveWithFullResponse: true
-						}),
-						hrefShouldBe = `http://127.0.0.1:${moduleConfig.serverPort}/login`,
-						refererShouldBe = `http://127.0.0.1:${moduleConfig.serverPort}/dashboard`
 					assert.strictEqual(result.request.href, hrefShouldBe, `bad value ${result.request.href} for result.request.href, expected ${hrefShouldBe}`)
 					assert.strictEqual(result.request.headers.referer, refererShouldBe, `bad value ${result.request.headers.referer} for result.request.headers.referer, expected ${refererShouldBe}`)
 					assert.strictEqual(result.body, layoutFileData, `bad value ${result.body} for result.body, expected the layoutFileData`)

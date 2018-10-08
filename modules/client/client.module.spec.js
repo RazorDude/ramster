@@ -264,7 +264,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully and continue to next if the user is not authenticated, but the route is not anonymous', function() {
+			it('should execute successfully and continue to next if the user is not authenticated, but the route is anonymous', function() {
 				return co(function*() {
 					moduleConfig.anonymousAccessRoutes = ['/unathorizedRoute']
 					changeableInstance.paths = ['/unathorizedRoute']
@@ -279,7 +279,6 @@ module.exports = {
 					delete changeableInstance.paths
 					assert.strictEqual(next.fail, false, `bad value ${next.fail} for next.fail, expected false`)
 					assert.strictEqual(req.locals.error, null, `bad value ${req.locals.error} for req.locals.error, expected null`)
-					assert.strictEqual(req.locals.errorStatus, 500, `bad value ${req.locals.errorStatus} for req.locals.errorStatus, expected 500`)
 					assert.strictEqual(req.locals.originalUrl, '/unathorizedRoute', `bad value ${req.locals.originalUrl} for req.locals.originalUrl, expected '/unathorizedRoute'`)
 					return true
 				})

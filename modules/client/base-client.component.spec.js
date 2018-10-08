@@ -219,8 +219,8 @@ module.exports = {
 		describe('base-client.component.readList', function() {
 			before(function() {
 				return co(function*() {
-					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
-					yield dbComponents.users.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', status: true})
+					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
+					yield dbComponents.users.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true})
 					delete req.locals.error
 					return true
 				})
@@ -238,7 +238,7 @@ module.exports = {
 					}
 					let returnedData = res.response.jsonBody,
 						result = returnedData.results[0],
-						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
+						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', active: true},
 						savedSearchData = JSON.parse(yield module.generalStore.getStoredEntry(`userId-1-searchComponent-users-savedSearchData`))
 					for (const key in item) {
 						assert.strictEqual(result[key], item[key], `bad value ${result[key]} for field "${key}", expected ${item[key]}`)
@@ -266,7 +266,7 @@ module.exports = {
 					}
 					let returnedData = res.response.jsonBody,
 						result = returnedData.results[0],
-						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true}
+						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', active: true}
 					for (const key in item) {
 						assert.strictEqual(result[key], item[key], `bad value ${result[key]} for field "${key}", expected ${item[key]}`)
 					}
@@ -383,13 +383,13 @@ module.exports = {
 				return co(function*() {
 					let fileName = 'testFile.csv',
 						fd = yield fs.open(path.join(config.globalStoragePath, `importTemplates/${componentName}.csv`), 'w')
-					yield fs.writeFile(fd, `id,typeId,firstName,lastname,email,password,status`)
+					yield fs.writeFile(fd, `id,typeId,firstName,lastname,email,password,active`)
 					yield fs.close(fd)
 					fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w')
-					yield fs.writeFile(fd, 'id,typeId,firstName,lastname,email,password,status\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
+					yield fs.writeFile(fd, 'id,typeId,firstName,lastname,email,password,active\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
 					yield fs.close(fd)
-					yield db.components.userTypes.create({name: 'type1', description: 'description1', status: true})
-					yield dbComponent.create({typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', status: true})
+					yield db.components.userTypes.create({name: 'type1', description: 'description1', active: true})
+					yield dbComponent.create({typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', active: true})
 					delete req.locals.error
 					req.user = {id: 1}
 					req.body = {fileName, delimiter: ','}
@@ -402,8 +402,8 @@ module.exports = {
 						throw req.locals.error
 					}
 					let usersShouldBe = [
-							{id: 2, typeId: 2, firstName: 'updatedFN2', lastName: 'thisIsTheNewShit2', email: 'email2Updated@ramster.com', status: true},
-							{id: 3, typeId: 2, firstName: 'fn3', lastName: 'thisIsTheNewShit2', email: 'email3@ramster.com', status: true}
+							{id: 2, typeId: 2, firstName: 'updatedFN2', lastName: 'thisIsTheNewShit2', email: 'email2Updated@ramster.com', active: true},
+							{id: 3, typeId: 2, firstName: 'fn3', lastName: 'thisIsTheNewShit2', email: 'email3@ramster.com', active: true}
 						],
 						users = yield dbComponent.model.findAll({order: [['id', 'asc']]})
 					for (const i in usersShouldBe) {
@@ -421,7 +421,7 @@ module.exports = {
 					let fileName = 'testFile.csv',
 						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w'),
 						messageShouldBe = 'The file does not match the template and not all columns have been mapped.'
-					yield fs.writeFile(fd, 'id,typeId,firstNameTest,lastname,emailTest,password,status\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
+					yield fs.writeFile(fd, 'id,typeId,firstNameTest,lastname,emailTest,password,active\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
 					yield fs.close(fd)
 					delete req.locals.error
 					req.user = {id: 1}
@@ -443,16 +443,16 @@ module.exports = {
 				return co(function*() {
 					let fileName = 'testFile.csv',
 						fd = yield fs.open(path.join(config.globalUploadPath, fileName), 'w')
-					yield fs.writeFile(fd, 'id,typeId,firstNameTest,lastname,emailTest,password,status\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
+					yield fs.writeFile(fd, 'id,typeId,firstNameTest,lastname,emailTest,password,active\n2,2,updatedFN2,ln2,email2Updated@ramster.com,1234,true\n\n,2,fn3,ln3,email3@ramster.com,1234,true')
 					yield fs.close(fd)
 					yield db.sequelize.query(`
 						delete from "users";
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					yield dbComponent.create({typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', status: true})
+					yield dbComponent.create({typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', active: true})
 					delete req.locals.error
 					req.user = {id: 1}
-					req.body = {fileName, delimiter: ',', id: 'id', typeId: 'typeId', firstName: 'firstNameTest', lastname: 'lastname', email: 'emailTest', password: 'password', status: 'status'}
+					req.body = {fileName, delimiter: ',', id: 'id', typeId: 'typeId', firstName: 'firstNameTest', lastname: 'lastname', email: 'emailTest', password: 'password', active: 'active'}
 					changeableInstance.addFields = [{fieldName: 'lastName', getValue: (item) => `thisIsTheNewShit${item.typeId}`}]
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
@@ -462,8 +462,8 @@ module.exports = {
 						throw req.locals.error
 					}
 					let usersShouldBe = [
-							{id: 2, typeId: 2, firstName: 'updatedFN2', lastName: 'thisIsTheNewShit2', email: 'email2Updated@ramster.com', status: true},
-							{id: 3, typeId: 2, firstName: 'fn3', lastName: 'thisIsTheNewShit2', email: 'email3@ramster.com', status: true}
+							{id: 2, typeId: 2, firstName: 'updatedFN2', lastName: 'thisIsTheNewShit2', email: 'email2Updated@ramster.com', active: true},
+							{id: 3, typeId: 2, firstName: 'fn3', lastName: 'thisIsTheNewShit2', email: 'email3@ramster.com', active: true}
 						],
 						users = yield dbComponent.model.findAll({order: [['id', 'asc']]})
 					for (const i in usersShouldBe) {

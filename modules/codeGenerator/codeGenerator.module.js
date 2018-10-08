@@ -656,7 +656,7 @@ class CodeGenerator {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
 			}
 			yield instance.checkOutputPath(outputPath)
-			let dbModules = ['globalConfig', 'moduleAccessPoints', 'moduleCategories', 'modules', 'users', 'userTypes'],
+			let dbModules = ['globalConfig', 'accessPoints', 'displayModuleCategories', 'displayModules', 'users', 'userTypes'],
 				clientModules = ['layout', 'users'],
 				outputFile = null
 			yield instance.generateBlankProject(outputPath, configProfile)
@@ -678,9 +678,12 @@ class CodeGenerator {
 				outputFile = yield fs.open(path.join(modulePath, `index.js`), 'w')
 				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/db/${moduleName}/index.js`)))
 				yield fs.close(outputFile)
-				outputFile = yield fs.open(path.join(modulePath, `index.spec.js`), 'w')
-				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/db/${moduleName}/index.spec.js`)))
-				yield fs.close(outputFile)
+				try {
+					let specData = yield fs.readFile(path.join(__dirname, `templates/modules/db/${moduleName}/index.spec.js`))
+					outputFile = yield fs.open(path.join(modulePath, `index.spec.js`), 'w')
+					yield fs.writeFile(outputFile, specData)
+					yield fs.close(outputFile)
+				} catch(e) {}
 			}
 			for (const i in clientModules) {
 				let moduleName = clientModules[i],
@@ -689,9 +692,12 @@ class CodeGenerator {
 				outputFile = yield fs.open(path.join(modulePath, `index.js`), 'w')
 				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/clients/site/${moduleName}/index.js`)))
 				yield fs.close(outputFile)
-				outputFile = yield fs.open(path.join(modulePath, `index.spec.js`), 'w')
-				yield fs.writeFile(outputFile, yield fs.readFile(path.join(__dirname, `templates/modules/clients/site/${moduleName}/index.spec.js`)))
-				yield fs.close(outputFile)
+				try {
+					let specData = yield fs.readFile(path.join(__dirname, `templates/modules/clients/site/${moduleName}/index.spec.js`))
+					outputFile = yield fs.open(path.join(modulePath, `index.spec.js`), 'w')
+					yield fs.writeFile(outputFile, specData)
+					yield fs.close(outputFile)
+				} catch(e) {}
 			}
 			yield fs.mkdirp(path.join(outputPath, `modules/apis/mobile`))
 			let cronJobsPath = path.join(outputPath, 'modules/cronJobs')

@@ -494,23 +494,23 @@ module.exports = {
 	testGetNested: function() {
 		const getNested = toolbelt.getNested
 		describe('toolbelt.getNested', function() {
-			it('should execute successfully and return null if the parent is undefined', function() {
-				assert(getNested() === null)
+			it('should execute successfully and return undefined if the parent is undefined', function() {
+				assert.strictEqual(getNested(), undefined)
 			})
-			it('should execute successfully and return null if the parent is null', function() {
-				assert(getNested(null) === null)
+			it('should execute successfully and return undefined if the parent is null', function() {
+				assert.strictEqual(getNested(null), undefined)
 			})
-			it('should execute successfully and return null if the parent is not an object', function() {
-				assert(getNested(1) === null)
+			it('should execute successfully and return undefined if the parent is not an object', function() {
+				assert.strictEqual(getNested(1), undefined)
 			})
-			it('should execute successfully and return null if the field is not a string', function() {
-				assert(getNested({}) === null)
+			it('should execute successfully and return undefined if the field is not a string', function() {
+				assert.strictEqual(getNested({}), undefined)
 			})
-			it('should execute successfully and return null if the field is an empty string', function() {
-				assert(getNested({}, '') === null)
+			it('should execute successfully and return undefined if the field is an empty string', function() {
+				assert.strictEqual(getNested({}, ''), undefined)
 			})
-			it('should execute successfully and return null if the field does not exist in the parent', function() {
-				assert(getNested({}, 'test.test1') === null)
+			it('should execute successfully and return undefined if the field does not exist in the parent', function() {
+				assert.strictEqual(getNested({}, 'test.test1'), undefined)
 			})
 			it('should execute successfully and return the field\'s value if all parameters are correct', function() {
 				assert(

@@ -13,8 +13,6 @@ const
 	glob = require('glob'),
 	expressSession = require('express-session'),
 	fs = require('fs-extra'),
-	merge = require('deepmerge'),
-	moment = require('moment'),
 	path = require('path'),
 	redis = require('redis'),
 	RedisStore = require('connect-redis')(expressSession),

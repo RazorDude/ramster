@@ -7,7 +7,7 @@ Creating a component
 --
 
 Here's a quick reminder of the folder structure:<br/>
-<img src='https://github.com/RazorDude/ramster/blob/master/docs/exampleDirStructureApiss.png' width='326' height='422' alt='Example Directory Structure (one api module and its components)' /><br/>
+<img src='https://github.com/RazorDude/ramster/blob/master/docs/exampleDirStructureApis.png' width='326' height='422' alt='Example Directory Structure (one api module and its components)' /><br/>
 
 First, we need to import ramster's BaseAPIComponent:<br/>
 

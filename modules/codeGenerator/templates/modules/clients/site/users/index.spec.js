@@ -5,47 +5,38 @@ const
 	request = require('request-promise-native')
 
 const checkUserData = (permissionsData, accessPoints, alwaysAccessibleModules) => {
+	const {displayModuleAccessPointIds, displayModuleNames, accessPointsById} = permissionsData
 	for (const i in accessPoints) {
 		const ap = accessPoints[i],
-			pd = permissionsData[ap.moduleId],
-			pdText = permissionsData[ap.module.name.replace(/\s/g, '')]
-		assert(pd, `Missing permissions data object for module id ${ap.moduleId} (by id).`)
-		assert.notStrictEqual(pd.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
-		assert(pd.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
-		assert(pdText, `Missing permissions data object for module id ${ap.moduleId} (by name).`)
-		assert.notStrictEqual(pdText.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object, ids array).`)
-		assert(pdText.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
+			pd = displayModuleAccessPointIds[ap.displayModuleId]
+		assert(pd, `Missing permissions data object for displayModule id ${ap.displayModuleId}, access point id ${ap.id}.`)
+		assert(displayModuleNames[ap.displayModule.name], `Missing displayModule name for displayModule id ${ap.displayModuleId}, access point id ${ap.id}.`)
+		assert.notStrictEqual(pd.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
+		assert(accessPointsById[ap.id], `Missing accessPoint data by id for the access point with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
 	}
 	for (const i in alwaysAccessibleModules) {
-		const module = alwaysAccessibleModules[i],
-			aps = module.accessPoints,
-			pd = permissionsData[module.id],
-			pdText = permissionsData[module.name.replace(/\s/g, '')]
-		assert(pd, `Missing permissions data object for always accessible module id ${module.id} (by id).`)
-		assert(pdText, `Missing permissions data object for always accessible module id ${module.id} (by name).`)
+		const displayModule = alwaysAccessibleModules[i],
+			aps = displayModule.accessPoints,
+			pd = displayModuleAccessPointIds[displayModule.id]
+		assert(pd, `Missing permissions data object for displayModule id ${displayModule.id}.`)
+		assert(displayModuleNames[displayModule.name], `Missing displayModule name for displayModule id ${displayModule.id}.`)
 		for (const j in aps) {
 			const ap = aps[j]
-			assert.notStrictEqual(pd.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (ids array).`)
-			assert(pd.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (text object).`)
-			assert.notStrictEqual(pdText.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (ids array).`)
-			assert(
-				pdText.text[`can${ap.name.replace(/\s/g, '')}`],
-				`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (text object).`
-			)
+			assert.notStrictEqual(pd.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
+			assert(accessPointsById[ap.id], `Missing accessPoint data by id for the access point with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
 		}
 	}
 }
 
 module.exports = {
 	testLogin: function() {
-		const instance = this,
-			{dbComponent} = this,
+		const {dbComponent} = this,
 			{config, db, generalStore, moduleConfig, tokenManager} = this.module,
-			{moduleAccessPoints, modules, userTypes} = db.components,
+			{accessPoints, displayModules, userTypes} = db.components,
 			tokensSecret = config.db.tokensSecret
+		let changeableInstance = this
 		describe('client.users.login', function() {
-			describe('POST /users/login with username and password', function() {
-				let sessionCookie = null
+			describe('POST /users/login with email and password', function() {
 				it('should throw an error if the user email and password is not provided', function() {
 					return co(function*() {
 						let didThrowAnError = false
@@ -91,12 +82,12 @@ module.exports = {
 				it('should throw an error with the correct message if the user is not active', function() {
 					return co(function*() {
 						let didThrowAnError = false
-						yield dbComponent.model.update({status: false}, {where: {id: 1}})
+						yield dbComponent.model.update({active: false, password: 'testPassword1234'}, {where: {id: 1}})
 						try {
 							yield request({
 								method: 'post',
 								uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
-								body: {email: 'admin@ramster.com', password: 'fakePassword'},
+								body: {email: 'admin@ramster.com', password: 'testPassword1234'},
 								json: true
 							})
 						} catch(e) {
@@ -113,13 +104,13 @@ module.exports = {
 				it('should throw an error with the correct message if the user type not active', function() {
 					return co(function*() {
 						let didThrowAnError = false
-						yield dbComponent.model.update({status: true}, {where: {id: 1}})
-						yield userTypes.model.update({status: false}, {where: {id: 1}})
+						yield dbComponent.model.update({active: true}, {where: {id: 1}})
+						yield userTypes.model.update({active: false}, {where: {id: 1}})
 						try {
 							yield request({
 								method: 'post',
 								uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
-								body: {email: 'admin@ramster.com', password: 'fakePassword'},
+								body: {email: 'admin@ramster.com', password: 'testPassword1234'},
 								json: true
 							})
 						} catch(e) {
@@ -135,10 +126,8 @@ module.exports = {
 				})
 				it('should execute successfully, return the user data and the session cookie in the header if the email and password are correct', function() {
 					return co(function*() {
-						yield userTypes.model.update({status: true}, {where: {id: 1}})
-						yield dbComponent.model.update({password: 'testPassword1234'}, {where: {email: 'admin@ramster.com'}})
-						let didThrowAnError = false,
-							result = yield request({
+						yield userTypes.model.update({active: true}, {where: {id: 1}})
+						let result = yield request({
 								method: 'post',
 								uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
 								body: {email: 'admin@ramster.com', password: 'testPassword1234'},
@@ -152,24 +141,24 @@ module.exports = {
 									model: userTypes.model,
 									as: 'type',
 									include: [{
-										model: moduleAccessPoints.model, as: 'accessPoints',
-										include: [{model: modules.model, as: 'module', attributes: ['name']}]
+										model: accessPoints.model, as: 'accessPoints',
+										include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]
 									}]
 								}]
 							}),
-							alwaysAccessibleModules = yield modules.model.findAll({
+							alwaysAccessibleModules = yield displayModules.model.findAll({
 								where: {alwaysAccessible: true},
-								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+								include: [{model: accessPoints.model, as: 'accessPoints'}]
 							})
 						assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
 						const permissionsData = userFromMethod.permissionsData,
-							accessPoints = userFromDB.type.accessPoints
+							aps = userFromDB.type.accessPoints
 						assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
-						checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+						checkUserData(permissionsData, aps, alwaysAccessibleModules)
 						let typeOfPassword = typeof userFromMethod.password
 						assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
 						assert(result.headers['set-cookie'], `expected result.headers['set-cookie'] to exist, got undefined`)
-						sessionCookie = result.headers['set-cookie']
+						changeableInstance.sessionCookie = result.headers['set-cookie']
 						return true
 					})
 				})
@@ -181,7 +170,7 @@ module.exports = {
 								method: 'post',
 								uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
 								headers: {
-									cookie: sessionCookie
+									cookie: changeableInstance.sessionCookie
 								},
 								body: {email: 'admin@ramster.com', password: 'fakePassword'},
 								json: true
@@ -202,7 +191,7 @@ module.exports = {
 				let sessionCookie = null
 				before(function() {
 					return co(function*() {
-						yield dbComponent.model.update({status: false}, {where: {id: 1}})
+						yield dbComponent.model.update({active: false}, {where: {id: 1}})
 						yield generalStore.removeEntry('user-1-dbLoginToken')
 						return true
 					})
@@ -318,8 +307,8 @@ module.exports = {
 				it('should throw an error with the correct message if the user type is inactive', function() {
 					return co(function*() {
 						let didThrowAnError = false
-						yield dbComponent.model.update({status: true}, {where: {id: 1}})
-						yield userTypes.model.update({status: false}, {where: {id: 1}})
+						yield dbComponent.model.update({active: true}, {where: {id: 1}})
+						yield userTypes.model.update({active: false}, {where: {id: 1}})
 						try {
 							yield request({
 								method: 'post',
@@ -341,8 +330,8 @@ module.exports = {
 				it('should throw an error with the correct message if the user does not have a stored token', function() {
 					return co(function*() {
 						let didThrowAnError = false
-						yield dbComponent.model.update({status: true}, {where: {id: 1}})
-						yield userTypes.model.update({status: true}, {where: {id: 1}})
+						yield dbComponent.model.update({active: true}, {where: {id: 1}})
+						yield userTypes.model.update({active: true}, {where: {id: 1}})
 						try {
 							yield request({
 								method: 'post',
@@ -424,20 +413,20 @@ module.exports = {
 									model: userTypes.model,
 									as: 'type',
 									include: [{
-										model: moduleAccessPoints.model, as: 'accessPoints',
-										include: [{model: modules.model, as: 'module', attributes: ['name']}]
+										model: accessPoints.model, as: 'accessPoints',
+										include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]
 									}]
 								}]
 							}),
-							alwaysAccessibleModules = yield modules.model.findAll({
+							alwaysAccessibleModules = yield displayModules.model.findAll({
 								where: {alwaysAccessible: true},
-								include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+								include: [{model: accessPoints.model, as: 'accessPoints'}]
 							})
 						assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
 						const permissionsData = userFromMethod.permissionsData,
-							accessPoints = userFromDB.type.accessPoints
+							aps = userFromDB.type.accessPoints
 						assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
-						checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+						checkUserData(permissionsData, aps, alwaysAccessibleModules)
 						let typeOfPassword = typeof userFromMethod.password
 						assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
 						assert(result.headers['set-cookie'], `expected result.headers['set-cookie'] to exist, got undefined`)
@@ -475,8 +464,7 @@ module.exports = {
 		})
 	},
 	testLogout: function() {
-		const instance = this,
-			{moduleConfig} = this.module
+		const {moduleConfig} = this.module
 		describe('client.users.logout: GET /users/login', function() {
 			let sessionCookie = null
 			before(function() {
@@ -531,12 +519,11 @@ module.exports = {
 		})
 	},
 	testGetLoggedInUserData: function() {
-		const instance = this,
-			{dbComponent} = this,
+		const {dbComponent} = this,
 			{db, generalStore, moduleConfig} = this.module,
-			{moduleAccessPoints, modules, userTypes} = db.components
+			{accessPoints, displayModules, userTypes} = db.components
+		let changeableInstance = this
 		describe('client.users.getLoggedInUserData: GET /users/loggedInUserData', function() {
-			let sessionCookie = null
 			before(function() {
 				return co(function*() {
 					let result = yield request({
@@ -546,7 +533,7 @@ module.exports = {
 						json: true,
 						resolveWithFullResponse: true
 					})
-					sessionCookie = result.headers['set-cookie']
+					changeableInstance.sessionCookie = result.headers['set-cookie']
 					return true
 				})
 			})
@@ -566,7 +553,7 @@ module.exports = {
 					let userFromMethod = yield request({
 							method: 'get',
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/loggedInUserData`,
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							json: true
 						}),
 						userFromDB = yield dbComponent.model.findOne({
@@ -575,20 +562,20 @@ module.exports = {
 								model: userTypes.model,
 								as: 'type',
 								include: [{
-									model: moduleAccessPoints.model, as: 'accessPoints',
-									include: [{model: modules.model, as: 'module', attributes: ['name']}]
+									model: accessPoints.model, as: 'accessPoints',
+									include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]
 								}]
 							}]
 						}),
-						alwaysAccessibleModules = yield modules.model.findAll({
+						alwaysAccessibleModules = yield displayModules.model.findAll({
 							where: {alwaysAccessible: true},
-							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							include: [{model: accessPoints.model, as: 'accessPoints'}]
 						})
 					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
 					const permissionsData = userFromMethod.permissionsData,
-						accessPoints = userFromDB.type.accessPoints
+						aps = userFromDB.type.accessPoints
 					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
-					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					checkUserData(permissionsData, aps, alwaysAccessibleModules)
 					let typeOfPassword = typeof userFromMethod.password
 					assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
 					return true
@@ -600,7 +587,7 @@ module.exports = {
 					let userFromMethod = yield request({
 							method: 'get',
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/loggedInUserData`,
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							json: true
 						}),
 						userFromDB = yield dbComponent.model.findOne({
@@ -609,21 +596,21 @@ module.exports = {
 								model: userTypes.model,
 								as: 'type',
 								include: [{
-									model: moduleAccessPoints.model, as: 'accessPoints',
-									include: [{model: modules.model, as: 'module', attributes: ['name']}]
+									model: accessPoints.model, as: 'accessPoints',
+									include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]
 								}]
 							}]
 						}),
-						alwaysAccessibleModules = yield modules.model.findAll({
+						alwaysAccessibleModules = yield displayModules.model.findAll({
 							where: {alwaysAccessible: true},
-							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							include: [{model: accessPoints.model, as: 'accessPoints'}]
 						}),
 						permissionsUpdatedFlag = yield generalStore.getStoredEntry(`db-userTypeId-${userFromDB.typeId}-permissionsUpdated`)
 					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
 					const permissionsData = userFromMethod.permissionsData,
-						accessPoints = userFromDB.type.accessPoints
+						aps = userFromDB.type.accessPoints
 					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
-					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					checkUserData(permissionsData, aps, alwaysAccessibleModules)
 					let typeOfPassword = typeof userFromMethod.password
 					assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
 					assert.strictEqual(permissionsUpdatedFlag, null, `bad value ${permissionsUpdatedFlag} for permissionsUpdatedFlag, expected null`)
@@ -636,7 +623,7 @@ module.exports = {
 					let userFromMethod = yield request({
 							method: 'get',
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/loggedInUserData`,
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							json: true
 						}),
 						userFromDB = yield dbComponent.model.findOne({
@@ -645,21 +632,21 @@ module.exports = {
 								model: userTypes.model,
 								as: 'type',
 								include: [{
-									model: moduleAccessPoints.model, as: 'accessPoints',
-									include: [{model: modules.model, as: 'module', attributes: ['name']}]
+									model: accessPoints.model, as: 'accessPoints',
+									include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]
 								}]
 							}]
 						}),
-						alwaysAccessibleModules = yield modules.model.findAll({
+						alwaysAccessibleModules = yield displayModules.model.findAll({
 							where: {alwaysAccessible: true},
-							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							include: [{model: accessPoints.model, as: 'accessPoints'}]
 						}),
 						permissionsUpdatedFlag = JSON.parse(yield generalStore.getStoredEntry(`db-userTypeId-${userFromDB.typeId}-permissionsUpdated`))
 					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
 					const permissionsData = userFromMethod.permissionsData,
-						accessPoints = userFromDB.type.accessPoints
+						aps = userFromDB.type.accessPoints
 					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
-					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					checkUserData(permissionsData, aps, alwaysAccessibleModules)
 					let typeOfPassword = typeof userFromMethod.password
 					assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
 					assert(permissionsUpdatedFlag instanceof Array, `bad value ${permissionsUpdatedFlag} for permissionsUpdatedFlag, expected an array`)
@@ -671,20 +658,21 @@ module.exports = {
 		})
 	},
 	testCheckEmail: function() {
-		const instance = this,
-			{moduleConfig} = this.module
-		let sessionCookie = null
+		const {moduleConfig} = this.module
+		let changeableInstance = this
 		describe('client.users.checkEmail: GET /users/checkEmail', function() {
 			before(function() {
 				return co(function*() {
-					let result = yield request({
-						method: 'post',
-						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
-						body: {email: 'admin@ramster.com', password: 'testPassword1234'},
-						json: true,
-						resolveWithFullResponse: true
-					})
-					sessionCookie = result.headers['set-cookie']
+					if (!changeableInstance.sessionCookie) {
+						let result = yield request({
+							method: 'post',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
+							body: {email: 'admin@ramster.com', password: 'testPassword1234'},
+							json: true,
+							resolveWithFullResponse: true
+						})
+						changeableInstance.sessionCookie = result.headers['set-cookie']
+					}
 					return true
 				})
 			})
@@ -704,7 +692,7 @@ module.exports = {
 				return co(function*() {
 					let result = yield request({
 						method: 'get',
-						headers: {cookie: sessionCookie},
+						headers: {cookie: changeableInstance.sessionCookie},
 						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/checkEmail`,
 						qs: {email: encodeURIComponent('admin@ramster.com')},
 						json: true
@@ -729,7 +717,7 @@ module.exports = {
 				return co(function*() {
 					let result = yield request({
 						method: 'get',
-						headers: {cookie: sessionCookie},
+						headers: {cookie: changeableInstance.sessionCookie},
 						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/checkEmail`,
 						qs: {email: encodeURIComponent('admin.not.in.use@ramster.com')},
 						json: true
@@ -741,8 +729,7 @@ module.exports = {
 		})
 	},
 	testSendPasswordResetRequest: function() {
-		const instance = this,
-			{db, generalStore, moduleConfig} = this.module
+		const {generalStore, moduleConfig} = this.module
 		describe('client.users.sendPasswordResetRequest: GET /users/sendPasswordResetRequest', function() {
 			before(function(){
 				return co(function*() {
@@ -790,19 +777,21 @@ module.exports = {
 	},
 	testSendEmailUpdateRequest: function() {
 		const instance = this,
-			{db, generalStore, moduleConfig} = this.module
-		let sessionCookie = null
+			{generalStore, moduleConfig} = this.module
+		let changeableInstance = this
 		describe('client.users.sendEmailUpdateRequest: GET /users/sendEmailUpdateRequest', function() {
 			before(function(){
 				return co(function*() {
-					let result = yield request({
-						method: 'post',
-						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
-						body: {email: 'admin@ramster.com', password: 'testPassword1234'},
-						json: true,
-						resolveWithFullResponse: true
-					})
-					sessionCookie = result.headers['set-cookie']
+					if (!changeableInstance.sessionCookie) {
+						let result = yield request({
+							method: 'post',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
+							body: {email: 'admin@ramster.com', password: 'testPassword1234'},
+							json: true,
+							resolveWithFullResponse: true
+						})
+						changeableInstance.sessionCookie = result.headers['set-cookie']
+					}
 					yield generalStore.removeEntry('user-1-dbLoginToken')
 					return true
 				})
@@ -832,7 +821,7 @@ module.exports = {
 				return co(function*() {
 					yield request({
 						method: 'get',
-						headers: {cookie: sessionCookie},
+						headers: {cookie: changeableInstance.sessionCookie},
 						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/sendEmailUpdateRequest`,
 						qs: {id: 1, newEmail: encodeURIComponent('admintest@ramster.com')},
 						json: true
@@ -850,19 +839,21 @@ module.exports = {
 	},
 	testUpdatePassword: function() {
 		const instance = this,
-			{config, db, generalStore, moduleConfig, tokenManager} = this.module
-		let sessionCookie = null
+			{config, generalStore, moduleConfig, tokenManager} = this.module
+		let changeableInstance = this
 		describe('client.users.updatePassword: PATCH /users/password', function() {
 			before(function(){
 				return co(function*() {
-					let result = yield request({
-						method: 'post',
-						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
-						body: {email: 'admin@ramster.com', password: 'testPassword1234'},
-						json: true,
-						resolveWithFullResponse: true
-					})
-					sessionCookie = result.headers['set-cookie']
+					if (!changeableInstance.sessionCookie) {
+						let result = yield request({
+							method: 'post',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
+							body: {email: 'admin@ramster.com', password: 'testPassword1234'},
+							json: true,
+							resolveWithFullResponse: true
+						})
+						changeableInstance.sessionCookie = result.headers['set-cookie']
+					}
 					yield generalStore.removeEntry('user-1-dbLoginToken')
 					yield instance.dbComponent.model.update({password: '1234'}, {where: {id: 1}})
 					return true
@@ -895,7 +886,7 @@ module.exports = {
 					try {
 						yield request({
 							method: 'patch',
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/password`,
 							body: {},
 							json: true
@@ -918,7 +909,7 @@ module.exports = {
 					try {
 						yield request({
 							method: 'patch',
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/password`,
 							body: {passwordResetToken: 'fakeToken'},
 							json: true
@@ -944,7 +935,7 @@ module.exports = {
 						setTimeout(() => {
 							request({
 								method: 'patch',
-								headers: {cookie: sessionCookie},
+								headers: {cookie: changeableInstance.sessionCookie},
 								uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/password`,
 								body: {passwordResetToken: token},
 								json: true
@@ -967,7 +958,7 @@ module.exports = {
 					try {
 						yield request({
 							method: 'patch',
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/password`,
 							body: {currentPassword: 'fakePassword'},
 							json: true
@@ -989,7 +980,7 @@ module.exports = {
 					yield generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
 					yield request({
 						method: 'patch',
-						headers: {cookie: sessionCookie},
+						headers: {cookie: changeableInstance.sessionCookie},
 						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/password`,
 						body: {passwordResetToken: token, newPassword: 'testPassword1234'},
 						json: true
@@ -1005,7 +996,7 @@ module.exports = {
 				return co(function*() {
 					yield request({
 						method: 'patch',
-						headers: {cookie: sessionCookie},
+						headers: {cookie: changeableInstance.sessionCookie},
 						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/password`,
 						body: {currentPassword: 'testPassword1234', newPassword: 'testPassword4321'},
 						json: true
@@ -1021,7 +1012,7 @@ module.exports = {
 					try {
 						yield request({
 							method: 'patch',
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/password`,
 							body: {currentPassword: 'testPassword4321'},
 							json: true
@@ -1039,7 +1030,7 @@ module.exports = {
 					try {
 						yield request({
 							method: 'patch',
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/password`,
 							body: {currentPassword: 'testPassword4321', newPassword: '123'},
 							json: true
@@ -1059,19 +1050,21 @@ module.exports = {
 	},
 	testUpdateEmail: function() {
 		const instance = this,
-			{config, db, generalStore, moduleConfig, tokenManager} = this.module
-		let sessionCookie = null
+			{config, generalStore, moduleConfig, tokenManager} = this.module
+		let changeableInstance = this
 		describe('client.users.updateEmail: PATCH /users/email', function() {
 			before(function() {
 				return co(function*() {
-					let result = yield request({
-						method: 'post',
-						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
-						body: {email: 'admin@ramster.com', password: 'testPassword4321'},
-						json: true,
-						resolveWithFullResponse: true
-					})
-					sessionCookie = result.headers['set-cookie']
+					if (!changeableInstance.sessionCookie) {
+						let result = yield request({
+							method: 'post',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
+							body: {email: 'admin@ramster.com', password: 'testPassword1234'},
+							json: true,
+							resolveWithFullResponse: true
+						})
+						changeableInstance.sessionCookie = result.headers['set-cookie']
+					}
 					yield generalStore.removeEntry('user-1-dbLoginToken')
 					yield instance.dbComponent.model.update({unconfirmedEmail: 'admintest@ramster.com'}, {where: {id: 1}})
 					return true
@@ -1104,7 +1097,7 @@ module.exports = {
 					try {
 						yield request({
 							method: 'patch',
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/email`,
 							body: {},
 							json: true
@@ -1127,7 +1120,7 @@ module.exports = {
 					try {
 						yield request({
 							method: 'patch',
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/email`,
 							body: {token: 'fakeToken'},
 							json: true
@@ -1153,7 +1146,7 @@ module.exports = {
 						setTimeout(() => {
 							request({
 								method: 'patch',
-								headers: {cookie: sessionCookie},
+								headers: {cookie: changeableInstance.sessionCookie},
 								uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/email`,
 								body: {token},
 								json: true
@@ -1176,7 +1169,7 @@ module.exports = {
 					yield generalStore.storeEntry('user-1-dbLoginToken', JSON.stringify({token, alreadyUsedForLogin: true}))
 					yield request({
 						method: 'patch',
-						headers: {cookie: sessionCookie},
+						headers: {cookie: changeableInstance.sessionCookie},
 						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/email`,
 						body: {token},
 						json: true
@@ -1198,20 +1191,21 @@ module.exports = {
 		})
 	},
 	testUpdateProfile: function() {
-		const instance = this,
-			{moduleConfig} = this.module
-		let sessionCookie = null
+		const {moduleConfig} = this.module
+		let changeableInstance = this
 		describe('client.users.updateProfile: PATCH /users/profile', function() {
 			before(function() {
 				return co(function*() {
-					let result = yield request({
-						method: 'post',
-						uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
-						body: {email: 'admin@ramster.com', password: 'testPassword4321'},
-						json: true,
-						resolveWithFullResponse: true
-					})
-					sessionCookie = result.headers['set-cookie']
+					if (!changeableInstance.sessionCookie) {
+						let result = yield request({
+							method: 'post',
+							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/login`,
+							body: {email: 'admin@ramster.com', password: 'testPassword1234'},
+							json: true,
+							resolveWithFullResponse: true
+						})
+						changeableInstance.sessionCookie = result.headers['set-cookie']
+					}
 					return true
 				})
 			})
@@ -1240,12 +1234,12 @@ module.exports = {
 				return co(function*() {
 					let user = yield request({
 							method: 'patch',
-							headers: {cookie: sessionCookie},
+							headers: {cookie: changeableInstance.sessionCookie},
 							uri: `http://127.0.0.1:${moduleConfig.serverPort}/users/profile`,
 							body: {typeId: 35, email: 'shouldNotUpdateTheEmail@ramster.com', phone: '+359888777666', gender: 'other', lastLogin: 'now'},
 							json: true
 						}),
-						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admin@ramster.com', phone: '+359888777666', gender: 'other', status: true}
+						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admin@ramster.com', phone: '+359888777666', gender: 'other', active: true}
 					for (const i in userShouldBe) {
 						const sbField = userShouldBe[i],
 							isField = user[i]

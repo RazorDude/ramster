@@ -97,7 +97,6 @@ class ClientModule extends BaseServerModule {
 			req.user = req.isAuthenticated() && req.session && req.session.passport ? req.session.passport.user : null
 			req.locals = {
 				error: null,
-				errorStatus: 500,
 				originalUrl
 			}
 			next()

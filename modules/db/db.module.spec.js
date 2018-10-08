@@ -324,7 +324,7 @@ module.exports = {
 			})
 			it('should have generated the correct seeding order', function() {
 				const seedingOrder = instance.seedingOrder
-				let correctSeedingOrder = ['globalConfig', 'moduleCategories', 'modules', 'moduleAccessPoints', 'userTypes', 'users']
+				let correctSeedingOrder = ['displayModuleCategories', 'displayModules', 'accessPoints', 'globalConfig', 'userTypes', 'users']
 				for (const i in correctSeedingOrder) {
 					assert.strictEqual(seedingOrder[i], correctSeedingOrder[i], `bad value ${seedingOrder[i]} at index ${i}, expected ${correctSeedingOrder[i]}`)
 				}

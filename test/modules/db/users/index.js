@@ -35,7 +35,7 @@ class UsersDBComponent extends BaseDBComponent {
 				phone: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
 				password: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 				gender: {type: Sequelize.ENUM('male', 'female', 'other'), allowNull: true},
-				status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true},
+				active: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true},
 				lastLogin: {type: Sequelize.DATE, allowNull: true, validate: {isDate: true}}
 			}, {
 				indexes: [
@@ -61,10 +61,10 @@ class UsersDBComponent extends BaseDBComponent {
 				},
 				scopes: {
 					default: {
-						attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+						attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'gender', 'active', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 					},
 					full: {
-						attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'gender', 'status', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
+						attributes: ['id', 'typeId', 'firstName', 'lastName', 'email', 'unconfirmedEmail', 'phone', 'password', 'gender', 'active', 'lastLogin', 'createdAt', 'updatedAt', 'deletedAt']
 					}
 				},
 				paranoid: true
@@ -84,7 +84,7 @@ class UsersDBComponent extends BaseDBComponent {
 					associationName: 'accessPoints',
 					attributes: ['id', 'name', 'description'],
 					required: true,
-					include: [{associationName: 'module', required: true, include: [{associationName: 'category', attributes: ['id', 'name', 'icon']}]}]
+					include: [{associationName: 'displayModule', required: true, include: [{associationName: 'category', attributes: ['id', 'name', 'icon']}]}]
 				}]
 			}
 		}
@@ -93,7 +93,7 @@ class UsersDBComponent extends BaseDBComponent {
 		 * An array, containing the fields allowed for update in the updateProfile method.
 		 * @type {string[]}
 		 */
-		this.profileUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'status']
+		this.profileUpdateFields = ['firstName', 'lastName', 'phone', 'gender', 'active']
 
 		this.searchFields = [
 			{field: 'id'},
@@ -104,7 +104,7 @@ class UsersDBComponent extends BaseDBComponent {
 			{field: 'unconfirmedEmail', like: '-%'},
 			{field: 'phone', like: '-%'},
 			{field: 'gender'},
-			{field: 'status'},
+			{field: 'active'},
 			{field: 'lastLogin'},
 			{field: 'createdAt'},
 			{field: 'updatedAt'},
@@ -120,63 +120,53 @@ class UsersDBComponent extends BaseDBComponent {
 	 */
 	getUserWithPermissionsData(filters) {
 		const instance = this,
-			{userTypes, moduleAccessPoints, modules} = this.db.components
+			{userTypes, accessPoints, displayModules} = this.db.components
 		return co(function*() {
 			if (!filters || (typeof filters !== 'object') || !Object.keys(filters).length) {
 				throw {customMessage: 'The filters argument must be a non-empty object.'}
 			}
-			let alwaysAccessibleModules = yield modules.model.findAll({
+			let alwaysAccessibleModules = yield displayModules.model.findAll({
 					where: {alwaysAccessible: true},
-					include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+					include: [{model: accessPoints.model, as: 'accessPoints'}]
 				}),
 				user = yield instance.model.scope('full').findOne({
 					where: filters,
 					include: [{
 						model: userTypes.model,
 						as: 'type',
-						include: [{model: moduleAccessPoints.model, as: 'accessPoints', include: [{model: modules.model, as: 'module', attributes: ['name']}]}]
+						include: [{model: accessPoints.model, as: 'accessPoints', include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]}]
 					}]
 				})
 			if (user) {
 				user = user.dataValues
-				let permissionsData = {}
+				let permissionsData = {displayModuleAccessPointIds: {}, displayModuleNames: {}, accessPointsById: {}}
 				user.type.accessPoints.forEach((ap, index) => {
-					let pd = permissionsData[ap.moduleId],
-						mName = ap.module.name.replace(/\s/g, ''),
-						pdText = permissionsData[mName]
-					if (!pd) {
-						pd = {text: {}, ids: []}
-						permissionsData[ap.moduleId] = pd
-					}
-					if (!pdText) {
-						pdText = {text: {}, ids: []}
-						permissionsData[mName] = pdText
-					}
-					pd.ids.push(ap.id)
-					pd.text[`can${ap.name.replace(/\s/g, '')}`] = true
-					pdText.ids.push(ap.id)
-					pdText.text[`can${ap.name.replace(/\s/g, '')}`] = true
-				})
-				alwaysAccessibleModules.forEach((module, index) => {
-					let pd = permissionsData[module.id],
-						mName = module.name.replace(/\s/g, ''),
-						pdText = permissionsData[mName]
-					if (!pd) {
-						pd = {text: {}, ids: []}
-						permissionsData[module.id] = pd
-					}
-					if (!pdText) {
-						pdText = {text: {}, ids: []}
-						permissionsData[mName] = pdText
-					}
-					module.accessPoints.forEach((ap, apIndex) => {
-						if (pd.ids.indexOf(ap.id) === -1) {
-							pd.ids.push(ap.id)
-							pd.text[`can${ap.name.replace(/\s/g, '')}`] = true
+					if (ap.displayModuleId) {
+						if (!permissionsData.displayModuleAccessPointIds[ap.displayModuleId]) {
+							permissionsData.displayModuleAccessPointIds[ap.displayModuleId] = [ap.id]
+							permissionsData.displayModuleNames[ap.displayModule.name] = ap.displayModuleId
+						} else {
+							permissionsData.displayModuleAccessPointIds[ap.displayModuleId].push(ap.id)
 						}
-						if (pdText.ids.indexOf(ap.id) === -1) {
-							pdText.ids.push(ap.id)
-							pdText.text[`can${ap.name.replace(/\s/g, '')}`] = true
+						delete ap.displayModule
+					}
+					if (!permissionsData.accessPointsById[ap.id]) {
+						permissionsData.accessPointsById[ap.id] = ap
+					}
+				})
+				alwaysAccessibleModules.forEach((displayModule, index) => {
+					let pd = permissionsData.displayModuleAccessPointIds[displayModule.id]
+					if (!pd) {
+						pd = []
+						permissionsData.displayModuleAccessPointIds[displayModule.id] = pd
+						permissionsData.displayModuleNames[displayModule.name] = displayModule.id
+					}
+					displayModule.accessPoints.forEach((ap, apIndex) => {
+						if (pd.indexOf(ap.id) === -1) {
+							pd.push(ap.id)
+						}
+						if (!permissionsData.accessPointsById[ap.id]) {
+							permissionsData.accessPointsById[ap.id] = ap
 						}
 					})
 				})
@@ -203,7 +193,7 @@ class UsersDBComponent extends BaseDBComponent {
 			if (!user) {
 				throw {customMessage: 'Invalid email or password.'}
 			}
-			if (!user.status || !user.type.status) {
+			if (!user.active || !user.type.active) {
 				throw {customMessage: 'Your account is currently inactive.'}
 			}
 			if (!bcryptjs.compareSync(password, user.password)) {
@@ -242,7 +232,7 @@ class UsersDBComponent extends BaseDBComponent {
 			if (!user) {
 				throw {customMessage: 'Invalid or expired token.', stage: 3}
 			}
-			if (!user.status || !user.type.status) {
+			if (!user.active || !user.type.active) {
 				throw {customMessage: 'Your account is currently inactive.'}
 			}
 			let tokenData = yield generalStore.getStoredEntry(`user-${user.id}-dbLoginToken`)

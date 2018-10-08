@@ -582,7 +582,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should throw a status 401 error with the correct message and pass it to "next" if an invalid access token is provided and moduleConfig.passErrorToNext is true', function() {
+			it('should throw a status 400 error with the correct message and pass it to "next" if an invalid access token is provided and moduleConfig.passErrorToNext is true', function() {
 				return co(function*() {
 					req.headers.authorization = 'Bearer invalidAccessToken'
 					config.apis.mobile.passErrorToNext = true
@@ -591,12 +591,12 @@ module.exports = {
 						wrap(validate)(req, res, next.bind(next, resolve))
 					}))
 					assert.strictEqual(next.fail, true, `bad value ${next.fail} for next.fail, expected true`)
-					assert.strictEqual(next.errorStatus, 401, `bad value ${next.errorStatus} for next.errorStatus, expected 401`)
+					assert.strictEqual(next.errorStatus, 400, `bad value ${next.errorStatus} for next.errorStatus, expected 400`)
 					assert.strictEqual(next.errorMessage, 'Failed to verify token.', `bad value ${next.errorMessage} for next.errorMessage, expected Failed to verify token.`)
 					return true
 				})
 			})
-			it('should throw a status 401 error with the correct message and pass it to "res" (.status and .json) if an invalid access token is provided and moduleConfig.passErrorToNext is false', function() {
+			it('should throw a status 400 error with the correct message and pass it to "res" (.status and .json) if an invalid access token is provided and moduleConfig.passErrorToNext is false', function() {
 				return co(function*() {
 					req.headers.authorization = 'Bearer invalidAccessToken'
 					config.apis.mobile.passErrorToNext = false
@@ -604,7 +604,7 @@ module.exports = {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						wrap(validate)(req, res, next.bind(next, resolve))
 					}))
-					assert.strictEqual(res.response.statusCode, 401, `bad value ${res.response.statusCode} for res.response.statusCode, expected 401`)
+					assert.strictEqual(res.response.statusCode, 400, `bad value ${res.response.statusCode} for res.response.statusCode, expected 400`)
 					assert.strictEqual(
 						res.response.jsonBody.message,
 						'Failed to verify token.',

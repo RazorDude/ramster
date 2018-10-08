@@ -1,27 +1,27 @@
 'use strict'
 /**
- * The moduleCategoriesDBComponentModule. Contains the ModuleCategoriesDBComponent class.
- * @module moduleCategoriesDBComponentModule
+ * The displayModuleCategoriesDBComponentModule. Contains the DisplayModuleCategoriesDBComponent class.
+ * @module displayModuleCategoriesDBComponentModule
  */
 
 const
-	{BaseDBComponent} = require('../../../../index')
+	{BaseDBComponent} = require('ramster')
 
 /**
- * The ModuleCategoriesDBComponent class. Contains the sequelize db model and the business logic for the moduleCategories. ModuleCategory items are used to visually group system modules for display in menus in a dynamic, non-hardcoded way.
- * @class ModuleCategoriesDBComponent
+ * The DisplayModuleCategoriesDBComponent class. Contains the sequelize db model and the business logic for the displayModuleCategories. DisplayModuleCategory items are used to visually group system modules for display in menus in a dynamic, non-hardcoded way.
+ * @class DisplayModuleCategoriesDBComponent
  */
-class ModuleCategoriesDBComponent extends BaseDBComponent {
+class DisplayModuleCategoriesDBComponent extends BaseDBComponent {
 	/**
-	 * Creates an instance of ModuleCategoriesDBComponent.
+	 * Creates an instance of DisplayModuleCategoriesDBComponent.
 	 * @param {object} sequelize An instance of Sequelize.
 	 * @param {object} Sequelize A Sequelize static object.
-	 * @memberof ModuleCategoriesDBComponent
+	 * @memberof DisplayModuleCategoriesDBComponent
 	 */
 	constructor(sequelize, Sequelize) {
 		super()
 
-		this.model = sequelize.define('moduleCategory', {
+		this.model = sequelize.define('displayModuleCategory', {
 				name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 				description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 				order: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 0}},
@@ -40,7 +40,7 @@ class ModuleCategoriesDBComponent extends BaseDBComponent {
 		)
 
 		this.associationsConfig = {
-			modules: {type: 'hasMany', foreignKey: 'categoryId'}
+			displayModules: {type: 'hasMany', foreignKey: 'categoryId'}
 		}
 
 		this.searchFields = [
@@ -55,4 +55,4 @@ class ModuleCategoriesDBComponent extends BaseDBComponent {
 	}
 }
 
-module.exports = ModuleCategoriesDBComponent
+module.exports = DisplayModuleCategoriesDBComponent

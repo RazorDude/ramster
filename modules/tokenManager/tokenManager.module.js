@@ -69,7 +69,7 @@ class TokenManager{
 				jwt.sign(userData, secret, { expiresIn: expiresInMinutes * 60 }, (err, token) => {
 					if (err) {
 						this.errorLogger.error(err)
-						reject({customMessage: 'Failed to sign token.', status: 401})
+						reject({customMessage: 'Failed to sign token.'})
 						return
 					}
 					resolve(token)
@@ -78,7 +78,7 @@ class TokenManager{
 			jwt.sign(userData, secret, null, (err, token) => {
 				if (err) {
 					this.errorLogger.error(err)
-					reject({customMessage: 'Failed to sign token.', status: 401})
+					reject({customMessage: 'Failed to sign token.'})
 					return
 				}
 				resolve(token)
@@ -107,7 +107,7 @@ class TokenManager{
 						reject({tokenExpired: true})
 						return
 					}
-					reject({customMessage: 'Failed to verify token.', status: 401})
+					reject({customMessage: 'Failed to verify token.'})
 					return
 				}
 				resolve(decoded)
@@ -252,8 +252,8 @@ class TokenManager{
 					} catch (innerError) {
 						req.user = null
 						errorLogger.error(innerError)
-						let status = innerError.status || 500,
-							message = innerError.customMessage || 'An internal server error has occurred.'
+						let status = innerError.status || 400,
+							message = innerError.customMessage || 'An error has occurred.'
 						if (innerError.tokenExpired) {
 							status = 401
 							message = 'Access token expired. Refresh token expired.'
@@ -272,8 +272,8 @@ class TokenManager{
 			} catch(e) {
 				req.user = null
 				let response = {},
-					status = e.status || req.locals.errorStatus || 500,
-					message = e.customMessage || 'An internal server error has occurred.'
+					status = e.status || req.locals.errorStatus || 400,
+					message = e.customMessage || 'An error has occurred.'
 				if (config.responseType === 'serviceName') {
 					response = {serviceName: req.locals.serviceName, data: null, message}
 				} else {

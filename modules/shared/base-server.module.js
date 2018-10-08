@@ -238,9 +238,10 @@ class BaseServerModule {
 	 */
 	handleNextAfterRoutes() {
 		const instance = this,
-			{moduleName, moduleConfig, config} = this,
+			{moduleConfig} = this,
 			notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
 		return function (req, res) {
+			const error = req.locals.error
 			if (!req.locals || !req.locals.error) {
 				if (notFoundRedirectRoutes) {
 					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
@@ -250,18 +251,29 @@ class BaseServerModule {
 				return
 			}
 			instance.logger.error(req.locals.error)
-			const errMessage = req.locals.error.message
-			if (errMessage && ((errMessage.indexOf('Validation error') !== -1) || (errMessage.indexOf('ValidationError') !== -1))) {
-				req.locals.error.customMessage = 'Validation error - please make sure all required fields are present and in the correct format.'
-			}
-			let response = {},
-				error = req.locals.error.customMessage || 'An internal server error has occurred. Please try again.'
-			if (moduleConfig.responseType === 'serviceName') {
-				response = {serviceName: req.locals.serviceName, data: null, message: error}
+			const sequelizeErrorMessage = error.message
+			let errorMessage = 'An internal server error has occurred. Please try again.',
+				errorStatus = 500
+			if (sequelizeErrorMessage && ((sequelizeErrorMessage.indexOf('Validation error') !== -1) || (sequelizeErrorMessage.indexOf('ValidationError') !== -1))) {
+				errorMessage = 'Validation error - please make sure all required fields are present and in the correct format.'
+				errorStatus = 400
+			} else if (error.customMessage) {
+				errorMessage = req.locals.error.customMessage
+				errorStatus = req.locals.errorStatus || req.locals.error.status || 400
 			} else {
-				response = {error}
+				if (req.locals.errorStatus) {
+					errorStatus = req.locals.errorStatus
+				} else if (error.status) {
+					errorStatus = error.status
+				}
 			}
-			res.status(req.locals.errorStatus || 500).json(response)
+			let response = {}
+			if (moduleConfig.responseType === 'serviceName') {
+				response = {serviceName: req.locals.serviceName, data: null, message: errorMessage}
+			} else {
+				response = {error: errorMessage}
+			}
+			res.status(errorStatus).json(response)
 		}
 	}
 }

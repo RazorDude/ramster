@@ -1,8 +1,6 @@
 const
 	assert = require('assert'),
-	co = require('co'),
-	fs = require('fs-extra'),
-	path = require('path')
+	co = require('co')
 
 module.exports = {
 	testMe: function() {
@@ -94,7 +92,6 @@ module.exports = {
 					}))
 					assert.strictEqual(next.fail, false, `bad value ${next.fail} for next.fail, expected false`)
 					assert.strictEqual(req.locals.error, null, `bad value ${req.locals.error} for req.locals.error, expected null`)
-					assert.strictEqual(req.locals.errorStatus, 500, `bad value ${req.locals.errorStatus} for req.locals.errorStatus, expected 500`)
 					assert.strictEqual(req.locals.originalUrl, '/someRoute', `bad value ${req.locals.originalUrl} for req.locals.originalUrl, expected '/someRoute'`)
 					return true
 				})

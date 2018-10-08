@@ -39,15 +39,15 @@ class UsersSiteClientComponent extends BaseClientComponent {
 				{method: 'get', path: '/checkEmail', func: 'checkEmail'},
 				{method: 'get', path: '/sendPasswordResetRequest', func: 'sendPasswordResetRequest'},
 				{method: 'get', path: '/sendEmailUpdateRequest', func: 'sendEmailUpdateRequest'},
-				{method: 'post', path: ``, func: 'accessFilter', options: {next: 'create', keyAccessPointIds: []}},
-				{method: 'get', path: `/item`, func: 'accessFilter', options: {next: 'read', moduleIds: []}},
-				{method: 'get', path: ``, func: 'accessFilter', options: {next: 'readList', moduleIds: []}},
-				{method: 'get', path: `/selectList`, func: 'accessFilter', options: {next: 'readSelectList', moduleIds: []}},
-				{method: 'put', path: ``, func: 'accessFilter', options: {next: 'bulkUpsert', keyAccessPointIds: []}},
+				{method: 'post', path: ``, func: 'accessFilter', options: {next: 'create', accessPointIds: []}},
+				{method: 'get', path: `/item`, func: 'accessFilter', options: {next: 'read', accessPointIds: []}},
+				{method: 'get', path: ``, func: 'accessFilter', options: {next: 'readList', accessPointIds: []}},
+				{method: 'get', path: `/selectList`, func: 'accessFilter', options: {next: 'readSelectList', accessPointIds: []}},
+				{method: 'put', path: ``, func: 'accessFilter', options: {next: 'bulkUpsert', accessPointIds: []}},
 				{method: 'patch', path: '/password', func: 'updatePassword'},
 				{method: 'patch', path: '/email', func: 'updateEmail'},
 				{method: 'patch', path: '/profile', func: 'updateProfile'},
-				{method: 'delete', path: `/delete/:id`, func: 'accessFilter', options: {next: 'delete', keyAccessPointIds: []}}
+				{method: 'delete', path: `/delete/:id`, func: 'accessFilter', options: {next: 'delete', accessPointIds: []}}
 			]
 		})
 	}
@@ -107,7 +107,7 @@ class UsersSiteClientComponent extends BaseClientComponent {
 			try {
 				const nextRoute = req.query.next && decodeURIComponent(req.query.next) || null
 				if (req.isAuthenticated()) {
-					throw {customMessage: 'Already logged in.'}
+					throw {customMessage: 'Already logged in.', status: 400}
 				}
 				let body = req.body
 				if (!body) {
@@ -123,8 +123,7 @@ class UsersSiteClientComponent extends BaseClientComponent {
 						return
 					}
 					if (!user) {
-						req.locals.errorStatus = 401
-						req.locals.error = {customMessage: 'User not found.'}
+						req.locals.error = {customMessage: 'User not found.', status: 400}
 						next()
 						return
 					}

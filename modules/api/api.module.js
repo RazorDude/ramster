@@ -60,7 +60,6 @@ class APIModule extends BaseServerModule {
 			}
 			req.locals = {
 				error: null,
-				errorStatus: 500,
 				originalUrl
 			}
 			next()

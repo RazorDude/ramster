@@ -1,9 +1,6 @@
 const
 	assert = require('assert'),
 	co = require('co'),
-	fs = require('fs-extra'),
-	path = require('path'),
-	moment = require('moment'),
 	wrap = require('co-express')
 
 module.exports = {
@@ -112,7 +109,6 @@ module.exports = {
 	},
 	testDecodeQueryValues: function() {
 		const instance = this
-		let {components} = this
 		describe('base-server.component.decodeQueryValues', function() {
 			it('should execute successfully and return null if the provided object is undefined', function() {
 				let result = instance.decodeQueryValues()
@@ -170,7 +166,7 @@ module.exports = {
 				assert.strictEqual(isArray, true, `bad value ${isArray} for isArray, expected true`)
 				assert.strictEqual(instance.routes.length, 0, `bad value ${instance.routes.length} for instance.routes.length, expected 0`)
 			})
-			it('should throw an error with the correct message if a route method is not valid', function() {
+			it('should throw an error with the correct message and status if a route method is not valid', function() {
 				delete changeableInstance.routes
 				let routes = [
 						{method: 'getty', path: '/test0', func: 'func0'}
@@ -439,80 +435,279 @@ module.exports = {
 	},
 	testAccessFilter: function(req, res, next) {
 		const instance = this
-		let changeableInstance = this
 		describe('base-server.component.accessFilter', function() {
-			it('should throw an error with the correct message if req.user is not a non-null object', function() {
+			it('should throw an error with the correct message and status if req.user is not a non-null object', function() {
 				return co(function*() {
 					req.user = null
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter())(req, res, next.bind(next, resolve))
 					}))
 					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
-					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
+					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized.`)
 					return true
 				})
 			})
-			it('should throw an error with the correct message if req.user.type is not a non-null object', function() {
+			it('should throw an error with the correct message and status if req.user.type is not a non-null object', function() {
 				return co(function*() {
 					req.user = {}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter())(req, res, next.bind(next, resolve))
 					}))
-					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
-					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
 					return true
 				})
 			})
-			it('should throw an error with the correct message if req.user.type.accessPoints is not an array', function() {
+			it('should throw an error with the correct message and status if req.user.type.accessPoints is not an array', function() {
 				return co(function*() {
 					req.user = {type: {}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter())(req, res, next.bind(next, resolve))
 					}))
-					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
-					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
 					return true
 				})
 			})
-			it('should throw an error with the correct message if the user does not have access to the method', function() {
+			it('should throw an error with the correct message and status if the user does not have access to the method', function() {
 				return co(function*() {
 					req.user = {type: {accessPoints: [{id: 1}]}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [2], next: () => {}}))(req, res, next.bind(next, resolve))
 					}))
-					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
-					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
 					return true
 				})
 			})
-			it('should throw an error with the correct message if the user has access to less than all access points and requireAllAPs is set to true', function() {
+			it('should throw an error with the correct message and status if the user has access to less than all access points and requireAllAPs is set to true', function() {
 				return co(function*() {
 					req.user = {type: {accessPoints: [{id: 1}]}}
 					yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: () => {}, requireAllAPs: true}))(req, res, next.bind(next, resolve))
 					}))
-					assert.strictEqual(req.locals.error.status, 401, `bad value ${req.locals.error.status} for req.locals.error.status, expected 401`) &&
-					assert.strictEqual(req.locals.error.customMessage, 'Unauthorized.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Unauthorized. .`)
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
 					return true
 				})
 			})
-			it('should executeSuccessfully if the user has access to the route and requireAllAPs is set to false', function() {
+			it('should execute successfully if the user has access to the route and requireAllAPs is set to false', function() {
 				return co(function*() {
 					req.user = {type: {accessPoints: [{id: 1}]}}
+					req.locals.error = null
 					let result = yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
 					}))
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
 					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
 					return true
 				})
 			})
-			it('should executeSuccessfully if the user has access to the route and requireAllAPs is set to true', function() {
+			it('should execute successfully if the user has access to the route and requireAllAPs is set to true', function() {
 				return co(function*() {
 					req.user = {type: {accessPoints: [{id: 1}, {id: 2}]}}
+					req.locals.error = null
 					let result = yield (new Promise((resolve, reject) => {
 						wrap(instance.accessFilter({accessPointIds: [1, 2], next: function*(){resolve({success: true})}, requireAllAPs: true}))(req, res, next.bind(next, resolve))
 					}))
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
 					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the user data and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource. Please check your data and try again if you think this is a mistake.`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the request data and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource. Please check your data and try again if you think this is a mistake.`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user does not have one of the required userField values because there is no match with the field in the provided in the request data and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: 'otherValue'}}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource. Please check your data and try again if you think this is a mistake.`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the array provided in the request data and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: ['otherValue']}}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource. Please check your data and try again if you think this is a mistake.`)
+					return true
+				})
+			})
+			it('should execute successfully if the user has one of the required userField vaues in the provided request data and setUserFieldValueIn is not set in the access point and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: 'someValue'}}
+					req.locals.error = null
+					let result = yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
+					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
+					return true
+				})
+			})
+			it('should execute successfully if the user has one of the required userField vaues in the provided request data (as an array) and setUserFieldValueIn is not set in the access point and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: ['someValue']}}
+					req.locals.error = null
+					let result = yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
+					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the container that the userField value has to be set in does not exist in the request data and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: ['otherValue']}}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource. Please check your data and try again if you think this is a mistake.`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if one of the containers that the userField value has to be set in does not exist in the request data and requireAllAPs is not set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer[]someField'}]}}
+					req.body = {someFieldContainer: {someField: ['otherValue']}}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource. Please check your data and try again if you think this is a mistake.`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the user data and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the request data and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user does not have one of the required userField values because there is no match with the field in the provided in the request data and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: 'otherValue'}}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the user does not have one of the required userField values because they do not exist in the array provided in the request data and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: ['otherValue']}}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.status, 403, `bad value ${req.locals.error.status} for req.locals.error.status, expected 403`) &&
+					assert.strictEqual(req.locals.error.customMessage, 'You do not have access to this resource.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected You do not have access to this resource.`)
+					return true
+				})
+			})
+			it('should execute successfully if the user has one of the required userField vaues in the provided request data and setUserFieldValueIn is not set in the access point and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: 'someValue'}}
+					req.locals.error = null
+					let result = yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
+					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
+					return true
+				})
+			})
+			it('should execute successfully if the user has one of the required userField vaues in the provided request data (as an array) and setUserFieldValueIn is not set in the access point and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: ['someValue']}}
+					req.locals.error = null
+					let result = yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
+					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the container that the userField value has to be set in does not exist in the request data and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer.someField'}]}}
+					req.body = {someFieldContainer: {someField: ['someValue']}}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.customMessage, 'Could not set access-related field values in the request data object. Please check your data and try again.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Could not set access-related field values in the request data object. Please check your data and try again.`)
+					assert.strictEqual(req.locals.error.status, 400, `bad value ${req.locals.error.status} for req.locals.error.status, expected 400`)
+					return true
+				})
+			})
+			it('should throw an error with the correct message if one of the containers that the userField value has to be set in does not exist in the request data and requireAllAPs is set', function() {
+				return co(function*() {
+					req.user = {someField: 'someValue', type: {accessPoints: [{id: 1, userFieldName: 'someField', searchForUserFieldIn: 'body.someFieldContainer.someField', setUserFieldValueIn: 'body.nonExistingContainer[]someField'}]}}
+					req.body = {someFieldContainer: {someField: ['someValue']}}
+					yield (new Promise((resolve, reject) => {
+						wrap(instance.accessFilter({accessPointIds: [1], requireAllAPs: true, next: function*(){resolve({success: true})}}))(req, res, next.bind(next, resolve))
+					}))
+					assert.strictEqual(req.locals.error.customMessage, 'Could not set access-related field values in the request data object. Please check your data and try again.', `bad value ${req.locals.error.customMessage} for req.locals.error.customMessage, expected Could not set access-related field values in the request data object. Please check your data and try again.`)
+					assert.strictEqual(req.locals.error.status, 400, `bad value ${req.locals.error.status} for req.locals.error.status, expected 400`)
 					return true
 				})
 			})
@@ -522,7 +717,6 @@ module.exports = {
 		const instance = this,
 			db = instance.module.db,
 			dbComponents = db.components
-		let changeableInstance = this
 		describe('base-server.component.create', function() {
 			it('should execute successfully and return the newly created object if all paramteres are correct', function() {
 				return co(function*() {
@@ -532,10 +726,10 @@ module.exports = {
 						select setval('"userTypes_id_seq"'::regclass, 1);
 						select setval('"users_id_seq"'::regclass, 1);
 					`)
-					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
+					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
 					delete req.locals.error
 					req.user = {id: 1}
-					req.body = {typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', status: true}
+					req.body = {typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true}
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
 						wrap(instance.create())(req, res, next.bind(next, resolve))
@@ -544,7 +738,7 @@ module.exports = {
 						throw req.locals.error
 					}
 					let result = res.response.jsonBody.result.dataValues,
-						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true}
+						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', active: true}
 					for (const key in item) {
 						assert.strictEqual(result[key], item[key], `Bad value ${result[key]} for field "${key}", expected ${item[key]}.`)
 					}
@@ -568,12 +762,11 @@ module.exports = {
 		const instance = this,
 			db = instance.module.db,
 			dbComponents = db.components
-		let changeableInstance = this
 		describe('base-server.component.read', function() {
 			it('should execute successfully and return the found object if all paramteres are correct', function() {
 				return co(function*() {
-					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
-					yield dbComponents.users.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', status: true})
+					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
+					yield dbComponents.users.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true})
 					delete req.locals.error
 					req.query = {filters: {id: 2}}
 					yield (new Promise((resolve, reject) => {
@@ -584,7 +777,7 @@ module.exports = {
 						throw req.locals.error
 					}
 					let result = res.response.jsonBody.result,
-						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true}
+						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', active: true}
 					for (const key in item) {
 						assert.strictEqual(result[key], item[key], `Bad value ${result[key]} for field "${key}", expected ${item[key]}.`)
 					}
@@ -608,12 +801,11 @@ module.exports = {
 		const instance = this,
 			db = instance.module.db,
 			dbComponents = db.components
-		let changeableInstance = this
 		describe('base-server.component.readList', function() {
 			it('should execute successfully and return the found object if all paramteres are correct', function() {
 				return co(function*() {
-					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
-					yield dbComponents.users.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', status: true})
+					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
+					yield dbComponents.users.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true})
 					delete req.locals.error
 					req.query = {filters: {id: 2}}
 					yield (new Promise((resolve, reject) => {
@@ -625,7 +817,7 @@ module.exports = {
 					}
 					let returnedData = res.response.jsonBody,
 						result = returnedData.results[0],
-						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', status: true}
+						item = {id:2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', active: true}
 					for (const key in item) {
 						assert.strictEqual(result[key], item[key], `Bad value ${result[key]} for field "${key}", expected ${item[key]}.`)
 					}
@@ -654,15 +846,14 @@ module.exports = {
 		const instance = this,
 			db = instance.module.db,
 			dbComponents = db.components
-		let changeableInstance = this
 		describe('base-server.component.readSelectList', function() {
 			it('should execute successfully and return the list if only titleField and filters are provided', function() {
 				return co(function*() {
-					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
+					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
 					yield dbComponents.users.bulkCreate([
-						{typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', status: true},
-						{typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', status: true},
-						{typeId: 2, firstName: 'fn3', lastName: 'ln3', email: 'email3@ramster.com', password: '1234', status: true}
+						{typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true},
+						{typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', active: true},
+						{typeId: 2, firstName: 'fn3', lastName: 'ln3', email: 'email3@ramster.com', password: '1234', active: true}
 					])
 					delete req.locals.error
 					req.query = {titleField: 'firstName', filters: {id: {$gt: 0}}}
@@ -896,16 +1087,15 @@ module.exports = {
 			{dbComponent, module} = this,
 			db = module.db,
 			dbComponents = db.components
-		let changeableInstance = this
 		describe('base-server.component.bulkUpsert', function() {
 			it('should execute successfully, pass the request data on to dbComponent.update and return the update result if all paramteres are correct and where is present in req.body', function() {
 				return co(function*() {
-					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
-					yield dbComponent.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', status: true})
-					delete req.locals.error
+					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
+					yield dbComponent.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true})
+					req.locals.error = null
 					req.user = {id: 1}
 					req.body = {
-						dbObject: {firstName: 'updatedFirstName1', status: false},
+						dbObject: {firstName: 'updatedFirstName1', active: false},
 						where: {id: 2}
 					}
 					yield (new Promise((resolve, reject) => {
@@ -917,7 +1107,7 @@ module.exports = {
 					}
 					let result = res.response.jsonBody,
 						resultItem = result[1][0],
-						item = {id: 2, typeId: 2, firstName: 'updatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', status: false}
+						item = {id: 2, typeId: 2, firstName: 'updatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', active: false}
 					for (const key in item) {
 						assert.strictEqual(resultItem[key], item[key], `Bad value ${resultItem[key]} for field "${key}", expected ${item[key]}.`)
 					}
@@ -928,11 +1118,11 @@ module.exports = {
 			})
 			it('should execute successfully, pass the request data on to dbComponent.bulkUpsert, return the {success: true} and create and update the provided items if all paramteres are correct and an array is present in req.body', function() {
 				return co(function*() {
-					delete req.locals.error
+					req.locals.error = null
 					req.user = {id: 1}
 					req.body = [
-						{id: 2, firstName: 'properlyUpdatedFirstName1', status: true},
-						{typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', status: true}
+						{id: 2, firstName: 'properlyUpdatedFirstName1', active: true},
+						{typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', password: '1234', active: true}
 					]
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)
@@ -944,8 +1134,8 @@ module.exports = {
 					let result = res.response.jsonBody,
 						resultItems = yield dbComponent.model.findAll({order: [['id', 'asc']]}),
 						items = [
-							{id: 2, typeId: 2, firstName: 'properlyUpdatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', status: true},
-							{id: 3, typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', status: true}
+							{id: 2, typeId: 2, firstName: 'properlyUpdatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', active: true},
+							{id: 3, typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', active: true}
 						]
 					for (const i in items) {
 						const item = items[i],
@@ -954,6 +1144,7 @@ module.exports = {
 							assert.strictEqual(resultItem[key], item[key], `Bad value ${resultItem[key]} for field "${key}" in item no. ${i}, expected ${item[key]}.`)
 						}
 					}
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
 					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
 					return true
 				})
@@ -976,13 +1167,12 @@ module.exports = {
 			{dbComponent, module} = this,
 			db = module.db,
 			dbComponents = db.components
-		let changeableInstance = this
 		describe('base-server.component.delete', function() {
 			it('should execute successfully and return {success: true} if all parameters are correct', function() {
 				return co(function*() {
-					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', status: true})
-					yield dbComponent.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', status: true})
-					delete req.locals.error
+					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
+					yield dbComponent.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true})
+					req.locals.error = null
 					req.user = {id: 1}
 					delete req.body
 					req.params = {id: 2}
@@ -995,6 +1185,7 @@ module.exports = {
 					}
 					let result = res.response.jsonBody,
 						resultItem = yield dbComponent.model.findOne({where: {id: 2}})
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
 					assert.strictEqual(resultItem, null, `bad value ${resultItem} for resultItem, expected null`)
 					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
 					return true

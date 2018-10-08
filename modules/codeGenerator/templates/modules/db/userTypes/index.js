@@ -9,7 +9,7 @@ const
 	co = require('co')
 
 /**
- * The UserTypesDBComponent class. Contains the sequelize db model and the business logic for the usersTypes. UserType items are central to the whole platform, as they server as the basis for the permissions system. Access points for different modules are linked to them.
+ * The UserTypesDBComponent class. Contains the sequelize db model and the business logic for the usersTypes. UserType items are central to the whole platform - they serve as the basis for the permissions system. Access points for different display modules are linked to them.
  * @class UserTypesDBComponent
  */
 class UserTypesDBComponent extends BaseDBComponent {
@@ -25,7 +25,7 @@ class UserTypesDBComponent extends BaseDBComponent {
 		this.model = sequelize.define('userType', {
 				name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 				description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-				status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true}
+				active: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true}
 			}, {
 				indexes: [
 					{unique: true, fields: ['name'], where: {deletedAt: null}}
@@ -40,14 +40,14 @@ class UserTypesDBComponent extends BaseDBComponent {
 
 		this.associationsConfig = {
 			users: {type: 'hasMany', foreignKey: 'typeId'},
-			accessPoints: {type: 'belongsToMany', componentName: 'moduleAccessPoints', through: 'userTypeModuleAccessPoints', foreignKey: 'userTypeId', otherKey: 'moduleAccessPointId'}
+			accessPoints: {type: 'belongsToMany', through: 'userTypeAccessPoints', foreignKey: 'userTypeId', otherKey: 'accessPointId'}
 		}
 
 		this.searchFields = [
 			{field: 'id'},
 			{field: 'name', like: '-%'},
 			{field: 'description', like: '-%'},
-			{field: 'status'},
+			{field: 'active'},
 			{field: 'createdAt'},
 			{field: 'updatedAt'},
 			{field: 'deletedAt'}
@@ -79,7 +79,7 @@ class UserTypesDBComponent extends BaseDBComponent {
 	update(data) {
 		const instance = this
 		return co(function*() {
-			if (data && data.dbObject && data.where && (data.dbObject.status === false)) {
+			if (data && data.dbObject && data.where && (data.dbObject.active === false)) {
 				const id = data.where.id
 				if (id instanceof Array) {
 					id.forEach((item, index) => {
@@ -99,16 +99,15 @@ class UserTypesDBComponent extends BaseDBComponent {
 	 * Updates the access points of a userType, by setting its related access points to the provided array of ids. Performs a check to make sure no access points of a fixedAccess userType are updated.
 	 * @param {Object.<string, any>} data The method input data, containing the id of the userType and its full list of accessPointIds.
 	 * @param {number} data.id The fields to update.
-	 * @param {number[]} data.moduleAccessPointIds The array of moduleAccessPoints to set.
+	 * @param {number[]} data.accessPointIds The array of accessPoints to set.
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof UserTypesDBComponent
 	 */
 	updateAccessPoints(data) {
-		const {id, moduleAccessPointIds} = data,
+		const {id, accessPointIds} = data,
 			instance = this,
-			{modules, moduleAccessPoints, users} = this.db.components,
-			sequelize = this.db.sequelize,
-			queryInterface = sequelize.getQueryInterface()
+			{accessPoints, users} = this.db.components,
+			sequelize = this.db.sequelize
 		return sequelize.transaction((t) => {
 			return co(function*() {
 				let userType = yield instance.model.findOne({
@@ -122,10 +121,10 @@ class UserTypesDBComponent extends BaseDBComponent {
 				if (instance.fixedAccessIds.indexOf(userType.id) !== -1) {
 					throw {customMessage: 'Cannot update the access points of a fixed-access user type.'}
 				}
-				yield sequelize.query(`delete from "userTypeModuleAccessPoints" where "userTypeId"=${userType.id};`, {transaction: t})
-				if ((moduleAccessPointIds instanceof Array) && moduleAccessPointIds.length) {
-					let apQuery = `insert into "userTypeModuleAccessPoints" ("userTypeId", "moduleAccessPointId", "createdAt", "updatedAt") values `,
-						apList = yield moduleAccessPoints.model.findAll({where: {id: moduleAccessPointIds}, attributes: ['id'], transaction: t})
+				yield sequelize.query(`delete from "userTypeAccessPoints" where "userTypeId"=${userType.id};`, {transaction: t})
+				if ((accessPointIds instanceof Array) && accessPointIds.length) {
+					let apQuery = `insert into "userTypeAccessPoints" ("userTypeId", "accessPointId", "createdAt", "updatedAt") values `,
+						apList = yield accessPoints.model.findAll({where: {id: accessPointIds}, attributes: ['id'], transaction: t})
 					apList.forEach((ap, index) => {
 						apQuery += `(${userType.id}, ${ap.id}, now(), now())`
 						if (index < (apList.length - 1)) {
@@ -174,7 +173,7 @@ class UserTypesDBComponent extends BaseDBComponent {
 					}
 					typeIds.push(type.id)
 				})
-				yield instance.db.sequelize.query(`delete from "userTypeModuleAccessPoints" where "userTypeId" in (${typeIds.join(',')});`, {transaction: t})
+				yield instance.db.sequelize.query(`delete from "userTypeAccessPoints" where "userTypeId" in (${typeIds.join(',')});`, {transaction: t})
 				return {deleted: yield instance.model.destroy({where: {id: typeIds}, transaction: t})}
 			})
 		})

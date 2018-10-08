@@ -7,8 +7,7 @@
 const
 	BaseDBComponent = require('../db/base-db.component'),
 	BaseServerModule = require('./base-server.module'),
-	co = require('co'),
-	{getNested} = require('../toolbelt'),
+	{getNested, setNested} = require('../toolbelt'),
 	spec = require('./base-server.component.spec')
 
 /**
@@ -178,44 +177,155 @@ class BaseServerComponent {
 		return function* (req, res, next) {
 			try {
 				const user = req.user
-				if ((typeof user !== 'object') || (user === null) || (typeof user.type !== 'object') || (user.type === null) || !(user.type.accessPoints instanceof Array)) {
+				if ((typeof user !== 'object') || (user === null)) {
 					throw {customMessage: 'Unauthorized.', status: 401}
+				}
+				if ((typeof user.type !== 'object') || (user.type === null) || !(user.type.accessPoints instanceof Array)) {
+					throw {customMessage: 'You do not have access to this resource.', status: 403}
 				}
 				const type = user.type,
 					userTypeAccessPoints = type.accessPoints,
 					apIds = options.accessPointIds,
-					nextMethod = typeof options.next === 'function' ? options.next : instance[options.next]()
+					nextMethod = (typeof options.next === 'function') ? options.next : instance[options.next]()
 
-				// check if we have a multitude of access points for this endpoint
 				if (apIds instanceof Array) {
-					let apIdMap = {}
+					const requireAllAPs = options.requireAllAPs
+					let apIdMap = {},
+						userFieldNameAPIndexes = [],
+						allPresent = true,
+						nonePresent = true
 					userTypeAccessPoints.forEach((ap, index) => {
-						apIdMap[ap.id] = true
+						apIdMap[ap.id] = {index, hasuserFieldName: ap.userFieldName ? true : false}
 					})
-					if (options.requireAllAPs) {
-						let allPresent = true
-						for (const i in apIds) {
-							if (!apIdMap[apIds[i]]) {
-								allPresent = false
-								break
-							}
+					// check for the existence of the access points themselves
+					for (const i in apIds) {
+						const apData = apIdMap[apIds[i]]
+						if (typeof apData === 'undefined') {
+							allPresent = false
+							break
 						}
-						if (allPresent) {
-							yield* nextMethod(req, res, next)
+						if (nonePresent) {
+							nonePresent = false
+						}
+						// if the AP has the "userFieldName" field provided, add its index to the list for later evaluation
+						if (apData.hasuserFieldName) {
+							userFieldNameAPIndexes.push(apData.index)
+						}
+					}
+					// block access if no APs are present or if all APs are required, but not all are present
+					if (nonePresent || (requireAllAPs && !allPresent)) {
+						throw {customMessage: 'You do not have access to this resource.', status: 403}
+					}
+					nonePresent = true
+					// check the APs with the "userFieldName" field provided
+					userFieldNameAPIndexes.forEach((apIndex, i) => {
+						const ap = userTypeAccessPoints[apIndex],
+							userFieldValue = getNested(user, ap.userFieldName),
+							userFieldValueIsAnArray = (userFieldValue instanceof Array)
+						if (typeof userFieldValue === 'undefined') {
+							if (requireAllAPs) {
+								throw {customMessage: 'You do not have access to this resource.', status: 403}
+							}
 							return
 						}
-					} else {
-						for (const i in apIds) {
-							if (apIdMap[apIds[i]]) {
-								yield* nextMethod(req, res, next)
+						// if we have to check whether the request has the required value(s)
+						if (ap.searchForUserFieldIn) {
+							const requestFieldValue = getNested(req, ap.searchForUserFieldIn)
+							if (typeof requestFieldValue === 'undefined') {
+								if (requireAllAPs) {
+									throw {customMessage: 'You do not have access to this resource.', status: 403}
+								}
+								return
+							}
+							const rfvActual = requestFieldValue instanceof Array ? requestFieldValue : [requestFieldValue]
+							let hasMatch = false
+							for (const index in rfvActual) {
+								const rfvItem = rfvActual[index],
+									requestFieldValues = [
+										rfvItem, // the value as-is
+										parseInt(rfvItem, 10), // the int value
+										parseFloat(rfvItem), // the float value
+										(rfvItem === true) || (rfvItem === 'true') // the boolean value
+									]
+								if (userFieldValueIsAnArray) {
+									for (const i in userFieldValue) {
+										const value = userFieldValue[i]
+										for (const j in requestFieldValues) {
+											if (requestFieldValues[j] === value) {
+												hasMatch = true
+												break
+											}
+										}
+										if (hasMatch) {
+											break
+										}
+									}
+								} else {
+									for (const j in requestFieldValues) {
+										if (requestFieldValues[j] === userFieldValue) {
+											hasMatch = true
+											break
+										}
+									}
+								}
+								if (hasMatch) {
+									break
+								}
+							}
+							if (!hasMatch) {
+								if (requireAllAPs) {
+									throw {customMessage: 'You do not have access to this resource.', status: 403}
+								}
 								return
 							}
 						}
+						// if we have to set the value of the userField under some key(s) in the request
+						if (ap.setUserFieldValueIn) {
+							const valueProcessorMethod = options.userFieldValueProcessorMethodName ? instance[options.userFieldValueProcessorMethodName].bind(instance) : (req, value) => value
+							// if we're setting the userField's value in multiple objects within an array
+							if (ap.setUserFieldValueIn.indexOf('[]') !== -1) {
+								let fieldPaths = ap.setUserFieldValueIn.split('[]'),
+									containerPath = fieldPaths[0],
+									inChildPath = fieldPaths[1],
+									container = getNested(req, containerPath)
+								if (!(container instanceof Array)) {
+									if (requireAllAPs) {
+										throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400}
+									}
+									return
+								}
+								const processedValue = valueProcessorMethod(req, userFieldValue)
+								container.forEach((item, index) => {
+									if (!setNested(req, `${containerPath}.${index}.${inChildPath}`, processedValue)) {
+										if (requireAllAPs) {
+											throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400}
+										}
+										return
+									}
+								})
+							}
+							// otherwise, if we have to set it for a single item but it didn't work
+							else if (!setNested(req, ap.setUserFieldValueIn, valueProcessorMethod(req, userFieldValue))) {
+								if (requireAllAPs) {
+									throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400}
+								}
+								return
+							}
+						}
+						if (nonePresent) {
+							nonePresent = false
+						}
+						console.log('================>', req.body)
+					})
+					if (userFieldNameAPIndexes.length && nonePresent) {
+						throw {customMessage: 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', status: 403}
 					}
+					yield* nextMethod(req, res, next)
+					return
 				}
 
 				// throw the user out, because he's failed all checks
-				throw {customMessage: 'Unauthorized.', status: 401}
+				throw {customMessage: 'You do not have access to this resource.', status: 403}
 			} catch (e) {
 				req.locals.error = e
 				next()

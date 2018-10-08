@@ -1,27 +1,27 @@
 'use strict'
 /**
- * The modulesDBComponentModule. Contains the ModulesDBComponent class.
- * @module modulesDBComponentModule
+ * The displayModulesDBComponentModule. Contains the DisplayModulesDBComponent class.
+ * @module displayModulesDBComponentModule
  */
 
 const
-	{BaseDBComponent} = require('../../../../index')
+	{BaseDBComponent} = require('ramster')
 
 /**
- * The ModulesDBComponent class. Contains the sequelize db model and the business logic for the modules. Modules are system entities which are used to logically group server components and restrict access to them. They are also used in the front-end as menu items if needed, creating dynamic, perimission-based menus, rather than hardcoded ones.
- * @class ModulesDBComponent
+ * The DisplayModulesDBComponent class. Contains the sequelize db model and the business logic for the displayModules. DisplayModules are system entities which are used to logically group server components in the front-end as menu items if needed, creating dynamic, perimission-based menus, rather than hardcoded ones. Optionally, they can have access points assigned to them for a dynamic permissions system.
+ * @class DisplayModulesDBComponent
  */
-class ModulesDBComponent extends BaseDBComponent {
+class DisplayModulesDBComponent extends BaseDBComponent {
 	/**
-	 * Creates an instance of ModulesDBComponent.
+	 * Creates an instance of DisplayModulesDBComponent.
 	 * @param {object} sequelize An instance of Sequelize.
 	 * @param {object} Sequelize A Sequelize static object.
-	 * @memberof ModulesDBComponent
+	 * @memberof DisplayModulesDBComponent
 	 */
 	constructor(sequelize, Sequelize) {
 		super()
 
-		this.model = sequelize.define('module', {
+		this.model = sequelize.define('displayModule', {
 				name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 				route: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
 				search: {type: Sequelize.STRING, allowNull: true, validate: {notEmpty: true}},
@@ -29,7 +29,7 @@ class ModulesDBComponent extends BaseDBComponent {
 				order: {type: Sequelize.INTEGER, allowNull: false, validate: {min: 0}},
 				alwaysAccessible: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: false},
 				visible: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true},
-				status: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true}
+				active: {type: Sequelize.BOOLEAN, allowNull: false, defaultValue: true}
 			}, {
 				indexes: [
 					{unique: true, fields: ['name'], where: {categoryId: null, deletedAt: null}},
@@ -46,8 +46,8 @@ class ModulesDBComponent extends BaseDBComponent {
 		)
 
 		this.associationsConfig = {
-			category: {type: 'belongsTo', componentName: 'moduleCategories', foreignKey: 'categoryId'},
-			accessPoints: {type: 'hasMany', componentName: 'moduleAccessPoints', foreignKey: 'moduleId'}
+			category: {type: 'belongsTo', componentName: 'displayModuleCategories', foreignKey: 'categoryId'},
+			accessPoints: {type: 'hasMany', foreignKey: 'displayModuleId'}
 		}
 
 		this.systemCriticalIds = [1]
@@ -61,7 +61,7 @@ class ModulesDBComponent extends BaseDBComponent {
 			{field: 'description'},
 			{field: 'order'},
 			{field: 'alwaysAccessible'},
-			{field: 'status'},
+			{field: 'active'},
 			{field: 'createdAt'},
 			{field: 'updatedAt'},
 			{field: 'deletedAt'}
@@ -69,4 +69,4 @@ class ModulesDBComponent extends BaseDBComponent {
 	}
 }
 
-module.exports = ModulesDBComponent
+module.exports = DisplayModulesDBComponent

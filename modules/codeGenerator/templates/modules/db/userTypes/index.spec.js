@@ -10,7 +10,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.update({dbObject: {status: false}, where: {id: [1]}})
+						yield instance.update({dbObject: {active: false}, where: {id: [1]}})
 					} catch(e) {
 						if (e && (e.customMessage === 'Cannot deactivate a system-critical user type.')) {
 							didThrowAnError = true
@@ -26,7 +26,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.update({dbObject: {status: false}, where: {id: 1}})
+						yield instance.update({dbObject: {active: false}, where: {id: 1}})
 					} catch(e) {
 						if (e && (e.customMessage === 'Cannot deactivate a system-critical user type.')) {
 							didThrowAnError = true
@@ -42,7 +42,7 @@ module.exports = {
 				return co(function*() {
 					yield instance.update({dbObject: {name: 'The God'}, where: {id: 1}})
 					let userType = yield instance.model.findOne({where: {id: 1}}),
-						userTypeShouldBe = {id: 1, name: 'The God', description: 'God user', status: true}
+						userTypeShouldBe = {id: 1, name: 'The God', description: 'God user', active: true}
 					for (const i in userTypeShouldBe) {
 						const sbField = userTypeShouldBe[i],
 							isField = userType[i]
@@ -53,9 +53,9 @@ module.exports = {
 			})
 			it('should execute successfully and update the user type if it is not a system-critical one and is being deactivated', function() {
 				return co(function*() {
-					yield instance.update({dbObject: {name: 'Inactive Regular', status: false}, where: {id: 2}})
+					yield instance.update({dbObject: {name: 'Inactive Regular', active: false}, where: {id: 2}})
 					let userType = yield instance.model.findOne({where: {id: 2}}),
-						userTypeShouldBe = {id: 2, name: 'Inactive Regular', description: 'Regular user', status: false}
+						userTypeShouldBe = {id: 2, name: 'Inactive Regular', description: 'Regular user', active: false}
 					for (const i in userTypeShouldBe) {
 						const sbField = userTypeShouldBe[i],
 							isField = userType[i]
@@ -90,7 +90,7 @@ module.exports = {
 				return co(function*() {
 					let didThrowAnError = false
 					try {
-						yield instance.updateAccessPoints({id: 1, moduleAccessPointIds: [1, 2, 3]})
+						yield instance.updateAccessPoints({id: 1, accessPointIds: [1, 2, 3]})
 					} catch(e) {
 						if (e && (e.customMessage === 'Cannot update the access points of a fixed-access user type.')) {
 							didThrowAnError = true
@@ -104,11 +104,11 @@ module.exports = {
 			})
 			it('should execute successfully, update the access points of a non-fixed-access user type and set the permissions updated flag in the general store for it if all parameters are correct', function() {
 				return co(function*() {
-					yield instance.updateAccessPoints({id: 2, moduleAccessPointIds: [1, 2, 3, 4]})
+					yield instance.updateAccessPoints({id: 2, accessPointIds: [1, 2, 3, 4]})
 					let userType = yield instance.model.findOne({
 							where: {id: 2},
 							include: [
-								{model: db.components.moduleAccessPoints.model, as: 'accessPoints', attributes: ['id'], where: {id: [1, 2, 3, 4]}},
+								{model: db.components.accessPoints.model, as: 'accessPoints', attributes: ['id'], where: {id: [1, 2, 3, 4]}},
 								{model: db.components.users.model, as: 'users', attributes: ['id']}
 							]
 						}),
@@ -177,7 +177,7 @@ module.exports = {
 				return co(function*() {
 					yield instance.delete({id: 3})
 					let userType = yield instance.model.findOne({where: {id: 3}}),
-						accessPoints = yield db.sequelize.query('select "userTypeId" from "userTypeModuleAccessPoints" where "userTypeId" = 3 limit 1;')
+						accessPoints = yield db.sequelize.query('select "userTypeId" from "userTypeAccessPoints" where "userTypeId" = 3 limit 1;')
 					assert.strictEqual(userType, null, 'The method failed to delete the user type.')
 					assert.strictEqual(accessPoints[0].length, 0, `bad value ${accessPoints[0].length} for accessPoints[0].length, expected 0`)
 					return true

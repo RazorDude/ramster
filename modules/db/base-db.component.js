@@ -7,8 +7,6 @@
 const
 	co = require('co'),
 	DBModule = require('./db.module'),
-	merge = require('deepmerge'),
-	moment = require('moment'),
 	Sequelize = require('sequelize'),
 	spec = require('./base-db.component.spec')
 
@@ -885,8 +883,8 @@ class BaseDBComponent {
 	 */
 	delete(data) {
 		const instance = this,
-			{associationsConfig, componentName, dependencyMap, relations} = this,
-			{equalWith, masterOf} = dependencyMap,
+			{associationsConfig, componentName, dependencyMap} = this,
+			{masterOf} = dependencyMap,
 			{id, additionalFilters, checkForRelatedModels, transaction} = data
 		return co(function*() {
 			let readListOptions = {readAll: true, filters: {id}, relReadKeys: {}, idsOnlyMode: true},

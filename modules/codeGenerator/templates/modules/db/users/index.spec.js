@@ -4,33 +4,25 @@ const
 	co = require('co')
 
 const checkUserData = (permissionsData, accessPoints, alwaysAccessibleModules) => {
+	const {displayModuleAccessPointIds, displayModuleNames, accessPointsById} = permissionsData
 	for (const i in accessPoints) {
 		const ap = accessPoints[i],
-			pd = permissionsData[ap.moduleId],
-			pdText = permissionsData[ap.module.name.replace(/\s/g, '')]
-		assert(pd, `Missing permissions data object for module id ${ap.moduleId} (by id).`)
-		assert.notStrictEqual(pd.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (ids array).`)
-		assert(pd.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
-		assert(pdText, `Missing permissions data object for module id ${ap.moduleId} (by name).`)
-		assert.notStrictEqual(pdText.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object, ids array).`)
-		assert(pdText.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for module id ${ap.moduleId} (text object).`)
+			pd = displayModuleAccessPointIds[ap.displayModuleId]
+		assert(pd, `Missing permissions data object for displayModule id ${ap.displayModuleId}, access point id ${ap.id}.`)
+		assert(displayModuleNames[ap.displayModule.name], `Missing displayModule name for displayModule id ${ap.displayModuleId}, access point id ${ap.id}.`)
+		assert.notStrictEqual(pd.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
+		assert(accessPointsById[ap.id], `Missing accessPoint data by id for the access point with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
 	}
 	for (const i in alwaysAccessibleModules) {
-		const module = alwaysAccessibleModules[i],
-			aps = module.accessPoints,
-			pd = permissionsData[module.id],
-			pdText = permissionsData[module.name.replace(/\s/g, '')]
-		assert(pd, `Missing permissions data object for always accessible module id ${module.id} (by id).`)
-		assert(pdText, `Missing permissions data object for always accessible module id ${module.id} (by name).`)
+		const displayModule = alwaysAccessibleModules[i],
+			aps = displayModule.accessPoints,
+			pd = displayModuleAccessPointIds[displayModule.id]
+		assert(pd, `Missing permissions data object for displayModule id ${displayModule.id}.`)
+		assert(displayModuleNames[displayModule.name], `Missing displayModule name for displayModule id ${displayModule.id}.`)
 		for (const j in aps) {
 			const ap = aps[j]
-			assert.notStrictEqual(pd.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (ids array).`)
-			assert(pd.text[`can${ap.name.replace(/\s/g, '')}`], `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (text object).`)
-			assert.notStrictEqual(pdText.ids.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (ids array).`)
-			assert(
-				pdText.text[`can${ap.name.replace(/\s/g, '')}`],
-				`Missing accessPoint with id ${ap.id} in the permissions data object for always accessible module id ${module.id} (text object).`
-			)
+			assert.notStrictEqual(pd.indexOf(ap.id), -1, `Missing accessPoint with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
+			assert(accessPointsById[ap.id], `Missing accessPoint data by id for the access point with id ${ap.id}, displayModule id ${ap.displayModuleId}.`)
 		}
 	}
 }
@@ -38,7 +30,7 @@ const checkUserData = (permissionsData, accessPoints, alwaysAccessibleModules) =
 module.exports = {
 	testGetUserWithPermissionsData: function() {
 		const instance = this,
-			{moduleAccessPoints, modules, userTypes} = instance.db.components
+			{accessPoints, displayModules, userTypes} = instance.db.components
 		describe('db.users.getUserWithPermissionsData', function() {
 			it('should throw an error with the correct message if no filters are provided', function() {
 				return co(function*() {
@@ -71,18 +63,18 @@ module.exports = {
 							include: [{
 								model: userTypes.model,
 								as: 'type',
-								include: [{model: moduleAccessPoints.model, as: 'accessPoints', include: [{model: modules.model, as: 'module', attributes: ['name']}]}]
+								include: [{model: accessPoints.model, as: 'accessPoints', include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]}]
 							}]
 						}),
-						alwaysAccessibleModules = yield modules.model.findAll({
+						alwaysAccessibleModules = yield displayModules.model.findAll({
 							where: {alwaysAccessible: true},
-							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							include: [{model: accessPoints.model, as: 'accessPoints'}]
 						})
 					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
 					const permissionsData = userFromMethod.permissionsData,
-						accessPoints = userFromDB.type.accessPoints
+						aps = userFromDB.type.accessPoints
 					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
-					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					checkUserData(permissionsData, aps, alwaysAccessibleModules)
 					return true
 				})
 			})
@@ -90,11 +82,11 @@ module.exports = {
 	},
 	testLogin: function() {
 		const instance = this,
-			{moduleAccessPoints, modules, userTypes} = instance.db.components
+			{accessPoints, displayModules, userTypes} = instance.db.components
 		describe('db.users.login', function() {
 			before(function() {
 				return co(function*() {
-					yield instance.model.update({password: 'test', status: false}, {where: {id: 1}})
+					yield instance.model.update({password: 'test', active: false}, {where: {id: 1}})
 					yield instance.db.generalStore.storeEntry('user-1-dbLoginToken', 'abcd')
 					return true
 				})
@@ -134,8 +126,8 @@ module.exports = {
 			it('should throw an error with the correct message if the user type not active', function() {
 				return co(function*() {
 					let didThrowAnError = false
-					yield instance.model.update({status: true}, {where: {id: 1}})
-					yield userTypes.model.update({status: false}, {where: {id: 1}})
+					yield instance.model.update({active: true}, {where: {id: 1}})
+					yield userTypes.model.update({active: false}, {where: {id: 1}})
 					try {
 						yield instance.login({email: 'admin@ramster.com'})
 					} catch(e) {
@@ -152,8 +144,8 @@ module.exports = {
 			it('should throw an error with the correct message if the user\'s password is incorrect', function() {
 				return co(function*() {
 					let didThrowAnError = false
-					yield instance.model.update({status: true}, {where: {id: 1}})
-					yield userTypes.model.update({status: true}, {where: {id: 1}})
+					yield instance.model.update({active: true}, {where: {id: 1}})
+					yield userTypes.model.update({active: true}, {where: {id: 1}})
 					try {
 						yield instance.login({email: 'admin@ramster.com', password: 'badPassword'})
 					} catch(e) {
@@ -176,20 +168,20 @@ module.exports = {
 								model: userTypes.model,
 								as: 'type',
 								include: [{
-									model: moduleAccessPoints.model, as: 'accessPoints',
-									include: [{model: modules.model, as: 'module', attributes: ['name']}]
+									model: accessPoints.model, as: 'accessPoints',
+									include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]
 								}]
 							}]
 						}),
-						alwaysAccessibleModules = yield modules.model.findAll({
+						alwaysAccessibleModules = yield displayModules.model.findAll({
 							where: {alwaysAccessible: true},
-							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							include: [{model: accessPoints.model, as: 'accessPoints'}]
 						})
 					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
 					const permissionsData = userFromMethod.permissionsData,
-						accessPoints = userFromDB.type.accessPoints
+						aps = userFromDB.type.accessPoints
 					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
-					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					checkUserData(permissionsData, aps, alwaysAccessibleModules)
 					let typeOfPassword = typeof userFromMethod.password
 					assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
 					return true
@@ -200,12 +192,12 @@ module.exports = {
 	testTokenLogin: function() {
 		const instance = this,
 			{components, config, generalStore, tokenManager} = this.db,
-			{moduleAccessPoints, modules, userTypes} = components,
+			{accessPoints, displayModules, userTypes} = components,
 			tokensSecret = config.db.tokensSecret
 		describe('db.users.tokenLogin', function() {
 			before(function() {
 				return co(function*() {
-					yield instance.model.update({status: false}, {where: {id: 1}})
+					yield instance.model.update({active: false}, {where: {id: 1}})
 					yield generalStore.removeEntry('user-1-dbLoginToken')
 					return true
 				})
@@ -299,8 +291,8 @@ module.exports = {
 			it('should throw an error with the correct message if the user type is inactive', function() {
 				return co(function*() {
 					let didThrowAnError = false
-					yield instance.model.update({status: true}, {where: {id: 1}})
-					yield userTypes.model.update({status: false}, {where: {id: 1}})
+					yield instance.model.update({active: true}, {where: {id: 1}})
+					yield userTypes.model.update({active: false}, {where: {id: 1}})
 					try {
 						yield instance.tokenLogin(yield tokenManager.signToken({id: 1}, tokensSecret))
 					} catch(e) {
@@ -317,8 +309,8 @@ module.exports = {
 			it('should throw an error with the correct message if the user does not have a stored token', function() {
 				return co(function*() {
 					let didThrowAnError = false
-					yield instance.model.update({status: true}, {where: {id: 1}})
-					yield userTypes.model.update({status: true}, {where: {id: 1}})
+					yield instance.model.update({active: true}, {where: {id: 1}})
+					yield userTypes.model.update({active: true}, {where: {id: 1}})
 					try {
 						yield instance.tokenLogin(yield tokenManager.signToken({id: 1}, tokensSecret))
 					} catch(e) {
@@ -378,20 +370,20 @@ module.exports = {
 								model: userTypes.model,
 								as: 'type',
 								include: [{
-									model: moduleAccessPoints.model, as: 'accessPoints',
-									include: [{model: modules.model, as: 'module', attributes: ['name']}]
+									model: accessPoints.model, as: 'accessPoints',
+									include: [{model: displayModules.model, as: 'displayModule', attributes: ['name']}]
 								}]
 							}]
 						}),
-						alwaysAccessibleModules = yield modules.model.findAll({
+						alwaysAccessibleModules = yield displayModules.model.findAll({
 							where: {alwaysAccessible: true},
-							include: [{model: moduleAccessPoints.model, as: 'accessPoints'}]
+							include: [{model: accessPoints.model, as: 'accessPoints'}]
 						})
 					assert(userFromMethod, `bad value ${userFromMethod} for userFromMethod, expected it to exist`)
 					const permissionsData = userFromMethod.permissionsData,
-						accessPoints = userFromDB.type.accessPoints
+						aps = userFromDB.type.accessPoints
 					assert(permissionsData, `bad value ${permissionsData} for permissionsData, expected it to exist`)
-					checkUserData(permissionsData, accessPoints, alwaysAccessibleModules)
+					checkUserData(permissionsData, aps, alwaysAccessibleModules)
 					let typeOfPassword = typeof userFromMethod.password
 					assert.strictEqual(typeOfPassword, 'undefined', `bad value ${typeOfPassword} for typeOfPassword, expected undefined`)
 					token = JSON.parse(yield generalStore.getStoredEntry('user-1-dbLoginToken'))
@@ -757,7 +749,7 @@ module.exports = {
 			it('should execute successfully and update only the allowed profile update fields if all parameters are correct', function() {
 				return co(function*() {
 					let user = yield instance.updateProfile({id: 1, typeId: 35, email: 'shouldNotUpdateTheEmail@ramster.com', phone: '+359888777666', gender: 'other', lastLogin: 'now'}),
-						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admin@ramster.com', phone: '+359888777666', gender: 'other', status: true}
+						userShouldBe = {id: 1, typeId: 1, firstName: 'Admin', lastName: 'User', email: 'admin@ramster.com', phone: '+359888777666', gender: 'other', active: true}
 					for (const i in userShouldBe) {
 						const sbField = userShouldBe[i],
 							isField = user[i]

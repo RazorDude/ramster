@@ -298,7 +298,7 @@ module.exports = {
 						return co(function*() {
 							yield instance.runQueryFromColumnData(queryInterface,
 								'userTypes', {
-									columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+									columns: ['id', 'name', 'description', 'active', 'createdAt', 'updatedAt'],
 									values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
 								},
 								t
@@ -320,7 +320,7 @@ module.exports = {
 						return co(function*() {
 							yield instance.runQueryFromColumnData(queryInterface, 
 								'userTypes', {
-									columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+									columns: ['id', 'name', 'description', 'active', 'createdAt', 'updatedAt'],
 									values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
 								},
 								t,
@@ -343,7 +343,7 @@ module.exports = {
 						return co(function*() {
 							yield instance.runQueryFromColumnData(queryInterface, 
 								'userTypes', {
-									columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+									columns: ['id', 'name', 'description', 'active', 'createdAt', 'updatedAt'],
 									values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
 								},
 								t,
@@ -366,7 +366,7 @@ module.exports = {
 						return co(function*() {
 							yield instance.runQueryFromColumnData(queryInterface, 
 								'userTypes', {
-									columns: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
+									columns: ['id', 'name', 'description', 'active', 'createdAt', 'updatedAt'],
 									values: [[1500, `Test type 1 - ${now}`, 'TT1', true, 'now()', 'now()']]
 								},
 								t,
@@ -735,8 +735,8 @@ module.exports = {
 					data.absolutelyFakeAndInexistentTableName = [1, 2, 3, 4, 5]
 					try {
 						yield instance.insertData(data, {
-								userTypes: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
-								users: ['id', 'typeId', 'firstName', 'lastName', 'email', 'password', 'status', 'createdAt', 'updatedAt']
+								userTypes: ['id', 'name', 'description', 'active', 'createdAt', 'updatedAt'],
+								users: ['id', 'typeId', 'firstName', 'lastName', 'email', 'password', 'active', 'createdAt', 'updatedAt']
 							}
 						)
 					} catch(e) {
@@ -792,8 +792,8 @@ module.exports = {
 					}
 					try {
 						yield instance.insertData(data, {
-								userTypes: ['id', 'name', 'description', 'status', 'createdAt', 'updatedAt'],
-								users: ['id', 'typeId', 'firstName', 'lastName', 'email', 'password', 'status', 'createdAt', 'updatedAt']
+								userTypes: ['id', 'name', 'description', 'active', 'createdAt', 'updatedAt'],
+								users: ['id', 'typeId', 'firstName', 'lastName', 'email', 'password', 'active', 'createdAt', 'updatedAt']
 							},
 							{noSync: true, deleteTableContents: true}
 						)

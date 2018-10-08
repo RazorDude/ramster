@@ -265,20 +265,20 @@ const
 	 * Get a nested object property's value by its keys path in the object.
 	 * @param {object} parent The object to search in.
 	 * @param {string} field The path to the desired value, comprised of the object keys leading to it, delimited by dots ("."). I.e. 'results.0.roles.0.id'.
-	 * @returns {any} The value or null if not found.
+	 * @returns {any} The value or undefined if not found.
 	 */
 	getNested = (parent, field) => {
 		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string') || !field.length) {
-			return null
+			return undefined
 		}
 		let fieldData = field.split('.'),
 			currentElement = parent
 		for (let i in fieldData) {
-			let innerElement = fieldData[i]
-			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
-				return null
+			let innerElementName = fieldData[i]
+			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElementName] === 'undefined')) {
+				return undefined
 			}
-			currentElement = currentElement[innerElement]
+			currentElement = currentElement[innerElementName]
 		}
 		return currentElement
 	},
@@ -353,11 +353,11 @@ const
 	 * @param {object} parent The object to search in.
 	 * @param {string} field The path to the desired value, comprised of the object keys leading to it, delimited by dots ("."). I.e. 'results.0.roles.0.id'.
 	 * @param {any} value The value to set.
-	 * @returns {number} 1 or -1, based on whether the test was ran.
+	 * @returns {boolean} true or false, based on whether the field was set successfully or not
 	 */
 	setNested = (parent, field, value) => {
 		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string') || !field.length) {
-			return
+			return false
 		}
 		let fieldData = field.split('.'),
 			fieldName = fieldData.pop(),
@@ -365,11 +365,12 @@ const
 		for (let i in fieldData) {
 			let innerElement = fieldData[i]
 			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
-				return
+				return false
 			}
 			currentElement = currentElement[innerElement]
 		}
 		currentElement[fieldName] = value
+		return true
 	}
 
 module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, findVertexByIdDFS, getFolderSize, getNested, generateRandomNumber, generateRandomString, parseDate, runTestConditionally, setNested}
