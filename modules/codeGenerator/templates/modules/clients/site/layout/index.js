@@ -49,7 +49,12 @@ class LayoutSiteClientComponent extends BaseClientComponent {
 			try {
 				if (req.isAuthenticated()) {
 					if ((req.locals.originalUrl === '/') || (req.locals.originalUrl === '/login')) {
-						res.redirect(302, '/dashboard')
+						const queryKeys = Object.keys(req.query)
+						let queryString = ''
+						if (queryKeys.length) {
+							queryString += '?' + queryKeys.map((key) => `${key}=${req.query[key]}`).join('&')
+						}
+						res.redirect(302, '/dashboard' + queryString)
 						return
 					}
 				}

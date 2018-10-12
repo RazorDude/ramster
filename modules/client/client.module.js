@@ -61,15 +61,24 @@ class ClientModule extends BaseServerModule {
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0],
 				cookies = new Cookies(req, res),
-				isGet = req.method.toLowerCase() === 'get'
-			if (!isGet) {
+				isGet = req.method.toLowerCase() === 'get',
+				queryString = ''
+			if (isGet) {
+				const query = req.query
+				if (query) {
+					const queryKeys = Object.keys(query)
+					if (queryKeys.length) {
+						queryString += '?' + queryKeys.map((key) => `${key}=${query[key]}`).join('&')
+					}
+				}
+			} else {
 				console.log(`[${moduleName} client]`, originalUrl, 'BODY Params: ', JSON.stringify(req.body || {}))
 			}
 
 			if (!checkRoutes(originalUrl, instance.paths)) {
 				const notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
 				if (notFoundRedirectRoutes) {
-					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
+					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated + queryString : notFoundRedirectRoutes.default + queryString)
 					return
 				}
 				res.status(404).end()
@@ -82,11 +91,11 @@ class ClientModule extends BaseServerModule {
 				) {
 					cookies.set('beforeLoginURL', req.originalUrl, {httpOnly: false})
 					if (moduleConfig.unauthorizedPageRedirectRoute) {
-						res.redirect(302, moduleConfig.unauthorizedPageRedirectRoute)
+						res.redirect(302, moduleConfig.unauthorizedPageRedirectRoute + queryString)
 						return
 					}
 					if (moduleConfig.redirectUnauthorizedPagesToNotFound && moduleConfig.notFoundRedirectRoutes && moduleConfig.notFoundRedirectRoutes.default) {
-						res.redirect(302, moduleConfig.notFoundRedirectRoutes.default)
+						res.redirect(302, moduleConfig.notFoundRedirectRoutes.default + queryString)
 						return
 					}
 				}

@@ -1,3 +1,6 @@
+# 1.0.2
+- Redirect fixes - added the query params to all redirects.
+
 # 1.0.1
 - Fixed the user permissionsData-related errors for accessPoints not linked to displayModules.
 - Added code for stoping access to inactive accesspoints.
