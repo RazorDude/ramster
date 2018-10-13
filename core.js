@@ -270,13 +270,14 @@ class Core {
 	 * @param {boolean} options.testClients If set to true, the user-built tests for each client module's components will be executed.
 	 * @param {boolean} options.testAPIs If set to true, the user-built tests for each api module's components will be executed.
 	 * @param {boolean} options.testWebpackBuildTools If set to true, the tests for the webpack built tools (webpackBuild.js and webpackDevserver.js) will be executed.
+	 * @param {string[]} options.staticDataFileNames If provided, this array of string will be used to execute insertStaticData with all files with these names from the migrations/staticData folder.
 	 * @returns {void}
 	 * @memberof Core
 	 */
 	runTests(options) {
 		const instance = this,
 			{config} = instance,
-			{testConfig, testDB, testClients, testAPIs, testWebpackBuildTools} = options
+			{testConfig, testDB, testClients, testAPIs, testWebpackBuildTools, staticDataFileNames} = options
 		let syncHistoryFilesCount = 0
 		describe(config.projectName, function() {
 			before(function() {
@@ -306,9 +307,19 @@ class Core {
 						} catch(e) {
 						}
 						try {
-							let stats = yield fs.lstat(path.join(config.migrations.staticDataPath, 'mockStaticData.json'))
-							if (stats.isFile()) {
-								yield instance.migrations.insertStaticData('mockStaticData')
+							if (staticDataFileNames instanceof Array) {
+								for (const i in staticDataFileNames) {
+									let stats = yield fs.lstat(path.join(config.migrations.staticDataPath, `${staticDataFileNames[i]}.json`))
+									if (stats.isFile()) {
+										yield instance.migrations.insertStaticData(staticDataFileNames[i])
+									}
+								}
+							}
+							else {
+								let stats = yield fs.lstat(path.join(config.migrations.staticDataPath, 'mockStaticData.json'))
+								if (stats.isFile()) {
+									yield instance.migrations.insertStaticData('mockStaticData')
+								}
 							}
 						} catch(e) {
 							console.log('Error while populating mockStaticData, skipping: ', e)

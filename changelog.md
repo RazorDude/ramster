@@ -1,3 +1,6 @@
+# 1.0.3
+- Added support for multiple static data files to be executed with the tests - see the projectMainFile.js in modules/codeGenerator/templates for more info.
+
 # 1.0.2
 - Redirect fixes - added the query params to all redirects.
 

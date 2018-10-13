@@ -26,7 +26,8 @@ if (argv.runTests) {
 		testDB: (argv.testDB === 'true') || (argv.testDB === true),
 		testClients: (argv.testClients === 'true') || (argv.testClients === true) ? true : argv.testClients,
 		testAPIs: (argv.testAPIs === 'true') || (argv.testAPIs === true) ? true : argv.testAPIs,
-		testWebpackBuildTools: (argv.testWebpackBuildTools === 'true') || (argv.testWebpackBuildTools === true)
+		testWebpackBuildTools: (argv.testWebpackBuildTools === 'true') || (argv.testWebpackBuildTools === true),
+		staticDataFileNames: argv.staticDataFileNames ? JSON.parse(argv.staticDataFileNames) : undefined
 	})
 	if (argv.testLint === 'true') {
 		ramster.runLintTests(__dirname, `{,!(node_modules)/**/}*.js`, 'public')
