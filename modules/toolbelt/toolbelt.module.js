@@ -414,12 +414,14 @@ const
 					i = closingBracketIndex
 				}
 			}
-			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElementName] === 'undefined')) {
+			if ((typeof currentElement === 'undefined') || (currentElement === null)) {
 				return false
 			}
 			if (i === lastElementIndex) {
 				currentElement[innerElementName] = value
 				break
+			} else if (typeof currentElement[innerElementName] === 'undefined') {
+				return false
 			}
 			currentElement = currentElement[innerElementName]
 		}

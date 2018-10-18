@@ -623,7 +623,64 @@ module.exports = {
 					result = parent.t.vertices.f.$vertices[1].vertices.test3['$evenDeeperTest.field$']
 				assert.strictEqual(response, true, `bad value ${response} for response, expected true`)
 				assert.strictEqual(result, 14, `bad value ${result} for result, expected 14`)
-				
+			})
+			it('should execute successfully and set the field\'s value if all parameters are correct and the last field does not exist in the object and it does not contain $ bracket syntax', function() {
+				let parent = {
+					test1: 'test1string',
+					a: undefined,
+					b: null,
+					c: 567,
+					t: {
+						vertices: {
+							f: {
+								$vertices: [
+									'', {
+										vertices: {
+											test2: true,
+											'$innerTest.vertices$': {veryInnerId: 25},
+											test3: {'$evenDeeperTest.field$': 13},
+										}
+									},
+									2
+								]
+							}
+						}
+					},
+					d: ''
+				}
+				let response = setNested(parent, 't.vertices.f.$vertices.1.vertices.test3.newField', 15),
+					result = parent.t.vertices.f.$vertices[1].vertices.test3.newField
+				assert.strictEqual(response, true, `bad value ${response} for response, expected true`)
+				assert.strictEqual(result, 15, `bad value ${result} for result, expected 15`)
+			})
+			it('should execute successfully and set the field\'s value if all parameters are correct and the last field does not exist in the object and it contains $ bracket syntax', function() {
+				let parent = {
+					test1: 'test1string',
+					a: undefined,
+					b: null,
+					c: 567,
+					t: {
+						vertices: {
+							f: {
+								$vertices: [
+									'', {
+										vertices: {
+											test2: true,
+											'$innerTest.vertices$': {veryInnerId: 25},
+											test3: {'$evenDeeperTest.field$': 13},
+										}
+									},
+									2
+								]
+							}
+						}
+					},
+					d: ''
+				}
+				let response = setNested(parent, 't.vertices.f.$vertices.1.vertices.test3.$new.field$', 15),
+					result = parent.t.vertices.f.$vertices[1].vertices.test3['$new.field$']
+				assert.strictEqual(response, true, `bad value ${response} for response, expected true`)
+				assert.strictEqual(result, 15, `bad value ${result} for result, expected 15`)
 			})
 		})
 	}
