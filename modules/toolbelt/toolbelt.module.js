@@ -272,9 +272,34 @@ const
 			return undefined
 		}
 		let fieldData = field.split('.'),
+			fieldDataLength = fieldData.length,
 			currentElement = parent
-		for (let i in fieldData) {
+		for (let i = 0; i < fieldDataLength; i++) {
 			let innerElementName = fieldData[i]
+			// logic for handling sequelize-style $foo.bar$ - should be treated as a single element
+			if (innerElementName.charAt(0) === '$') {
+				let closingBracketFound = false,
+					closingBracketIndex = i + 1
+				while (closingBracketIndex < fieldDataLength) {
+					const element = fieldData[closingBracketIndex]
+					// false alarm - there's another $ opening before the current one closed - so the current one must be just a variable name, not a bracket
+					if (element.charAt(0) === '$') {
+						break
+					}
+					// found it !
+					if (element.charAt(element.length - 1) === '$') {
+						closingBracketFound = true
+						break
+					}
+					closingBracketIndex++
+				}
+				if (closingBracketFound) {
+					for (let j = i + 1; j <= closingBracketIndex; j++) {
+						innerElementName += `.${fieldData[j]}`
+					}
+					i = closingBracketIndex
+				}
+			}
 			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElementName] === 'undefined')) {
 				return undefined
 			}
@@ -360,16 +385,44 @@ const
 			return false
 		}
 		let fieldData = field.split('.'),
-			fieldName = fieldData.pop(),
+			fieldDataLength = fieldData.length,
+			lastElementIndex = fieldDataLength - 1,
 			currentElement = parent
-		for (let i in fieldData) {
-			let innerElement = fieldData[i]
-			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElement] === 'undefined')) {
+		for (let i = 0; i < fieldDataLength; i++) {
+			let innerElementName = fieldData[i]
+			// logic for handling sequelize-style $foo.bar$ - should be treated as a single element
+			if (innerElementName.charAt(0) === '$') {
+				let closingBracketFound = false,
+					closingBracketIndex = i + 1
+				while (closingBracketIndex < fieldDataLength) {
+					const element = fieldData[closingBracketIndex]
+					// false alarm - there's another $ opening before the current one closed - so the current one must be just a variable name, not a bracket
+					if (element.charAt(0) === '$') {
+						break
+					}
+					// found it !
+					if (element.charAt(element.length - 1) === '$') {
+						closingBracketFound = true
+						break
+					}
+					closingBracketIndex++
+				}
+				if (closingBracketFound) {
+					for (let j = i + 1; j <= closingBracketIndex; j++) {
+						innerElementName += `.${fieldData[j]}`
+					}
+					i = closingBracketIndex
+				}
+			}
+			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElementName] === 'undefined')) {
 				return false
 			}
-			currentElement = currentElement[innerElement]
+			if (i === lastElementIndex) {
+				currentElement[innerElementName] = value
+				break
+			}
+			currentElement = currentElement[innerElementName]
 		}
-		currentElement[fieldName] = value
 		return true
 	}
 

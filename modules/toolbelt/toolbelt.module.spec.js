@@ -513,56 +513,61 @@ module.exports = {
 				assert.strictEqual(getNested({}, 'test.test1'), undefined)
 			})
 			it('should execute successfully and return the field\'s value if all parameters are correct', function() {
-				assert(
-					getNested({
-							test1: 'test1string',
-							a: undefined,
-							b: null,
-							c: 567,
-							t: {
-								vertices: {
-									f: {
-										vertices: [
-											'', {
-												vertices: {
-													test2: true,
-													innerTest: {vertices: {veryInnerId: 25}}
-												}
-											},
-											2
-										]
-									}
+				const result = getNested({
+						test1: 'test1string',
+						a: undefined,
+						b: null,
+						c: 567,
+						t: {
+							vertices: {
+								f: {
+									$vertices: [
+										'', {
+											vertices: {
+												test2: true,
+												'$innerTest.vertices$': {veryInnerId: 25}
+											}
+										},
+										2
+									]
 								}
-							},
-							d: ''
-						}, 't.vertices.f.vertices.1.vertices.innerTest.vertices.veryInnerId'
-					) === 25
+							}
+						},
+						d: ''
+					}, 't.vertices.f.$vertices.1.vertices.$innerTest.vertices$.veryInnerId'
 				)
+				assert.strictEqual(result, 25, `bad value ${result} for result, expected 25`)
 			})
 		})
 	},
 	testSetNested: function() {
 		const setNested = toolbelt.setNested
 		describe('toolbelt.setNested', function() {
-			it('should execute successfully and do nothing if the parent is undefined', function() {
-				setNested()
+			it('should execute successfully and return false if the parent is undefined', function() {
+				const response = setNested()
+				assert.strictEqual(response, false, `bad value ${response} for response, expected false`)
 			})
-			it('should execute successfully and do nothing if the parent is null', function() {
-				setNested(null)
+			it('should execute successfully and return false if the parent is null', function() {
+				const response = setNested(null)
+				assert.strictEqual(response, false, `bad value ${response} for response, expected false`)
 			})
-			it('should execute successfully and do nothing if the parent is not an object', function() {
-				setNested(1)
+			it('should execute successfully and return false if the parent is not an object', function() {
+				const response = setNested(1)
+				assert.strictEqual(response, false, `bad value ${response} for response, expected false`)
 			})
-			it('should execute successfully and do nothing if the field is not a string', function() {
-				setNested({})
+			it('should execute successfully and return false if the field is not a string', function() {
+				const response = setNested({})
+				assert.strictEqual(response, false, `bad value ${response} for response, expected false`)
 			})
-			it('should execute successfully and do nothing if the field is an empty string', function() {
-				setNested({}, '')
+			it('should execute successfully and return false if the field is an empty string', function() {
+				const response = setNested({}, '')
+				assert.strictEqual(response, false, `bad value ${response} for response, expected false`)
 			})
-			it('should execute successfully and do nothing if the field does not exist in the parent', function() {
-				setNested({}, 'test.test1')
+			it('should execute successfully and return false if the field does not exist in the parent', function() {
+				const response = setNested({}, 'test.test1')
+				assert.strictEqual(response, false, `bad value ${response} for response, expected false`)
 			})
-			it('should execute successfully and set the field\'s value if all parameters are correct', function() {
+			it('should execute successfully and set the field\'s value if all parameters are correct and the last field does not contain $ bracket syntax', function() {
 				let parent = {
 					test1: 'test1string',
 					a: undefined,
@@ -571,11 +576,11 @@ module.exports = {
 					t: {
 						vertices: {
 							f: {
-								vertices: [
+								'$vertices': [
 									'', {
 										vertices: {
 											test2: true,
-											innerTest: {vertices: {veryInnerId: 25}}
+											'$innerTest.vertices$': {veryInnerId: 25}
 										}
 									},
 									2
@@ -585,8 +590,40 @@ module.exports = {
 					},
 					d: ''
 				}
-				setNested(parent, 't.vertices.f.vertices.1.vertices.innerTest.vertices.veryInnerId', 26)
-				assert(parent.t.vertices.f.vertices[1].vertices.innerTest.vertices.veryInnerId === 26)
+				let response = setNested(parent, 't.vertices.f.$vertices.1.vertices.$innerTest.vertices$.veryInnerId', 26),
+					result = parent.t.vertices.f.$vertices[1].vertices['$innerTest.vertices$'].veryInnerId
+				assert.strictEqual(response, true, `bad value ${response} for response, expected true`)
+				assert.strictEqual(result, 26, `bad value ${result} for result, expected 26`)
+			})
+			it('should execute successfully and set the field\'s value if all parameters are correct and the last field contains $ bracket syntax', function() {
+				let parent = {
+					test1: 'test1string',
+					a: undefined,
+					b: null,
+					c: 567,
+					t: {
+						vertices: {
+							f: {
+								$vertices: [
+									'', {
+										vertices: {
+											test2: true,
+											'$innerTest.vertices$': {veryInnerId: 25},
+											test3: {'$evenDeeperTest.field$': 13},
+										}
+									},
+									2
+								]
+							}
+						}
+					},
+					d: ''
+				}
+				let response = setNested(parent, 't.vertices.f.$vertices.1.vertices.test3.$evenDeeperTest.field$', 14),
+					result = parent.t.vertices.f.$vertices[1].vertices.test3['$evenDeeperTest.field$']
+				assert.strictEqual(response, true, `bad value ${response} for response, expected true`)
+				assert.strictEqual(result, 14, `bad value ${result} for result, expected 14`)
+				
 			})
 		})
 	}

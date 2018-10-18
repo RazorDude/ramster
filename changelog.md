@@ -1,3 +1,6 @@
+# 1.0.4
+- toolbelt.getNested and toolbelt.setNested now corretly work with $$ fields - a field surrounded by $ won't be split if there's a "." in it. I.e. testContainer.$testField.name$ will return the value of the $testField.name$ key in the testContainer object.
+
 # 1.0.3
 - Added support for multiple static data files to be executed with the tests - see the projectMainFile.js in modules/codeGenerator/templates for more info.
 
