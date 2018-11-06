@@ -1,3 +1,6 @@
+# 1.0.6
+- Added configurable file size limit for multipart bodies in client modules. The config variable is fileSizeLimit and must be in the format described in the docs of connect-multiparty.
+
 # 1.0.5
 - Fix for a regression bug in toolbelt.setNested and extended tests - it can now correctly set a field's value even if it does not exist in the lowemost parent.
 

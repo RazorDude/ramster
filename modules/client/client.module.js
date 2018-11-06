@@ -133,7 +133,7 @@ class ClientModule extends BaseServerModule {
 			app.use(bodyParser.json()) // for 'application/json' request bodies
 			app.use(bodyParser.urlencoded({extended: false})) // 'x-www-form-urlencoded' request bodies
 			if (config.globalUploadPath) {
-				app.use(multipart({uploadDir: config.globalUploadPath})) // for multipart bodies - file uploads etc.
+				app.use(multipart({limit: moduleConfig.fileSizeLimit || '10mb', uploadDir: config.globalUploadPath})) // for multipart bodies - file uploads etc.
 			}
 			app.use(cookieParser())
 
@@ -217,7 +217,7 @@ class ClientModule extends BaseServerModule {
 			}
 			app.use('/', instance.router)
 
-			//after every route - return handled errors and set up redirects
+			// after every route - return handled errors and set up redirects
 			app.use('*', instance.handleNextAfterRoutes())
 
 			instance.server = http.createServer(app)
