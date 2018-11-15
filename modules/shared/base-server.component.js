@@ -23,6 +23,7 @@ class BaseServerComponent {
 	 * @param {string[]} options.addDefaultRoutes (optional) The list of default routes to add - create, read, readList, readSelectList, update, bulkUpsert, delete.
 	 * @param {baseServerComponentRouteConfigObject[]} options.additionalDefaultRoutes (optional) A list of routes to set as default ones for all components that inherit the class that sets them, in addition to the ramster-provided default routes.
 	 * @param {boolean} options.appendComponentNameToRoutes (optional) If set to true, the component name will be added as a prefix too all routes in the "routes" array. In such a case, be sure to use "" instead of "/" for the route path of methods that are supposed to be at "/componentName". Otherwise you'll get a not found error, because the routes will mount at "/componentName/".
+	 * @param {string[]} options.afterRoutesMethodNames (optional) The list of method names to mount as net() for all routes. Must correspond to actual methods from the server component. Will be mounted in the order provided.
 	 * @typedef {Object.<string, any>} baseServerComponentRouteConfigObject
 	 * @property {string} method The HTTP method type - GET, POST, PUT, PATCH and DELETE. Case-insensitive.
 	 * @property {string} path The HTTP REST path of the route (not including the server URL).
@@ -31,10 +32,15 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	constructor(options) {
-		const {componentName, routes, addDefaultRoutes, additionalDefaultRoutes, appendComponentNameToRoutes} = options
+		const {componentName, routes, addDefaultRoutes, additionalDefaultRoutes, appendComponentNameToRoutes, afterRoutesMethodNames} = options
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
+		/**
+		 * The currently initialized instance of the BaseServerModule.
+		 * @type {string[]}
+		 */
+		this.afterRoutesMethodNames = afterRoutesMethodNames instanceof Array ? afterRoutesMethodNames : []
 		/**
 		 * The list of allowed HTTP methods for routes.
 		 * @type {string[]}

@@ -12,13 +12,11 @@ const
 	cookieParser = require('cookie-parser'),
 	co = require('co'),
 	Cookies = require('cookies'),
-	{changeKeyCase, checkRoutes} = require('../toolbelt'),
+	{checkRoutes} = require('../toolbelt'),
 	express = require('express'),
 	expressSession = require('express-session'),
-	fs = require('fs-extra'),
 	http = require('http'),
 	multipart = require('connect-multiparty'),
-	path = require('path'),
 	requestLogger = require('morgan'),
 	spec = require('./client.module.spec'),
 	wrap = require('co-express')
@@ -57,7 +55,7 @@ class ClientModule extends BaseServerModule {
 	 */
 	setDefaultsBeforeRequest() {
 		const instance = this,
-			{moduleName, moduleConfig, config} = this
+			{moduleName, moduleConfig} = this
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0],
 				cookies = new Cookies(req, res),
@@ -121,7 +119,7 @@ class ClientModule extends BaseServerModule {
 	mountRoutes(sessionStore) {
 		let instance = this
 		return co(function*() {
-			const {config, moduleName, moduleConfig, passport} = instance
+			const {afterRoutesMethodNames, config, moduleName, moduleConfig, passport} = instance
 			instance.app = express()
 			instance.router = express.Router()
 			instance.paths = []
@@ -211,14 +209,24 @@ class ClientModule extends BaseServerModule {
 			// mount all routes
 			for (const i in components) {
 				let component = components[i]
+				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
 				component.routes.forEach((routeData, index) => {
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 				})
+				if (componentAfterRoutesMethodNames.length) {
+					for (const i in componentAfterRoutesMethodNames) {
+						instance.router.use(`/${component.componentName}/*`, component[componentAfterRoutesMethodNames[i]]())
+					}
+				}
 			}
 			app.use('/', instance.router)
 
 			// after every route - return handled errors and set up redirects
-			app.use('*', instance.handleNextAfterRoutes())
+			if (afterRoutesMethodNames.length) {
+				for (const i in afterRoutesMethodNames) {
+					app.use('*', instance[afterRoutesMethodNames[i]]())
+				}
+			}
 
 			instance.server = http.createServer(app)
 			instance.server.listen(moduleConfig.serverPort, () => {

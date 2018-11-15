@@ -97,7 +97,7 @@ module.exports = {
 	},
 	testLoadComponents: function() {
 		const instance = this,
-			{config, moduleConfig} = this,
+			{config} = this,
 			originalConfig = JSON.parse(JSON.stringify(config))
 		let changeableInstance = this
 		describe('base-server.module.loadComponents', function() {
@@ -171,7 +171,14 @@ module.exports = {
 			})
 			it('should execute successfully if all paramters are correct', function() {
 				return co(function*() {
+					let filePath = path.join(config.clientModulesPath, instance.moduleName, 'moduleMethods.js'),
+						fd = yield fs.open(filePath, 'w')
+					yield fs.writeFile(fd, 'module.exports = {mmTestMethod: () => true}')
+					yield fs.close(fd)
 					yield instance.loadComponents()
+					yield fs.remove(filePath)
+					const typeofTestMethod = typeof instance.mmTestMethod
+					assert.strictEqual(typeofTestMethod, 'function', `bad value ${typeofTestMethod} for typeofTestMethod, expected function`)
 					return true
 				})
 			})

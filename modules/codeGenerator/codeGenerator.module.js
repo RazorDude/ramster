@@ -501,30 +501,48 @@ class CodeGenerator {
 	/**
 	 * Generates the project's basic directory structure.
 	 * @param {string} outputPath The path to the folder in which the generated folders will be put. Must be a valid and accessible directory.
+	 * @param {boolean} overwrite (optional) Overwrite the existing folders. False by default.
 	 * @returns {Promise<boolean>} A promise which wraps a generator function.
 	 * @memberof CodeGenerator
 	 */
-	generateFolders(outputPath) {
+	generateFolders(outputPath, overwrite) {
 		const instance = this
 		return co(function*() {
 			if ((typeof outputPath !== 'string') || !outputPath.length) {
 				throw {customMessage: 'The outputPath argument must be a non-empty string.'}
 			}
 			yield instance.checkOutputPath(outputPath)
-			yield fs.mkdirp(path.join(outputPath, 'clients'))
-			yield fs.mkdirp(path.join(outputPath, 'config/profiles'))
-			yield fs.mkdirp(path.join(outputPath, 'logs'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/db'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/clients'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/apis'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/emails/templates'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/seedFiles'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/syncHistory'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/backup'))
-			yield fs.mkdirp(path.join(outputPath, 'modules/migrations/staticData'))
-			yield fs.mkdirp(path.join(outputPath, 'public'))
-			yield fs.mkdirp(path.join(outputPath, 'storage/importTemplates'))
-			yield fs.mkdirp(path.join(outputPath, 'storage/tmp'))
+			const folderPaths = [
+				path.join(outputPath, 'clients'),
+				path.join(outputPath, 'config/profiles'),
+				path.join(outputPath, 'logs'),
+				path.join(outputPath, 'modules/db'),
+				path.join(outputPath, 'modules/clients'),
+				path.join(outputPath, 'modules/apis'),
+				path.join(outputPath, 'modules/emails/templates'),
+				path.join(outputPath, 'modules/migrations/seedFiles'),
+				path.join(outputPath, 'modules/migrations/syncHistory'),
+				path.join(outputPath, 'modules/migrations/backup'),
+				path.join(outputPath, 'modules/migrations/staticData'),
+				path.join(outputPath, 'public'),
+				path.join(outputPath, 'storage/importTemplates'),
+				path.join(outputPath, 'storage/tmp')
+			]
+			if (overwrite) {
+				for (const i in folderPaths) {
+					const folderPath = folderPaths[i]
+					yield fs.mkdirp(folderPath)
+				}
+				return true
+			}
+			for (const i in folderPaths) {
+				const folderPath = folderPaths[i]
+				try {
+					yield fs.lstat(folderPath)
+				} catch(e) {
+					yield fs.mkdirp(folderPath)
+				}
+			}
 			return true
 		})
 	}
@@ -622,7 +640,7 @@ class CodeGenerator {
 			yield instance.checkOutputPath(outputPath)
 			yield instance.generateProjectMainFile(outputPath)
 			yield instance.generateGitignore(outputPath)
-			yield instance.generateFolders(outputPath)
+			yield instance.generateFolders(outputPath, true)
 			yield instance.generateIndexConfigFile(path.join(outputPath, 'config'))
 			yield instance.generateCommonConfigFile(path.join(outputPath, 'config'))
 			yield instance.generateProfileConfigFile(path.join(outputPath, 'config'), configProfile || 'local')

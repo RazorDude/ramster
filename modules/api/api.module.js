@@ -74,7 +74,7 @@ class APIModule extends BaseServerModule {
 	mountRoutes() {
 		let instance = this
 		return co(function*() {
-			const {config, moduleName, moduleConfig, passport} = instance
+			const {afterRoutesMethodNames, config, moduleName, moduleConfig} = instance
 			instance.app = express()
 			instance.router = express.Router()
 			instance.paths = []
@@ -131,6 +131,7 @@ class APIModule extends BaseServerModule {
 
 			// mount all routes
 			for (const i in components) {
+				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
 				let component = components[i]
 				component.routes.forEach((routeData, index) => {
 					if (moduleConfig.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
@@ -139,11 +140,20 @@ class APIModule extends BaseServerModule {
 					}
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 				})
+				if (componentAfterRoutesMethodNames.length) {
+					for (const i in componentAfterRoutesMethodNames) {
+						instance.router.use(`/${component.componentName}/*`, component[componentAfterRoutesMethodNames[i]]())
+					}
+				}
 			}
 			app.use('/', instance.router)
 
 			// after every route - return handled errors and set up redirects
-			app.use('*', instance.handleNextAfterRoutes())
+			if (afterRoutesMethodNames.length) {
+				for (const i in afterRoutesMethodNames) {
+					app.use('*', instance[afterRoutesMethodNames[i]]())
+				}
+			}
 
 			instance.server = http.createServer(app)
 			instance.server.listen(moduleConfig.serverPort, () => {

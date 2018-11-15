@@ -210,7 +210,7 @@ module.exports = {
 			it('should throw an error with the correct message if a component\'s class does not contain a model object', function() {
 				return co(function*() {
 					let didThrowAnError = false,
-						componentName = `absolutelyFakeModule_${moment.utc().valueOf()}`,
+						componentName = `absolutelyFakeComponent_${moment.utc().valueOf()}`,
 						componentPath = path.join(moduleConfig.modulePath, componentName)
 					yield fs.mkdirp(componentPath)
 					let fd = yield fs.open(path.join(componentPath, 'index.js'), 'w')
@@ -233,7 +233,7 @@ module.exports = {
 			it('should throw an error with the correct message if a component has a spec file, but it is invalid', function() {
 				return co(function*() {
 					let didThrowAnError = false,
-						componentName = `absolutelyFakeModule_${moment.utc().valueOf()}`,
+						componentName = `absolutelyFakeComponent_${moment.utc().valueOf()}`,
 						componentPath = path.join(moduleConfig.modulePath, componentName)
 					yield fs.mkdirp(componentPath)
 					let fd = yield fs.open(path.join(componentPath, 'index.js'), 'w')

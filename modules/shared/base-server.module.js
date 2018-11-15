@@ -30,6 +30,7 @@ class BaseServerModule {
 	 * @param {string} moduleName The name of the module.
 	 * @param {string} moduleType The type of the module. Can be 'client' or 'api'.
 	 * @param {object} options An object containing additonal properties.
+	 * @param {string[]} options.afterRoutesMethodNames An array of strings, which represent module methods to be mounted after all routes as next() for the whole module.
 	 * @param {DBModule} options.db An instance of the DBModule class.
 	 * @param {Logger} options.logger An instance of the Logger class.
 	 * @param {GeneralStore} options.generalStore An instance of the GeneralStore class.
@@ -37,10 +38,15 @@ class BaseServerModule {
 	 * @memberof BaseServerModule
 	 */
 	constructor(config, moduleName, moduleType, options) {
-		const {db, logger, generalStore, tokenManager} = options
+		const {afterRoutesMethodNames, db, generalStore, logger, tokenManager} = options
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
+		/**
+		 * An array of strings, which represent module methods to be mounted after all routes as next() for the whole module.
+		 * @type {string[]}
+		 */
+		this.afterRoutesMethodNames = afterRoutesMethodNames instanceof Array ? afterRoutesMethodNames : ['handleNextAfterRoutes']
 		/**
 		 * The project config object.
 		 * @type {object}
@@ -104,7 +110,7 @@ class BaseServerModule {
 	}
 
 	/**
-	 * Loads all server components in the related folder and their tests. Sets the module as a property of each one, while dereferecing the component from the module's components object to avoid circularization. Runs the setup method for each component that has one.
+	 * Loads all server components in the related folder and their tests. Sets the module as a property of each one, while dereferecing the component from the module's components object to avoid circularization. Runs the setup method for each component that has one. Also loads the moduleMethods.js file, if present in the module folder.
 	 * @returns {Promise<boolean>} A promise wrapping a generator function.
 	 * @memberof BaseServerModule
 	 */
@@ -154,6 +160,17 @@ class BaseServerModule {
 					instance.fieldCaseMap = require(componentPath)
 				} else if (componentName === 'precursorMethods.js') {
 					instance.precursorMethods = require(componentPath)
+				} else if (componentName === 'moduleMethods.js') {
+					let moduleMethods = require(componentPath)
+					if ((typeof moduleMethods !== 'object') || (moduleMethods === null)) {
+						throw {customMessage: `Invalid moduleMethods file for the "${moduleName}" client module.`}
+					}
+					for (const methodName in moduleMethods) {
+						let method = moduleMethods[methodName]
+						if (typeof method === 'function') {
+							instance[methodName] = method
+						}
+					}
 				}
 			}
 			instance.components = components
