@@ -209,6 +209,9 @@ class ClientModule extends BaseServerModule {
 			// mount all routes
 			for (const i in components) {
 				let component = components[i]
+				if (typeof component.setup === 'function') {
+					component.setup()
+				}
 				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
 				component.routes.forEach((routeData, index) => {
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))

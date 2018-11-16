@@ -133,6 +133,9 @@ class APIModule extends BaseServerModule {
 			for (const i in components) {
 				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
 				let component = components[i]
+				if (typeof component.setup === 'function') {
+					component.setup()
+				}
 				component.routes.forEach((routeData, index) => {
 					if (moduleConfig.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
 						instance.router[routeData.method](routeData.path, wrap(instance.tokenManager.validate()), wrap(component[routeData.func](routeData.options || {})))

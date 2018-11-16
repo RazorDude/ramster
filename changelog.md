@@ -1,4 +1,7 @@
 # 1.0.7
+- Moved the client and api server modules' triggering of each component's setup method (if present) to mountRoutes, so they can make use of module.app.
+
+# 1.0.7
 - Added the ability to set custom after-routes methods for each server component, as well as a global custom after-routes methods. Each module's handleNextAfterRoutes is still added by default.
 - The codeGenerator.generateFolders can now be safely used at all times - it does not overwrite existing folders. From now on, it will create just the ones that don't currently exist, unless overwrite is set to true.
 
