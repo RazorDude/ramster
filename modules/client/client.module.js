@@ -209,9 +209,6 @@ class ClientModule extends BaseServerModule {
 			// mount all routes
 			for (const i in components) {
 				let component = components[i]
-				if (typeof component.setup === 'function') {
-					component.setup()
-				}
 				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
 				component.routes.forEach((routeData, index) => {
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
@@ -223,6 +220,15 @@ class ClientModule extends BaseServerModule {
 				}
 			}
 			app.use('/', instance.router)
+
+			// add the express app to each component's module instance and run its setup method, if needed
+			for (const i in components) {
+				let component = components[i]
+				component.module.app = app
+				if (typeof component.setup === 'function') {
+					component.setup()
+				}
+			}
 
 			// after every route - return handled errors and set up redirects
 			if (afterRoutesMethodNames.length) {

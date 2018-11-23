@@ -1,4 +1,7 @@
-# 1.0.7
+# 1.0.9
+- Small fix for the latest feature.
+
+# 1.0.8
 - Moved the client and api server modules' triggering of each component's setup method (if present) to mountRoutes, so they can make use of module.app.
 
 # 1.0.7

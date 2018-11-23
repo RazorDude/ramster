@@ -131,11 +131,8 @@ class APIModule extends BaseServerModule {
 
 			// mount all routes
 			for (const i in components) {
-				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
 				let component = components[i]
-				if (typeof component.setup === 'function') {
-					component.setup()
-				}
+				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
 				component.routes.forEach((routeData, index) => {
 					if (moduleConfig.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
 						instance.router[routeData.method](routeData.path, wrap(instance.tokenManager.validate()), wrap(component[routeData.func](routeData.options || {})))
@@ -155,6 +152,15 @@ class APIModule extends BaseServerModule {
 			if (afterRoutesMethodNames.length) {
 				for (const i in afterRoutesMethodNames) {
 					app.use('*', instance[afterRoutesMethodNames[i]]())
+				}
+			}
+
+			// add the express app to each component's module instance and run its setup method, if needed
+			for (const i in components) {
+				let component = components[i]
+				component.module.app = app
+				if (typeof component.setup === 'function') {
+					component.setup()
 				}
 			}
 
