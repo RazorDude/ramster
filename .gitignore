@@ -9,3 +9,4 @@ debug.log
 test
 !test/generateStuff.js
 !test/test.js
+package-lock.json

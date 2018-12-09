@@ -1,3 +1,7 @@
+# 1.0.10
+- Small module import fixes for certain modules.
+- Upgraded and greatly expanded the tests for the client module's setDefaultsBeforeRequest method redirects.
+
 # 1.0.9
 - Small fix for the latest feature.
 

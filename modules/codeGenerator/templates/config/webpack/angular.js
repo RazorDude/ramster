@@ -1,14 +1,16 @@
 'use strict'
 
 const
+	AngularCompilerPlugin = require( "@ngtools/webpack" ).AngularCompilerPlugin,
 	BellOnBundlerErrorPlugin = require('bell-on-bundler-error-plugin'),
+	BundleAnalyzerPlugin = require('webpack-bundle-analyzer').BundleAnalyzerPlugin,
 	path = require('path'),
 	ProgressBarPlugin = require('progress-bar-webpack-plugin'),
-	UglifyJsPlugin = require('uglifyjs-webpack-plugin'),
+	TerserPlugin = require('terser-webpack-plugin'),
 	webpack = require('webpack')
 
 
-module.exports = (config, name) => {
+module.exports = (config) => {
 	let includePath = config.clientPath,
 		publicPath = config.publicPath,
 		nodeModulesPath = config.nodeModulesPath,
@@ -18,9 +20,9 @@ module.exports = (config, name) => {
 		mode: config.mode,
 		devtool: 'source-map',
 		entry: [
-			// '@babel/polyfill',
 			path.join(includePath, 'polyfills.ts'),
-			path.join(includePath, 'vendor.ts'),
+			path.join(includePath, 'vendor.common.ts'),
+			path.join(includePath, 'vendor.browser.ts'),
 			path.join(includePath, 'index.ts')
 		],
 		output: {
@@ -30,20 +32,11 @@ module.exports = (config, name) => {
 			publicPath: '/dist/'
 		},
 		resolve: {
-			extensions: ['.js', '.ts'],
+			extensions: ['.ts', '.js'],
 			modules: ['node_modules']
 		},
 		module: {
 			rules: [
-				// {
-				// 	test: /\.(jpg|png|svg|jpeg)$/,
-				// 	use: [{
-				// 		loader: 'file-loader',
-				// 		options: {
-				// 			name: '[path][name].[hash].[ext]',
-				// 		}
-				// 	}]
-				// },
 				{
 					test: /\.pug$/,
 					include,
@@ -53,13 +46,12 @@ module.exports = (config, name) => {
 					test: /\.css$/,
 					include: [nodeModulesPath, includePath],
 					exclude: [],
-					use: ['style-loader', 'css-loader']
+					use: ['to-string-loader', 'css-loader']
 				},
 				{
 					test: /\.less$/,
-					include: [nodeModulesPath, includePath],
 					exclude: [],
-					use: ['style-loader', 'css-loader', 'less-loader']
+					use: ['to-string-loader', 'css-loader', 'less-loader']
 				},
 				{
 					test: /\.scss$/,
@@ -68,24 +60,11 @@ module.exports = (config, name) => {
 					use: ['raw-loader', 'sass-loader']
 				},
 				{
-					test: /\.js$/,
+					test: /(?:\.ngfactory\.js|\.ngstyle\.js|\.ts)$/,
 					include,
 					use: [{
-						loader: 'babel-loader?cacheDirectory=false&plugins[]=transform-runtime&presets[]=es2015'
-					}]
-				},
-				{
-					test: /\.ts$/,
-					include: [includePath, libPath],
-					use: [{
-							loader: 'ng-router-loader',
-							options: {loader: 'async-import', genDir: 'compiled', aot: true}
-						}, {
-							loader: 'ts-loader'
-						}, {
-							loader: 'angular2-template-loader'
-						}
-					],
+						loader: '@ngtools/webpack'
+					}],
 					exclude: [/\.(spec|e2e)\.ts$/]
 				},
 				{
@@ -106,11 +85,11 @@ module.exports = (config, name) => {
 				complete: '#',
 				summary: 'true'
 			}),
-			new webpack.ContextReplacementPlugin(/\@angular(\\|\/)core(\\|\/)esm5/, path.join(__dirname, '../clients/site')),
-			new webpack.ProvidePlugin({
-				'$': 'jquery',
-				'jQuery': 'jquery',
-				'window.jQuery': 'jquery'
+			new webpack.NamedModulesPlugin(),
+			new AngularCompilerPlugin({
+				tsConfigPath: path.join(__dirname, '../../tsconfig.browser.json'),
+				entryModule: path.join(includePath, 'app.ts#AppModule'),
+				sourceMap: true
 			})
 		],
 		productionPlugins: [
@@ -122,11 +101,15 @@ module.exports = (config, name) => {
 				complete: '#',
 				summary: 'true'
 			}),
-			new UglifyJsPlugin({
-				sourceMap: false,
-				uglifyOptions: {
-					mangle: true,
-					compress: true
+			new webpack.HashedModuleIdsPlugin(),
+			new TerserPlugin({
+				terserOptions: {
+					ecma: 6,
+					warnings: true,
+					compress: {
+						ecma: 6
+					},
+					mangle: true
 				}
 			}),
 			new webpack.DefinePlugin({
@@ -134,11 +117,31 @@ module.exports = (config, name) => {
 					'NODE_ENV': JSON.stringify('production')
 				}
 			}),
-			new webpack.ContextReplacementPlugin(/\@angular(\\|\/)core(\\|\/)esm5/, path.join(__dirname, '../clients/site')),
-			new webpack.ProvidePlugin({
-				'$': 'jquery',
-				'jQuery': 'jquery',
-				'window.jQuery': 'jquery'
+			new AngularCompilerPlugin({
+				tsConfigPath: path.join(__dirname, '../../tsconfig.browser.json'),
+				entryModule: path.join(includePath, 'app.ts#AppModule'),
+				sourceMap: false
+			})
+		],
+		productionDebugPlugins: [
+			new BundleAnalyzerPlugin(),
+			new webpack.NoEmitOnErrorsPlugin(),
+			new BellOnBundlerErrorPlugin(),
+			new ProgressBarPlugin({
+				format: '  build [:bar] (:percent) - (:elapsed seconds)',
+				clear: false,
+				complete: '#',
+				summary: 'true'
+			}),
+			new webpack.DefinePlugin({
+				'process.env': {
+					'NODE_ENV': JSON.stringify('production')
+				}
+			}),
+			new AngularCompilerPlugin({
+				tsConfigPath: path.join(__dirname, '../../tsconfig.browser.json'),
+				entryModule: path.join(includePath, 'app.ts#AppModule'),
+				sourceMap: true
 			})
 		]
 	}

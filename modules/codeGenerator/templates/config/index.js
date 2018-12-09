@@ -2,7 +2,7 @@
 
 const
 	argv = require('yargs').argv,
-	commonConfig = require(`./common.js`),
+	commonConfig = require(`./common`),
 	merge = require('deepmerge'),
 	profileConfig = require(`./profiles/${argv.configProfile || 'local'}`)
 

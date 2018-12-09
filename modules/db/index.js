@@ -1,6 +1,6 @@
 'use strict'
 
-const DBModule = require('./db.module.js'),
-	BaseDBComponent = require('./base-db.component.js')
+const DBModule = require('./db.module'),
+	BaseDBComponent = require('./base-db.component')
 
 module.exports = {DBModule, BaseDBComponent}

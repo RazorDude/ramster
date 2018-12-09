@@ -75,7 +75,7 @@ class ClientModule extends BaseServerModule {
 
 			if (!checkRoutes(originalUrl, instance.paths)) {
 				const notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
-				if (notFoundRedirectRoutes) {
+				if (notFoundRedirectRoutes && isGet) {
 					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated + queryString : notFoundRedirectRoutes.default + queryString)
 					return
 				}

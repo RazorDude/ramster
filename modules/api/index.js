@@ -1,6 +1,6 @@
 'use strict'
 
-const APIModule = require('./api.module.js'),
-	BaseAPIComponent = require('./base-api.component.js')
+const APIModule = require('./api.module'),
+	BaseAPIComponent = require('./base-api.component')
 
 module.exports = {APIModule, BaseAPIComponent}

@@ -222,8 +222,9 @@ class BaseServerComponent {
 					if (nonePresent || (requireAllAPs && !allPresent)) {
 						throw {customMessage: 'You do not have access to this resource.', status: 403}
 					}
-					nonePresent = true
 					// check the APs with the "userFieldName" field provided
+					const valueProcessorMethod = options.userFieldValueProcessorMethodName ? instance[options.userFieldValueProcessorMethodName].bind(instance) : (req, value) => value
+					nonePresent = true
 					userFieldNameAPIndexes.forEach((apIndex, i) => {
 						const ap = userTypeAccessPoints[apIndex],
 							userFieldValue = getNested(user, ap.userFieldName),
@@ -287,7 +288,6 @@ class BaseServerComponent {
 						}
 						// if we have to set the value of the userField under some key(s) in the request
 						if (ap.setUserFieldValueIn) {
-							const valueProcessorMethod = options.userFieldValueProcessorMethodName ? instance[options.userFieldValueProcessorMethodName].bind(instance) : (req, value) => value
 							// if we're setting the userField's value in multiple objects within an array
 							if (ap.setUserFieldValueIn.indexOf('[]') !== -1) {
 								let fieldPaths = ap.setUserFieldValueIn.split('[]'),
