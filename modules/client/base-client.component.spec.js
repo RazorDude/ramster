@@ -215,7 +215,6 @@ module.exports = {
 			{module} = this,
 			db = module.db,
 			dbComponents = db.components
-		let changeableInstance = this
 		describe('base-client.component.readList', function() {
 			before(function() {
 				return co(function*() {

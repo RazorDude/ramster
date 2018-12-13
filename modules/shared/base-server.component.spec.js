@@ -761,7 +761,7 @@ module.exports = {
 					if (req.locals.error) {
 						throw req.locals.error
 					}
-					let result = res.response.jsonBody.result.dataValues,
+					let result = res.response.jsonBody.result,
 						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', active: true}
 					for (const key in item) {
 						assert.strictEqual(result[key], item[key], `Bad value ${result[key]} for field "${key}", expected ${item[key]}.`)
@@ -1129,14 +1129,11 @@ module.exports = {
 					if (req.locals.error) {
 						throw req.locals.error
 					}
-					let result = res.response.jsonBody,
-						resultItem = result[1][0],
+					const resultItem = res.response.jsonBody,
 						item = {id: 2, typeId: 2, firstName: 'updatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', active: false}
 					for (const key in item) {
 						assert.strictEqual(resultItem[key], item[key], `Bad value ${resultItem[key]} for field "${key}", expected ${item[key]}.`)
 					}
-					assert.strictEqual(result.length, 2, `Bad value ${result.length} for result.length, expected 2.`)
-					assert.strictEqual(result[1].length, 1, `Bad value ${result[1].length} for result[1].length, expected 1.`)
 					return true
 				})
 			})
@@ -1155,12 +1152,13 @@ module.exports = {
 					if (req.locals.error) {
 						throw req.locals.error
 					}
-					let result = res.response.jsonBody,
+					const result = res.response.jsonBody,
 						resultItems = yield dbComponent.model.findAll({order: [['id', 'asc']]}),
 						items = [
 							{id: 2, typeId: 2, firstName: 'properlyUpdatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', active: true},
 							{id: 3, typeId: 2, firstName: 'fn2', lastName: 'ln2', email: 'email2@ramster.com', active: true}
 						]
+					assert.strictEqual(result.success, true, `Bad value ${result.success} for result.success, expected true.`)
 					for (const i in items) {
 						const item = items[i],
 							resultItem = resultItems[i].dataValues
@@ -1169,7 +1167,6 @@ module.exports = {
 						}
 					}
 					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
-					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
 					return true
 				})
 			})

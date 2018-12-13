@@ -271,13 +271,17 @@ class Core {
 	 * @param {boolean} options.testAPIs If set to true, the user-built tests for each api module's components will be executed.
 	 * @param {boolean} options.testWebpackBuildTools If set to true, the tests for the webpack built tools (webpackBuild.js and webpackDevserver.js) will be executed.
 	 * @param {string[]} options.staticDataFileNames If provided, this array of string will be used to execute insertStaticData with all files with these names from the migrations/staticData folder.
+	 * @param {additionalClassData[]} options.additionalClasses If provided, this object contains external classes whose testMethods have to be executed.
+	 * @typedef {object} additionalClassData
+	 * @property {function} getClassInstance A function that takes the ramster core instance as an argument and returns an instance of the class to be tested.
+	 * @property {string} suiteDescription The name of the suite to be displayed by mocha when reporting the test results.
 	 * @returns {void}
 	 * @memberof Core
 	 */
 	runTests(options) {
 		const instance = this,
 			{config} = instance,
-			{testConfig, testDB, testClients, testAPIs, testWebpackBuildTools, staticDataFileNames} = options
+			{testConfig, testDB, testClients, testAPIs, testWebpackBuildTools, staticDataFileNames, additionalClasses} = options
 		let syncHistoryFilesCount = 0
 		describe(config.projectName, function() {
 			before(function() {
@@ -416,6 +420,24 @@ class Core {
 						}
 					}
 					return true
+				})
+			})
+			describeSuiteConditionally((additionalClasses instanceof Array) && additionalClasses.length, 'additional classes for testing', function() {
+				it('should test all classes successfully', function() {
+					for (const i in additionalClasses) {
+						const {getClassInstance, suiteDescription} = additionalClasses[i],
+							classInstance = getClassInstance(instance),
+							{specMethodNames} = classInstance
+						describeSuiteConditionally(
+							(specMethodNames instanceof Array) && specMethodNames.length,
+							suiteDescription,
+							function() {
+								for (const i in specMethodNames) {
+									classInstance[specMethodNames[i]]()
+								}
+							}
+						)
+					}
 				})
 			})
 			describeSuiteConditionally(testWebpackBuildTools === true, 'webpack build tools', function() {

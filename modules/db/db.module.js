@@ -190,7 +190,6 @@ class DBModule {
 										specMethodNames.push(key)
 									}
 								}
-								component.specMethodNames = specMethodNames
 							} catch (e) {
 								throw {customMessage: `Invalid spec file for DB module component "${componentName}".`}
 							}
@@ -198,6 +197,7 @@ class DBModule {
 						}
 					}
 					component.componentName = componentName
+					component.specMethodNames = specMethodNames
 					components[componentName] = component
 				} else if (componentName === 'fieldCaseMap.js') {
 					instance.fieldCaseMap = require(path.join(modulePath, componentName))

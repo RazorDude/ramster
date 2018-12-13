@@ -7,7 +7,10 @@
 const
 	co = require('co'),
 	DBModule = require('./db.module'),
+	fs = require('fs-extra'),
+	path = require('path'),
 	Sequelize = require('sequelize'),
+	sharp = require('sharp'),
 	spec = require('./base-db.component.spec')
 
 /**
@@ -43,7 +46,16 @@ class BaseDBComponent {
 		 * @type {string[]}
 		 */
 		this.allowedFilterKeywordOperators = ['$and', '$gt', '$gte', '$lt', '$lte', '$not', '$or']
+		/**
+		 * The list of keyword operators to check and parse when escaping objects for filters. Anything not included in this list will be skipped.
+		 * @type {string[]}
+		 */
 		this.allowedFilterContainerKeys = ['$or']
+		/**
+		 * The default list of image file type extensions allowed for processing by the saveImage method.
+		 * @type {string[]}
+		 */
+		this.allowedImageTypes = ['.jpg', '.jpeg', '.svg', '.png']
 		/**
 		 * The default settings for bulding associations. They describe the required keys and the dependency category of which association type. The keys are the association types - belongsTo, hasOne, hasMany and belongsToMany.
 		 * @type {Object.<string, baseDBComponentAssociationDefaultsObject>}
@@ -194,8 +206,7 @@ class BaseDBComponent {
 			throw {customMessage: 'Invalid config array provided.'}
 		}
 		const components = this.db.components,
-			sourceComponentName = sourceComponent.componentName,
-			associationKeys = sourceComponent.dependencyMap.associationKeys
+			sourceComponentName = sourceComponent.componentName
 		let mappedArray = [],
 			mappedOrder = []
 		config.forEach((item, index) => {
@@ -592,6 +603,56 @@ class BaseDBComponent {
 	}
 
 	/**
+	 * Saves an image in the storage folder based on the provided data, converting it to png.
+	 * @param {string} inputFileName The name of the input file as saved in the uploads folder.
+	 * @param {string} outputFileName The name of the input file as saved in the uploads folder.
+	 * @param {number} dbObjectId The id of the db item the image is for.
+	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with true.
+	 * @memberof BaseDBComponent
+	 */
+	saveImage(inputFileName, outputFileName, dbObjectId) {
+		const instance = this,
+			{allowedImageTypes, componentName, db} = instance
+		return co(function*() {
+			if ((typeof inputFileName !== 'string') || !inputFileName.length) {
+				throw {customMessage: 'Invalid inputFileName provided. Please provide a non-empty string.'}
+			}
+			if ((typeof outputFileName !== 'string') || !outputFileName.length) {
+				throw {customMessage: 'Invalid outputFileName provided. Please provide a non-empty string.'}
+			}
+			if ((typeof dbObjectId !== 'number') || (dbObjectId < 1)) {
+				throw {customMessage: 'Invalid dbObjectId provided. Please provide a non-zero integer.'}
+			}
+			let inputFilePath = path.join(db.config.globalUploadPath, inputFileName),
+				outputFolderPath = path.join(db.config.globalStoragePath, `/images/${componentName}/${dbObjectId}`),
+				extNameRegex = new RegExp(/\.[^/.]+$/),
+				extName = extNameRegex.exec(inputFileName)
+			try {
+				extName = extName && extName[0] && extName[0].toLowerCase() || ''
+				if (allowedImageTypes.indexOf(extName) === -1) {
+					throw {customMessage: `Invalid or unsupported image file type "${extName}".`}
+				}
+				yield fs.mkdirp(outputFolderPath)
+				let inputFileData = yield fs.readFile(inputFilePath),
+					outputFile = yield fs.open(path.join(outputFolderPath, `${outputFileName}.png`), 'w')
+				if (extName !== '.png') {
+					inputFileData = yield sharp(inputFileData).png().toBuffer()
+				}
+				yield fs.writeFile(outputFile, inputFileData)
+				yield fs.close(outputFile)
+				yield fs.remove(inputFilePath)
+			} catch (e) {
+				if (e && e.customMessage) {
+					throw e
+				}
+				instance.db.logger.error(e)
+				throw {customMessage: 'Error saving the image file.'}
+			}
+			return true
+		})
+	}
+
+	/**
 	 * Creates a new DB item.
 	 * @param {object} data The object to create.
 	 * @param {object} options Transaction, current userId, as well as other options to be passed to sequelize.
@@ -603,13 +664,19 @@ class BaseDBComponent {
 	create(data, options) {
 		const instance = this
 		return co(function*() {
-			if ((typeof options === 'object') && (options !== null)) {
-				if (options.userId) {
-					data.changeUserId = options.userId
-				}
-				return yield instance.model.create(data, options)
+			let actualOptions = (typeof options === 'object') && (options !== null) ? options : {},
+				hasImageData = data.inputImageFileName && data.outputImageFileName
+			if (hasImageData && !actualOptions.transaction) {
+				return yield instance.db.sequelize.transaction((t) => instance.create(data, {transaction: t, ...actualOptions}))
 			}
-			return yield instance.model.create(data)
+			if (actualOptions.userId) {
+				data.changeUserId = actualOptions.userId
+			}
+			const createdItem = (yield instance.model.create(data, actualOptions)).dataValues
+			if (hasImageData) {
+				yield instance.saveImage(data.inputImageFileName, data.outputImageFileName, createdItem.id)
+			}
+			return createdItem
 		})
 	}
 
@@ -812,8 +879,12 @@ class BaseDBComponent {
 				throw {customMessage: 'Cannot update without criteria.'}
 			}
 			let options = {
-				where,
-				returning: true
+					where,
+					returning: true
+				},
+				hasImageData = dbObject.inputImageFileName && dbObject.outputImageFileName
+			if (hasImageData && !transaction) {
+				return yield instance.db.sequelize.transaction((t) => instance.update({transaction: t, ...data}))
 			}
 			if (transaction) {
 				options.transaction = transaction
@@ -821,16 +892,25 @@ class BaseDBComponent {
 			if (userId) {
 				dbObject.changeUserId = userId
 			}
+			let objectForUpdate = {}
 			if (allowedUpdateFields instanceof Array) {
-				let objectForUpdate = {}
 				allowedUpdateFields.forEach((e, i) => {
 					if (typeof dbObject[e] !== 'undefined') {
 						objectForUpdate[e] = dbObject[e]
 					}
 				})
-				return yield instance.model.update(objectForUpdate, options)
+			} else {
+				objectForUpdate = dbObject
 			}
-			return yield instance.model.update(dbObject, options)
+			const updateResults = yield instance.model.update(objectForUpdate, options)
+			let updateResult = null
+			if (updateResults[0]) {
+				updateResult = updateResults[1][0].dataValues
+				if (dbObject.inputImageFileName && dbObject.outputImageFileName) {
+					yield instance.saveImage(dbObject.inputImageFileName, dbObject.outputImageFileName, updateResult.id)
+				}
+			}
+			return updateResult
 		})
 	}
 
@@ -883,7 +963,7 @@ class BaseDBComponent {
 	 */
 	delete(data) {
 		const instance = this,
-			{associationsConfig, componentName, dependencyMap} = this,
+			{associationsConfig, componentName, db, dependencyMap} = this,
 			{masterOf} = dependencyMap,
 			{id, additionalFilters, checkForRelatedModels, transaction} = data
 		return co(function*() {
@@ -930,7 +1010,15 @@ class BaseDBComponent {
 					idsToDelete.push(item.id)
 				}
 				deleteOptions.where.id = idsToDelete
-				return {deleted: yield instance.model.destroy(deleteOptions)}
+				const deleted = yield instance.model.destroy(deleteOptions)
+				for (const i in existingItems) {
+					try {
+						yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/${existingItems[i].id}`))
+					} catch(e) {
+						db.logger.error(e)
+					}
+				}
+				return {deleted}
 			}
 			if (systemCriticalIds.length) {
 				let existingItems = (yield instance.readList(readListOptions)).results,
@@ -956,7 +1044,15 @@ class BaseDBComponent {
 				idsToDelete.push((existingItems[i]).dataValues.id)
 			}
 			deleteOptions.where.id = idsToDelete
-			return {deleted: yield instance.model.destroy(deleteOptions)}
+			const deleted = yield instance.model.destroy(deleteOptions)
+			for (const i in existingItems) {
+				try {
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/${existingItems[i].id}`))
+				} catch(e) {
+					db.logger.error(e)
+				}
+			}
+			return {deleted}
 		})
 	}
 }

@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -44,6 +44,7 @@
     "redis": "^2.6.2",
     "request-promise-native": "^1.0.5",
     "sequelize": "^4.41.0",
+    "sharp": "^0.21.1",
     "ssh2-promise": "0.0.9",
     "webpack": "^4.25.1",
     "webpack-dev-server": "^3.1.10",

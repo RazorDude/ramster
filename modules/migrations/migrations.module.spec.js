@@ -40,6 +40,9 @@ module.exports = {
 			it('should execute testInsertData successfully', function() {
 				instance.testInsertData()
 			})
+			it('should execute testInsertStaticData successfully', function() {
+				instance.testInsertStaticData()
+			})
 			it('should execute testSync successfully', function() {
 				instance.testSync()
 			})
@@ -51,9 +54,6 @@ module.exports = {
 			})
 			it('should execute testGenerateBackup successfully', function() {
 				instance.testGenerateBackup()
-			})
-			it('should execute testInsertStaticData successfully', function() {
-				instance.testInsertStaticData()
 			})
 		})
 	},
@@ -833,6 +833,74 @@ module.exports = {
 			})
 		})
 	},
+	testInsertStaticData: function() {
+		const instance = this,
+			{config} = this
+		let changeableInstance = this
+		describe('migrations.insertStaticData', function() {
+			it('should throw an error if the staticDataPath does not exist or is not a valid directory', function() {
+				return co(function*() {
+					const originalPath = config.migrations.staticDataPath
+					let didThrowAnError = false
+					changeableInstance.config.migrations.staticDataPath = 'fakePath'
+					try {
+						yield instance.insertStaticData()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					changeableInstance.config.migrations.staticDataPath = originalPath
+					assert(didThrowAnError, true, 'no error was thrown')
+					return true
+				})
+			})
+			it('should throw an error if no staticData.json file exists at the staticDataPath or is not a valid json file', function() {
+				return co(function*() {
+					const originalPath = config.migrations.staticDataPath
+					let didThrowAnError = false
+					changeableInstance.config.migrations.staticDataPath = config.migrations.syncHistoryPath
+					try {
+						yield instance.insertStaticData()
+					} catch(e) {
+						didThrowAnError = true
+					}
+					changeableInstance.config.migrations.staticDataPath = originalPath
+					assert(didThrowAnError, true, 'no error was thrown')
+					return true
+				})
+			})
+			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct and no staticData fileName is provided', function() {
+				return co(function*() {
+					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath)
+					yield instance.insertStaticData()
+					let newLength = (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					assert(newLength > currentSyncHistoryDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentSyncHistoryDirData.length}`)
+					try {
+						yield fs.emptyDir(config.migrations.syncHistoryPath)
+					} catch(e) {
+					}
+					return true
+				})
+			})
+			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct and a staticData fileName is provided', function() {
+				return co(function*() {
+					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
+						testFilePath = path.join(config.migrations.staticDataPath, 'staticDataTest.json'),
+						fd = yield fs.open(testFilePath, 'w')
+					yield fs.write(fd, yield fs.readFile(path.join(config.migrations.staticDataPath, 'staticData.json')))
+					yield fs.close(fd)
+					yield instance.insertStaticData('staticDataTest')
+					let newLength = (yield fs.readdir(config.migrations.syncHistoryPath)).length
+					assert(newLength > currentSyncHistoryDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentSyncHistoryDirData.length}`)
+					try {
+						yield fs.emptyDir(config.migrations.syncHistoryPath)
+						yield fs.remove(testFilePath)
+					} catch(e) {
+					}
+					return true
+				})
+			})
+		})
+	},
 	testSync: function() {
 		const instance = this,
 			{config} = this
@@ -1011,74 +1079,6 @@ module.exports = {
 					assert(newLength > currentBackupDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentBackupDirData.length}`)
 					try {
 						yield fs.emptyDir(config.migrations.backupPath)
-					} catch(e) {
-					}
-					return true
-				})
-			})
-		})
-	},
-	testInsertStaticData: function() {
-		const instance = this,
-			{config} = this
-		let changeableInstance = this
-		describe('migrations.insertStaticData', function() {
-			it('should throw an error if the staticDataPath does not exist or is not a valid directory', function() {
-				return co(function*() {
-					const originalPath = config.migrations.staticDataPath
-					let didThrowAnError = false
-					changeableInstance.config.migrations.staticDataPath = 'fakePath'
-					try {
-						yield instance.insertStaticData()
-					} catch(e) {
-						didThrowAnError = true
-					}
-					changeableInstance.config.migrations.staticDataPath = originalPath
-					assert(didThrowAnError, true, 'no error was thrown')
-					return true
-				})
-			})
-			it('should throw an error if no staticData.json file exists at the staticDataPath or is not a valid json file', function() {
-				return co(function*() {
-					const originalPath = config.migrations.staticDataPath
-					let didThrowAnError = false
-					changeableInstance.config.migrations.staticDataPath = config.migrations.syncHistoryPath
-					try {
-						yield instance.insertStaticData()
-					} catch(e) {
-						didThrowAnError = true
-					}
-					changeableInstance.config.migrations.staticDataPath = originalPath
-					assert(didThrowAnError, true, 'no error was thrown')
-					return true
-				})
-			})
-			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct and no staticData fileName is provided', function() {
-				return co(function*() {
-					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath)
-					yield instance.insertStaticData()
-					let newLength = (yield fs.readdir(config.migrations.syncHistoryPath)).length
-					assert(newLength > currentSyncHistoryDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentSyncHistoryDirData.length}`)
-					try {
-						yield fs.emptyDir(config.migrations.syncHistoryPath)
-					} catch(e) {
-					}
-					return true
-				})
-			})
-			it('should execute successfully and generate a preStaticDataInsert file if all parameters are correct and a staticData fileName is provided', function() {
-				return co(function*() {
-					let currentSyncHistoryDirData = yield fs.readdir(config.migrations.syncHistoryPath),
-						testFilePath = path.join(config.migrations.staticDataPath, 'staticDataTest.json'),
-						fd = yield fs.open(testFilePath, 'w')
-					yield fs.write(fd, yield fs.readFile(path.join(config.migrations.staticDataPath, 'staticData.json')))
-					yield fs.close(fd)
-					yield instance.insertStaticData('staticDataTest')
-					let newLength = (yield fs.readdir(config.migrations.syncHistoryPath)).length
-					assert(newLength > currentSyncHistoryDirData.length, `bad value ${newLength} for newLength, expected it to be greater than ${currentSyncHistoryDirData.length}`)
-					try {
-						yield fs.emptyDir(config.migrations.syncHistoryPath)
-						yield fs.remove(testFilePath)
 					} catch(e) {
 					}
 					return true

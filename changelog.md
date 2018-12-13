@@ -1,3 +1,9 @@
+# 1.0.11
+- Added support for running additional tests, passed as functions in core.runTests.
+- Added functionality for saving images to the baseDBComponent - the saveImageMethod. It is now being used by its create, update and delete methods.
+- Improved the quality of the tests in the baseDBComponent.
+- The baseDBComponent.update method now returns the first updated object's dataValues.
+
 # 1.0.10
 - Small module import fixes for certain modules.
 - Upgraded and greatly expanded the tests for the client module's setDefaultsBeforeRequest method redirects.

@@ -1,6 +1,9 @@
 const
 	assert = require('assert'),
-	co = require('co')
+	co = require('co'),
+	fs = require('fs-extra'),
+	moment = require('moment'),
+	path = require('path')
 
 module.exports = {
 	testMe: function() {
@@ -32,6 +35,9 @@ module.exports = {
 			it('should execute testAssignModelToDereferencedRelationRecursively successfully', function() {
 				instance.testAssignModelToDereferencedRelationRecursively()
 			})
+			it('should execute testSaveImage successfully', function() {
+				instance.testSaveImage()
+			})
 			it('should execute testCreate successfully', function() {
 				instance.testCreate()
 			})
@@ -58,26 +64,30 @@ module.exports = {
 	testAssociate: function() {
 		const instance = this
 		let changeableInstance = this,
-			model = {
-				belongsToAssociations: [],
-				hasOneAssociations: [],
-				hasManyAssociations: [],
-				belongsToManyAssociations: [],
-				belongsTo: function(model, options) {
-					this.belongsToAssociations.push({model, options})
-				},
-				hasOne: function(model, options) {
-					this.hasOneAssociations.push({model, options})
-				},
-				hasMany: function(model, options) {
-					this.hasManyAssociations.push({model, options})
-				},
-				belongsToMany: function(model, options) {
-					this.belongsToManyAssociations.push({model, options})
+			model = null
+		describe('baseDBComponent.associate', function() {
+			before(function() {
+				changeableInstance.model = {
+					belongsToAssociations: [],
+					hasOneAssociations: [],
+					hasManyAssociations: [],
+					belongsToManyAssociations: [],
+					belongsTo: function(model, options) {
+						this.belongsToAssociations.push({model, options})
+					},
+					hasOne: function(model, options) {
+						this.hasOneAssociations.push({model, options})
+					},
+					hasMany: function(model, options) {
+						this.hasManyAssociations.push({model, options})
+					},
+					belongsToMany: function(model, options) {
+						this.belongsToManyAssociations.push({model, options})
+					}
 				}
-			},
-			db = {
-				components: {
+				model = changeableInstance.model
+				changeableInstance.db.components = {
+					...changeableInstance.db.components,
 					test1: {model: 'test1Model'},
 					testComponent2: {model: 'testComponent2Model'},
 					test3: {model: 'test3Model'},
@@ -87,11 +97,9 @@ module.exports = {
 					test7: {model: 'test7Model'},
 					testComponent8: {model: 'testComponent8Model'}
 				}
-			}
-		describe('baseDBComponent.associate', function() {
+				return true
+			})
 			it('should execute successfully and leave everything blank if the component\'s associationConfig is not a non-null object', function() {
-				changeableInstance.model = model
-				changeableInstance.db = db
 				instance.associate()
 				assert.strictEqual(model.belongsToAssociations.length, 0, `bad value ${model.belongsToAssociations.length} for model.belongsToAssociations.length, expected 0`)
 				assert.strictEqual(model.hasOneAssociations.length, 0, `bad value ${model.hasOneAssociations.length} for model.hasOneAssociations.length, expected 0`)
@@ -104,8 +112,6 @@ module.exports = {
 				changeableInstance.associationsConfig = {
 					testAssociation: {type: 'doesNotBelongTo'}
 				}
-				changeableInstance.model = model
-				changeableInstance.db = db
 				try {
 					instance.associate()
 				} catch(e) {
@@ -122,8 +128,6 @@ module.exports = {
 				changeableInstance.associationsConfig = {
 					testAssociation: {type: 'belongsTo'}
 				}
-				changeableInstance.model = model
-				changeableInstance.db = db
 				try {
 					instance.associate()
 				} catch(e) {
@@ -140,8 +144,6 @@ module.exports = {
 				changeableInstance.associationsConfig = {
 					testAssociation: {type: 'belongsTo', foreignKey: 'testAssociationId'}
 				}
-				changeableInstance.model = model
-				changeableInstance.db = db
 				try {
 					instance.associate()
 				} catch(e) {
@@ -178,8 +180,6 @@ module.exports = {
 						equalWith: ['test7', 'testComponent8'],
 						associationKeys: ['test1', 'test2', 'test3', 'test4', 'test5', 'test6', 'test7', 'test8']
 					}
-				changeableInstance.model = model
-				changeableInstance.db = db
 				changeableInstance.associationsConfig = {
 					test1: {type: 'belongsTo', foreignKey: 'test1Id'},
 					test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'},
@@ -223,9 +223,11 @@ module.exports = {
 	},
 	testMapNestedRelations: function() {
 		const instance = this
-		let changeableInstance = this,
-			db = {
-				components: {
+		let changeableInstance = this
+		describe('baseDBComponent.mapNestedRelations', function() {
+			before(function() {
+				changeableInstance.db.components = {
+					...changeableInstance.db.components,
 					test2: {
 						model: 'test2Model',
 						componentName: 'test2',
@@ -248,8 +250,7 @@ module.exports = {
 						componentName: 'testComponent5'
 					}
 				}
-			}
-		describe('baseDBComponent.mapNestedRelations', function() {
+			})
 			it('should throw an error with the correct message if the sourceComponent argument is not a non-null object', function() {
 				let didThrowAnError = false
 				try {
@@ -307,7 +308,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an association with the provided name does not exist in the sourceComponent', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({componentName: 'test1', associationsConfig: {}, dependencyMap: {}}, [{associationName: 'test2'}])
 				} catch(e) {
@@ -321,7 +321,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an attributes object is povided in an association, but is not an array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -341,7 +340,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an attributes object is povided in an association, but is an empty array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -361,7 +359,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an attributes object is povided in an association, but one of its items is not a string', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -381,7 +378,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an attributes object is povided in an association, but one of its items is an empty string', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -401,7 +397,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if a where object is povided in an association, but it\'s not an array or an object', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -421,7 +416,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if a where object is povided in an association, but it\'s an empty object', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -441,7 +435,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if a where object is povided in an association, but it\'s an empty array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -461,7 +454,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an order object is povided in an association, but it\'s not an array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -481,7 +473,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an order object is povided in an association, but it\'s an empty array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -501,7 +492,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an order object is povided in an association, but one of its items is not an array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -521,7 +511,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an order object is povided in an association, but one of its items is an empty array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -541,7 +530,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an order object is povided in an association, but one of its inner items is not a string', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -561,7 +549,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an order object is povided in an association, but one of its inner items is an empty string', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -581,7 +568,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an order object is povided in an association, but one of its items has an invalid number of args (should be 2)', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -601,7 +587,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an include object is povided in an association, but it\'s not an array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -621,7 +606,6 @@ module.exports = {
 			})
 			it('should throw an error with the correct message if an include object is povided in an association, but it\'s an empty array', function() {
 				let didThrowAnError = false
-				changeableInstance.db = db
 				try {
 					instance.mapNestedRelations({
 							componentName: 'test1',
@@ -640,7 +624,6 @@ module.exports = {
 				assert.strictEqual(didThrowAnError, true, 'no error was thrown')
 			})
 			it('should execute successfully and return valid order and include arrays if all paramters are correct', function() {
-				changeableInstance.db = db
 				let {order, include} = instance.mapNestedRelations({
 							componentName: 'test1',
 							associationsConfig: {
@@ -697,18 +680,19 @@ module.exports = {
 		const instance = this
 		let changeableInstance = this
 		describe('baseDBComponent.mapRelations', function() {
+			before(function() {
+				changeableInstance.db.components = {
+					...changeableInstance.db.components,
+					test1: {model: 'test1Model'},
+					testComponent2: {model: 'testComponent2Model'},
+					test3: {model: 'test3Model'}
+				}
+			})
 			it('should execute successfully and leave everything blank if the component\'s associationConfig is not a non-null object', function() {
 				changeableInstance.relReadKeys = []
 				changeableInstance.relations = {}
 				changeableInstance.associationsConfig = {}
 				changeableInstance.relationsConfig = {}
-				changeableInstance.db = {
-					components: {
-						test1: {model: 'test1Model'},
-						testComponent2: {model: 'testComponent2Model'},
-						test3: {model: 'test3Model'}
-					}
-				}
 				instance.mapRelations()
 				let relKeysLength = Object.keys(instance.relations).length
 				assert.strictEqual(instance.relReadKeys.length, 0 , `Bad value ${instance.relReadKeys.length} for instance.relReadKeys.length, expected 0`)
@@ -731,13 +715,6 @@ module.exports = {
 				changeableInstance.relationsConfig = {
 					test3: {required: true, attributes: ['id', 'name']},
 					test3ButWithADiffreentAlias: {associationName: 'test3', where: {id: 1}}
-				}
-				changeableInstance.db = {
-					components: {
-						test1: {model: 'test1Model'},
-						testComponent2: {model: 'testComponent2Model'},
-						test3: {model: 'test3Model'}
-					}
 				}
 				instance.mapRelations()
 				let keysAre = JSON.stringify(instance.relReadKeys),
@@ -951,7 +928,6 @@ module.exports = {
 	},
 	testAssignModelToDereferencedRelationRecursively: function() {
 		const instance = this
-		let changeableInstance = this
 		describe('baseDBComponent.assignModelToDereferencedRelationRecursively', function() {
 			it('should execute successfully and return the correct object if all parameters are correct', function() {
 				let item = {
@@ -973,6 +949,19 @@ module.exports = {
 		const instance = this
 		let changeableInstance = this
 		describe('baseDBComponent.getRelationObjects', function() {
+			before(function() {
+				changeableInstance.db.components = {
+					...changeableInstance.db.components,
+					test1: {model: 'test1Model', dependencyMap: {associationKeys: []}},
+					testComponent2: {
+						model: 'testComponent2Model',
+						dependencyMap: {associationKeys: ['test3']},
+						associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}}
+					},
+					test3: {model: 'test3Model', dependencyMap: {associationKeys: []}},
+					test4: {model: 'test4Model', dependencyMap: {associationKeys: []}}
+				}
+			})
 			it('should execute successfully and return the correct include and order objects if all parameters are correct', function() {
 				changeableInstance.searchFields = [
 					{field: 'id'},
@@ -987,18 +976,6 @@ module.exports = {
 				changeableInstance.relationsConfig = {
 					test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]},
 					test2ButWithADiffreentAlias: {associationName: 'test2', where: {id: 1}}
-				}
-				changeableInstance.db = {
-					components: {
-						test1: {model: 'test1Model', dependencyMap: {associationKeys: []}},
-						testComponent2: {
-							model: 'testComponent2Model',
-							dependencyMap: {associationKeys: ['test3']},
-							associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}}
-						},
-						test3: {model: 'test3Model', dependencyMap: {associationKeys: []}},
-						test4: {model: 'test4Model', dependencyMap: {associationKeys: []}}
-					}
 				}
 				changeableInstance.relReadKeys = []
 				changeableInstance.relations = {}
@@ -1039,67 +1016,354 @@ module.exports = {
 			})
 		})
 	},
+	testSaveImage: function() {
+		const instance = this,
+			{componentName, db} = this,
+			now = moment.utc().valueOf()
+		describe('baseDBComponent.saveImage', function() {
+			before(function() {
+				this.timeout(5000)
+				return co(function*() {
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpg'), path.join(db.config.globalUploadPath, `example_${now}.badExtension`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpg'), path.join(db.config.globalUploadPath, `example_${now}.jpg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpeg'), path.join(db.config.globalUploadPath, `example_${now}.jpeg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.svg'), path.join(db.config.globalUploadPath, `example_${now}.svg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.png'), path.join(db.config.globalUploadPath, `example_${now}.png`))
+					return true
+				})
+			})
+			it('should throw an error with the correct message if no inputFileName is provided', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage()
+					} catch(e) {
+						if (e && (e.customMessage === 'Invalid inputFileName provided. Please provide a non-empty string.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should throw an error with the correct message the provided inputFileName is an empty string', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage('')
+					} catch(e) {
+						if (e && (e.customMessage === 'Invalid inputFileName provided. Please provide a non-empty string.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if no outputFileName is provided', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage(`suchAFileDoesntExist_${now}.png`)
+					} catch(e) {
+						if (e && (e.customMessage === 'Invalid outputFileName provided. Please provide a non-empty string.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided outputFileName is an empty string', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage(`suchAFileDoesntExist_${now}.png`, '')
+					} catch(e) {
+						if (e && (e.customMessage === 'Invalid outputFileName provided. Please provide a non-empty string.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if no dbObjectId is provided', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage(`suchAFileDoesntExist_${now}.png`, 'ouput')
+					} catch(e) {
+						if (e && (e.customMessage === 'Invalid dbObjectId provided. Please provide a non-zero integer.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided dbObjectId is not a number', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage(`suchAFileDoesntExist_${now}.png`, 'ouput', 'test')
+					} catch(e) {
+						if (e && (e.customMessage === 'Invalid dbObjectId provided. Please provide a non-zero integer.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the provided dbObjectId is a number, but is less than 1', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage(`suchAFileDoesntExist_${now}.png`, 'ouput', -1)
+					} catch(e) {
+						if (e && (e.customMessage === 'Invalid dbObjectId provided. Please provide a non-zero integer.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if no file exists for the provided inputFileName', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage(`suchAFileDoesntExist_${now}.png`, 'ouput', 1)
+					} catch(e) {
+						if (e && (e.customMessage === 'Error saving the image file.')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should throw an error with the correct message if the file extension is invalid', function() {
+				return co(function*() {
+					let didThrowAnError = false
+					try {
+						yield instance.saveImage(`example_${now}.badExtension`, 'ouput', 1)
+					} catch(e) {
+						if (e && (e.customMessage === 'Invalid or unsupported image file type ".badextension".')) {
+							didThrowAnError = true
+						} else {
+							throw e
+						}
+					}
+					assert(didThrowAnError, true, 'no error thrown')
+					return true
+				})
+			})
+			it('should execute successfully and save the image if it is a .png file', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}.png`, 'ouput', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is a .jpg file', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}.jpg`, 'ouput1', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput1.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput1.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is a .jpeg file', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}.jpeg`, 'ouput2', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput2.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput2.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is an .svg file', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}.svg`, 'ouput3', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput3.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput3.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			after(function() {
+				return co(function*() {
+					yield fs.remove(path.join(db.config.globalUploadPath, `example_${now}.badExtension`))
+					return true
+				})
+			})
+		})
+	},
 	testCreate: function() {
 		const instance = this,
-			{sequelize, Sequelize} = this
-		let changeableInstance = this
+			{componentName, db} = this
+		let changeableInstance = this,
+			now = moment.utc().valueOf()
 		describe('baseDBComponent.create', function() {
-			it('should execute successfully and create a new db entry correctly if all parameters are correct', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let item = {id: 3, name: 'testName', description: 'testDescription'}
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.create(item, {transaction: t})
-					let createdItem = (yield instance.model.findOne({where: {id: 3}, transaction: t})).dataValues
+			before(function() {
+				this.timeout(5000)
+				return co(function*() {
+					changeableInstance.searchFields = [
+						{field: 'id'},
+						{field: '$test2.name$'},
+						{field: '$test2.test3.description$'}
+					]
+					changeableInstance.associationsConfig = {
+						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'},
+						test4: {type: 'hasMany', foreignKey: 'test1Id'}
+					}
+					changeableInstance.relationsConfig = {
+						test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]}
+					}
+					changeableInstance.model = db.sequelize.define('test1Model', {
+							name: {type: db.Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+							description: {type: db.Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+						}, {
+							setterMethods: {
+								id: () => {}
+							}
+						}
+					)
+					changeableInstance.allowedUpdateFields = ['name', 'description']
+					changeableInstance.systemCriticalIds = [1]
+					changeableInstance.db.components = {
+						...changeableInstance.db.components,
+						testComponent2: {
+							model: db.sequelize.define('test2Model', {
+									name: {type: db.Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: db.Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}, {
+									setterMethods: {
+										id: () => {}
+									}
+								}
+							),
+							associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
+							dependencyMap: {associationKeys: ['test3']}
+						},
+						test3: {
+							model: db.sequelize.define('test3Model', {
+									name: {type: db.Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: db.Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}, {
+									setterMethods: {
+										id: () => {}
+									}
+								}
+							),
+							associationsConfig: {test2: {type: 'hasMany', componentName: 'testComponent2', foreignKey: 'test3Id'}},
+							dependencyMap: {associationKeys: ['test2']}
+						},
+						test4: {
+							model: db.sequelize.define('test4Model', {
+									name: {type: db.Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+									description: {type: db.Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
+								}, {
+									setterMethods: {
+										id: () => {}
+									}
+								}
+							),
+							associationsConfig: {test1: {type: 'belongsTo', foreignKey: 'test1Id'}},
+							dependencyMap: {associationKeys: ['test1']}
+						}
+					}
+					changeableInstance.associate()
+					changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
+					changeableInstance.db.components.test4.model.belongsTo(changeableInstance.model, {as: 'test1', foreignKey: 'test1Id'})
+					changeableInstance.mapRelations()
+					yield db.sequelize.sync({force: true})
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.png'), path.join(db.config.globalUploadPath, `avatarForUpload_${now}.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}`))
+					return true
+				})
+			})
+			it('should execute successfully and create a new db entry correctly if all parameters are correct and no image data is provided', function() {
+				return co(function*() {
+					let item = {id: 10, name: 'testName1', description: 'testDescription1'},
+						createdItem = yield instance.create(item)
+					item.id = 1
 					for (const i in item) {
 						assert.strictEqual(createdItem[i], item[i], `Bad value ${createdItem[i]} for field "${i}", expected ${item[i]}.`)
 					}
-					delete changeableInstance.model
-					return t.rollback()
-				}))
-				return true
+				})
+			})
+			it('should execute successfully, create the dbObject and save the provided image file, if all parameters are correct and image data is provided', function() {
+				return co(function*() {
+					let item = {id: 10, name: 'testName2', description: 'testDescription2'},
+						createdItem = yield instance.create({inputImageFileName: `avatarForUpload_${now}.png`, outputImageFileName: 'avatar', ...item})
+					item.id = 2
+					for (const i in item) {
+						assert.strictEqual(createdItem[i], item[i], `Bad value ${createdItem[i]} for field "${i}", expected ${item[i]}.`)
+					}
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/${createdItem.id}/avatar.png`))
+					assert.strictEqual(stats.isFile(), true, 'expected the output to be saved as a png file, got undefined')
+					return true
+				})
+			})
+			after(function() {
+				return co(function*() {
+					yield db.components.test4.model.create({test1Id: 2, name: 'test4Name', description: 'test4Description'})
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}`))
+					return true
+				})
 			})
 		})
 	},
 	testBulkCreate: function() {
-		const instance = this,
-			{sequelize, Sequelize} = this
-		let changeableInstance = this
+		const instance = this
 		describe('baseDBComponent.bulkCreate', function() {
 			it('should execute successfully and create the new db entries correctly if all parameters are correct', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let items = [{id: 3, name: 'testName', description: 'testDescription'}, {id: 4, name: 'testName4', description: 'testDescription4'}]
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.bulkCreate(items, {transaction: t})
-					let createdItems = yield instance.model.findAll({where: {id: [3, 4]}, transaction: t})
+				return co(function*() {
+					let items = [{id: 10, name: 'testName3', description: 'testDescription3'}, {id: 10, name: 'testName4', description: 'testDescription4'}]
+					yield instance.bulkCreate(items)
+					items[0].id = 3
+					items[1].id = 4
+					let createdItems = yield instance.model.findAll({where: {id: {$not: [1, 2]}}})
+					assert.strictEqual(createdItems.length, 2, `Bad value ${createdItems.length} for createdItems.length, expected ${2}.`)
 					for (const i in items) {
 						const item = items[i],
 							createdItem = createdItems[i].dataValues
 						for (const j in item) {
-							assert.strictEqual(createdItem[j], item[j], `Bad value '${createdItem[j]}' for field "${j}" for item no. ${i}.`)
+							assert.strictEqual(createdItem[j], item[j], `Bad value ${createdItem[j]} for field "${j}" for item no. ${i}, expected ${item[j]}.`)
 						}
 					}
-					delete changeableInstance.model
-					return t.rollback()
-				}))
+					return true
+				})
 			})
 		})
 	},
 	testRead: function() {
-		const instance = this,
-			{sequelize, Sequelize} = this
-		let changeableInstance = this
+		const instance = this
 		describe('baseDBComponent.read', function() {
 			it('should throw an error with the correct message if no filters are provided', function() {
 				return co(function*() {
-					changeableInstance.relReadKeys = []
 					let didThrowAnError = false
 					try {
 						yield instance.read({})
@@ -1115,160 +1379,59 @@ module.exports = {
 				})
 			})
 			it('should execute successfully and read a db entry correctly if all parameters are correct', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let item = {id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
+				return co(function*() {
+					let item = {id: 1, test2Id: 1, name: 'testName1', description: 'testDescription1'},
 						test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
 						test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					changeableInstance.searchFields = [
-						{field: 'id'},
-						{field: '$test2.name$'},
-						{field: '$test2.test3.description$'}
-					]
-					changeableInstance.associationsConfig = {
-						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
-					}
-					changeableInstance.relationsConfig = {
-						test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]}
-					}
-					changeableInstance.db = {
-						components: {
-							testComponent2: {
-								model: sequelize.define('test2Model', {
-									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								}),
-								associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
-								dependencyMap: {associationKeys: ['test3']}
-							},
-							test3: {
-								model: sequelize.define('test3Model', {
-									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								}),
-								dependencyMap: {associationKeys: []}
-							}
-						}
-					}
-					changeableInstance.associate()
-					changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
-					changeableInstance.mapRelations()
-					yield sequelize.sync({force: true, transaction: t})
-					yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
-					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
-					yield instance.create(item, {transaction: t})
+					yield instance.db.components.test3.model.create(test3Item)
+					yield instance.db.components.testComponent2.model.create(test2Item)
+					yield instance.model.update({test2Id: 1}, {where: {id: 1}})
 					let createdItem = (yield instance.read({
 							filters: {
 								id: 1,
 								'$test2.name$': 'test2Name',
 								'$test2.test3.description$': 'test3Description',
 								$and: [{id: [1,2,3,4]}, {$or: {'$test2.name$': 'test2Name'}}],
-							},
-							transaction: t
+							}
 						})).dataValues,
 						createdTest2Item = createdItem.test2.dataValues,
 						createdTest3Item = createdTest2Item.test3.dataValues
 					for (const i in item) {
-						assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, expected ${item[i]}.`)
+						assert.strictEqual(createdItem[i], item[i], `Bad value ${createdItem[i]} for field "${i}" for the main item, expected ${item[i]}.`)
 					}
 					for (const i in test2Item) {
-						assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the test2Item, expected ${test2Item[i]}.`)
+						assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value ${createdTest2Item[i]} for field "${i}" for the test2Item, expected ${test2Item[i]}.`)
 					}
 					for (const i in test3Item) {
-						assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the test3Item, expected ${test3Item[i]}.`)
+						assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value ${createdTest3Item[i]} for field "${i}" for the test3Item, expected ${test3Item[i]}.`)
 					}
-					delete changeableInstance.model
-					delete changeableInstance.db
-					return t.rollback()
-				}))
-				return true
+					return true
+				})
 			})
 		})
 	},
 	testReadList: function() {
-		const instance = this,
-			{sequelize, Sequelize} = this
-		let changeableInstance = this
+		const instance = this
 		describe('baseDBComponent.readList', function() {
-			// it('should throw an error with the correct message if no filters are provided', function() {
-			// 	return co(function*() {
-			// 		changeableInstance.relReadKeys = []
-			// 		let didThrowAnError = false
-			// 		try {
-			// 			yield instance.readList({})
-			// 		} catch(e) {
-			// 			if (e && (e.customMessage === 'No filters provided.')) {
-			// 			didThrowAnError = true
-			// 		} else {
-			// 			throw e
-			// 		}
-			// 		}
-			// 		assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-			// 		return true
-			// 	})
-			// })
 			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are no relReadKeys', function() {
-				return sequelize.transaction().then((t) => co(function*() {
+				return co(function*() {
 					let items = [
-							{id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
-							{id: 2, test2Id: 1, name: 'test2Name', description: 'test2Description'},
-							{id: 3, test2Id: 1, name: 'test3Name', description: 'test3Description'}
+							{id: 1, test2Id: 1, name: 'testName1', description: 'testDescription1'},
+							{id: 2, test2Id: 1, name: 'testName2', description: 'testDescription2'},
+							{id: 3, test2Id: 1, name: 'testName3', description: 'testDescription3'}
 						],
 						test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
 						test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					changeableInstance.searchFields = [
-						{field: 'id'},
-						{field: '$test2.name$', like: '-%'},
-						{field: '$test2.test3.description$', like: '-%'}
-					]
-					changeableInstance.associationsConfig = {
-						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
-					}
-					changeableInstance.relationsConfig = {
-						test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]}
-					}
-					changeableInstance.db = {
-						components: {
-							testComponent2: {
-								model: sequelize.define('test2Model', {
-									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								}),
-								associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
-								dependencyMap: {associationKeys: ['test3']}
-							},
-							test3: {
-								model: sequelize.define('test3Model', {
-									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								}),
-								dependencyMap: {associationKeys: []}
-							}
-						}
-					}
-					changeableInstance.associate()
-					changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
-					changeableInstance.mapRelations()
-					yield sequelize.sync({force: true, transaction: t})
-					yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
-					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
-					yield instance.bulkCreate(items, {transaction: t})
+					yield instance.model.update({test2Id: 1}, {where: {id: [2, 3]}})
 					let createdItemsData = yield instance.readList({
 						filters: {
 							id: [1, 2, 3],
-							'$test2.name$': 'test',
-							'$test2.test3.description$': 'test'
+							'$test2.name$': 'testName2',
+							'$test2.test3.description$': 'test3Description'
 						},
-						orderDirection: 'asc',
-						transaction: t
+						orderDirection: 'asc'
 					})
+					assert.strictEqual(createdItemsData.results.length, 3, `Bad value ${createdItemsData.results.length} for createdItemsData.results.length, expected 3.`)
 					for (const index in createdItemsData.results) {
 						let item = items[index],
 							createdItem = createdItemsData.results[index].dataValues,
@@ -1288,69 +1451,26 @@ module.exports = {
 					assert.strictEqual(createdItemsData.perPage, 10, `Bad value ${createdItemsData.perPage} for createdItemsData.perPage, expected 10.`)
 					assert.strictEqual(createdItemsData.totalPages, 1, `Bad value ${createdItemsData.totalPages} for createdItemsData.totalPages, expected 1.`)
 					assert.strictEqual(createdItemsData.more, false, `Bad value ${createdItemsData.more} for createdItemsData.more, expected false.`)
-					delete changeableInstance.model
-					delete changeableInstance.db
-					return t.rollback()
-				}))
+					return true
+				})
 			})
 			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are relReadKeys', function() {
-				return sequelize.transaction().then((t) => co(function*() {
+				return co(function*() {
 					let items = [
-							{id: 1, test2Id: 1, name: 'test1Name', description: 'test1Description'},
-							{id: 2, test2Id: 1, name: 'test2Name', description: 'test2Description'},
-							{id: 3, test2Id: 1, name: 'test3Name', description: 'test3Description'}
+							{id: 1, test2Id: 1, name: 'testName1', description: 'testDescription1'},
+							{id: 2, test2Id: 1, name: 'testName2', description: 'testDescription2'},
+							{id: 3, test2Id: 1, name: 'testName3', description: 'testDescription3'}
 						],
 						test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
 						test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					changeableInstance.searchFields = [
-						{field: 'id'},
-						{field: '$test2.name$', like: '-%'},
-						{field: '$test2.test3.description$', like: '-%'}
-					]
-					changeableInstance.associationsConfig = {
-						test2: {type: 'belongsTo', componentName: 'testComponent2', foreignKey: 'test2Id'}
-					}
-					changeableInstance.relationsConfig = {
-						test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]}
-					}
-					changeableInstance.db = {
-						components: {
-							testComponent2: {
-								model: sequelize.define('test2Model', {
-									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								}),
-								associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
-								dependencyMap: {associationKeys: ['test3']}
-							},
-							test3: {
-								model: sequelize.define('test3Model', {
-									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								}),
-								dependencyMap: {associationKeys: []}
-							}
-						}
-					}
-					changeableInstance.associate()
-					changeableInstance.db.components.testComponent2.model.belongsTo(changeableInstance.db.components.test3.model, {as: 'test3', foreignKey: 'test3Id'})
-					changeableInstance.mapRelations()
-					yield sequelize.sync({force: true, transaction: t})
-					yield changeableInstance.db.components.test3.model.create(test3Item, {transaction: t})
-					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
-					yield instance.bulkCreate(items, {transaction: t})
 					let createdItemsData = yield instance.readList({
 						filters: {
 							id: [1, 2, 3]
 						},
 						relReadKeys: {test2: true},
-						orderDirection: 'asc',
-						transaction: t
+						orderDirection: 'asc'
 					})
+					assert.strictEqual(createdItemsData.results.length, 3, `Bad value ${createdItemsData.results.length} for createdItemsData.results.length, expected 3.`)
 					for (const index in createdItemsData.results) {
 						let item = items[index],
 							createdItem = createdItemsData.results[index].dataValues,
@@ -1370,19 +1490,24 @@ module.exports = {
 					assert.strictEqual(createdItemsData.perPage, 10, `Bad value ${createdItemsData.perPage} for createdItemsData.perPage, expected 10.`)
 					assert.strictEqual(createdItemsData.totalPages, 1, `Bad value ${createdItemsData.totalPages} for createdItemsData.totalPages, expected 1.`)
 					assert.strictEqual(createdItemsData.more, false, `Bad value ${createdItemsData.more} for createdItemsData.more, expected false.`)
-					delete changeableInstance.model
-					delete changeableInstance.db
-					return t.rollback()
-				}))
-				return true
+					return true
+				})
 			})
 		})
 	},
 	testUpdate: function() {
 		const instance = this,
-			{sequelize, Sequelize} = this
-		let changeableInstance = this
+			{componentName, db} = this
+		let now = moment.utc().valueOf()
 		describe('baseDBComponent.update', function() {
+			before(function() {
+				this.timeout(5000)
+				return co(function*() {
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.png'), path.join(db.config.globalUploadPath, `avatarForUpload_${now}.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}`))
+					return true
+				})
+			})
 			it('should throw an error with the correct message if no filters are provided', function() {
 				return co(function*() {
 					let didThrowAnError = false
@@ -1399,31 +1524,32 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully and update a db entry correctly if all parameters are correct', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let item = {name: 'testNameUpdated', description: 'testDescriptionUpdated'}
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.create({id: 3, name: 'testName', description: 'testDescription'}, {transaction: t})
-					yield instance.update({dbObject: item, where: {id: 3}, transaction: t})
-					let updatedItem = (yield instance.model.findOne({where: {id: 3}, transaction: t})).dataValues
+			it('should execute successfully and update the db entry correctly if all parameters are correct and no image data is provided', function() {
+				return co(function*() {
+					let item = {name: 'testNameUpdated', description: 'testDescriptionUpdated'},
+						updatedItem = yield instance.update({dbObject: item, where: {id: 3}})
 					for (const i in item) {
 						assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}", expected ${item[i]}.`)
 					}
-					delete changeableInstance.model
-					return t.rollback()
-				}))
-				return true
+					return true
+				})
+			})
+			it('should execute successfully, update the db entry correctly and save the image file if all parameters are correct and correct image data is provided', function() {
+				return co(function*() {
+					let item = {name: 'testNameUpdated2', description: 'testDescriptionUpdated2'},
+						updatedItem = yield instance.update({dbObject: {inputImageFileName: `avatarForUpload_${now}.png`, outputImageFileName: 'avatar', ...item}, where: {id: 3}})
+					for (const i in item) {
+						assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}", expected ${item[i]}.`)
+					}
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/${updatedItem.id}/avatar.png`))
+					assert.strictEqual(stats.isFile(), true, 'expected the output to be saved as a png file, got undefined')
+					return true
+				})
 			})
 		})
 	},
 	testBulkUpsert: function() {
-		const instance = this,
-			{sequelize, Sequelize} = this
-		let changeableInstance = this
+		const instance = this
 		describe('baseDBComponent.bulkUpsert', function() {
 			it('should throw an error with the correct message of dbObjects is not an array', function() {
 				return co(function*() {
@@ -1441,26 +1567,15 @@ module.exports = {
 				})
 			})
 			it('should execute successfully create and update the list of db entries correctly if all parameters are correct', function() {
-				changeableInstance.db = {sequelize}
-				return sequelize.transaction().then((t) => co(function*() {
+				return co(function*() {
 					let items = [
-						{id: 1, name: 'testName1Updated', description: 'testDescription1Updated'},
-						{id: 2, name: 'testName2Updated', description: 'testDescription2Updated'},
-						{name: 'testName3Created', description: 'testDescription3Created'}
+						{name: 'testName5Created', description: 'testDescription5Created'},
+						{id: 4, name: 'testName4Updated', description: 'testDescription4Updated'},
+						{id: 3, name: 'testName3Updated', description: 'testDescription3Updated'}
 					]
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.bulkCreate([
-							{name: 'testName1', description: 'testDescription1'},
-							{name: 'testName2', description: 'testDescription2'}
-						],
-						{transaction: t}
-					)
-					yield instance.bulkUpsert(items, {transaction: t})
-					let updatedItems = yield instance.model.findAll({orderBy: [['id', 'asc']], transaction: t})
+					yield instance.bulkUpsert(items)
+					let updatedItems = yield instance.model.findAll({order: [['id', 'desc']], limit: 3})
+					items[0].id = 5
 					for (const index in updatedItems) {
 						const updatedItem = updatedItems[index].dataValues,
 							item = items[index]
@@ -1468,179 +1583,93 @@ module.exports = {
 							assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}" in item no. ${index}, expected ${item[i]}.`)
 						}
 					}
-					delete changeableInstance.model
-					return t.rollback()
-				}))
+					return true
+				})
 			})
 		})
 	},
 	testDelete: function() {
-		const instance = this,
-			{sequelize, Sequelize} = this
-		let changeableInstance = this
+		const instance = this
 		describe('baseDBComponent.delete', function() {
 			it('should throw an error with the correct message if checkForRelatedModels is set to true and an item has dependent items', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
-						test2Item = {id: 1, test1Id: 1, name: 'test2Name', description: 'test2Description'},
-						didThrowAnError = false
-					changeableInstance.componentName = 'test1Component'
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					changeableInstance.associationsConfig = {
-						test2: {type: 'hasMany', componentName: 'testComponent2', foreignKey: 'test1Id'}
-					}
-					changeableInstance.relationsConfig = {}
-					changeableInstance.db = {
-						components: {
-							testComponent2: {
-								model: sequelize.define('test2Model', {
-									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								}),
-								dependencyMap: {associationKeys: []}
-							}
-						}
-					}
-					changeableInstance.searchFields = [
-						{field: 'id'},
-						{field: '$test2.name$'}
-					]
-					changeableInstance.associate()
-					changeableInstance.mapRelations()
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.create(item, {transaction: t})
-					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+				return co(function*() {
+					let didThrowAnError = false
 					try {
-						yield instance.delete({id: 1, additionalFilters: {'$test2.name$': 'test2Name'}, checkForRelatedModels: true, transaction: t})
+						yield instance.delete({id: 2, additionalFilters: {'$test4.name$': 'test4Name'}, checkForRelatedModels: true})
 					} catch(e) {
-						if (e && (e.customMessage === 'Cannot delete a "test1Component" item that has related "test2" items in the database.')) {
+						if (e && (e.customMessage === 'Cannot delete a "testComponent" item that has related "test4" items in the database.')) {
 							didThrowAnError = true
 						} else {
 							throw e
 						}
 					}
 					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-					return t.rollback()
-				}))
+					return true
+				})
 			})
 			it('should throw an error with the correct message if checkForRelatedModels is set to true and the item is system-critical', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
-						test2Item = {id: 1, test1Id: 1, name: 'test2Name', description: 'test2Description'},
-						didThrowAnError = false
-					changeableInstance.systemCriticalIds = [1]
-					changeableInstance.componentName = 'test1Component'
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					changeableInstance.associationsConfig = {
-						test2: {type: 'hasMany', componentName: 'testComponent2', foreignKey: 'test1Id'}
-					}
-					changeableInstance.relationsConfig = {}
-					changeableInstance.db = {
-						components: {
-							testComponent2: {
-								model: sequelize.define('test2Model', {
-									name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-									description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-								}),
-								dependencyMap: {associationKeys: []}
-							}
-						}
-					}
-					changeableInstance.associate()
-					changeableInstance.mapRelations()
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.create(item, {transaction: t})
-					yield changeableInstance.db.components.testComponent2.model.create(test2Item, {transaction: t})
+				return co(function*() {
+					let didThrowAnError = false
 					try {
-						yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})
+						yield instance.delete({id: 1, checkForRelatedModels: true})
 					} catch(e) {
-						if (e && (e.customMessage === 'Cannot delete the "test1Component" item with id 1 - it is system-critical.')) {
+						if (e && (e.customMessage === 'Cannot delete the "testComponent" item with id 1 - it is system-critical.')) {
 							didThrowAnError = true
 						} else {
 							throw e
 						}
 					}
 					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-					return t.rollback()
-				}))
+					return true
+				})
 			})
 			it('should throw an error with the correct message if checkForRelatedModels is not set to true and the item is system-critical', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
-						didThrowAnError = false
-					changeableInstance.systemCriticalIds = [1]
-					changeableInstance.componentName = 'test1Component'
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.create(item, {transaction: t})
+				return co(function*() {
+					let didThrowAnError = false
 					try {
-						yield instance.delete({id: 1, transaction: t})
+						yield instance.delete({id: 1})
 					} catch(e) {
-						if (e && (e.customMessage === 'Cannot delete the "test1Component" item with id 1 - it is system-critical.')) {
+						if (e && (e.customMessage === 'Cannot delete the "testComponent" item with id 1 - it is system-critical.')) {
 							didThrowAnError = true
 						} else {
 							throw e
 						}
 					}
 					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
-					return t.rollback()
-				}))
+					return true
+				})
 			})
-			it('should execute successfully delete a db entry correctly if all parameters are correct and no additionalFilters are provided', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
-						deletedCount = 0
-					delete changeableInstance.systemCriticalIds
-					changeableInstance.componentName = 'test1Component'
-					changeableInstance.model = sequelize.define('test1Model', {
-						name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-					})
-					changeableInstance.associationsConfig = {}
-					changeableInstance.relationsConfig = {}
-					changeableInstance.db = {components: {}}
-					changeableInstance.associate()
-					changeableInstance.mapRelations()
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.create(item, {transaction: t})
-					deletedCount = (yield instance.delete({id: 1, checkForRelatedModels: true, transaction: t})).deleted
+			it('should execute successfully delete a db entry correctly if all parameters are correct, no additionalFilters are provided and none of them have images', function() {
+				return co(function*() {
+					let deletedCount = (yield instance.delete({id: 3, checkForRelatedModels: true})).deleted
 					assert.strictEqual(deletedCount, 1, `bad value ${deletedCount} for deletedCount, expected 1`)
-					return t.rollback()
-				}))
+					return true
+				})
 			})
-			it('should execute successfully delete a db entry correctly if all parameters are correct and additionalFilters are provided', function() {
-				return sequelize.transaction().then((t) => co(function*() {
-					let item = {id: 1, name: 'test1Name', description: 'test1Description'},
-						deletedCount = 0
-					delete changeableInstance.systemCriticalIds
-					changeableInstance.componentName = 'test1Component'
-					changeableInstance.model = sequelize.define('test1Model', {
-							name: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-							description: {type: Sequelize.STRING, allowNull: false, validate: {notEmpty: true}},
-						}, {
-							paranoid: true
-						}
+			it('should execute successfully delete a db entry correctly if all parameters are correct, additionalFilters are provided and some of them have images', function() {
+				return co(function*() {
+					let deletedCount = (yield instance.delete({id: 4, additionalFilters: {id: 15, deletedAt: null}, checkForRelatedModels: true})).deleted,
+						didThrowAnError = true
+					assert.strictEqual(deletedCount, 1, `bad value ${deletedCount} for deletedCount, expected 1`)
+					try {
+						yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/${updatedItem.id}`))
+					} catch(e) {
+						didThrowAnError = true
+					}
+					assert.strictEqual(didThrowAnError, true, 'the images folder was not deleted')
+					return true
+				})
+			})
+			after(function() {
+				return co(function*() {
+					yield instance.db.sequelize.query(
+						`drop table "test4Models";` +
+						`drop table "test1Models";` +
+						`drop table "test2Models";` +
+						`drop table "test3Models";`
 					)
-					changeableInstance.associationsConfig = {}
-					changeableInstance.relationsConfig = {}
-					changeableInstance.db = {components: {}}
-					changeableInstance.associate()
-					changeableInstance.mapRelations()
-					yield sequelize.sync({force: true, transaction: t})
-					yield instance.create(item, {transaction: t})
-					deletedCount = (yield instance.delete({id: 1, additionalFilters: {id: 15, deletedAt: null}, checkForRelatedModels: true, transaction: t})).deleted
-					assert.strictEqual(deletedCount, 1, `bad value ${deletedCount} for deletedCount, expected 1`)
-					return t.rollback()
-				}))
+					return true
+				})
 			})
 		})
 	}
