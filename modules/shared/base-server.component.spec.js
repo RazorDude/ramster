@@ -1129,8 +1129,11 @@ module.exports = {
 					if (req.locals.error) {
 						throw req.locals.error
 					}
-					const resultItem = res.response.jsonBody,
+					const resultItems = res.response.jsonBody,
 						item = {id: 2, typeId: 2, firstName: 'updatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', active: false}
+					assert.strictEqual(resultItems[0], 1, `Bad value ${resultItems[0]} for resultItems[0], expected 1.`)
+					assert.strictEqual(resultItems[1].length, 1, `Bad value ${resultItems[1].length} for resultItems[1].length, expected 1.`)
+					const resultItem = resultItems[1][0]
 					for (const key in item) {
 						assert.strictEqual(resultItem[key], item[key], `Bad value ${resultItem[key]} for field "${key}", expected ${item[key]}.`)
 					}

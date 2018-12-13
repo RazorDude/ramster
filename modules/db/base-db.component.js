@@ -903,14 +903,13 @@ class BaseDBComponent {
 				objectForUpdate = dbObject
 			}
 			const updateResults = yield instance.model.update(objectForUpdate, options)
-			let updateResult = null
 			if (updateResults[0]) {
-				updateResult = updateResults[1][0].dataValues
+				let updateResult = updateResults[1][0].dataValues
 				if (dbObject.inputImageFileName && dbObject.outputImageFileName) {
 					yield instance.saveImage(dbObject.inputImageFileName, dbObject.outputImageFileName, updateResult.id)
 				}
 			}
-			return updateResult
+			return updateResults
 		})
 	}
 

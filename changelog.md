@@ -1,3 +1,6 @@
+# 1.0.12
+- Restored the old return values of baseDBComponent.update.
+
 # 1.0.11
 - Added support for running additional tests, passed as functions in core.runTests.
 - Added functionality for saving images to the baseDBComponent - the saveImageMethod. It is now being used by its create, update and delete methods.

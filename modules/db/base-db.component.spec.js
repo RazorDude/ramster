@@ -1526,8 +1526,11 @@ module.exports = {
 			})
 			it('should execute successfully and update the db entry correctly if all parameters are correct and no image data is provided', function() {
 				return co(function*() {
-					let item = {name: 'testNameUpdated', description: 'testDescriptionUpdated'},
-						updatedItem = yield instance.update({dbObject: item, where: {id: 3}})
+					const item = {name: 'testNameUpdated', description: 'testDescriptionUpdated'},
+						updatedItems = yield instance.update({dbObject: item, where: {id: 3}})
+					assert.strictEqual(updatedItems[0], 1, `Bad value ${updatedItems[0]} for updatedItems[0], expected 1.`)
+					assert.strictEqual(updatedItems[1].length, 1, `Bad value ${updatedItems[1].length} for updatedItems[1].length, expected 1.`)
+					const updatedItem = updatedItems[1][0]
 					for (const i in item) {
 						assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}", expected ${item[i]}.`)
 					}
@@ -1536,8 +1539,11 @@ module.exports = {
 			})
 			it('should execute successfully, update the db entry correctly and save the image file if all parameters are correct and correct image data is provided', function() {
 				return co(function*() {
-					let item = {name: 'testNameUpdated2', description: 'testDescriptionUpdated2'},
-						updatedItem = yield instance.update({dbObject: {inputImageFileName: `avatarForUpload_${now}.png`, outputImageFileName: 'avatar', ...item}, where: {id: 3}})
+					const item = {name: 'testNameUpdated2', description: 'testDescriptionUpdated2'},
+						updatedItems = yield instance.update({dbObject: {inputImageFileName: `avatarForUpload_${now}.png`, outputImageFileName: 'avatar', ...item}, where: {id: 3}})
+					assert.strictEqual(updatedItems[0], 1, `Bad value ${updatedItems[0]} for updatedItems[0], expected 1.`)
+					assert.strictEqual(updatedItems[1].length, 1, `Bad value ${updatedItems[1].length} for updatedItems[1].length, expected 1.`)
+					const updatedItem = updatedItems[1][0]
 					for (const i in item) {
 						assert.strictEqual(updatedItem[i], item[i], `Bad value ${updatedItem[i]} for field "${i}", expected ${item[i]}.`)
 					}
