@@ -12,6 +12,4 @@ test
 !test/storage
 test/storage/*
 !test/storage/test
-test/storage/test/*
-!test/storage/test/example.*
 package-lock.json
