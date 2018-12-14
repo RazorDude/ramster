@@ -1,3 +1,6 @@
+# 1.0.15
+- Exlucded test/storage/test/example.* from the .gitignore, so that Travis can test properly.
+
 # 1.0.14
 - Important improvement to the baseDBComponent.update method - now uses baseDBComponent.readList in idsOnlyMode to find results.
 
