@@ -1197,8 +1197,7 @@ module.exports = {
 					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
 					yield dbComponent.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true})
 					req.locals.error = null
-					req.user = {id: 1}
-					delete req.body
+					req.body = {}
 					req.params = {id: 2}
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)

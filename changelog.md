@@ -1,3 +1,6 @@
+# 1.0.13
+- Added the missing support for additional filtering in baseServerComponent.update (the body.where object) and baseServerComponent.delete (the body.additonalFilters) object.
+
 # 1.0.12
 - Restored the old return values of baseDBComponent.update.
 

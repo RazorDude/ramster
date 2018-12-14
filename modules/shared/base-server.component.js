@@ -484,11 +484,10 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	update() {
-		const instance = this,
-			{dbComponent} = this
+		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				res.json(yield dbComponent.update({dbObject: req.body, where: {id: req.params.id}, userId: req.user.id}))
+				res.json(yield dbComponent.update({dbObject: req.body, where: {...(req.body.where || {}), id: req.params.id}, userId: req.user.id}))
 			} catch (e) {
 				req.locals.error = e
 				next()
@@ -502,8 +501,7 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	bulkUpsert() {
-		const instance = this,
-			{dbComponent} = this
+		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
 				if (req.body.where) {
@@ -531,11 +529,10 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	delete() {
-		const instance = this,
-			{dbComponent} = this
+		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				yield dbComponent.delete({id: req.params.id, checkForRelatedModels: true})
+				yield dbComponent.delete({id: req.params.id, additionalFilters: req.body.additionalFilters, checkForRelatedModels: true})
 				res.json({success: true})
 			} catch (e) {
 				req.locals.error = e
