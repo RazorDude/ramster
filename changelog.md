@@ -1,3 +1,6 @@
+# 1.0.14
+- Important improvement to the baseDBComponent.update method - now uses baseDBComponent.readList in idsOnlyMode to find results.
+
 # 1.0.13
 - Added the missing support for additional filtering in baseServerComponent.update (the body.where object) and baseServerComponent.delete (the body.additonalFilters) object.
 

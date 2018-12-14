@@ -878,13 +878,13 @@ class BaseDBComponent {
 			if ((typeof where !== 'object') || (where === null) || (Object.keys(where).length === 0)) {
 				throw {customMessage: 'Cannot update without criteria.'}
 			}
-			let options = {
-					where,
-					returning: true
-				},
-				hasImageData = dbObject.inputImageFileName && dbObject.outputImageFileName
+			const hasImageData = dbObject.inputImageFileName && dbObject.outputImageFileName
 			if (hasImageData && !transaction) {
 				return yield instance.db.sequelize.transaction((t) => instance.update({transaction: t, ...data}))
+			}
+			let options = {
+				where: {id: (yield instance.readList({readAll: true, filters: where, idsOnlyMode: true, transaction})).results.map((e, i) => e.id)},
+				returning: true
 			}
 			if (transaction) {
 				options.transaction = transaction
