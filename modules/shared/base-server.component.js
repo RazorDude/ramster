@@ -511,11 +511,22 @@ class BaseServerComponent {
 					res.json(yield dbComponent.update(req.body))
 					return
 				}
-				let options = null
+				let options = {}
 				if (req.user) {
-					options = {userId: req.user.id}
+					options.userId = req.user.id
 				}
-				res.json(yield dbComponent.bulkUpsert(req.body, options))
+				if (req.body instanceof Array) {
+					res.json(yield dbComponent.bulkUpsert(req.body, options))
+					return
+				}
+				let {additionalCreateFields, dbObjects, updateFilters} = req.body
+				if (additionalCreateFields) {
+					options.additionalCreateFields = additionalCreateFields
+				}
+				if (updateFilters) {
+					options.updateFilters = updateFilters
+				}
+				res.json(yield dbComponent.bulkUpsert(dbObjects, options))
 			} catch (e) {
 				req.locals.error = e
 				next()

@@ -1173,6 +1173,43 @@ module.exports = {
 					return true
 				})
 			})
+			it('should execute successfully, pass the request data on to dbComponent.bulkUpsert, return the {success: true} and create and update the provided items if all paramteres are correct and an object in the format {additionalCreateFields, dbObjects, updateFilters} is provided', function() {
+				return co(function*() {
+					req.locals.error = null
+					req.user = {id: 1}
+					req.body = {
+						additionalCreateFields: {active: false},
+						dbObjects: [
+							{id: 2, firstName: 'properlyUpdatedFirstName1', active: true},
+							{typeId: 2, firstName: 'fnn2', lastName: 'lnn2', email: 'emailn2@ramster.com', password: '1234', active: true}
+						],
+						updateFilters: {deletedAt: null}
+					}
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						wrap(instance.bulkUpsert())(req, res, next.bind(next, resolve))
+					}))
+					if (req.locals.error) {
+						throw req.locals.error
+					}
+					const result = res.response.jsonBody,
+						resultItems = yield dbComponent.model.findAll({where: {id: [2, 4]}, order: [['id', 'asc']]}),
+						items = [
+							{id: 2, typeId: 2, firstName: 'properlyUpdatedFirstName1', lastName: 'ln1', email: 'email1@ramster.com', active: true},
+							{id: 4, typeId: 2, firstName: 'fnn2', lastName: 'lnn2', email: 'emailn2@ramster.com', active: false}
+						]
+					assert.strictEqual(result.success, true, `Bad value ${result.success} for result.success, expected true.`)
+					for (const i in items) {
+						const item = items[i],
+							resultItem = resultItems[i].dataValues
+						for (const key in item) {
+							assert.strictEqual(resultItem[key], item[key], `Bad value ${resultItem[key]} for field "${key}" in item no. ${i}, expected ${item[key]}.`)
+						}
+					}
+					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
+					return true
+				})
+			})
 			after(function() {
 				return co(function*() {
 					yield db.sequelize.query(`

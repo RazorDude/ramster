@@ -917,6 +917,8 @@ class BaseDBComponent {
 	 * Triggers component.update for each dbObject that has an id. Puts the rest into an array and triggers component.bulkCreate for them.
 	 * @param {object[]} dbObjects The array of objects to create & update. An error will be thrown if this is not an array.
 	 * @param {object} options The options to pass to the component.bulkCreate and component.update methods.
+	 * @param {object} options.additionalCreateFields (optional) An object that contains fields to be added to each dbObject.
+	 * @param {object} options.updateFilters (optional) An object that contains filters to be added to the "where" update object.
 	 * @param {number} options.userId The id of the user to be set as "changeUserId", usually the current logged in user.
 	 * @param {object} options.transaction A sequelize transaction to be passed to sequelize.
 	 * @returns {Promise<{success: boolean}>} A promise which wraps a generator function. When resolved, the promise returns {success: true}.
@@ -930,20 +932,24 @@ class BaseDBComponent {
 			return this.db.sequelize.transaction((t) => this.bulkUpsert(dbObjects, {transaction: t}))
 		}
 		if (!options.transaction) {
-			return this.db.sequelize.transaction((t) => this.bulkUpsert(dbObjects, {transaction: t, ...options}))
+			return this.db.sequelize.transaction((t) => this.bulkUpsert(dbObjects, {...options, transaction: t}))
 		}
 		const instance = this,
-			{userId, transaction, ...otherOptions} = options
+			{additionalCreateFields, updateFilters, userId, transaction, ...otherOptions} = options
 		return co(function*() {
-			let objectsToCreate = []
+			let objectsToCreate = [],
+				fieldsToAdd = (typeof additionalCreateFields === 'object') && (additionalCreateFields !== null) ? additionalCreateFields : {}
 			for (const i in dbObjects) {
 				let dbObject = dbObjects[i],
 					id = parseInt(dbObject.id, 10)
 				if (!dbObject.id) {
+					for (const key in fieldsToAdd) {
+						dbObject[key] = fieldsToAdd[key]
+					}
 					objectsToCreate.push(dbObject)
 					continue
 				}
-				yield instance.update({dbObject, where: {id}, userId, transaction, ...otherOptions})
+				yield instance.update({dbObject, where: {...(updateFilters || {}), id}, userId, transaction, ...otherOptions})
 			}
 			yield instance.bulkCreate(objectsToCreate, {userId, transaction, ...otherOptions})
 			return {success: true}

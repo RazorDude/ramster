@@ -1,3 +1,6 @@
+# 1.0.16
+- Upgraded the baseDbComponent.bulkUpsert method to support updateFilters filters for updating items and additionalCreateFields for creating items.
+
 # 1.0.15
 - Exlucded test/storage/test/example.* from the .gitignore, so that Travis can test properly.
 

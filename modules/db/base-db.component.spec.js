@@ -1250,7 +1250,7 @@ module.exports = {
 							}
 						}
 					)
-					changeableInstance.allowedUpdateFields = ['name', 'description']
+					changeableInstance.allowedUpdateFields = ['testId', 'name', 'description', 'active']
 					changeableInstance.systemCriticalIds = [1]
 					changeableInstance.db.components = {
 						...changeableInstance.db.components,
@@ -1579,9 +1579,10 @@ module.exports = {
 						{id: 4, name: 'testName4Updated', description: 'testDescription4Updated'},
 						{id: 3, name: 'testName3Updated', description: 'testDescription3Updated'}
 					]
-					yield instance.bulkUpsert(items)
+					yield instance.bulkUpsert(items, {additionalCreateFields: {test2Id: 1}, updateFilters: {deletedAt: null}})
 					let updatedItems = yield instance.model.findAll({order: [['id', 'desc']], limit: 3})
 					items[0].id = 5
+					items[0].test2Id = 1
 					for (const index in updatedItems) {
 						const updatedItem = updatedItems[index].dataValues,
 							item = items[index]
