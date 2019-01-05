@@ -267,6 +267,7 @@ class Core {
 	 * @param {object} options The config object, whose properties specify which tests to execute.
 	 * @param {boolean} options.testConfig If set to true, the ramster tests for the coreInstance config will be executed.
 	 * @param {boolean} options.testDB If set to true, the user-built tests for each dbComponent will be executed.
+	 * @param {boolean} options.testDBInjectedModules If set to true, the user-built tests for each module that was injected in the db module as per the config.db.injectModules property will be executed.
 	 * @param {boolean} options.testClients If set to true, the user-built tests for each client module's components will be executed.
 	 * @param {boolean} options.testAPIs If set to true, the user-built tests for each api module's components will be executed.
 	 * @param {boolean} options.testWebpackBuildTools If set to true, the tests for the webpack built tools (webpackBuild.js and webpackDevserver.js) will be executed.
@@ -281,7 +282,7 @@ class Core {
 	runTests(options) {
 		const instance = this,
 			{config} = instance,
-			{testConfig, testDB, testClients, testAPIs, testWebpackBuildTools, staticDataFileNames, additionalClasses} = options
+			{testConfig, testDB, testDBInjectedModules, testClients, testAPIs, testWebpackBuildTools, staticDataFileNames, additionalClasses} = options
 		let syncHistoryFilesCount = 0
 		describe(config.projectName, function() {
 			before(function() {
@@ -355,6 +356,29 @@ class Core {
 							}
 						)
 					}
+					return true
+				})
+			})
+			describeSuiteConditionally(testDBInjectedModules === true, 'db injected modules', function() {
+				it('should test all db injected modules components successfully', function() {
+					const dbModule = instance.modules.db,
+						dbInjectedModuleNames = dbModule.config.db.injectModules
+					if (!(dbInjectedModuleNames instanceof Array) || !dbInjectedModuleNames.length) {
+						return true
+					}
+					dbInjectedModuleNames.forEach((moduleName, index) => {
+						const dbInjectedModule = dbModule[moduleName],
+							{specMethodNames} = dbInjectedModule
+						describeSuiteConditionally(
+							(specMethodNames instanceof Array) && specMethodNames.length,
+							`db injected modules, module ${moduleName}`,
+							function() {
+								for (const j in specMethodNames) {
+									dbInjectedModule[specMethodNames[j]]()
+								}
+							}
+						)
+					})
 					return true
 				})
 			})

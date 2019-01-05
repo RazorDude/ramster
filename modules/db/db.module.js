@@ -85,6 +85,11 @@ class DBModule {
 		 * @type {Sequelize}
 		 */
 		this.sequelize = null
+		/**
+		 * Whether the module is runnign in mockMode or not.
+		 * @type {boolean}
+		 */
+		this.runningInMockMode = false
 	}
 
 	/**
@@ -158,8 +163,8 @@ class DBModule {
 	loadComponents() {
 		let instance = this
 		return co(function*() {
-			const {sequelize, Sequelize} = instance,
-				{modulePath} = instance.moduleConfig,
+			const {config, sequelize, Sequelize} = instance,
+				{injectableModulesPath, modulePath} = instance.moduleConfig,
 				moduleDir = yield fs.readdir(modulePath)
 			let components = instance.components
 			for (const i in moduleDir) {
@@ -201,6 +206,15 @@ class DBModule {
 					components[componentName] = component
 				} else if (componentName === 'fieldCaseMap.js') {
 					instance.fieldCaseMap = require(path.join(modulePath, componentName))
+				}
+			}
+			const injectModules = config.db.injectModules
+			if ((injectModules instanceof Array) && injectModules.length) {
+				const modulesPath = injectableModulesPath || path.join(modulePath, '../')
+				for (const i in injectModules) {
+					const moduleName = injectModules[i],
+						moduleToInject = new (require(path.join(modulesPath, moduleName)))(config, instance.runningInMockMode)
+					instance[moduleName] = moduleToInject
 				}
 			}
 			instance.setDBInComponents()
@@ -259,18 +273,28 @@ class DBModule {
 	}
 
 	/**
-	 * Sets the db property for each component, while at the same removing the particular component from each dbComponent's db.components to avoid circularization.
+	 * Sets the db property for each component, while at the same removing the particular component from each dbComponent's db.components to avoid circularization. Do the same for the injected modules.
 	 * @returns {void}
 	 * @memberof DBModule
 	 */
 	setDBInComponents() {
-		let {components} = this
+		let {components, config} = this
 		for (const componentName in components) {
 			let component = components[componentName],
 				dbClone = Object.assign({}, this)
 			dbClone.components = Object.assign({}, this.components)
 			delete dbClone.components[componentName]
 			component.db = dbClone
+		}
+		const injectModules = config.db.injectModules
+		if ((injectModules instanceof Array) && injectModules.length) {
+			for (const i in injectModules) {
+				const moduleName = injectModules[i]
+				let injectedModule = this[moduleName],
+					dbClone = Object.assign({}, this)
+				delete dbClone[moduleName]
+				injectedModule.db = dbClone
+			}
 		}
 	}
 

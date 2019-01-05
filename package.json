@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.0.16",
+  "version": "1.0.17",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -67,11 +67,11 @@
     "url": "git+https://github.com/RazorDude/ramster.git"
   },
   "scripts": {
-    "fullTest-local": "node ./test/generateStuff.js && mocha ./test/test.js && mocha ./test/index.js --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools",
-    "fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools --testLint",
+    "fullTest-local": "node ./test/generateStuff.js && mocha ./test/test.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testWebpackBuildTools",
+    "fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testWebpackBuildTools --testLint",
     "generateProjectDocs": "node ./generateProjectDocs.js",
     "test-local": "node ./test/generateStuff.js && mocha ./test/test.js",
-    "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testClients --testAPIs --testWebpackBuildTools"
+    "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testWebpackBuildTools"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",

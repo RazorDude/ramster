@@ -864,7 +864,7 @@ class BaseDBComponent {
 	 * Updates a DB item (or multiple items, if more than one matches the provided filters). If component.allowedUpdateFields are set, only these fields will be updated.
 	 * @param {object} data The data to search by.
 	 * @param {object} data.dbObject The object containing the fields to be updated.
-	 * @param {number} data.where The filters to match the object(s) for update by.
+	 * @param {number} data.filters The filters to match the object(s) for update by.
 	 * @param {number} data.userId The id of the user to be set as "changeUserId", usually the current logged in user.
 	 * @param {object} data.transaction A sequelize transaction to be passed to sequelize.
 	 * @returns {Promise<array>} A promise which wraps a generator function. When resolved, the promise returns an array of the format [updatedItemsCount: number, updatedItems: array].
@@ -873,9 +873,9 @@ class BaseDBComponent {
 	update(data) {
 		const instance = this,
 			{allowedUpdateFields} = this,
-			{dbObject, where, userId, transaction} = data
+			{dbObject, filters, userId, transaction} = data
 		return co(function*() {
-			if ((typeof where !== 'object') || (where === null) || (Object.keys(where).length === 0)) {
+			if ((typeof filters !== 'object') || (filters === null) || (Object.keys(filters).length === 0)) {
 				throw {customMessage: 'Cannot update without criteria.'}
 			}
 			const hasImageData = dbObject.inputImageFileName && dbObject.outputImageFileName
@@ -883,7 +883,7 @@ class BaseDBComponent {
 				return yield instance.db.sequelize.transaction((t) => instance.update({transaction: t, ...data}))
 			}
 			let options = {
-				where: {id: (yield instance.readList({readAll: true, filters: where, idsOnlyMode: true, transaction})).results.map((e, i) => e.id)},
+				where: {id: (yield instance.readList({readAll: true, filters, idsOnlyMode: true, transaction})).results.map((e, i) => e.id)},
 				returning: true
 			}
 			if (transaction) {
@@ -949,7 +949,7 @@ class BaseDBComponent {
 					objectsToCreate.push(dbObject)
 					continue
 				}
-				yield instance.update({dbObject, where: {...(updateFilters || {}), id}, userId, transaction, ...otherOptions})
+				yield instance.update({dbObject, filters: {...(updateFilters || {}), id}, userId, transaction, ...otherOptions})
 			}
 			yield instance.bulkCreate(objectsToCreate, {userId, transaction, ...otherOptions})
 			return {success: true}

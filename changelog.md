@@ -1,3 +1,6 @@
+# 1.0.17
+- Added the ability to inject modules in the db module. Set the injectModules property in the db config - an array of strings, representing the names of the modules to be injected. Each module must be present in project_root/modules.
+
 # 1.0.16
 - Upgraded the baseDbComponent.bulkUpsert method to support updateFilters filters for updating items and additionalCreateFields for creating items.
 

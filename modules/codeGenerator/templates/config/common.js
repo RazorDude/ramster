@@ -38,6 +38,8 @@ module.exports = {
 	},
 	db: {
 		modulePath: path.join(__dirname, '../modules/db'),
+		injectableModulesPath: path.join(__dirname, '../modules'),
+		injectModules: ['testModule'],
 		dbType: 'postgreSQL',
 		schema: 'public'
 	},

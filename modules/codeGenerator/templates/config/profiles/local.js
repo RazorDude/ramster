@@ -18,7 +18,7 @@ module.exports = {
 	hostProtocol,
 	hostAddress,
 	wsPort: site.wsPort,
-	wsConfigFolderPath: 'c:\\programs\\nginx\\conf',
+	wsConfigFolderPath: '/etc/nginx/conf-avail.d',
 	postgreSQL: {
 		user: 'postgres',
 		password: 'postgres',
@@ -32,6 +32,7 @@ module.exports = {
 	redis: {
 		host: '127.0.0.1',
 		port: 6379,
+		password: 'redis',
 		mockModePrefix: 'mockMode'
 	},
 	migrations: {

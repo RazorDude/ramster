@@ -31,6 +31,10 @@ co(function*() {
 		yield fs.writeFile(fd, fileData)
 		yield fs.close(fd)
 	}
+	yield fs.copy(
+		path.join(__dirname, '../modules/codeGenerator/templates/modules/testModule'),
+		path.join(__dirname, './modules/testModule')
+	)
 
 	let clientModulesPath = path.join(__dirname, 'modules/clients'),
 		clientModules = yield fs.readdir(clientModulesPath)

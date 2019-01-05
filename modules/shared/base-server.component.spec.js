@@ -1106,6 +1106,39 @@ module.exports = {
 			})
 		})
 	},
+	testUpdate: function(req, res, next) {
+		const instance = this,
+			{module} = this
+		describe('base-server.component.update', function() {
+			it('should execute successfully, pass the request data on to dbComponent.update and return the update result if all paramteres are correct', function() {
+				return co(function*() {
+					req.locals.error = null
+					req.user = {id: 1}
+					req.params = {id: 1}
+					req.body = {
+						dbObject: {firstName: 'updatedFirstName0', active: false},
+						filters: {id: 1, active: true}
+					}
+					yield (new Promise((resolve, reject) => {
+						res.json = res.jsonTemplate.bind(res, resolve)
+						wrap(instance.update())(req, res, next.bind(next, resolve))
+					}))
+					if (req.locals.error) {
+						throw req.locals.error
+					}
+					const resultItems = res.response.jsonBody,
+						item = {id: 1, firstName: 'updatedFirstName0', active: false}
+					assert.strictEqual(resultItems[0], 1, `Bad value ${resultItems[0]} for resultItems[0], expected 1.`)
+					assert.strictEqual(resultItems[1].length, 1, `Bad value ${resultItems[1].length} for resultItems[1].length, expected 1.`)
+					const resultItem = resultItems[1][0]
+					for (const key in item) {
+						assert.strictEqual(resultItem[key], item[key], `Bad value ${resultItem[key]} for field "${key}", expected ${item[key]}.`)
+					}
+					return true
+				})
+			})
+		})
+	},
 	testBulkUpsert: function(req, res, next) {
 		const instance = this,
 			{dbComponent, module} = this,
@@ -1120,7 +1153,7 @@ module.exports = {
 					req.user = {id: 1}
 					req.body = {
 						dbObject: {firstName: 'updatedFirstName1', active: false},
-						where: {id: 2}
+						filters: {id: 2}
 					}
 					yield (new Promise((resolve, reject) => {
 						res.json = res.jsonTemplate.bind(res, resolve)

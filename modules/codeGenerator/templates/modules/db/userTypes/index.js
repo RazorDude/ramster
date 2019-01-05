@@ -71,7 +71,7 @@ class UserTypesDBComponent extends BaseDBComponent {
 	 * Updates a userType. Performs a check to make sure no systemCriticalIds are deactivated.
 	 * @param {Object.<string, any>} data The method input data, containing the dbObject to update and the conditions to update it by.
 	 * @param {Object.<string, any>} data.dbObject The fields to update.
-	 * @param {Object.<string, any>} data.where The criteria to update by. Must contain the id.
+	 * @param {Object.<string, any>} data.filters The criteria to update by. Must contain the id.
 	 * @param {number} data.userId The id of the user performing the update, usually the currently logged-in user.
 	 * @returns {Promise<array>} A promise which wraps a generator function. When resolved, the promise returns an array of the format [updatedItemsCount: number, updatedItems: array].
 	 * @memberof UserTypesDBComponent
@@ -79,8 +79,8 @@ class UserTypesDBComponent extends BaseDBComponent {
 	update(data) {
 		const instance = this
 		return co(function*() {
-			if (data && data.dbObject && data.where && (data.dbObject.active === false)) {
-				const id = data.where.id
+			if (data && data.dbObject && data.filters && (data.dbObject.active === false)) {
+				const id = data.filters.id
 				if (id instanceof Array) {
 					id.forEach((item, index) => {
 						if (instance.systemCriticalIds.indexOf(item) !== -1) {

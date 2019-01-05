@@ -24,6 +24,7 @@ if (argv.runTests) {
 	ramster.runTests({
 		testConfig: (argv.testConfig === 'true') || (argv.testConfig === true),
 		testDB: (argv.testDB === 'true') || (argv.testDB === true),
+		testDBInjectedModules: (argv.testDBInjectedModules === 'true') || (argv.testDBInjectedModules === true),
 		testClients: (argv.testClients === 'true') || (argv.testClients === true) ? true : argv.testClients,
 		testAPIs: (argv.testAPIs === 'true') || (argv.testAPIs === true) ? true : argv.testAPIs,
 		testWebpackBuildTools: (argv.testWebpackBuildTools === 'true') || (argv.testWebpackBuildTools === true),
