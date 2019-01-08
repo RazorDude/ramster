@@ -874,13 +874,15 @@ class BaseDBComponent {
 	update(data) {
 		const instance = this,
 			{allowedUpdateFields} = this,
-			{dbObject, filters, userId, where, transaction} = data
+			{dbObject, userId, where, transaction} = data
+		let {filters} = data
 		return co(function*() {
 			if ((typeof filters !== 'object') || (filters === null) || (Object.keys(filters).length === 0)) {
 				if ((typeof where !== 'object') || (where === null) || (Object.keys(where).length === 0)) {
 					throw {customMessage: 'Cannot update without criteria.'}
 				}
 				filters = where
+				data.filters = where
 			}
 			const hasImageData = dbObject.inputImageFileName && dbObject.outputImageFileName
 			if (hasImageData && !transaction) {

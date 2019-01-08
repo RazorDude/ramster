@@ -1,3 +1,6 @@
+# 1.0.19
+- Fix for the latest update.
+
 # 1.0.18
 - Restored "where" in dbComponent.update for backwards compatibility. Still, it's recommended that you use "filters".
 
