@@ -1,3 +1,6 @@
+# 1.0.18
+- Restored "where" in dbComponent.update for backwards compatibility. Still, it's recommended that you use "filters".
+
 # 1.0.17
 - Added the ability to inject modules in the db module. Set the injectModules property in the db config - an array of strings, representing the names of the modules to be injected. Each module must be present in project_root/modules.
 
