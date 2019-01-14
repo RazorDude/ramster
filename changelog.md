@@ -1,3 +1,6 @@
+# 1.0.22
+- Another fix for serverComponent.update.
+
 # 1.0.21
 - Restored "where" in serverComponent.update for backwards compatibility. Still, it's recommended that you use "filters".
 - Travis build error fixes.

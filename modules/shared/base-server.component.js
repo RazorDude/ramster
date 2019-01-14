@@ -487,13 +487,15 @@ class BaseServerComponent {
 		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
+				const filters =  {
+					...(req.body.filters || req.body.where || {}),
+					id: req.params.id
+				}
 				res.json(
 					yield dbComponent.update({
 						dbObject: req.body,
-						filters: {
-							...(req.body.filters || req.body.where || {}),
-							id: req.params.id
-						},
+						filters,
+						where: filters,
 						userId: req.user.id
 					})
 				)
