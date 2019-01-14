@@ -1,3 +1,7 @@
+# 1.0.21
+- Restored "where" in serverComponent.update for backwards compatibility. Still, it's recommended that you use "filters".
+- Travis build error fixes.
+
 # 1.0.20
 - toobelt.getNested now supports providing arrays without indexes in the path, which caused the method to cycle through all items of the encountered array and return an array with the found values.
 

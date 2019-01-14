@@ -487,7 +487,16 @@ class BaseServerComponent {
 		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				res.json(yield dbComponent.update({dbObject: req.body, filters: {...(req.body.filters || {}), id: req.params.id}, userId: req.user.id}))
+				res.json(
+					yield dbComponent.update({
+						dbObject: req.body,
+						filters: {
+							...(req.body.filters || req.body.where || {}),
+							id: req.params.id
+						},
+						userId: req.user.id
+					})
+				)
 			} catch (e) {
 				req.locals.error = e
 				next()
