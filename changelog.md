@@ -1,3 +1,6 @@
+# 1.0.20
+- toobelt.getNested now supports providing arrays without indexes in the path, which caused the method to cycle through all items of the encountered array and return an array with the found values.
+
 # 1.0.19
 - Fix for the latest update.
 

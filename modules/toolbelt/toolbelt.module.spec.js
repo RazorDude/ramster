@@ -512,7 +512,7 @@ module.exports = {
 			it('should execute successfully and return undefined if the field does not exist in the parent', function() {
 				assert.strictEqual(getNested({}, 'test.test1'), undefined)
 			})
-			it('should execute successfully and return the field\'s value if all parameters are correct', function() {
+			it('should execute successfully and return the field\'s value if all parameters are correct and no items in the path are arrays without indexes', function() {
 				const result = getNested({
 						test1: 'test1string',
 						a: undefined,
@@ -537,6 +537,63 @@ module.exports = {
 					}, 't.vertices.f.$vertices.1.vertices.$innerTest.vertices$.veryInnerId'
 				)
 				assert.strictEqual(result, 25, `bad value ${result} for result, expected 25`)
+			})
+			it('should execute successfully and return the field\'s value if all parameters are correct and the last value is an array', function() {
+				const result = getNested({
+						test1: 'test1string',
+						a: undefined,
+						b: null,
+						c: 567,
+						t: {
+							vertices: {
+								f: {
+									$vertices: [
+										'', {
+											vertices: {
+												test2: true,
+												'$innerTest.vertices$': {veryInnerIds: [25]}
+											}
+										},
+										2
+									]
+								}
+							}
+						},
+						d: ''
+					}, 't.vertices.f.$vertices.1.vertices.$innerTest.vertices$.veryInnerIds'
+				)
+				assert.strictEqual(result instanceof Array, true, 'expected the returned value to be an array')
+				assert.strictEqual(result.length, 1, `bad value ${result.length} for result.length, expected 1`)
+				assert.strictEqual(result[0], 25, `bad value ${result[0]} for result[0], expected 25`)
+			})
+			it('should execute successfully and return the field\'s value if all parameters are correct and one of the items in the path is an array without an index', function() {
+				const result = getNested({
+						test1: 'test1string',
+						a: undefined,
+						b: null,
+						c: 567,
+						t: {
+							vertices: {
+								f: {
+									$vertices: [
+										'', {
+											vertices: {
+												test2: true,
+												'$innerTest.vertices$': [{veryInnerId: 25}, {veryInnerId: 26}]
+											}
+										},
+										2
+									]
+								}
+							}
+						},
+						d: ''
+					}, 't.vertices.f.$vertices.1.vertices.$innerTest.vertices$.veryInnerId'
+				)
+				assert.strictEqual(result instanceof Array, true, 'expected the returned value to be an array')
+				assert.strictEqual(result.length, 2, `bad value ${result.length} for result.length, expected 2`)
+				assert.strictEqual(result[0], 25, `bad value ${result[0]} for result[0], expected 25`)
+				assert.strictEqual(result[1], 26, `bad value ${result[1]} for result[1], expected 26`)
 			})
 		})
 	},

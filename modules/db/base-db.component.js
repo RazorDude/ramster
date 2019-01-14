@@ -964,7 +964,7 @@ class BaseDBComponent {
 
 	/**
 	 * Deletes all DB items matching the provided id and additionalFilters.
-	 * @param {object} data The data to pass to the component.bulkCreate and component.update methods.
+	 * @param {object} data The data to determine what to delete by.
 	 * @param {number} data.id The id if the item / items to delete.
 	 * @param {object} data.additionalFilters An object containing additonal filters for narrowing down the list of DB items to be deleted.
 	 * @param {boolean} data.checkForRelatedModels If set to true, all of the component's hasOne, hasMany and belongsToMany associations will be checked. If a single DB item exists for any of them, an error will be thrown.

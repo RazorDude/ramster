@@ -267,7 +267,7 @@ const
 	 * @param {string} field The path to the desired value, comprised of the object keys leading to it, delimited by dots ("."). I.e. 'results.0.roles.0.id'.
 	 * @returns {any} The value or undefined if not found.
 	 */
-	getNested = (parent, field) => {
+	getNested = function(parent, field) {
 		if ((typeof parent !== 'object') || (parent === null) || (typeof field !== 'string') || !field.length) {
 			return undefined
 		}
@@ -275,6 +275,9 @@ const
 			fieldDataLength = fieldData.length,
 			currentElement = parent
 		for (let i = 0; i < fieldDataLength; i++) {
+			if ((typeof currentElement === 'undefined') || (currentElement === null)) {
+				return undefined
+			}
 			let innerElementName = fieldData[i]
 			// logic for handling sequelize-style $foo.bar$ - should be treated as a single element
 			if (innerElementName.charAt(0) === '$') {
@@ -300,10 +303,33 @@ const
 					i = closingBracketIndex
 				}
 			}
-			if ((typeof currentElement === 'undefined') || (currentElement === null) || (typeof currentElement[innerElementName] === 'undefined')) {
+			let nextElement = currentElement[innerElementName]
+			if (typeof nextElement === 'undefined') {
 				return undefined
 			}
-			currentElement = currentElement[innerElementName]
+			// if the next element is an array, prepare to return an array of the inner items
+			if (nextElement instanceof Array) {
+				// if this is the last item, just return the array
+				if (i === (fieldData.length - 1)) {
+					return nextElement
+				}
+				// if the next item is not an index, recursively call self for each item of the array
+				if (isNaN(parseInt(fieldData[i + 1], 10))) {
+					currentElement = []
+					let innerPath = ''
+					for (let j = i + 1; j < fieldDataLength; j++) {
+						innerPath += fieldData[j]
+					}
+					nextElement.forEach((item, iIndex) => {
+						let innerValue = getNested(item, innerPath)
+						if (typeof innerValue !== 'undefined') {
+							currentElement.push(innerValue)
+						}
+					})
+					return currentElement
+				}
+			}
+			currentElement = nextElement
 		}
 		return currentElement
 	},
