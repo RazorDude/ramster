@@ -113,6 +113,7 @@ module.exports = {
 				})
 			})
 			it('should execute successfully up to the email sending point', function() {
+				this.timeout(10000)
 				return co(function*() {
 					let didThrowAnError = false
 					try {

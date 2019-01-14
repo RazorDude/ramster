@@ -1,3 +1,8 @@
+# 1.0.23
+- Another really minor fix for baseServerComponent.update.
+- Minor fix for the baseServerComponent.accessFilter method.
+- Increased the test timeout of the success test in mailClient.sendEmail to 10000 to avoid test errors due to slow pug compilation.
+
 # 1.0.22
 - Another fix for serverComponent.update.
 

@@ -208,7 +208,10 @@ class BaseServerComponent {
 						const apData = apIdMap[apIds[i]]
 						if ((typeof apData === 'undefined') || !apData.active) {
 							allPresent = false
-							break
+							if (requireAllAPs) {
+								break
+							}
+							continue
 						}
 						if (nonePresent) {
 							nonePresent = false
@@ -491,6 +494,8 @@ class BaseServerComponent {
 					...(req.body.filters || req.body.where || {}),
 					id: req.params.id
 				}
+				delete req.body.filters
+				delete req.body.where
 				res.json(
 					yield dbComponent.update({
 						dbObject: req.body,
