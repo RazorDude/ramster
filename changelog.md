@@ -1,3 +1,6 @@
+# 1.0.24
+- toolbelt.getNested now supports multiple consecutive unindexed arrays in the path.
+
 # 1.0.23
 - Another really minor fix for baseServerComponent.update.
 - Minor fix for the baseServerComponent.accessFilter method.

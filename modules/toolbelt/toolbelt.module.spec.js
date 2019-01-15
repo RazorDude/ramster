@@ -595,6 +595,41 @@ module.exports = {
 				assert.strictEqual(result[0], 25, `bad value ${result[0]} for result[0], expected 25`)
 				assert.strictEqual(result[1], 26, `bad value ${result[1]} for result[1], expected 26`)
 			})
+			it('should execute successfully and return the field\'s value if all parameters are correct and multiple items in the path are arrays without an index', function() {
+				const result = getNested({
+						test1: 'test1string',
+						a: undefined,
+						b: null,
+						c: 567,
+						t: {
+							vertices: {
+								f: {
+									$vertices: [
+										'', {
+											vertices: [{
+													test2: true,
+													'$innerTest.vertices$': [{veryInnerId: 25}, {veryInnerId: 26}]
+												},{
+													test2: true,
+													'$innerTest.vertices$': [{veryInnerId: 27}, {veryInnerId: 28}]
+												}
+											]
+										},
+										2
+									]
+								}
+							}
+						},
+						d: ''
+					}, 't.vertices.f.$vertices.1.vertices.$innerTest.vertices$.veryInnerId'
+				)
+				assert.strictEqual(result instanceof Array, true, 'expected the returned value to be an array')
+				assert.strictEqual(result.length, 4, `bad value ${result.length} for result.length, expected 4`)
+				assert.strictEqual(result[0], 25, `bad value ${result[0]} for result[0], expected 25`)
+				assert.strictEqual(result[1], 26, `bad value ${result[1]} for result[1], expected 26`)
+				assert.strictEqual(result[2], 27, `bad value ${result[2]} for result[2], expected 27`)
+				assert.strictEqual(result[3], 28, `bad value ${result[3]} for result[3], expected 28`)
+			})
 		})
 	},
 	testSetNested: function() {

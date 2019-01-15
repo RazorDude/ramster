@@ -310,7 +310,7 @@ const
 			// if the next element is an array, prepare to return an array of the inner items
 			if (nextElement instanceof Array) {
 				// if this is the last item, just return the array
-				if (i === (fieldData.length - 1)) {
+				if (i === (fieldDataLength - 1)) {
 					return nextElement
 				}
 				// if the next item is not an index, recursively call self for each item of the array
@@ -318,12 +318,17 @@ const
 					currentElement = []
 					let innerPath = ''
 					for (let j = i + 1; j < fieldDataLength; j++) {
-						innerPath += fieldData[j]
+						innerPath += `${fieldData[j]}${j < (fieldDataLength - 1) ? '.' : ''}`
 					}
 					nextElement.forEach((item, iIndex) => {
 						let innerValue = getNested(item, innerPath)
 						if (typeof innerValue !== 'undefined') {
-							currentElement.push(innerValue)
+							// if the innerValue is an array too, merge it with the currentElement - this way we can have nested arrays without indexes
+							if (innerValue instanceof Array) {
+								currentElement = currentElement.concat(innerValue)
+								return
+							}
+ 							currentElement.push(innerValue)
 						}
 					})
 					return currentElement
