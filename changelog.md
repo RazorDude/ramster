@@ -1,3 +1,6 @@
+# 1.0.26
+- Fix for the latter.
+
 # 1.0.25
 - Updated baseServerComponent.update to better structure the req.body before passing it to the dbComponent. It now accepts both the fields to update plainly in the body for legacy reasons, and a "dbObject" object containing the fields to update in the body - the preferred way to di it.
 
