@@ -29,8 +29,8 @@ module.exports = {
 			it('should execute testGetWhereObjects successfully', function() {
 				instance.testGetWhereObjects()
 			})
-			it('should execute testGetWhereObjects successfully', function() {
-				instance.testGetWhereObjects()
+			it('should execute testGetRelationObjects successfully', function() {
+				instance.testGetRelationObjects()
 			})
 			it('should execute testAssignModelToDereferencedRelationRecursively successfully', function() {
 				instance.testAssignModelToDereferencedRelationRecursively()

@@ -1,3 +1,7 @@
+# 1.0.28
+- Another fix for the latter.
+- Turns out testGetWhereObjects was being executed twice, instead of once and then executing getRelationObjects, hence why the bug wasn't found. Fixed.
+
 # 1.0.27
 - Fixed baseDbComponent.getRelationObjects - it now correctly works with items from the relationsConfig, not just ones from the associationsConfig.
 

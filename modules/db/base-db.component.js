@@ -538,7 +538,7 @@ class BaseDBComponent {
 					let nextRelationItemFound = false
 					for (const i in relationItem.include) {
 						let thisItem = relationItem.include[i]
-						if (thisItem.as === keyFromPath) {
+						if ((thisItem.as === keyFromPath) || (thisItem.relationAlias === keyFromPath)) {
 							nextRelationItemFound = true
 							relationItem = thisItem
 							relationItem.required = true
