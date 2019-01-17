@@ -1,3 +1,6 @@
+# 1.0.25
+- Updated baseServerComponent.update to better structure the req.body before passing it to the dbComponent. It now accepts both the fields to update plainly in the body for legacy reasons, and a "dbObject" object containing the fields to update in the body - the preferred way to di it.
+
 # 1.0.24
 - toolbelt.getNested now supports multiple consecutive unindexed arrays in the path.
 

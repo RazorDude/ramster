@@ -496,6 +496,14 @@ class BaseServerComponent {
 				}
 				delete req.body.filters
 				delete req.body.where
+				if (!req.body.dbObject) {
+					let dbObject = {}
+					Object.keys(req.body).forEach((key, index) => {
+						dbObject[key] = req.body[key]
+						delete req.body[key]
+					})
+					req.body.dbObject = dbObject
+				}
 				res.json(
 					yield dbComponent.update({
 						dbObject: req.body,
