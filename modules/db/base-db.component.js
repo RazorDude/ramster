@@ -523,8 +523,12 @@ class BaseDBComponent {
 			if (relationData) {
 				const relConfig = this.relations[key]
 				let splitPath = relationData.path.split('.'),
-					includeItem = this.assignModelToDereferencedRelationRecursively(relConfig.includeItem),
-					relationItem = {include: [includeItem]},
+					includeItem = this.assignModelToDereferencedRelationRecursively(relConfig.includeItem)
+				// if the item only exists as a relationsConfig item and not as an associationsConfig item, add an extra key called "relationAlias" to the includeItem so the loop that goes through the path can actually find it
+				if (typeof this.associationsConfig[key] === 'undefined') {
+					includeItem.relationAlias = key
+				}
+				let relationItem = {include: [includeItem]},
 					currentItemName = this.componentName
 				// set required=true for all items in the path and set the filter values to the bottom one
 				splitPath.forEach((keyFromPath, pcIndex) => {

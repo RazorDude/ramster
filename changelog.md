@@ -1,3 +1,6 @@
+# 1.0.27
+- Fixed baseDbComponent.getRelationObjects - it now correctly works with items from the relationsConfig, not just ones from the associationsConfig.
+
 # 1.0.26
 - Fix for the latter.
 
