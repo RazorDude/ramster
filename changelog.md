@@ -1,3 +1,6 @@
+# 1.0.29
+- Fixed the baseServerComponent.accessFilter method to update the request field values when they're arrays to contain only the items the user has access to. 
+
 # 1.0.28
 - Another fix for the latter.
 - Turns out testGetWhereObjects was being executed twice, instead of once and then executing getRelationObjects, hence why the bug wasn't found. Fixed.

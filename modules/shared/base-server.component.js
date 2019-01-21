@@ -247,7 +247,8 @@ class BaseServerComponent {
 								}
 								return
 							}
-							const rfvActual = requestFieldValue instanceof Array ? requestFieldValue : [requestFieldValue]
+							const requestFieldValueIsAnArray = requestFieldValue instanceof Array,
+								rfvActual = requestFieldValueIsAnArray ? requestFieldValue : [requestFieldValue]
 							let hasMatch = false
 							for (const index in rfvActual) {
 								const rfvItem = rfvActual[index],
@@ -258,17 +259,25 @@ class BaseServerComponent {
 										(rfvItem === true) || (rfvItem === 'true') // the boolean value
 									]
 								if (userFieldValueIsAnArray) {
+									// if the user field value is an array, filter out only the items he has access to
+									let allowedValues = []
 									for (const i in userFieldValue) {
 										const value = userFieldValue[i]
 										for (const j in requestFieldValues) {
 											if (requestFieldValues[j] === value) {
-												hasMatch = true
-												break
+												allowedValues.push(value)
 											}
 										}
-										if (hasMatch) {
-											break
+									}
+									if (allowedValues.length) {
+										if (!hasMatch) {
+											hasMatch = true
 										}
+										if (requestFieldValueIsAnArray) {
+											setNested(req, ap.searchForUserFieldIn, allowedValues)
+										}
+									} else if (requestFieldValueIsAnArray) {
+										setNested(req, ap.searchForUserFieldIn, undefined)
 									}
 								} else {
 									for (const j in requestFieldValues) {
