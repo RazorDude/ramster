@@ -1,3 +1,6 @@
+# 1.0.30
+- Another improvement of the same type in baseServerComponent.accessFilter.
+
 # 1.0.29
 - Fixed the baseServerComponent.accessFilter method to update the request field values when they're arrays to contain only the items the user has access to. 
 
