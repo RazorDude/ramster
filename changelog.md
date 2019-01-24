@@ -1,3 +1,6 @@
+# 1.0.31
+- Restored support for "where" in baseDBComponent.bulkUpert and baseServerCompnent.bulkUpsert for backwards-compatibility purposes.
+
 # 1.0.30
 - Another improvement of the same type in baseServerComponent.accessFilter.
 

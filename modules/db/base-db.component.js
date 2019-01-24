@@ -947,6 +947,7 @@ class BaseDBComponent {
 		const instance = this,
 			{additionalCreateFields, updateFilters, userId, transaction, ...otherOptions} = options
 		return co(function*() {
+			const actualUpdateFilters = updateFilters || {}
 			let objectsToCreate = [],
 				fieldsToAdd = (typeof additionalCreateFields === 'object') && (additionalCreateFields !== null) ? additionalCreateFields : {}
 			for (const i in dbObjects) {
@@ -959,7 +960,8 @@ class BaseDBComponent {
 					objectsToCreate.push(dbObject)
 					continue
 				}
-				yield instance.update({dbObject, filters: {...(updateFilters || {}), id}, userId, transaction, ...otherOptions})
+				let filters = {...actualUpdateFilters, id}
+				yield instance.update({dbObject, filters, where: filters, userId, transaction, ...otherOptions})
 			}
 			yield instance.bulkCreate(objectsToCreate, {userId, transaction, ...otherOptions})
 			return {success: true}

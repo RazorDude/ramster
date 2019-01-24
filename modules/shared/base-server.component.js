@@ -549,7 +549,7 @@ class BaseServerComponent {
 		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				if (req.body.filters) {
+				if ((req.body.filters) || (req.body.where)) {
 					if (req.user) {
 						req.body.userId = req.user.id
 					}
