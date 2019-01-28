@@ -109,7 +109,7 @@ class Emails {
 
 			let rq = {
 				to: receivers,
-				from: instance.sender,
+				from: sender,
 				subject,
 				html: template
 			}

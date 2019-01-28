@@ -1,3 +1,6 @@
+# 1.0.32
+- Fixed baseServerComponent.readSelectList - it used to send relReadKeys as an empty array by default, instead of an empy object by default.
+
 # 1.0.31
 - Restored support for "where" in baseDBComponent.bulkUpert and baseServerCompnent.bulkUpsert for backwards-compatibility purposes.
 
