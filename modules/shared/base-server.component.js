@@ -432,7 +432,7 @@ class BaseServerComponent {
 		return function* (req, res, next) {
 			try {
 				let query = instance.decodeQueryValues(req.query),
-					options = {readAll: true, filters: query.filters, relReadKeys: query.relReadKeys || [], orderDirection: query.orderDirection || 'asc'},
+					options = {readAll: true, filters: query.filters, relReadKeys: query.relReadKeys || {}, orderDirection: query.orderDirection || 'asc'},
 					prependString = query.prependString || '',
 					appendString = query.appendString || '',
 					processTitleFields = query.processTitleFields || [],

@@ -1,3 +1,6 @@
+# 1.0.33
+- Actually made the fix :D
+
 # 1.0.32
 - Fixed baseServerComponent.readSelectList - it used to send relReadKeys as an empty array by default, instead of an empy object by default.
 
