@@ -1,3 +1,6 @@
+# 1.0.34
+- Added the ability to test cronJobs. See the example syntax in modules/codeGenerator/templates/modules/cronJobs for more info.
+
 # 1.0.33
 - Actually made the fix :D
 

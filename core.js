@@ -189,24 +189,33 @@ class Core {
 
 	/**
 	 * Loads the cronJobs module, starts all cronJobs and sets the module to coreInstance.modules.cronJobs.
+	 * @param {boolean} mockMode A flag which determines whether the method should run in "live" or "mock" mode (used in unit testing). In mock mode, cron jobs won't be started.
 	 * @returns {void}
 	 * @memberof Core
 	 */
-	loadCRONJobs() {
+	loadCRONJobs(mockMode) {
 		const {config, generalStore, logger, mailClient, modules, tokenManager} = this
 		let cronJobsModule = require(config.cronJobs.path),
-			jobs = cronJobsModule.getJobs({
+			jobTests = {}
+		try {
+			jobTests = require(`${config.cronJobs.path}/index.spec.js`)
+		} catch (e) {
+		}
+		let jobs = cronJobsModule.getJobs({
 				config,
 				db: modules.db,
 				generalStore,
 				logger,
 				mailClient,
 				tokenManager
-			}),
-			jobsModule = {jobs, activeJobs: []}
+			}, mockMode),
+			jobsModule = {jobs, jobTests, activeJobs: []}
 		if (jobs instanceof Array) {
 			jobs.forEach((jobData, index) => {
 				try {
+					if (mockMode) {
+						return
+					}
 					if (!jobData.start) {
 						jobData.start = true
 					}
@@ -270,6 +279,7 @@ class Core {
 	 * @param {boolean} options.testDBInjectedModules If set to true, the user-built tests for each module that was injected in the db module as per the config.db.injectModules property will be executed.
 	 * @param {boolean} options.testClients If set to true, the user-built tests for each client module's components will be executed.
 	 * @param {boolean} options.testAPIs If set to true, the user-built tests for each api module's components will be executed.
+	 * @param {boolean} options.testCronJobs If set to true, the user-built tests for each cron job will be executed.
 	 * @param {boolean} options.testWebpackBuildTools If set to true, the tests for the webpack built tools (webpackBuild.js and webpackDevserver.js) will be executed.
 	 * @param {string[]} options.staticDataFileNames If provided, this array of string will be used to execute insertStaticData with all files with these names from the migrations/staticData folder.
 	 * @param {additionalClassData[]} options.additionalClasses If provided, this object contains external classes whose testMethods have to be executed.
@@ -282,7 +292,7 @@ class Core {
 	runTests(options) {
 		const instance = this,
 			{config} = instance,
-			{testConfig, testDB, testDBInjectedModules, testClients, testAPIs, testWebpackBuildTools, staticDataFileNames, additionalClasses} = options
+			{testConfig, testDB, testDBInjectedModules, testClients, testAPIs, testCronJobs, testWebpackBuildTools, staticDataFileNames, additionalClasses} = options
 		let syncHistoryFilesCount = 0
 		describe(config.projectName, function() {
 			before(function() {
@@ -303,7 +313,7 @@ class Core {
 						yield instance.loadAPIs()
 					}
 					if (config.cronJobs) {
-						instance.loadCRONJobs()
+						instance.loadCRONJobs(true)
 					}
 					yield instance.listen()
 					if (config.migrations) {
@@ -443,6 +453,12 @@ class Core {
 							)
 						}
 					}
+					return true
+				})
+			})
+			describeSuiteConditionally(testCronJobs === true, 'cronJobs', function() {
+				it('should execute testCronJobs successfully', function() {
+					instance.testCronJobs()
 					return true
 				})
 			})

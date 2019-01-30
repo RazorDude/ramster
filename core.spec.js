@@ -785,6 +785,17 @@ module.exports = {
 			})
 		})
 	},
+	testCronJobs: function() {
+		const instance = this
+		describe('core.testCronJobs', function() {
+			it('should execute successfully and test all cron jobs', function() {
+				const cronJobTests = instance.modules.cronJobs.jobTests
+				for (const key in cronJobTests) {
+					cronJobTests[key].apply(instance)
+				}
+			})
+		})
+	},
 	testBaseServerModule: function() {
 		const instance = this
 		describe('core.modules.base-server.module', function() {
