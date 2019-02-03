@@ -71,7 +71,7 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	decodeQueryValues(object) {
-		if (typeof object === 'undefined') {
+		if ((typeof object === 'undefined') || (object === 'null')) {
 			return null
 		}
 		if (typeof object === 'string') {

@@ -1,3 +1,6 @@
+# 1.0.35
+- Small fix in baseServerComponent.decodeQueryValues - passing 'null' now returns null, insteadd of 'null'.
+
 # 1.0.34
 - Added the ability to test cronJobs. See the example syntax in modules/codeGenerator/templates/modules/cronJobs for more info.
 
