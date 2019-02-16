@@ -1,3 +1,6 @@
+# 1.0.36
+- Small fix.
+
 # 1.0.35
 - Small fix in baseServerComponent.decodeQueryValues - passing 'null' now returns null, insteadd of 'null'.
 

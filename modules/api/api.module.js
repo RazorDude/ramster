@@ -140,7 +140,7 @@ class APIModule extends BaseServerModule {
 					}
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 				})
-				if (componentAfterRoutesMethodNames.length) {
+				if (componentAfterRoutesMethodNames && componentAfterRoutesMethodNames.length) {
 					for (const i in componentAfterRoutesMethodNames) {
 						instance.router.use(`/${component.componentName}/*`, component[componentAfterRoutesMethodNames[i]]())
 					}
