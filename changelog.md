@@ -1,3 +1,6 @@
+# 1.0.38
+- Fixed the attributes probem in base-db.component.restoreAttributesFromMapRecursively.
+
 # 1.0.37
 - Fixed the deep recursion in the base-db.component.getRelationObjects.
 

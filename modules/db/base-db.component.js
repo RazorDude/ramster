@@ -601,6 +601,8 @@ class BaseDBComponent {
 	restoreAttributesFromMapRecursively(optionsObject, map) {
 		if (map.topLevel) {
 			optionsObject.attributes = map.topLevel
+		} else {
+			delete optionsObject.attributes
 		}
 		if (map.nested.length) {
 			map.nested.forEach((item, index) => this.restoreAttributesFromMapRecursively(optionsObject.include[index], item))
