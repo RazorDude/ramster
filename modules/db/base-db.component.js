@@ -546,6 +546,7 @@ class BaseDBComponent {
 							if (pcIndex === (splitPath.length - 1) && (typeof relationData.field !== 'undefined')) {
 								relationItem.where = {[relationData.field]: relationData.value}
 							}
+							break
 						}
 					}
 					if (!nextRelationItemFound) {

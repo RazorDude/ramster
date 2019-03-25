@@ -1,3 +1,6 @@
+# 1.0.37
+- Fixed the deep recursion in the base-db.component.getRelationObjects.
+
 # 1.0.36
 - Small fix.
 
