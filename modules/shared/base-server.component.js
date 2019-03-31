@@ -7,7 +7,7 @@
 const
 	BaseDBComponent = require('../db/base-db.component'),
 	BaseServerModule = require('./base-server.module'),
-	{getNested, setNested} = require('../toolbelt'),
+	{decodeQueryValues, getNested, setNested} = require('../toolbelt'),
 	spec = require('./base-server.component.spec')
 
 /**
@@ -56,42 +56,13 @@ class BaseServerComponent {
 		 * @type {BaseDBComponent}
 		 */
 		this.dbComponent = undefined
+		this.decodeQueryValues = decodeQueryValues
 		/**
 		 * The currently initialized instance of the BaseServerModule.
 		 * @type {BaseServerModule}
 		 */
 		this.module = undefined
 		this.setRoutes({addDefaultRoutes, additionalDefaultRoutes, appendComponentNameToRoutes, routes})
-	}
-
-	/**
-	 * Recursively performs decodeURIComponent on an object or value and returns the decoded object.
-	 * @param {any} object The object / value to decode.
-	 * @returns {any} The decoded object / value.
-	 * @memberof BaseServerComponent
-	 */
-	decodeQueryValues(object) {
-		if ((typeof object === 'undefined') || (object === 'null')) {
-			return null
-		}
-		if (typeof object === 'string') {
-			return decodeURIComponent(object)
-		}
-		if ((typeof object !== 'object') || (object === null)) {
-			return object
-		}
-		if (object instanceof Array) {
-			let decodedObject = []
-			object.forEach((item, index) => {
-				decodedObject.push(this.decodeQueryValues(item))
-			})
-			return decodedObject
-		}
-		let decodedObject = {}
-		for (const key in object) {
-			decodedObject[decodeURIComponent(key)] = this.decodeQueryValues(object[key])
-		}
-		return decodedObject
 	}
 
 	/**

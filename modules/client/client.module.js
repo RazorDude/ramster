@@ -12,7 +12,7 @@ const
 	cookieParser = require('cookie-parser'),
 	co = require('co'),
 	Cookies = require('cookies'),
-	{checkRoutes} = require('../toolbelt'),
+	{checkRoutes, decodeQueryValues} = require('../toolbelt'),
 	express = require('express'),
 	expressSession = require('express-session'),
 	http = require('http'),
@@ -134,6 +134,13 @@ class ClientModule extends BaseServerModule {
 				app.use(multipart({limit: moduleConfig.fileSizeLimit || '10mb', uploadDir: config.globalUploadPath})) // for multipart bodies - file uploads etc.
 			}
 			app.use(cookieParser())
+
+			app.use((req, res, next) => {
+				if (req.method.toLowerCase() === 'get') {
+					req.query = decodeQueryValues(req.query)
+				}
+				next()
+			})
 
 			// set up access control by origin
 			if (moduleConfig.allowOrigins) {

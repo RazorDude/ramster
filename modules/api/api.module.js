@@ -10,10 +10,9 @@ const
 	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
 	co = require('co'),
+	{decodeQueryValues} = require('../toolbelt'),
 	express = require('express'),
-	expressSession = require('express-session'),
 	http = require('http'),
-	path = require('path'),
 	requestLogger = require('morgan'),
 	spec = require('./api.module.spec'),
 	wrap = require('co-express')
@@ -85,6 +84,13 @@ class APIModule extends BaseServerModule {
 			app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
 			app.use(bodyParser.json()) // for 'application/json' request bodies
 			app.use(cookieParser())
+
+			app.use((req, res, next) => {
+				if (req.method.toLowerCase() === 'get') {
+					req.query = decodeQueryValues(req.query)
+				}
+				next()
+			})
 
 			// set up access control by origin
 			if (moduleConfig.allowOrigins) {

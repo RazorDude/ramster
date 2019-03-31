@@ -157,6 +157,39 @@ const
 		return false
 	},
 	/**
+	 * Recursively performs decodeURIComponent on an object or value and returns the decoded object.
+	 * @param {any} object The object / value to decode.
+	 * @returns {any} The decoded object / value.
+	 * @memberof BaseServerComponent
+	 */
+	decodeQueryValues = (object) => {
+		if ((typeof object === 'undefined') || (object === 'null')) {
+			return null
+		}
+		if (typeof object === 'string') {
+			return decodeURIComponent(object)
+		}
+		if ((typeof object !== 'object') || (object === null)) {
+			return object
+		}
+		if (object instanceof Array) {
+			let decodedObject = []
+			object.forEach((item) => {
+				decodedObject.push(decodeQueryValues(item))
+			})
+			return decodedObject
+		}
+		let decodedObject = {}
+		for (const key in object) {
+			let decodedKey = decodeURIComponent(key)
+			if (decodedKey.substr(0, 6) === '_json_') {
+				decodedObject[decodedKey.substr(6, decodedKey.length)] = decodeQueryValues(JSON.parse(decodeURIComponent(object[key])))
+			}
+			decodedObject[decodedKey] = decodeQueryValues(object[key])
+		}
+		return decodedObject
+	},
+	/**
 	 * Run chai describe or describe.skip, based on a provided condition.
 	 * @param {boolean} condition The condition that determines whether the suite will be executed or not.
 	 * @param {string} suiteText The description of the suite.
@@ -459,4 +492,19 @@ const
 		return true
 	}
 
-module.exports = {arraySort, changeKeyCase, checkRoutes, describeSuiteConditionally, emptyToNull, findVertexByIdDFS, getFolderSize, getNested, generateRandomNumber, generateRandomString, parseDate, runTestConditionally, setNested}
+module.exports = {
+	arraySort,
+	changeKeyCase,
+	checkRoutes,
+	decodeQueryValues,
+	describeSuiteConditionally,
+	emptyToNull,
+	findVertexByIdDFS,
+	getFolderSize,
+	getNested,
+	generateRandomNumber,
+	generateRandomString,
+	parseDate,
+	runTestConditionally,
+	setNested
+}
