@@ -1,3 +1,6 @@
+# 1.0.40
+- Added an improved error message for Sequelize unique contraint errors.
+
 # 1.0.39
 - Moved decodeQueryValues from the base-server.component to the toolbelt, updated it to support _json query params (when you pass _json_something={key: value} it will now parse it it query.something = {key: value}) and added it by default for all get requests both in the client and in the api modules. Left it as property of base-server.component for backwards compatibility, will be removed in the next major release.
 

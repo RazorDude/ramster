@@ -265,9 +265,14 @@ class BaseServerModule {
 			const sequelizeErrorMessage = error.message
 			let errorMessage = 'An internal server error has occurred. Please try again.',
 				errorStatus = 500
-			if (sequelizeErrorMessage && ((sequelizeErrorMessage.indexOf('Validation error') !== -1) || (sequelizeErrorMessage.indexOf('ValidationError') !== -1))) {
-				errorMessage = 'Validation error - please make sure all required fields are present and in the correct format.'
-				errorStatus = 400
+			if (sequelizeErrorMessage) {
+				if (sequelizeErrorMessage.indexOf('SequelizeUniqueConstraintError') !== -1) {
+					errorMessage = 'A similar item already exists. Please check your data and make sure it\'s unique before proceeding.'
+					errorStatus = 400
+				} else if ((sequelizeErrorMessage.indexOf('Validation error') !== -1) || (sequelizeErrorMessage.indexOf('ValidationError') !== -1)) {
+					errorMessage = 'Validation error - please make sure all required fields are present and in the correct format.'
+					errorStatus = 400
+				}
 			} else if (error.customMessage) {
 				errorMessage = req.locals.error.customMessage
 				errorStatus = req.locals.errorStatus || req.locals.error.status || 400

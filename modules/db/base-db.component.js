@@ -409,7 +409,7 @@ class BaseDBComponent {
 			if (typeof container[actualField] === 'undefined') {
 				container[actualField] = {}
 			}
-			container[actualField][(exactMatchFields.indexOf(actualField) !== -1) || filter.exactMatchFields ? '$gte' : '$gt'] = value
+			container[actualField][(exactMatchFields.indexOf(actualField) !== -1) || filter.exactMatch ? '$gte' : '$gt'] = value
 			return true
 		}
 		if (filter.betweenTo) {
@@ -417,7 +417,7 @@ class BaseDBComponent {
 			if (typeof container[actualField] === 'undefined') {
 				container[actualField] = {}
 			}
-			container[actualField][actualField, (exactMatchFields.indexOf(actualField) !== -1) || filter.exactMatchFields ? '$lte' : '$lt'] = value
+			container[actualField][actualField, (exactMatchFields.indexOf(actualField) !== -1) || filter.exactMatch ? '$lte' : '$lt'] = value
 			return true
 		}
 		// equality filter
