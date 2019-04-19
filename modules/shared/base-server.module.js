@@ -253,7 +253,7 @@ class BaseServerModule {
 			notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
 		return function (req, res) {
 			const error = req.locals.error
-			if (!req.locals || !req.locals.error) {
+			if (!req.locals || !error) {
 				if (notFoundRedirectRoutes) {
 					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
 					return
@@ -261,15 +261,15 @@ class BaseServerModule {
 				res.status(404).json({error: 'Not found.'})
 				return
 			}
-			instance.logger.error(req.locals.error)
-			const sequelizeErrorMessage = error.message
+			instance.logger.error(error)
+			const sequelizeErrorMessage = error.name
 			let errorMessage = 'An internal server error has occurred. Please try again.',
 				errorStatus = 500
 			if (sequelizeErrorMessage) {
-				if (sequelizeErrorMessage.indexOf('SequelizeUniqueConstraintError') !== -1) {
+				if (sequelizeErrorMessage === 'SequelizeUniqueConstraintError') {
 					errorMessage = 'A similar item already exists. Please check your data and make sure it\'s unique before proceeding.'
 					errorStatus = 400
-				} else if ((sequelizeErrorMessage.indexOf('Validation error') !== -1) || (sequelizeErrorMessage.indexOf('ValidationError') !== -1)) {
+				} else if (sequelizeErrorMessage === 'ValidationError') {
 					errorMessage = 'Validation error - please make sure all required fields are present and in the correct format.'
 					errorStatus = 400
 				}

@@ -1,3 +1,6 @@
+# 1.0.41
+- Another improvement of the same type.
+
 # 1.0.40
 - Added an improved error message for Sequelize unique contraint errors.
 
