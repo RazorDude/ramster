@@ -1,3 +1,6 @@
+# 1.0.43
+- Removed bodyParser.raw() from the client and api module and added a custom middleware.
+
 # 1.0.42
 - Added bodyParser.raw() for client and api requests.
 

@@ -82,7 +82,22 @@ class APIModule extends BaseServerModule {
 
 			// set up request logging and request body parsing
 			app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
-			app.use(bodyParser.raw()) // for raw request bodies
+			// for raw request bodies
+			app.use((req, res, next) => {
+				if (typeof req.get('Content-Type') === 'undefined') {
+					let data = ''
+					req.setEncoding('utf8')
+					req.on('data', function(chunk) {
+						data += chunk
+					})
+					req.on('end', function() {
+						req.rawBody = data
+						next()
+					})
+					return
+				}
+				next()
+			})
 			app.use(bodyParser.json()) // for 'application/json' request bodies
 			app.use(cookieParser())
 
