@@ -865,9 +865,9 @@ module.exports = {
 				instance.setFilterValue(container, {betweenFrom: true}, 'testFieldFrom', 'testValue', ['testField'])
 				assert.strictEqual(container.testField.$gte, 'testValue', `bad value ${container.testField.$gte} for container.testField.$gte, expected testValue`)
 			})
-			it('should set the filter value correctly if the filter is of the "betweenFrom" range type and exactMatchFields is set for it in the field options', function() {
+			it('should set the filter value correctly if the filter is of the "betweenFrom" range type and exactMatch is set for it in the field options', function() {
 				let container = {}
-				instance.setFilterValue(container, {betweenFrom: true, exactMatchFields: true}, 'testFieldFrom', 'testValue')
+				instance.setFilterValue(container, {betweenFrom: true, exactMatch: true}, 'testFieldFrom', 'testValue')
 				assert.strictEqual(container.testField.$gte, 'testValue', `bad value ${container.testField.$gte} for container.testField.$gte, expected testValue`)
 			})
 			it('should set the filter value correctly if the filter is of the "betweenTo" range type and exactMatch is not set for it', function() {
@@ -880,9 +880,9 @@ module.exports = {
 				instance.setFilterValue(container, {betweenTo: true}, 'testFieldTo', 'testValue', ['testField'])
 				assert.strictEqual(container.testField.$lte, 'testValue', `bad value ${container.testField.$lte} for container.testField.$lte, expected testValue`)
 			})
-			it('should set the filter value correctly if the filter is of the "betweenTo" range type and exactMatchFields is set for it in the field options', function() {
+			it('should set the filter value correctly if the filter is of the "betweenTo" range type and exactMatch is set for it in the field options', function() {
 				let container = {}
-				instance.setFilterValue(container, {betweenTo: true, exactMatchFields: true}, 'testFieldTo', 'testValue')
+				instance.setFilterValue(container, {betweenTo: true, exactMatch: true}, 'testFieldTo', 'testValue')
 				assert.strictEqual(container.testField.$lte, 'testValue', `bad value ${container.testField.$lte} for container.testField.$lte, expected testValue`)
 			})
 		})

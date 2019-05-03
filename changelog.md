@@ -1,3 +1,6 @@
+# 1.0.42
+- Added bodyParser.raw() for client and api requests.
+
 # 1.0.41
 - Another improvement of the same type.
 

@@ -128,6 +128,7 @@ class ClientModule extends BaseServerModule {
 
 			// set up request logging and request body parsing
 			app.use(requestLogger(`[${moduleName} client] :method request to :url; result: :status; completed in: :response-time; :date`))
+			app.use(bodyParser.raw()) // for raw request bodies
 			app.use(bodyParser.json()) // for 'application/json' request bodies
 			app.use(bodyParser.urlencoded({extended: false})) // 'x-www-form-urlencoded' request bodies
 			if (config.globalUploadPath) {

@@ -18,7 +18,8 @@ module.exports = {
 	hostProtocol,
 	hostAddress,
 	wsPort: site.wsPort,
-	wsConfigFolderPath: '/etc/nginx/conf-avail.d',
+	// wsConfigFolderPath: '/etc/nginx/conf-avail.d',
+	wsConfigFolderPath: path.join(__dirname, '../'),
 	postgreSQL: {
 		user: 'postgres',
 		password: 'postgres',
