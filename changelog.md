@@ -1,3 +1,6 @@
+# 1.1.0
+- Added streamReadList to the base server component.
+
 # 1.0.45
 - Fix for the latter
 

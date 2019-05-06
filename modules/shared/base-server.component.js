@@ -109,6 +109,7 @@ class BaseServerComponent {
 					create: {method: 'post', path: `/${componentName}`, func: 'create'},
 					read: {method: 'get', path: `/${componentName}/item`, func: 'read'},
 					readList: {method: 'get', path: `/${componentName}`, func: 'readList'},
+					streamReadList: {method: 'get', path: `/${componentName}/streamList`, func: 'streamReadList'},
 					readSelectList: {method: 'get', path: `/${componentName}/selectList`, func: 'readSelectList'},
 					update: {method: 'patch', path: `/${componentName}/item/:id`, func: 'update'},
 					bulkUpsert: {method: 'put', path: `/${componentName}`, func: 'bulkUpsert'},
@@ -385,6 +386,50 @@ class BaseServerComponent {
 		return function* (req, res, next) {
 			try {
 				res.json(yield dbComponent.readList(instance.decodeQueryValues(req.query)))
+			} catch (e) {
+				req.locals.error = e
+				next()
+			}
+		}
+	}
+
+	/**
+	 * Establish a peristent connection and continuously push the list of database items matching the search criteria to the front-end.
+	 * @returns {IterableIterator} An expressJS-style generator function to be wrapped by co-wrap and mounted in the server's router.
+	 * @memberof BaseServerComponent
+	 */
+	streamReadList() {
+		const instance = this,
+			{dbComponent} = this
+		return function* (req, res, next) {
+			try {
+				const acceptHeader = req.get('accept')
+				if (!acceptHeader || (acceptHeader.indexOf('text/event-stream') === -1)) {
+					throw {customMessage: 'Please provide an accept header that contains text/event-stream to access this content.'}
+				}
+				res.status(200).set({
+					'Content-Type': 'text/event-stream',
+					'Cache-Control': 'no-cache',
+					Connection: 'keep-alive',
+					'X-Accel-Buffering': 'no'
+				})
+				res.write(`data: ${JSON.stringify(yield dbComponent.readList(req.query))}\n\n`)
+				let interval = setInterval(() => {
+					return co(function*() {
+						return yield dbComponent.readList(req.query)
+					}).then(
+						(data) => {
+							res.write(`data: ${JSON.stringify(data)}\n\n`)
+						},
+						(err) => {
+							instance.module.logger.error(err)
+							res.write(`data: ${JSON.stringify({error: 'Could not get data.'})}\n\n`)
+						}
+					)
+				}, 5000)
+				req.on('close', () => {
+					clearInterval(interval)
+				})
 			} catch (e) {
 				req.locals.error = e
 				next()

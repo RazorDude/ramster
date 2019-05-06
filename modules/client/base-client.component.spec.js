@@ -31,9 +31,16 @@ module.exports = {
 	testMe: function() {
 		const instance = this
 		let req = {
-				headers: {},
+				headers: {accept: 'text/event-stream'},
 				connection: {},
-				locals: {}
+				locals: {},
+				callbacks: {},
+				get: function(headerName) {
+					return req.headers[headerName]
+				},
+				on: function(callbackName, callbackMethod) {
+					req.callbacks[callbackName] = callbackMethod
+				}
 			},
 			res = {
 				headers: {},
@@ -79,6 +86,18 @@ module.exports = {
 					}
 					res.response.statusCode = statusCode
 					res.response.redirectRoute = route
+					if (typeof resolvePromise === 'function') {
+						resolvePromise()
+						return
+					}
+					return res
+				},
+				writeTemplate: function(resolvePromise, data) {
+					res.fakeVar = true
+					if (typeof res.response === 'undefined') {
+						res.response = {}
+					}
+					res.response.body = data
 					if (typeof resolvePromise === 'function') {
 						resolvePromise()
 						return

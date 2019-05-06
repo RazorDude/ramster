@@ -11,7 +11,14 @@ module.exports = {
 					moduleName: 'mobile',
 					moduleType: 'client'
 				},
-				headers: {}
+				headers: {accept: 'text/event-stream'},
+				callbacks: {},
+				get: function(headerName) {
+					return req.headers[headerName]
+				},
+				on: function(callbackName, callbackMethod) {
+					req.callbacks[callbackName] = callbackMethod
+				}
 			},
 			res = {
 				headers: {},
@@ -60,6 +67,18 @@ module.exports = {
 						return
 					}
 					return res
+				},
+				writeTemplate: function(resolvePromise, data) {
+					res.fakeVar = true
+					if (typeof res.response === 'undefined') {
+						res.response = {}
+					}
+					res.response.body = data
+					if (typeof resolvePromise === 'function') {
+						resolvePromise()
+						return
+					}
+					return res
 				}
 			},
 			next = function(resolvePromise, errorObject) {
@@ -95,6 +114,9 @@ module.exports = {
 			})
 			it('should execute testReadList successfully', function() {
 				instance.testReadList(req, res, next)
+			})
+			it('should execute testStreamReadList successfully', function() {
+				instance.testStreamReadList(req, res, next)
 			})
 			it('should execute testReadSelectList successfully', function() {
 				instance.testReadSelectList(req, res, next)
@@ -850,6 +872,62 @@ module.exports = {
 					assert.strictEqual(returnedData.perPage, 10, `Bad value ${returnedData.perPage} for returnedData.perPage, expected 10.`)
 					assert.strictEqual(returnedData.totalPages, 1, `Bad value ${returnedData.totalPages} for returnedData.totalPages, expected 1.`)
 					assert.strictEqual(returnedData.more, false, `Bad value ${returnedData.more} for returnedData.more, expected false.`)
+					return true
+				})
+			})
+			after(function() {
+				return co(function*() {
+					yield db.sequelize.query(`
+						delete from "userTypes";
+						delete from "users";
+						select setval('"userTypes_id_seq"'::regclass, 1);
+						select setval('"users_id_seq"'::regclass, 1);
+					`)
+					return true
+				})
+			})
+		})
+	},
+	testStreamReadList: function(req, res, next) {
+		const instance = this,
+			{module} = this,
+			db = module.db,
+			dbComponents = db.components
+		describe('base-server.component.streamReadList', function() {
+			before(function() {
+				return co(function*() {
+					yield dbComponents.userTypes.create({name: 'type1', description: 'description1', active: true})
+					yield dbComponents.users.create({typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', password: '1234', active: true})
+					delete req.locals.error
+					return true
+				})
+			})
+			it('should execute successfully and return the found object if all paramteres are correct', function() {
+				return co(function*() {
+					req.user = {id: 1}
+					req.query = {filters: {id: 2}, saveSearchData: true}
+					yield (new Promise((resolve, reject) => {
+						res.write = res.writeTemplate.bind(res, resolve)
+						wrap(instance.streamReadList())(req, res, next.bind(next, resolve))
+					}))
+					// req.callbacks.close()
+					if (req.locals.error) {
+						throw req.locals.error
+					}
+					let returnedData = res.response.body,
+						returnedDataStart = returnedData.substr(0, 6)
+					returnedData = JSON.parse(returnedData.replace('data: ', ''))
+					let result = returnedData.results[0],
+						item = {id: 2, typeId: 2, firstName: 'fn1', lastName: 'ln1', email: 'email1@ramster.com', active: true}
+					assert.strictEqual(returnedDataStart, 'data: ', `bad value ${returnedDataStart} for returnedDataStart, expected 'data: '`)
+					for (const key in item) {
+						assert.strictEqual(result[key], item[key], `bad value ${result[key]} for field "${key}", expected ${item[key]}`)
+					}
+					assert.strictEqual(returnedData.results.length, 1, `bad value ${returnedData.results.length} for returnedData.results.length, expected 1`)
+					assert.strictEqual(returnedData.page, 1, `bad value ${returnedData.page} for returnedData.page, expected 1`)
+					assert.strictEqual(returnedData.perPage, 10, `bad value ${returnedData.perPage} for returnedData.perPage, expected 10`)
+					assert.strictEqual(returnedData.totalPages, 1, `bad value ${returnedData.totalPages} for returnedData.totalPages, expected 1`)
+					assert.strictEqual(returnedData.more, false, `bad value ${returnedData.more} for returnedData.more, expected false`)
 					return true
 				})
 			})
