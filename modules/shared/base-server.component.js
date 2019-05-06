@@ -7,6 +7,7 @@
 const
 	BaseDBComponent = require('../db/base-db.component'),
 	BaseServerModule = require('./base-server.module'),
+	co = require('co'),
 	{decodeQueryValues, getNested, setNested} = require('../toolbelt'),
 	spec = require('./base-server.component.spec')
 

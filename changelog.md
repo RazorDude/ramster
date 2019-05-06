@@ -1,3 +1,6 @@
+# 1.1.1
+- Fix for baseServerComponent.streamReadList.
+
 # 1.1.0
 - Added streamReadList to the base server component.
 
