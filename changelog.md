@@ -1,3 +1,6 @@
+# 1.1.2
+- Just updating before pushing with the previous version.
+
 # 1.1.1
 - Fix for baseServerComponent.streamReadList.
 
