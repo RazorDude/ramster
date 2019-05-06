@@ -1,3 +1,6 @@
+# 1.0.44
+- Updated how the migrations module handles Array columns - it now parses string column values that start with '[' and end with ']', and replaces them with '{' and '}'.
+
 # 1.0.43
 - Removed bodyParser.raw() from the client and api module and added a custom middleware.
 

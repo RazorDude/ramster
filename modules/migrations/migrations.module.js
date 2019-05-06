@@ -297,7 +297,11 @@ class Migrations {
 					}
 					query += ' ('
 					for (let j in valuesItem) {
-						query += `${queryInterface.escape(valuesItem[j])},`
+						let innerItem = queryInterface.escape(valuesItem[j])
+						if ((typeof innerItem === 'string') && (innerItem[0] === '[') && (innerItem[innerItem.length - 1] === ']')) {
+							innerItem = `{${innerItem.length > 2 ? innerItem.substr(1, innerItem.length - 2) : ''}}`
+						}
+						query += `${innerItem},`
 					}
 					query = query.substr(0, query.length - 1)
 					query += ')'
