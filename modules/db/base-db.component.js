@@ -821,7 +821,7 @@ class BaseDBComponent {
 			let results = []
 			// workaround for this Sequelize bug - https://github.com/sequelize/sequelize/issues/8602, moved to https://github.com/sequelize/sequelize/issues/9166
 			try {
-				results = yield instance.model.findAll(readListOptions)
+				results = yield instance.db.sequelize.transaction((innerT) => instance.model.findAll({...readListOptions, transaction: innerT}))
 			} catch(e) {
 				if (e && e.message && (
 						(e.message.indexOf('missing FROM-clause item for table') !== -1) ||

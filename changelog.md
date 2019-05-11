@@ -1,3 +1,6 @@
+# 1.1.3
+- Urgent hotfix for the BaseDBComponent.readList method - added a nested transaction for the findAll method in the try-catch block, as the handled sequelize error there produces a transaction error but does not roll back the transaction itself (.because the error is handled).
+
 # 1.1.2
 - Just updating before pushing with the previous version.
 
