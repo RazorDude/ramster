@@ -1,3 +1,6 @@
+# 1.1.4
+- Reverted the fix from 1.0.45 because it breaks JSON columns.
+
 # 1.1.3
 - Urgent hotfix for the BaseDBComponent.readList method - added a nested transaction for the findAll method in the try-catch block, as the handled sequelize error there produces a transaction error but does not roll back the transaction itself (.because the error is handled).
 
@@ -41,7 +44,7 @@
 - Small fix.
 
 # 1.0.35
-- Small fix in baseServerComponent.decodeQueryValues - passing 'null' now returns null, insteadd of 'null'.
+- Small fix in baseServerComponent.decodeQueryValues - passing 'null' now returns null, instead of 'null'.
 
 # 1.0.34
 - Added the ability to test cronJobs. See the example syntax in modules/codeGenerator/templates/modules/cronJobs for more info.
