@@ -1,3 +1,6 @@
+# 1.1.5
+- Migrations fix.
+
 # 1.1.4
 - Reverted the fix from 1.0.45 because it breaks JSON columns.
 
