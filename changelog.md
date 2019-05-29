@@ -1,3 +1,7 @@
+# 1.2.0
+- Nested associations in db components are now being automatically detected when querying (read and readList "relReadKeys"), even if they are not explicitly defined in a db component's "relationsConfig" object.
+- Duplicate associations when querying are now being merged - this fixes the "table XXX included more than once" SQL error.
+
 # 1.1.5
 - Migrations fix.
 
@@ -5,7 +9,7 @@
 - Reverted the fix from 1.0.45 because it breaks JSON columns.
 
 # 1.1.3
-- Urgent hotfix for the BaseDBComponent.readList method - added a nested transaction for the findAll method in the try-catch block, as the handled sequelize error there produces a transaction error but does not roll back the transaction itself (.because the error is handled).
+- Urgent hotfix for the BaseDBComponent.readList method - added a nested transaction for the findAll method in the try-catch block, as the handled sequelize error there produces a transaction error but does not roll back the transaction itself (because the error is handled).
 
 # 1.1.2
 - Just updating before pushing with the previous version.

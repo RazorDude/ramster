@@ -14,7 +14,6 @@ const
 	{describeSuiteConditionally, runTestConditionally} = require('./modules/toolbelt'),
 	fs = require('fs-extra'),
 	path = require('path'),
-	{spawn} = require('child_process'),
 	toolbeltSpec = require('./modules/toolbelt/toolbelt.module.spec')
 
 module.exports = {

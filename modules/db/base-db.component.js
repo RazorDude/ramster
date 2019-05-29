@@ -209,7 +209,7 @@ class BaseDBComponent {
 			sourceComponentName = sourceComponent.componentName
 		let mappedArray = [],
 			mappedOrder = []
-		config.forEach((item, index) => {
+		config.forEach((item) => {
 			const {associationName, required, attributes, where, order, include} = item,
 				targetAssociation = sourceComponent.associationsConfig[associationName]
 			let relationObject = {}
@@ -439,18 +439,28 @@ class BaseDBComponent {
 		let where = {},
 			requiredRelationsData = {}
 		if ((typeof filters === 'object') && Object.keys(filters).length > 0) {
-			this.searchFields.forEach((element, index) => {
+			this.searchFields.forEach((element) => {
 				let field = element.field,
 					fieldValue = filters[field]
+				// handle $associationName.fieldName$ cases
 				if ((field[0] === '$') && (field[field.length - 1] === '$')) {
 					let tempContainer = {}
 					if (this.setFilterValue(tempContainer, element, field, fieldValue, exactMatch)) {
 						let fieldKey = Object.keys(tempContainer)[0],
-							actualFieldKey = field.replace(/\$/g, '').split('.')
-						actualFieldKey = actualFieldKey[actualFieldKey.length - 1]
-						field = field.replace(/\$/g, '').split('.')
-						field.pop()
-						requiredRelationsData[field[0]] = {path: field.join('.'), field: actualFieldKey, value: tempContainer[fieldKey]}
+							processedField = field.replace(/\$/g, '').split('.'),
+							actualFieldKey = processedField.pop(),
+							currentRelationsData = requiredRelationsData
+						processedField.forEach((item, index) => {
+							if (typeof currentRelationsData[item] === 'undefined') {
+								currentRelationsData[item] = {children: {}, values: {}}
+							}
+							if (index < (processedField.length - 1)) {
+								currentRelationsData = currentRelationsData[item].children
+								return
+							}
+							currentRelationsData = currentRelationsData[item]
+						})
+						currentRelationsData.values[actualFieldKey] = tempContainer[fieldKey]
 					}
 				} else {
 					this.setFilterValue(where, element, field, fieldValue, exactMatch)
@@ -458,21 +468,19 @@ class BaseDBComponent {
 			})
 			if ((filters.$and instanceof Array) && (filters.$and.length)) {
 				where.$and = []
-				filters.$and.forEach((andItem, aIndex) => {
+				filters.$and.forEach((andItem) => {
 					let whereObjects = this.getWhereObjects(andItem, exactMatch)
 					if (Object.keys(whereObjects.where).length) {
 						where.$and.push(whereObjects.where)
-						// if ()
 					}
 				})
 			}
 			if ((filters.$or instanceof Array) && (filters.$or.length)) {
 				where.$or = []
-				filters.$or.forEach(($orItem, oIndex) => {
+				filters.$or.forEach(($orItem) => {
 					let whereObjects = this.getWhereObjects($orItem, exactMatch)
 					if (Object.keys(whereObjects.where).length) {
 						where.$or.push(whereObjects.where)
-						// if ()
 					}
 				})
 			}
@@ -481,92 +489,209 @@ class BaseDBComponent {
 	}
 
 	/**
-	 * Assigns the instance of the sequelize model to the provided relItem object and its "order" array (if it has one), and invokes itself if the relItem has include items of its own. This is perticularly useful when building the sequelize query options object, as we're using JSON.parse(JSON.stirngify()) to dereference configs, which destroys object instances.
-	 * @param {object} relItem The relItem object.
-	 * @returns {object} The relItem with the relevant component's model added under the "model" property.
+	 * Populates the provided order array based on the relation data and the fieldMap.
+	 * @param {Array} order The order object to populate.
+	 * @param {Array} relationIncludeItem The relation's "include" object, which contains the order object to take the data from and the association alias of the model.
+	 * @param {object} fieldMap The order fields field map object.
+	 * @returns {void}
 	 * @memberof BaseDBComponent
 	 */
-	assignModelToDereferencedRelationRecursively(relItem) {
-		let includeItem = JSON.parse(JSON.stringify(relItem)),
-			innerInclude = includeItem.include
-		includeItem.model = relItem.model
-		for (const j in relItem.order) {
-			let orderItem = relItem.order[j]
-			if (orderItem.length === 3) {
-				includeItem.order[j] = [{model: orderItem[0].model, as: relItem.as}, orderItem[1], orderItem[2]]
+	setOrderDataForRelation(order, relationIncludeItem, fieldMap) {
+		const relationIncludeItemOrder = relationIncludeItem.order
+		for (const i in relationIncludeItemOrder) {
+			let relationOrderItem = relationIncludeItemOrder[i],
+				fieldNameIndex = 0,
+				directionIndex = 1
+			if (relationOrderItem.length === 3) {
+				fieldNameIndex = 1
+				directionIndex = 2
+			}
+			const fieldName = relationOrderItem[fieldNameIndex],
+				direction = relationOrderItem[directionIndex]
+			let orderMapItem = fieldMap[fieldName]
+			if (typeof orderMapItem === 'undefined') {
+				orderMapItem = {index: order.length, direction}
+				fieldMap[fieldName] = orderMapItem
+				order.push([{model: relationIncludeItem.model, as: relationIncludeItem.as}, fieldName, direction])
+				continue
+			}
+			if (orderMapItem.direction !== direction) {
+				order[orderMapItem.index][2] = direction
 			}
 		}
-		if (innerInclude instanceof Array) {
-			for (const i in innerInclude) {
-				innerInclude[i] = this.assignModelToDereferencedRelationRecursively(relItem.include[i])
-			}
-		}
-		return includeItem
 	}
 
 	/**
-	 * Creates the "include" and "order" sequelize options objects based on the provided search data and the "requiredRelationsData" object compiled by "getWhereObjects" (if any).
-	 * @param {object} data The search data.
-	 * @param {object} requiredRelationsData The requiredRelationsData object, compiled by "getWhereObjects".
+	 * Populates the provided include array based on the relation data and the required fields data (if any).
+	 * @param {BaseDBComponent} dbComponent The curent DB component. Used to map associations from required fields that aren't explicitly specified in the relationsConfig.
+	 * @param {Array} include The include array to populate.
+	 * @param {object} associationNameMap The associationNameMap object. This object will be mutated according to the provided relationIncludeItem data.
+	 * @param {object} relationIncludeItem The object that contains the relation's sequelize "include" data.
+	 * @param {string} relationName The relation name.
+	 * @param {object} requiredFieldsData The requiredFieldsData object generated by getWhereObjects.
+	 * @returns {void}
+	 * @memberof BaseDBComponent
+	 */
+	setQueryDataForRelation(dbComponent, include, associationNameMap, relationIncludeItem, relationName, requiredFieldsData) {
+		let mapItem = associationNameMap[relationIncludeItem.as]
+		// create node for the relation if it doesn't exist in the map; the JSON trick here is used to de-reference the relation item so it won't be mutated
+		if (typeof mapItem === 'undefined') {
+			let includeItem = JSON.parse(JSON.stringify(relationIncludeItem))
+			mapItem = {children: {}, index: include.length, orderFieldsMap: {}}
+			associationNameMap[includeItem.as] = mapItem
+			includeItem.model = relationIncludeItem.model
+			if (includeItem.include) {
+				delete includeItem.include
+			}
+			// delete the de-referenced include item's order array (if present) so the setOrderDataForRelation method can work correctly
+			if (typeof includeItem.order !== 'undefined') {
+				delete includeItem.order
+			}
+			include.push(includeItem)
+		}
+		const associationsConfig = dbComponent.associationsConfig,
+			dbComponents = dbComponent.db.components,
+			innerIncludeItems = relationIncludeItem.include,
+			requiredFieldsDataItem = requiredFieldsData[relationName || relationIncludeItem.as] || {},
+			requiredFieldsDataItemValues = requiredFieldsDataItem.values
+		let includeItem = include[mapItem.index],
+			innerInclude = includeItem.include || [],
+			mapItemChildren = mapItem.children,
+			requiredFieldsDataItemChildren = requiredFieldsDataItem.children || {}
+		// if there are required fields for this relation, add them to the "where" object and make the relation required in the query
+		if (requiredFieldsDataItemValues && Object.keys(requiredFieldsDataItemValues).length) {
+			let where = includeItem.where
+			if (typeof includeItem.where === 'undefined') {
+				where = {}
+				includeItem.where = where
+			}
+			for (const key in requiredFieldsDataItemValues) {
+				let currentValue = where[key]
+				if (typeof currentValue === 'undefined') {
+					where[key] = requiredFieldsDataItemValues[key]
+					continue
+				}
+				if ((typeof currentValue === 'object') && (currentValue !== null) && (currentValue.$and instanceof Array)) {
+					currentValue.$and.push(requiredFieldsDataItemValues[key])
+					continue
+				}
+				where[key] = {$and: [where[key], requiredFieldsDataItemValues[key]]}
+			}
+			if (!includeItem.required) {
+				includeItem.required = true
+			}
+		}
+		// if there are required fields for any of this relation's children - make it required in the query before moving on
+		else if (requiredFieldsDataItemChildren && Object.keys(requiredFieldsDataItemChildren).length && !includeItem.required) {
+			includeItem.required = true
+		}
+		// set the order array's models - otherwise sequelize will ignore the sort
+		if (relationIncludeItem.order instanceof Array) {
+			let order = includeItem.order
+			if (!(order instanceof Array)) {
+				order = []
+				includeItem.order = order
+			}
+			this.setOrderDataForRelation(order, relationIncludeItem, mapItem.orderFieldsMap)
+		}
+		// go through the inner relations and do all of the above for each one
+		if (innerIncludeItems instanceof Array) {
+			for (const i in innerIncludeItems) {
+				const innerIncludeItem = innerIncludeItems[i],
+					associationConfigItemComponentName = associationsConfig[innerIncludeItem.as].componentName
+				this.setQueryDataForRelation(
+					dbComponents[associationConfigItemComponentName || innerIncludeItem.as],
+					innerInclude,
+					mapItemChildren,
+					innerIncludeItem,
+					null,
+					requiredFieldsDataItemChildren
+				)
+			}
+		}
+		// go through any required relations that have not been explicitly added in the component's relationConfig and use the target component's relations object to get the relation data
+		if (requiredFieldsDataItemChildren) {
+			for (const key in requiredFieldsDataItemChildren) {
+				if (typeof mapItemChildren[key] === 'undefined') {
+					const targetAssociationConfigItem = associationsConfig[key]
+					if (typeof targetAssociationConfigItem === 'undefined') {
+						throw {customMessage: `No association with name "${key}" found for DB component "${dbComponent.componentName}".`}
+					}
+					this.setQueryDataForRelation(
+						dbComponents[targetAssociationConfigItem.componentName || key],
+						innerInclude,
+						mapItemChildren,
+						dbComponent.relations[key].includeItem,
+						null,
+						requiredFieldsDataItemChildren
+					)
+				}
+			}
+		}
+		if (innerInclude.length) {
+			includeItem.include = innerInclude
+		}
+	}
+
+	/**
+	 * Goes through the component's relReadKeys and creates "include" and "order" objects to be consumed by read and readList queries.
+	 * The method also takes a "requiredRelationsData" object generated by "getWhereObjects" and uses it to set (deeply nested) relations as required and add filters to them.
+	 * Duplicate relations and their nested includes are merged to avoid duplicate query errors. Duplicate order items are overwritten.
+	 * @param {object} relReadKeys The search relReadKeys's relReadKeys.
+	 * @param {object} requiredRelationsData The requiredRelationsData object, generated by "getWhereObjects".
 	 * @typedef {object} BaseDBComponentGetRelationObjectsReturnData
 	 * @property {object} include
 	 * @property {object} order
 	 * @returns {BaseDBComponentGetRelationObjectsReturnData} Returns an object with keys {include, order}. More info in the method description.
 	 * @memberof BaseDBComponent
 	 */
-	getRelationObjects(data, requiredRelationsData) {
-		let include = [],
+	getRelationObjects(relReadKeys, requiredRelationsData) {
+		const associationsConfig = this.associationsConfig,
+			dbComponents = this.db.components
+		let associationNameMap = {},
+			include = [],
 			order = [],
-			actualData = ((typeof data !== 'object') || (data === null)) ? {} : data
-		this.relReadKeys.forEach((key, index) => {
-			let relationData = requiredRelationsData[key]
-			if (relationData) {
-				const relConfig = this.relations[key]
-				let splitPath = relationData.path.split('.'),
-					includeItem = this.assignModelToDereferencedRelationRecursively(relConfig.includeItem)
-				// if the item only exists as a relationsConfig item and not as an associationsConfig item, add an extra key called "relationAlias" to the includeItem so the loop that goes through the path can actually find it
-				if (typeof this.associationsConfig[key] === 'undefined') {
-					includeItem.relationAlias = key
+			orderFieldsMap = {}
+		if (requiredRelationsData) {
+			for (const relationName in requiredRelationsData) {
+				const relationData = this.relations[relationName]
+				if (!relationData) {
+					throw {customMessage: `No relation "${relationName}" exists for component "${this.componentName}".`}
 				}
-				let relationItem = {include: [includeItem]},
-					currentItemName = this.componentName
-				// set required=true for all items in the path and set the filter values to the bottom one
-				splitPath.forEach((keyFromPath, pcIndex) => {
-					if (!(relationItem.include instanceof Array)) {
-						throw {customMessage: `Invalid include array in "${currentItemName}"'s relations item (looking for "${keyFromPath}").`}
-					}
-					let nextRelationItemFound = false
-					for (const i in relationItem.include) {
-						let thisItem = relationItem.include[i]
-						if ((thisItem.as === keyFromPath) || (thisItem.relationAlias === keyFromPath)) {
-							nextRelationItemFound = true
-							relationItem = thisItem
-							relationItem.required = true
-							currentItemName = keyFromPath
-							if (pcIndex === (splitPath.length - 1) && (typeof relationData.field !== 'undefined')) {
-								relationItem.where = {[relationData.field]: relationData.value}
-							}
-							break
-						}
-					}
-					if (!nextRelationItemFound) {
-						throw {customMessage: `Invalid relation "${keyFromPath}" for "${currentItemName}".`}
-					}
-				})
-				include.push(includeItem)
-				if (relConfig.order && relConfig.order.length) {
-					order = order.concat(relConfig.order)
+				const associationConfigItemComponentName = associationsConfig[relationData.includeItem.as].componentName
+				this.setQueryDataForRelation(
+					dbComponents[associationConfigItemComponentName || relationData.includeItem.as],
+					include,
+					associationNameMap,
+					relationData.includeItem,
+					relationName,
+					requiredRelationsData
+				)
+				if (relationData.order instanceof Array) {
+					this.setOrderDataForRelation(order, {...relationData.includeItem, order: relationData.order}, orderFieldsMap)
 				}
-				return
 			}
-			if (actualData[key]) {
-				const relConfig = this.relations[key]
-				if (relConfig.order && relConfig.order.length) {
-					order = order.concat(relConfig.order)
+		}
+		if (relReadKeys) {
+			for (const relationName in relReadKeys) {
+				const relationData = this.relations[relationName]
+				if (!relationData) {
+					throw {customMessage: `No relation "${relationName}" exists for component "${this.componentName}".`}
 				}
-				include.push(this.assignModelToDereferencedRelationRecursively(relConfig.includeItem))
+				const associationConfigItemComponentName = associationsConfig[relationData.includeItem.as].componentName
+				this.setQueryDataForRelation(
+					dbComponents[associationConfigItemComponentName || relationData.includeItem.as],
+					include,
+					associationNameMap,
+					relationData.includeItem,
+					relationName,
+					{}
+				)
+				if (relationData.order instanceof Array) {
+					this.setOrderDataForRelation(order, {...relationData.includeItem, order: relationData.order}, orderFieldsMap)
+				}
 			}
-		})
+		}
 		return {include, order}
 	}
 
@@ -766,7 +891,7 @@ class BaseDBComponent {
 				idsOnlyMode = (data.idsOnlyMode === true) || (data.idsOnlyMode === 'true')
 			if (data.orderBy instanceof Array) {
 				const orderDirection = data.orderDirection || instance.defaults.orderDirection
-				data.orderBy.forEach((item, index) => order.push([item, orderDirection]))
+				data.orderBy.forEach((item) => order.push([item, orderDirection]))
 			} else {
 				order.push([data.orderBy || instance.defaults.orderBy, data.orderDirection || instance.defaults.orderDirection])
 			}
@@ -896,7 +1021,7 @@ class BaseDBComponent {
 				return yield instance.db.sequelize.transaction((t) => instance.update({transaction: t, ...data}))
 			}
 			let options = {
-				where: {id: (yield instance.readList({readAll: true, filters, idsOnlyMode: true, transaction})).results.map((e, i) => e.id)},
+				where: {id: (yield instance.readList({readAll: true, filters, idsOnlyMode: true, transaction})).results.map((e) => e.id)},
 				returning: true
 			}
 			if (transaction) {

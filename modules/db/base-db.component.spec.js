@@ -29,11 +29,14 @@ module.exports = {
 			it('should execute testGetWhereObjects successfully', function() {
 				instance.testGetWhereObjects()
 			})
+			it('should execute testSetOrderDataForRelation successfully', function() {
+				instance.testSetOrderDataForRelation()
+			})
+			it('should execute testSetQueryDataForRelation successfully', function() {
+				instance.testSetQueryDataForRelation()
+			})
 			it('should execute testGetRelationObjects successfully', function() {
 				instance.testGetRelationObjects()
-			})
-			it('should execute testAssignModelToDereferencedRelationRecursively successfully', function() {
-				instance.testAssignModelToDereferencedRelationRecursively()
 			})
 			it('should execute testSaveImage successfully', function() {
 				instance.testSaveImage()
@@ -902,13 +905,21 @@ module.exports = {
 				changeableInstance.searchFields = [
 					{field: 'id'},
 					{field: 'someString', like: '%%'},
+					{field: '$testRelation.nestedName$'},
 					{field: '$testRelation.innerTestRelation.nestedId$'},
+					{field: '$testRelation.innerTestRelation.evenDeeperInnerTestRelation.nestedId$'},
+					{field: '$testRelation2.nestedId$'},
+					{field: '$testRelation2.innerTestRelation2.evenDeeperInnerTestRelation2.nestedId2$'},
 					{field: 'anotherString', like: '-%'}
 				]
 				let {where, requiredRelationsData} = instance.getWhereObjects({
 							id: 3,
 							someString: 'test1',
+							'$testRelation.nestedName$': 'test',
 							'$testRelation.innerTestRelation.nestedId$': 5,
+							'$testRelation.innerTestRelation.evenDeeperInnerTestRelation.nestedId$': 16,
+							'$testRelation2.nestedId$': 7,
+							'$testRelation2.innerTestRelation2.evenDeeperInnerTestRelation2.nestedId2$': 25,
 							anotherString: 'test2',
 							$and: [{id: 15, someString: 'test2'}, {id: 16, someString: 'test3'}],
 							$or: [{id: 15, someString: 'test2'}, {id: 16, someString: 'test3'}]
@@ -919,29 +930,191 @@ module.exports = {
 				assert.strictEqual(where.id, 3, `bad value ${where.id} for where.id, expected 3`)
 				assert.strictEqual(where.someString.$iLike, '%test1%', `bad value ${where.someString.$iLike} for where.someString.$iLike, expected %test1%`)
 				assert.strictEqual(where.anotherString, 'test2', `bad value ${where.anotherString} for where.anotherString, expected test2`)
-				assert.strictEqual(requiredRelationsDataKeysLength, 1, `bad value ${requiredRelationsDataKeysLength} for requiredRelationsDataKeysLength, expected 1`)
-				assert.strictEqual(requiredRelationsData.testRelation.path, 'testRelation.innerTestRelation', `bad value ${requiredRelationsData.testRelation.path} for requiredRelationsData.testRelation.path, expected testRelation.innerTestRelation`)
-				assert.strictEqual(requiredRelationsData.testRelation.field, 'nestedId', `bad value ${requiredRelationsData.testRelation.field} for requiredRelationsData.testRelation.field, expected nestedId`)
-				assert.strictEqual(requiredRelationsData.testRelation.value, 5, `bad value ${requiredRelationsData.testRelation.value} for requiredRelationsData.testRelation.value, expected 5`)
+				assert.strictEqual(requiredRelationsDataKeysLength, 2, `bad value ${requiredRelationsDataKeysLength} for requiredRelationsDataKeysLength, expected 2`)
+				assert.strictEqual(
+					requiredRelationsData.testRelation.values.nestedName,
+					'test',
+					`bad value ${requiredRelationsData.testRelation.values.nestedName} for requiredRelationsData.testRelation.values.nestedName, expected "test"`
+				)
+				assert.strictEqual(
+					requiredRelationsData.testRelation.children.innerTestRelation.values.nestedId,
+					5,
+					`bad value ${requiredRelationsData.testRelation.children.innerTestRelation.values.nestedId} for ` +
+					`requiredRelationsData.testRelation.children.innerTestRelation.values.nestedId, expected 5`
+				)
+				assert.strictEqual(
+					requiredRelationsData.testRelation.children.innerTestRelation.children.evenDeeperInnerTestRelation.values.nestedId,
+					16,
+					`bad value ${requiredRelationsData.testRelation.children.innerTestRelation.children.evenDeeperInnerTestRelation.values.nestedId} for ` +
+					`requiredRelationsData.testRelation.children.innerTestRelation.children.evenDeeperInnerTestRelation.values.nestedId, expected 16`
+				)
+				assert.strictEqual(
+					requiredRelationsData.testRelation2.values.nestedId,
+					7,
+					`bad value ${requiredRelationsData.testRelation2.values.nestedId} for requiredRelationsData.testRelation2.values.nestedId, expected 7`
+				)
+				assert.strictEqual(
+					requiredRelationsData.testRelation2.children.innerTestRelation2.children.evenDeeperInnerTestRelation2.values.nestedId2,
+					25,
+					`bad value ${requiredRelationsData.testRelation2.children.innerTestRelation2.children.evenDeeperInnerTestRelation2.values.nestedId2} for ` +
+					`requiredRelationsData.testRelation2.children.innerTestRelation2.children.evenDeeperInnerTestRelation2.values.nestedId2, expected 25`
+				)
 			})
 		})
 	},
-	testAssignModelToDereferencedRelationRecursively: function() {
+	testSetOrderDataForRelation: function() {
 		const instance = this
-		describe('baseDBComponent.assignModelToDereferencedRelationRecursively', function() {
-			it('should execute successfully and return the correct object if all parameters are correct', function() {
-				let item = {
+		describe('baseDBComponent.setOrderDataForRelation', function() {
+			it('should execute successfully and mutate the order and fieldMap objects correctly if all parameters are correct', function() {
+				let fieldMap = {},
+					order = []
+				instance.setOrderDataForRelation(
+					order, {
 						model: new Date(),
 						as: 'test1',
-						include: [{model: new Date(), as: 'test2'}, {model: new Date(), as: 'test3', include: [{model: new Date(), as: 'test4'}]}, {model: new Date(), as: 'test5'}]
+						order: [['id', 'desc'], [{model: new Date()}, 'name', 'asc'], ['id', 'asc']]
 					},
-					result = instance.assignModelToDereferencedRelationRecursively(item),
-					include = result.include
-				assert(result.model instanceof Date, `bad value ${result.model} for result.model, expected an instance of Date`)
+					fieldMap
+				)
+				assert.strictEqual(order.length, 2, `bad value ${order.length} for order.length, expected 2`)
+				assert(order[0][0].model instanceof Date, `bad value ${order[0][0].model} for order[0][0].model, expected an instance of Date`)
+				assert.strictEqual(order[0][1], 'id', `bad value ${order[0][1]} for order[0][1], expected 'id'`)
+				assert.strictEqual(order[0][2], 'asc', `bad value ${order[0][2]} for order[0][2], expected 'asc'`)
+				assert(order[1][0].model instanceof Date, `bad value ${order[1][0].model} for order[1][0].model, expected an instance of Date`)
+				assert.strictEqual(order[1][1], 'name', `bad value ${order[1][1]} for order[1][1], expected 'name'`)
+				assert.strictEqual(order[1][2], 'asc', `bad value ${order[1][2]} for order[1][2], expected 'asc'`)
+			})
+		})
+	},
+	testSetQueryDataForRelation: function() {
+		const instance = this
+		let changeableInstance = this
+		describe('baseDBComponent.setQueryDataForRelation', function() {
+			before(function() {
+				changeableInstance.db.components = {
+					...changeableInstance.db.components,
+					test1: {
+						model: 'test1Model',
+						componentName: 'test1',
+						db: changeableInstance.db,
+						dependencyMap: {associationKeys: ['test2', 'test3', 'test5']},
+						associationsConfig: {
+							test2: {type: 'hasMany', componentName: 'test2', foreignKey: 'test2Id'},
+							test3: {type: 'belongsTo', foreignKey: 'test3Id'},
+							test5: {type: 'belongsTo', foreignKey: 'test5Id'}
+						},
+						relations: {
+							test2: {includeItem: {model: 'test2Model', as: 'test2'}, order: [['id', 'desc']]},
+							test3: {includeItem: {model: 'test3Model', as: 'test3'}, order: [['id', 'desc']]},
+							test5: {includeItem: {model: 'test5Model', as: 'test5'}, order: [['id', 'desc']]}
+						}
+					},
+					test2: {
+						model: 'test2Model',
+						db: changeableInstance.db,
+						componentName: 'test2',
+						dependencyMap: {associationKeys: []},
+						associationsConfig: {},
+						relations: {}
+					},
+					test3: {
+						model: 'test3Model',
+						db: changeableInstance.db,
+						componentName: 'test3',
+						dependencyMap: {associationKeys: ['test4']},
+						associationsConfig: {test4: {type: 'belongsTo', foreignKey: 'test4Id'}},
+						relations: {
+							test4: {includeItem: {model: 'test4Model', as: 'test4'}, order: [['id', 'desc']]}
+						}
+					},
+					test4: {
+						model: 'test4Model',
+						db: changeableInstance.db,
+						componentName: 'test4',
+						dependencyMap: {associationKeys: []},
+						associationsConfig: {},
+						relations: {}
+					},
+					test5: {
+						model: 'test5Model',
+						db: changeableInstance.db,
+						componentName: 'test5',
+						dependencyMap: {associationKeys: []},
+						associationsConfig: {},
+						relations: {}
+					}
+				}
+				changeableInstance.associationsConfig = {test1: {type: 'belongsTo', foreignKey: 'test1Id'}}
+			})
+			it('should execute successfully and mutate the include array and associationNameMap object if all parameters are correct', function() {
+				let associationNameMap = {},
+					include = []
+				instance.setQueryDataForRelation(
+					instance.db.components.test1,
+					include,
+					associationNameMap, {
+						model: new Date(),
+						as: 'test1',
+						include: [
+							{model: new Date(), as: 'test2'},
+							{model: new Date(), as: 'test3', include: [{model: new Date(), as: 'test4'}]},
+							{model: new Date(), as: 'test5'}
+						]
+					},
+					'test1Relation',
+					{test1Relation: {values: {name: 'testName'}, children: {test3: {values: {id: 1234}, children: {test4: {values: {id: 5}}}}}}}
+				)
+				assert.strictEqual(include.length, 1, `bad value ${include.length} for include.length, expected 1`)
 				assert(include[0].model instanceof Date, `bad value ${include[0].model} for include[0].model, expected an instance of Date`)
-				assert(include[1].model instanceof Date, `bad value ${include[1].model} for include[1].model, expected an instance of Date`)
-				assert(include[1].include[0].model instanceof Date, `bad value ${include[1].include[0].model} for include[1].include[0].model, expected an instance of Date`)
-				assert(include[2].model instanceof Date, `bad value ${include[2].model} for include[2].model, expected an instance of Date`)
+				assert.strictEqual(include[0].required, true, `bad value ${include[0].required} for include[0].required, expected true`)
+				assert.strictEqual(include[0].where.name, 'testName', `bad value ${include[0].where.name} for include[0].where.name, expected testName`)
+				assert.strictEqual(include[0].include.length, 3, `bad value ${include[0].include.length} for include[0].include.length, expected 3`)
+				assert(
+					include[0].include[0].model instanceof Date,
+					`bad value ${include[0].include[0].model} for include[0].include[0].model, expected an instance of Date`
+				)
+				assert.strictEqual(
+					typeof include[0].include[0].required,
+					'undefined',
+					`bad value ${include[0].include[0].required} for include[0].include[0].required, expected undefined`
+				)
+				assert(
+					include[0].include[1].model instanceof Date,
+					`bad value ${include[0].include[1].model} for include[0].include[1].model, expected an instance of Date`
+				)
+				assert.strictEqual(
+					include[0].include[1].required,
+					true,
+					`bad value ${include[0].include[1].required} for include[0].include[1].required, expected true`
+				)
+				assert.strictEqual(
+					include[0].include[1].where.id,
+					1234,
+					`bad value ${include[0].include[1].where.id} for include[0].include[1].where.id, expected 1234`
+				)
+				assert(
+					include[0].include[1].include[0].model instanceof Date,
+					`bad value ${include[0].include[1].include[0].model} for include[0].include[1].include[0].model, expected an instance of Date`
+				)
+				assert.strictEqual(
+					include[0].include[1].include[0].required,
+					true,
+					`bad value ${include[0].include[1].include[0].required} for include[0].include[1].include[0].required, expected true`
+				)
+				assert.strictEqual(
+					include[0].include[1].include[0].where.id,
+					5,
+					`bad value ${include[0].include[1].include[0].where.id} for include[0].include[1].include[0].where.id, expected 5`
+				)
+				assert(
+					include[0].include[2].model instanceof Date,
+					`bad value ${include[0].include[2].model} for include[0].include[2].model, expected an instance of Date`
+				)
+				assert.strictEqual(
+					typeof include[0].include[2].required,
+					'undefined',
+					`bad value ${include[0].include[2].required} for include[0].include[2].required, expected undefined`
+				)
 			})
 		})
 	},
@@ -952,21 +1125,49 @@ module.exports = {
 			before(function() {
 				changeableInstance.db.components = {
 					...changeableInstance.db.components,
-					test1: {model: 'test1Model', dependencyMap: {associationKeys: []}},
+					test1: {
+						model: 'test1Model',
+						componentName: 'test1',
+						db: changeableInstance.db,
+						dependencyMap: {associationKeys: []}
+					},
 					testComponent2: {
 						model: 'testComponent2Model',
+						componentName: 'testComponent2',
+						db: changeableInstance.db,
 						dependencyMap: {associationKeys: ['test3']},
 						associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}}
 					},
-					test3: {model: 'test3Model', dependencyMap: {associationKeys: []}},
-					test4: {model: 'test4Model', dependencyMap: {associationKeys: []}}
+					test3: {
+						model: 'test3Model',
+						componentName: 'test3',
+						db: changeableInstance.db,
+						dependencyMap: {associationKeys: ['test5']},
+						associationsConfig: {test5: {type: 'belongsTo', foreignKey: 'test5Id'}},
+						relations: {
+							test5: {includeItem: {model: 'test5Model', as: 'test5'}, order: [['id', 'desc']]}
+						}
+					},
+					test4: {
+						model: 'test4Model',
+						componentName: 'test4',
+						db: changeableInstance.db,
+						dependencyMap: {associationKeys: []}
+					},
+					test5: {
+						model: 'test5Model',
+						componentName: 'test5',
+						db: changeableInstance.db,
+						dependencyMap: {associationKeys: []}
+					}
 				}
 			})
 			it('should execute successfully and return the correct include and order objects if all parameters are correct', function() {
 				changeableInstance.searchFields = [
 					{field: 'id'},
 					{field: '$test1.name$'},
-					{field: '$test2.test3.description$', like: '%-'}
+					{field: '$test2.test3.description$', like: '%-'},
+					{field: '$test2.test3.test5.description$', like: '%-'}
 				]
 				changeableInstance.associationsConfig = {
 					test1: {type: 'belongsTo', foreignKey: 'test1Id'},
@@ -975,12 +1176,17 @@ module.exports = {
 				}
 				changeableInstance.relationsConfig = {
 					test2: {order: [['id', 'asc']], include: [{associationName: 'test3'}]},
-					test2ButWithADiffreentAlias: {associationName: 'test2', where: {id: 1}}
+					test2ButWithADifferentAlias: {associationName: 'test2', where: {id: 1}}
 				}
 				changeableInstance.relReadKeys = []
 				changeableInstance.relations = {}
 				instance.mapRelations()
-				let {where, requiredRelationsData} = instance.getWhereObjects({id: 3, '$test1.name$': 'testName', '$test2.test3.description$': 'testDescription'}),
+				let {requiredRelationsData} = instance.getWhereObjects({
+						id: 3,
+						'$test1.name$': 'testName',
+						'$test2.test3.description$': 'testDescription',
+						'$test2.test3.test5.description$': 'testInnerDescription'
+					}),
 					{include, order} = instance.getRelationObjects({test4: true}, requiredRelationsData),
 					topLevelIncludeShouldBe = [
 						{model: 'test1Model', as: 'test1', required: true},
@@ -991,7 +1197,7 @@ module.exports = {
 					const includeItem = include[i],
 						includeItemShouldBe = topLevelIncludeShouldBe[i]
 					for (const j in includeItemShouldBe) {
-						assert.strictEqual(includeItem[j], includeItemShouldBe[j],`Bad value ${includeItem[j]} for key "${j}" in item no. ${i}, expected ${includeItemShouldBe[j]}.`)
+						assert.strictEqual(includeItem[j], includeItemShouldBe[j],`Bad value ${includeItem[j]} for key "${j}" in include item no. ${i}, expected ${includeItemShouldBe[j]}.`)
 					}
 				}
 				assert(order instanceof Array, `Bad value ${order} for order, expcted an array.`)
@@ -1012,7 +1218,16 @@ module.exports = {
 				assert.strictEqual(firstIncludeItem.required, true, `Bad value ${firstIncludeItem.required} for firstIncludeItem.required, expected true.`)
 				assert(firstIncludeItem.where, `Bad value ${firstIncludeItem.where} for firstIncludeItem.where, expected it to exist.`)
 				assert(firstIncludeItem.where.description, `Bad value ${firstIncludeItem.where.description} for firstIncludeItem.where.description, expected it to exist.`)
-				assert.strictEqual(firstIncludeItem.where.description.$iLike, '%testDescription', `Bad value ${firstIncludeItem.where.description.$iLike} for firstIncludeItem.where.description.$iLike, expected %testDescription.`)
+				assert.strictEqual(
+					firstIncludeItem.where.description.$iLike,
+					'%testDescription',
+					`Bad value ${firstIncludeItem.where.description.$iLike} for firstIncludeItem.where.description.$iLike, expected %testDescription.`
+				)
+				assert.strictEqual(
+					firstIncludeItem.include[0].where.description.$iLike,
+					'%testInnerDescription',
+					`Bad value ${firstIncludeItem.include[0].where.description.$iLike} for firstIncludeItem.include[0].where.description.$iLike, expected %testInnerDescription.`
+				)
 			})
 		})
 	},
@@ -1375,6 +1590,16 @@ module.exports = {
 					}
 					}
 					assert.strictEqual(didThrowAnError, true, 'no error was thrown')
+					let dbComponents = instance.db.components
+					for (const componentName in dbComponents) {
+						let dbComponent = dbComponents[componentName]
+						if (!dbComponent.componentName) {
+							dbComponent.componentName = componentName
+						}
+						if (!dbComponent.db) {
+							dbComponent.db = instance.db 
+						}
+					}
 					return true
 				})
 			})
@@ -1416,41 +1641,49 @@ module.exports = {
 			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are no relReadKeys', function() {
 				return co(function*() {
 					let items = [
-							{id: 1, test2Id: 1, name: 'testName1', description: 'testDescription1'},
 							{id: 2, test2Id: 1, name: 'testName2', description: 'testDescription2'},
 							{id: 3, test2Id: 1, name: 'testName3', description: 'testDescription3'}
 						],
 						test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
 						test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
+					yield instance.model.update({test2Id: null}, {where: {id: 1}})
 					yield instance.model.update({test2Id: 1}, {where: {id: [2, 3]}})
-					let createdItemsData = yield instance.readList({
+					let data = yield instance.readList({
 						filters: {
 							id: [1, 2, 3],
-							'$test2.name$': 'testName2',
-							'$test2.test3.description$': 'test3Description'
+							'$test2.test3.description$': {$or: ['test2Description', 'test3Description']}
 						},
 						orderDirection: 'asc'
 					})
-					assert.strictEqual(createdItemsData.results.length, 3, `Bad value ${createdItemsData.results.length} for createdItemsData.results.length, expected 3.`)
-					for (const index in createdItemsData.results) {
+					assert.strictEqual(data.results.length, 2, `Bad value ${data.results.length} for data.results.length, expected 2.`)
+					for (const index in data.results) {
 						let item = items[index],
-							createdItem = createdItemsData.results[index].dataValues,
-							createdTest2Item = createdItem.test2.dataValues,
-							createdTest3Item = createdTest2Item.test3.dataValues
+							dataItem = data.results[index].dataValues,
+							dataTest2Item = dataItem.test2.dataValues,
+							dataTest3Item = dataTest2Item.test3.dataValues
 						for (const i in item) {
-							assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, index ${index}, expected ${item[i]}.`)
+							assert.strictEqual(dataItem[i],
+								item[i],
+								`Bad value '${dataItem[i]}' for field "${i}" for the item, index ${index}, expected ${item[i]}.`
+							)
 						}
 						for (const i in test2Item) {
-							assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the main test2Item, index ${index}, expected ${test2Item[i]}.`)
+							assert.strictEqual(dataTest2Item[i],
+								test2Item[i],
+								`Bad value '${dataTest2Item[i]}' for field "${i}" for the test2Item, index ${index}, expected ${test2Item[i]}.`
+							)
 						}
 						for (const i in test3Item) {
-							assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the main test3Item, index ${index}, expected ${test3Item[i]}.`)
+							assert.strictEqual(dataTest3Item[i],
+								test3Item[i],
+								`Bad value '${dataTest3Item[i]}' for field "${i}" for the test3Item, index ${index}, expected ${test3Item[i]}.`
+							)
 						}
 					}
-					assert.strictEqual(createdItemsData.page, 1, `Bad value ${createdItemsData.page} for createdItemsData.page, expected 1.`)
-					assert.strictEqual(createdItemsData.perPage, 10, `Bad value ${createdItemsData.perPage} for createdItemsData.perPage, expected 10.`)
-					assert.strictEqual(createdItemsData.totalPages, 1, `Bad value ${createdItemsData.totalPages} for createdItemsData.totalPages, expected 1.`)
-					assert.strictEqual(createdItemsData.more, false, `Bad value ${createdItemsData.more} for createdItemsData.more, expected false.`)
+					assert.strictEqual(data.page, 1, `Bad value ${data.page} for data.page, expected 1.`)
+					assert.strictEqual(data.perPage, 10, `Bad value ${data.perPage} for data.perPage, expected 10.`)
+					assert.strictEqual(data.totalPages, 1, `Bad value ${data.totalPages} for data.totalPages, expected 1.`)
+					assert.strictEqual(data.more, false, `Bad value ${data.more} for data.more, expected false.`)
 					return true
 				})
 			})
@@ -1463,33 +1696,43 @@ module.exports = {
 						],
 						test2Item = {id: 1, test3Id: 1, name: 'test2Name', description: 'test2Description'},
 						test3Item = {id: 1, name: 'test3Name', description: 'test3Description'}
-					let createdItemsData = yield instance.readList({
+					yield instance.model.update({test2Id: 1}, {where: {id: 1}})
+					let data = yield instance.readList({
 						filters: {
 							id: [1, 2, 3]
 						},
 						relReadKeys: {test2: true},
 						orderDirection: 'asc'
 					})
-					assert.strictEqual(createdItemsData.results.length, 3, `Bad value ${createdItemsData.results.length} for createdItemsData.results.length, expected 3.`)
-					for (const index in createdItemsData.results) {
+					assert.strictEqual(data.results.length, 3, `Bad value ${data.results.length} for data.results.length, expected 3.`)
+					for (const index in data.results) {
 						let item = items[index],
-							createdItem = createdItemsData.results[index].dataValues,
-							createdTest2Item = createdItem.test2.dataValues,
-							createdTest3Item = createdTest2Item.test3.dataValues
+							dataItem = data.results[index].dataValues,
+							dataTest2Item = dataItem.test2.dataValues,
+							dataTest3Item = dataTest2Item.test3.dataValues
 						for (const i in item) {
-							assert.strictEqual(createdItem[i], item[i], `Bad value '${createdItem[i]}' for field "${i}" for the main item, index ${index}, expected ${item[i]}.`)
+							assert.strictEqual(dataItem[i],
+								item[i],
+								`Bad value '${dataItem[i]}' for field "${i}" for the main item, index ${index}, expected ${item[i]}.`
+							)
 						}
 						for (const i in test2Item) {
-							assert.strictEqual(createdTest2Item[i], test2Item[i], `Bad value '${createdTest2Item[i]}' for field "${i}" for the main test2Item, index ${index}, expected ${test2Item[i]}.`)
+							assert.strictEqual(dataTest2Item[i],
+								test2Item[i],
+								`Bad value '${dataTest2Item[i]}' for field "${i}" for the main test2Item, index ${index}, expected ${test2Item[i]}.`
+							)
 						}
 						for (const i in test3Item) {
-							assert.strictEqual(createdTest3Item[i], test3Item[i], `Bad value '${createdTest3Item[i]}' for field "${i}" for the main test3Item, index ${index}, expected ${test3Item[i]}.`)
+							assert.strictEqual(dataTest3Item[i],
+								test3Item[i],
+								`Bad value '${dataTest3Item[i]}' for field "${i}" for the main test3Item, index ${index}, expected ${test3Item[i]}.`
+							)
 						}
 					}
-					assert.strictEqual(createdItemsData.page, 1, `Bad value ${createdItemsData.page} for createdItemsData.page, expected 1.`)
-					assert.strictEqual(createdItemsData.perPage, 10, `Bad value ${createdItemsData.perPage} for createdItemsData.perPage, expected 10.`)
-					assert.strictEqual(createdItemsData.totalPages, 1, `Bad value ${createdItemsData.totalPages} for createdItemsData.totalPages, expected 1.`)
-					assert.strictEqual(createdItemsData.more, false, `Bad value ${createdItemsData.more} for createdItemsData.more, expected false.`)
+					assert.strictEqual(data.page, 1, `Bad value ${data.page} for data.page, expected 1.`)
+					assert.strictEqual(data.perPage, 10, `Bad value ${data.perPage} for data.perPage, expected 10.`)
+					assert.strictEqual(data.totalPages, 1, `Bad value ${data.totalPages} for data.totalPages, expected 1.`)
+					assert.strictEqual(data.more, false, `Bad value ${data.more} for data.more, expected false.`)
 					return true
 				})
 			})

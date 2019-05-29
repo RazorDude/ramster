@@ -274,6 +274,7 @@ class Core {
 	/**
 	 * Fully loads all Core modules and components, in mock mode when applicable, inserts mockStaticData (if migrations are enabled in the config), and executes tests per the provided method options argument.
 	 * @param {object} options The config object, whose properties specify which tests to execute.
+	 * @param {boolean} options.exitProcessOnModuleTestFail If set to true, the ramster process will terminate if one of the module's test suites ends with an error.
 	 * @param {boolean} options.testConfig If set to true, the ramster tests for the coreInstance config will be executed.
 	 * @param {boolean} options.testDB If set to true, the user-built tests for each dbComponent will be executed.
 	 * @param {boolean} options.testDBInjectedModules If set to true, the user-built tests for each module that was injected in the db module as per the config.db.injectModules property will be executed.
@@ -291,8 +292,18 @@ class Core {
 	 */
 	runTests(options) {
 		const instance = this,
-			{config} = instance,
-			{testConfig, testDB, testDBInjectedModules, testClients, testAPIs, testCronJobs, testWebpackBuildTools, staticDataFileNames, additionalClasses} = options
+			{config} = instance, {
+				exitProcessOnModuleTestFail,
+				testConfig,
+				testDB,
+				testDBInjectedModules,
+				testClients,
+				testAPIs,
+				testCronJobs,
+				testWebpackBuildTools,
+				staticDataFileNames,
+				additionalClasses
+			} = options
 		let syncHistoryFilesCount = 0
 		describe(config.projectName, function() {
 			before(function() {
@@ -376,7 +387,7 @@ class Core {
 					if (!(dbInjectedModuleNames instanceof Array) || !dbInjectedModuleNames.length) {
 						return true
 					}
-					dbInjectedModuleNames.forEach((moduleName, index) => {
+					dbInjectedModuleNames.forEach((moduleName) => {
 						const dbInjectedModule = dbModule[moduleName],
 							{specMethodNames} = dbInjectedModule
 						describeSuiteConditionally(
