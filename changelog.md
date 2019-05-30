@@ -1,3 +1,6 @@
+# 1.2.1
+- Nested ordering fix for the baseDBComponent.
+
 # 1.2.0
 - Nested associations in db components are now being automatically detected when querying (read and readList "relReadKeys"), even if they are not explicitly defined in a db component's "relationsConfig" object.
 - Duplicate associations when querying are now being merged - this fixes the "table XXX included more than once" SQL error.

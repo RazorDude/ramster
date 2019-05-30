@@ -499,20 +499,30 @@ class BaseDBComponent {
 	setOrderDataForRelation(order, relationIncludeItem, fieldMap) {
 		const relationIncludeItemOrder = relationIncludeItem.order
 		for (const i in relationIncludeItemOrder) {
-			let relationOrderItem = relationIncludeItemOrder[i],
-				fieldNameIndex = 0,
-				directionIndex = 1
-			if (relationOrderItem.length === 3) {
-				fieldNameIndex = 1
-				directionIndex = 2
-			}
-			const fieldName = relationOrderItem[fieldNameIndex],
-				direction = relationOrderItem[directionIndex]
+			const relationOrderItem = relationIncludeItemOrder[i],
+				fieldName = relationOrderItem[relationOrderItem.length - 2],
+				direction = relationOrderItem[relationOrderItem.length - 1]
 			let orderMapItem = fieldMap[fieldName]
 			if (typeof orderMapItem === 'undefined') {
+				let orderItem = []
+				// sometimes we have top-level ordering by deeply nested associations - in that case, we would have the models listed in the relation's order item
+				if (relationOrderItem.length > 2) {
+					for (const j in relationOrderItem) {
+						let intIndex = parseInt(j, 10),
+							itemAtIndex = relationOrderItem[intIndex]
+						if (typeof itemAtIndex.model === 'undefined') {
+							break
+						}
+						orderItem.push({model: itemAtIndex.model, as: itemAtIndex.as})
+					}
+				} else {
+					orderItem.push({model: relationIncludeItem.model, as: relationIncludeItem.as})
+				}
+				orderItem.push(fieldName)
+				orderItem.push(direction)
 				orderMapItem = {index: order.length, direction}
 				fieldMap[fieldName] = orderMapItem
-				order.push([{model: relationIncludeItem.model, as: relationIncludeItem.as}, fieldName, direction])
+				order.push(orderItem)
 				continue
 			}
 			if (orderMapItem.direction !== direction) {

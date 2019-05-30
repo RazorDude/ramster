@@ -972,7 +972,11 @@ module.exports = {
 					order, {
 						model: new Date(),
 						as: 'test1',
-						order: [['id', 'desc'], [{model: new Date()}, 'name', 'asc'], ['id', 'asc']]
+						order: [
+							['id', 'desc'],
+							[{model: new Date(), as: 'someDate'}, 'name', 'asc'],
+							['id', 'asc']
+						]
 					},
 					fieldMap
 				)
