@@ -605,8 +605,7 @@ class BaseServerComponent {
 		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				yield dbComponent.delete({id: req.params.id, additionalFilters: req.body.additionalFilters, checkForRelatedModels: true})
-				res.json({success: true})
+				res.json(yield dbComponent.delete({id: req.params.id, additionalFilters: req.body.additionalFilters, checkForRelatedModels: true}))
 			} catch (e) {
 				req.locals.error = e
 				next()

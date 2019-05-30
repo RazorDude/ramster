@@ -1358,7 +1358,7 @@ module.exports = {
 						resultItem = yield dbComponent.model.findOne({where: {id: 2}})
 					assert.strictEqual(req.locals.error, null, `bad value ${JSON.stringify(req.locals.error)} for req.locals.error, expected null`)
 					assert.strictEqual(resultItem, null, `bad value ${resultItem} for resultItem, expected null`)
-					assert.strictEqual(result.success, true, `bad value ${result.success} for result.success, expected true`)
+					assert.strictEqual(result.deleted, 1, `bad value ${result.deleted} for result.deleted, expected 1`)
 					return true
 				})
 			})

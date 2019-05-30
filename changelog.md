@@ -1,3 +1,6 @@
+# 1.2.2
+- Fixed baseServerComponent.delete - it now returns the result of dbComponent.delete, instead of {success: true}
+
 # 1.2.1
 - Nested ordering fix for the baseDBComponent.
 
