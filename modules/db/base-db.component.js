@@ -861,7 +861,7 @@ class BaseDBComponent {
 			let {where, requiredRelationsData} = instance.getWhereObjects(filters, (exactMatch instanceof Array) && exactMatch || []),
 				{include, order} = instance.getRelationObjects(relReadKeys, requiredRelationsData),
 				readOptions = {where, include, order}
-			if (!Object.keys(where).length) {
+			if (!Object.keys(where).length && !Object.keys(requiredRelationsData).length) {
 				throw {customMessage: 'No filters provided.'}
 			}
 			if (transaction) {

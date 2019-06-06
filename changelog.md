@@ -1,3 +1,6 @@
+# 1.2.3
+- Fixed baseDBComponent.read's "No filters provided" logic - it now checks "requiredRelationsData" as well as "where".
+
 # 1.2.2
 - Fixed baseServerComponent.delete - it now returns the result of dbComponent.delete, instead of {success: true}
 
