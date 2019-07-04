@@ -49,7 +49,8 @@
     "webpack": "^4.25.1",
     "webpack-dev-server": "^3.1.10",
     "winston": "^2.4.4",
-    "yargs": "^11.1.0"
+    "yargs": "^11.1.0",
+    "snyk": "^1.189.0"
   },
   "deprecated": false,
   "description": "A standalone NodeJS MVC boilerplate.",
@@ -71,7 +72,9 @@
     "fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testCronJobs --testWebpackBuildTools --testLint",
     "generateProjectDocs": "node ./generateProjectDocs.js",
     "test-local": "node ./test/generateStuff.js && mocha ./test/test.js",
-    "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testCronJobs --testWebpackBuildTools"
+    "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testCronJobs --testWebpackBuildTools",
+    "snyk-protect": "snyk protect",
+    "prepare": "npm run snyk-protect"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",
@@ -93,5 +96,6 @@
   },
   "engines": {
     "node": ">= 8.9.4"
-  }
+  },
+  "snyk": true
 }
