@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The tokenManager.module module. Contains the TokenManager class.
  * @module tokenManagerModule
@@ -104,7 +103,7 @@ class TokenManager{
 			jwt.verify(token, secret, (err, decoded) => {
 				if (err) {
 					if (err.name === 'TokenExpiredError') {
-						reject({tokenExpired: true})
+						reject({decodedData: decoded, tokenExpired: true})
 						return
 					}
 					reject({customMessage: 'Failed to verify token.'})

@@ -1,3 +1,6 @@
+# 1.2.4
+- The tokenManager now returns the decoded token data when there's a TokenExpiredError - under the "decoded" key in the error object.
+
 # 1.2.3
 - Fixed baseDBComponent.read's "No filters provided" logic - it now checks "requiredRelationsData" as well as "where".
 

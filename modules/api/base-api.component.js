@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The base-api.component module. Contains the BaseAPIComponent class.
  * @module baseApiComponent
@@ -7,9 +6,6 @@
 const
 	ApiModule = require('./api.module'),
 	BaseServerComponent = require('../shared/base-server.component'),
-	co = require('co'),
-	fs = require('fs'),
-	path = require('path'),
 	spec = require('./base-api.component.spec')
 
 /**

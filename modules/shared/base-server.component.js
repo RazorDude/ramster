@@ -174,7 +174,7 @@ class BaseServerComponent {
 						allPresent = true,
 						nonePresent = true
 					userTypeAccessPoints.forEach((ap, index) => {
-						apIdMap[ap.id] = {index, active: ap.active, hasuserFieldName: ap.userFieldName ? true : false}
+						apIdMap[ap.id] = {index, active: ap.active, hasUserFieldName: ap.userFieldName ? true : false}
 					})
 					// check for the existence of the access points themselves
 					for (const i in apIds) {
@@ -190,7 +190,7 @@ class BaseServerComponent {
 							nonePresent = false
 						}
 						// if the AP has the "userFieldName" field provided, add its index to the list for later evaluation
-						if (apData.hasuserFieldName) {
+						if (apData.hasUserFieldName) {
 							userFieldNameAPIndexes.push(apData.index)
 						}
 					}
