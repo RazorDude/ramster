@@ -1,3 +1,6 @@
+# 1.2.5
+- BaseDBComponent.getWhereObjects now returns the requiredRelationsData of its recursive calls as well.
+
 # 1.2.4
 - The tokenManager now returns the decoded token data when there's a TokenExpiredError - under the "decoded" key in the error object.
 

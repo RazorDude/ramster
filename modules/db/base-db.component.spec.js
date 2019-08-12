@@ -909,6 +909,7 @@ module.exports = {
 					{field: '$testRelation.innerTestRelation.nestedId$'},
 					{field: '$testRelation.innerTestRelation.evenDeeperInnerTestRelation.nestedId$'},
 					{field: '$testRelation2.nestedId$'},
+					{field: '$testRelation2.nestedId2$'},
 					{field: '$testRelation2.innerTestRelation2.evenDeeperInnerTestRelation2.nestedId2$'},
 					{field: 'anotherString', like: '-%'}
 				]
@@ -921,7 +922,7 @@ module.exports = {
 							'$testRelation2.nestedId$': 7,
 							'$testRelation2.innerTestRelation2.evenDeeperInnerTestRelation2.nestedId2$': 25,
 							anotherString: 'test2',
-							$and: [{id: 15, someString: 'test2'}, {id: 16, someString: 'test3'}],
+							$and: [{id: 15, someString: 'test2'}, {id: 16, someString: 'test3'}, {'$testRelation2.nestedId2$': 70}],
 							$or: [{id: 15, someString: 'test2'}, {id: 16, someString: 'test3'}]
 						},
 						['anotherString']
@@ -952,6 +953,11 @@ module.exports = {
 					requiredRelationsData.testRelation2.values.nestedId,
 					7,
 					`bad value ${requiredRelationsData.testRelation2.values.nestedId} for requiredRelationsData.testRelation2.values.nestedId, expected 7`
+				)
+				assert.strictEqual(
+					requiredRelationsData.testRelation2.values.nestedId2,
+					70,
+					`bad value ${requiredRelationsData.testRelation2.values.nestedId2} for requiredRelationsData.testRelation2.values.nestedId2, expected 70`
 				)
 				assert.strictEqual(
 					requiredRelationsData.testRelation2.children.innerTestRelation2.children.evenDeeperInnerTestRelation2.values.nestedId2,

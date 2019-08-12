@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The base-db.component module. Contains the BaseDBComponent class.
  * @module baseDbComponentModule
@@ -7,6 +6,7 @@
 const
 	co = require('co'),
 	DBModule = require('./db.module'),
+	deepmerge = require('deepmerge'),
 	fs = require('fs-extra'),
 	path = require('path'),
 	Sequelize = require('sequelize'),
@@ -473,6 +473,9 @@ class BaseDBComponent {
 					if (Object.keys(whereObjects.where).length) {
 						where.$and.push(whereObjects.where)
 					}
+					if (Object.keys(whereObjects.requiredRelationsData).length) {
+						requiredRelationsData = deepmerge(requiredRelationsData, whereObjects.requiredRelationsData)
+					}
 				})
 			}
 			if ((filters.$or instanceof Array) && (filters.$or.length)) {
@@ -481,6 +484,9 @@ class BaseDBComponent {
 					let whereObjects = this.getWhereObjects($orItem, exactMatch)
 					if (Object.keys(whereObjects.where).length) {
 						where.$or.push(whereObjects.where)
+					}
+					if (Object.keys(whereObjects.requiredRelationsData).length) {
+						requiredRelationsData = deepmerge(requiredRelationsData, whereObjects.requiredRelationsData)
 					}
 				})
 			}

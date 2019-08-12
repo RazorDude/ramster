@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The core module. Contains the Core class.
  * @module coreModule
