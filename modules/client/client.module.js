@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The client.component module. It contains the ClientModule class.
  * @module clientComponent
@@ -167,13 +166,14 @@ class ClientModule extends BaseServerModule {
 			app.use(expressSession({
 				secret: moduleConfig.session.secret,
 				key: moduleConfig.session.key,
-				resave: true,
-				saveUninitialized: true,
+				resave: false,
+				saveUninitialized: false,
 				cookie: {
 					httpOnly: false
 				},
 				store: sessionStore,
-				passport: {}
+				passport: {},
+				unset: 'destroy'
 			}))
 			app.use(passport.initialize())
 			app.use(passport.session())

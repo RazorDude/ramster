@@ -1,3 +1,6 @@
+# 1.2.6
+- Session cookies update - fixes the multiple users bug.
+
 # 1.2.5
 - BaseDBComponent.getWhereObjects now returns the requiredRelationsData of its recursive calls as well.
 
