@@ -169,7 +169,7 @@ const
 		if (typeof object === 'string') {
 			return decodeURIComponent(object)
 		}
-		if ((typeof object !== 'object') || (object === null)) {
+		if ((typeof object !== 'object') || (object === null) || (object instanceof Date)) {
 			return object
 		}
 		if (object instanceof Array) {
@@ -183,7 +183,38 @@ const
 		for (const key in object) {
 			let decodedKey = decodeURIComponent(key)
 			if (decodedKey.substr(0, 6) === '_json_') {
-				decodedObject[decodedKey.substr(6, decodedKey.length)] = decodeQueryValues(JSON.parse(decodeURIComponent(object[key])))
+				let actualKey = decodedKey.substr(6, decodedKey.length),
+					decodedValues = decodeQueryValues(JSON.parse(decodeURIComponent(object[key])))
+				const nonDecodedValues = object[actualKey]
+				if (typeof nonDecodedValues === 'undefined') {
+					decodedObject[actualKey] = decodedValues
+				} else {
+					/*
+					 * decodedValues - array, nonDecodedValues - array = concat
+					 * decodedValues - array, nonDecodedValues - not array = add nonDecodedValues to decodedValues
+					 * decodedValues - object, nonDecodedValues - array = add decodedValues to nonDecodedValues
+					 * decodedValues - object, nonDecodedValues - non-null object = merge
+					 * decodedValues - object, nonDecodedValues - not an object = add nonDecodedValues under the _originalValue key to decodedValues
+					 * otherwise - overwrite as fallback
+					 */
+					if (decodedValues instanceof Array) {
+						if (nonDecodedValues instanceof Array) {
+							decodedObject[actualKey] = nonDecodedValues.concat(decodedValues)
+						} else {
+							decodedObject[actualKey] = decodedValues.push(nonDecodedValues)
+						}
+					} else if ((typeof decodedValues === 'object') && (decodedValues !== null)) {
+						if (nonDecodedValues instanceof Array) {
+							decodedObject[actualKey] = nonDecodedValues.push(decodedValues)
+						} else if ((typeof decodedValues === 'object') && (decodedValues !== null)) {
+							decodedObject[actualKey] = Object.assign(nonDecodedValues, decodedValues)
+						} else {
+							decodedObject[actualKey] = Object.assign({_originalValue: nonDecodedValues}, decodedValues)
+						}
+					} else {
+						decodedObject[actualKey] = decodedValues
+					}
+				}
 			}
 			decodedObject[decodedKey] = decodeQueryValues(object[key])
 		}

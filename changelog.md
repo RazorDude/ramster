@@ -1,3 +1,6 @@
+# 1.2.7
+- Updated the toolbelt.decodeQueryValues method to not overwrite the decodedKeys in existing objects.
+
 # 1.2.6
 - Session cookies update - fixes the multiple users bug.
 

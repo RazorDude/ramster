@@ -1,8 +1,6 @@
-'use strict'
 const
 	assert = require('assert'),
 	co = require('co'),
-	fs = require('fs-extra'),
 	moment = require('moment'),
 	path = require('path'),
 	toolbelt = require('./index')
@@ -19,6 +17,9 @@ module.exports = {
 			})
 			it('should execute testCheckRoutes successfully', function() {
 				instance.testCheckRoutes()
+			})
+			it('should execute testDecodeQueryValues successfully', function() {
+				instance.testDecodeQueryValues()
 			})
 			it('should execute testEmptyToNull successfully', function() {
 				instance.testEmptyToNull()
@@ -255,6 +256,76 @@ module.exports = {
 			})
 		})
 	},
+	testDecodeQueryValues: function() {
+		const decodeQueryValues = toolbelt.decodeQueryValues
+		describe('toolbelt.decodeQueryValues', function() {
+			it('should execute successfully and decode all values as expected', function() {
+				let timestamp = (new Date()).valueOf(),
+					decodedValuesShouldBe = {
+						undefinedKey: undefined,
+						nullKey: null,
+						stringKeyNonEncoded: 'strKey',
+						stringKeyEncoded: decodeURIComponent(encodeURIComponent('1234@/test?=apqc&d')),
+						dateKey: new Date(timestamp),
+						booleanKey: true,
+						numberKey: 1234,
+						arrayKey: [{test: 'test'}, 1 , 2, true],
+						objectKey: {test1: 'abcd', test2: 123},
+						_json_objectKey: JSON.stringify({test3: 'trololo', test4: [1, 4, 3, 2]}),
+						_json_arrayKey: JSON.stringify([15])
+					},
+					decodedValues = decodeQueryValues(decodedValuesShouldBe),
+					arrayKeyShouldBe = [1, 2, true, 15],
+					innerArrayKeyShouldBe = {test: 'test'},
+					objectKeyShouldBe = {test1: 'abcd', test2: 123, test3: 'trololo'},
+					innerObjectKeyShouldBe = [1, 4, 3, 2]
+				decodedValuesShouldBe.undefinedKey = null
+				decodedValuesShouldBe.dateKey = `${new Date(timestamp)}`
+				if (decodedValues.dateKey) {
+					decodedValues.dateKey = `${decodedValues.dateKey}`
+				}
+				delete decodedValuesShouldBe.arrayKey
+				delete decodedValuesShouldBe.objectKey
+				delete decodedValuesShouldBe._json_objectKey
+				delete decodedValuesShouldBe._json_arrayKey
+				for (const key in decodedValuesShouldBe) {
+					assert.strictEqual(
+						decodedValues[key],
+						decodedValuesShouldBe[key],
+						`bad value ${decodedValues[key]} for field ${key}, expected ${decodedValuesShouldBe[key]}`
+					)
+				}
+				arrayKeyShouldBe.forEach((item, index) => {
+					assert.strictEqual(
+						decodedValues.arrayKey[index + 1],
+						item,
+						`bad value ${decodedValues.arrayKey[index + 1]} for arrayKey index ${index + 1}, expected ${item}`
+					)
+				})
+				for (const key in innerArrayKeyShouldBe) {
+					assert.strictEqual(
+						decodedValues.arrayKey[0][key],
+						innerArrayKeyShouldBe[key],
+						`bad value ${decodedValues.arrayKey[0][key]} for field decodedValues.arrayKey[0]['${key}'], expected ${innerArrayKeyShouldBe[key]}`
+					)
+				}
+				for (const key in objectKeyShouldBe) {
+					assert.strictEqual(
+						decodedValues.objectKey[key],
+						objectKeyShouldBe[key],
+						`bad value ${decodedValues.objectKey[key]} for objectKey field ${key}, expected ${objectKeyShouldBe[key]}`
+					)
+				}
+				innerObjectKeyShouldBe.forEach((item, index) => {
+					assert.strictEqual(
+						decodedValues.objectKey.test4[index],
+						item,
+						`bad value ${decodedValues.objectKey.test4[index]} for decodedValues.objectKey.test4 index ${index}, expected ${item}`
+					)
+				})
+			})
+		})
+	},
 	testEmptyToNull: function() {
 		const emptyToNull = toolbelt.emptyToNull
 		describe('toolbelt.emptyToNull', function() {
@@ -433,7 +504,8 @@ module.exports = {
 			it('should execute successfully and return the entity size in megabytes if folderPath points to a folder and unit is set to 2', function() {
 				return co(function*() {
 					let folderSize = yield getFolderSize(path.join(__dirname, '../toolbelt'), 2)
-					assert(folderSize < 0.05)
+					console.log('===> folderSize', folderSize)
+					assert(folderSize < 0.07)
 					return true
 				})
 			})
