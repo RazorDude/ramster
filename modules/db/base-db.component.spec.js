@@ -32,6 +32,9 @@ module.exports = {
 			it('should execute testSetOrderDataForRelation successfully', function() {
 				instance.testSetOrderDataForRelation()
 			})
+			it('should execute testParseDereferencedObjectValues successfully', function() {
+				instance.testParseDereferencedObjectValues()
+			})
 			it('should execute testSetQueryDataForRelation successfully', function() {
 				instance.testSetQueryDataForRelation()
 			})
@@ -993,6 +996,172 @@ module.exports = {
 				assert(order[1][0].model instanceof Date, `bad value ${order[1][0].model} for order[1][0].model, expected an instance of Date`)
 				assert.strictEqual(order[1][1], 'name', `bad value ${order[1][1]} for order[1][1], expected 'name'`)
 				assert.strictEqual(order[1][2], 'asc', `bad value ${order[1][2]} for order[1][2], expected 'asc'`)
+			})
+		})
+	},
+	testParseDereferencedObjectValues: function() {
+		const instance = this
+		describe('baseDBComponent.parseDereferencedObjectValues', function() {
+			it('should execute successfully and mutate the target object correctly if all parameters are correct', function() {
+				let sourceObject = {
+						nullKey: null,
+						numberKey: 1,
+						booleanKey: true,
+						stringKey: 'str',
+						dateKey: new Date(),
+						functionKey: () => {
+							return true
+						},
+						sequelizeMethodKey: instance.db.sequelize.col('test'),
+						sequelizeModelKey: instance.model,
+						nestedObject: {
+							nullKey: null,
+							numberKey: 1,
+							booleanKey: true,
+							stringKey: 'str',
+							dateKey: new Date(),
+							functionKey: () => {
+								return true
+							},
+							sequelizeMethodKey: instance.db.sequelize.col('test'),
+							sequelizeModelKey: instance.model,
+							nestedObjectArray: [{
+									deeplyNestedObject: {
+										nullKey: null,
+										numberKey: 1,
+										booleanKey: true,
+										stringKey: 'str',
+										dateKey: new Date(),
+										functionKey: () => {
+											return true
+										},
+										sequelizeMethodKey: instance.db.sequelize.col('test'),
+										sequelizeModelKey: instance.model
+									}
+								},
+								1,
+								15,
+								false,
+								[{test: 'test3'}]
+							]
+						}
+					},
+					targetObject = JSON.parse(JSON.stringify(sourceObject))
+				// instance.parseDereferencedObjectValues(sourceObject, targetObject)
+				console.log(targetObject)
+				assert.strictEqual(targetObject.nullKey, null, `bad value ${targetObject.nullKey} for targetObject.nullKey, expected null`)
+				assert.strictEqual(targetObject.numberKey, 1, `bad value ${targetObject.numberKey} for targetObject.numberKey, expected 1`)
+				assert.strictEqual(targetObject.booleanKey, true, `bad value ${targetObject.booleanKey} for targetObject.booleanKey, expected true`)
+				assert.strictEqual(targetObject.stringKey, 'str', `bad value ${targetObject.stringKey} for targetObject.stringKey, expected 'str'`)
+				assert(targetObject.dateKey instanceof Date, `bad value ${targetObject.dateKey} for targetObject.dateKey, expected an instance of Date`)
+				// assert.strictEqual(
+				// 	typeof targetObject.functionKey,
+				// 	'function',
+				// 	`bad value ${targetObject.functionKey} for targetObject.functionKey, expected a function`
+				// )
+				assert(
+					targetObject.sequelizeMethodKey instanceof instance.db.Sequelize.Utils.SequelizeMethod,
+					`bad value ${targetObject.sequelizeMethodKey} for targetObject.sequelizeMethodKey, expected an instance of instance.db.Sequelize.Utils.SequelizeMethod`
+				)
+				assert(
+					targetObject.sequelizeModelKey instanceof instance.db.Sequelize.Model,
+					`bad value ${targetObject.sequelizeModelKey} for targetObject.sequelizeModelKey, expected an instance of instance.db.Sequelize.Model`
+				)
+
+				assert.strictEqual(
+					targetObject.nestedObject.nullKey,
+					null,
+					`bad value ${targetObject.nestedObject.nullKey} for targetObject.nestedObject.nullKey, expected null`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.numberKey,
+					1,
+					`bad value ${targetObject.nestedObject.numberKey} for targetObject.nestedObject.numberKey, expected 1`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.booleanKey,
+					true,
+					`bad value ${targetObject.nestedObject.booleanKey} for targetObject.nestedObject.booleanKey, expected true`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.stringKey,
+					'str',
+					`bad value ${targetObject.nestedObject.stringKey} for targetObject.nestedObject.stringKey, expected 'str'`
+				)
+				assert(
+					targetObject.nestedObject.dateKey instanceof Date,
+					`bad value ${targetObject.nestedObject.dateKey} for targetObject.nestedObject.dateKey, expected an instance of Date`
+				)
+				// assert(
+				// 	typeof targetObject.nestedObject.functionKey === 'function',
+				// 	`bad value ${targetObject.nestedObject.functionKey} for targetObject.nestedObject.functionKey, expected a function`
+				// )
+				assert(
+					targetObject.nestedObject.sequelizeMethodKey instanceof instance.db.Sequelize.Utils.SequelizeMethod,
+					`bad value ${targetObject.nestedObject.sequelizeMethodKey} for targetObject.nestedObject.sequelizeMethodKey, expected an instance of instance.db.Sequelize.Utils.SequelizeMethod`
+				)
+				assert(
+					targetObject.nestedObject.sequelizeModelKey instanceof instance.db.Sequelize.Model,
+					`bad value ${targetObject.nestedObject.sequelizeModelKey} for targetObject.nestedObject.sequelizeModelKey, expected an instance of instance.db.Sequelize.Model`
+				)
+
+				assert.strictEqual(
+					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.nullKey,
+					null,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.nullKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.nullKey, expected null`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.numberKey,
+					1,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.numberKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.numberKey, expected 1`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.booleanKey,
+					true,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.booleanKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.booleanKey, expected true`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.stringKey,
+					'str',
+					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.stringKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.stringKey, expected 'str'`
+				)
+				assert(
+					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.dateKey instanceof Date,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.dateKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.dateKey, expected an instance of Date`
+				)
+				// assert(
+				// 	typeof targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey === 'function',
+				// 	`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey, expected a function`
+				// )
+				assert(
+					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeMethodKey instanceof instance.db.Sequelize.Utils.SequelizeMethod,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeMethodKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeMethodKey, expected an instance of instance.db.Sequelize.Utils.SequelizeMethod`
+				)
+				assert(
+					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeModelKey instanceof instance.db.Sequelize.Model,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeModelKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeModelKey, expected an instance of instance.db.Sequelize.Model`
+				)
+
+				assert.strictEqual(
+					targetObject.nestedObject.nestedObjectArray[1],
+					1,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[1]} for targetObject.nestedObject.nestedObjectArray[1], expected 1`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.nestedObjectArray[2],
+					15,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[2]} for targetObject.nestedObject.nestedObjectArray[2], expected 15`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.nestedObjectArray[3],
+					false,
+					`bad value ${targetObject.nestedObject.nestedObjectArray[3]} for targetObject.nestedObject.nestedObjectArray[3], expected false`
+				)
+				assert.strictEqual(
+					targetObject.nestedObject.nestedObjectArray[4][0].test,
+					'test3',
+					`bad value ${targetObject.nestedObject.nestedObjectArray[4][0].test} for targetObject.nestedObject.nestedObjectArray[4][0].test, expected 'test3'`
+				)
 			})
 		})
 	},

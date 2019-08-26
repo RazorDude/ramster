@@ -298,12 +298,14 @@ class BaseDBComponent {
 	 */
 	mapRelations() {
 		const components = this.db.components,
-			{associationsConfig, componentName} = this,
-			relationsConfig = this.relationsConfig && JSON.parse(JSON.stringify(this.relationsConfig)) || {}
+			{associationsConfig, componentName} = this
+			// relationsConfig = this.relationsConfig || {}
 		if (!associationsConfig) {
 			return
 		}
+		const relationsConfig = this.relationsConfig && JSON.parse(JSON.stringify(this.relationsConfig)) || {}
 		let relations = {}
+		this.parseDereferencedObjectValues(this.relationsConfig, relationsConfig)
 		for (const alias in associationsConfig) {
 			const itemData = associationsConfig[alias],
 				targetModelName = itemData.componentName || alias,
@@ -538,6 +540,60 @@ class BaseDBComponent {
 	}
 
 	/**
+	 * Goes through an object and its nested objects and makes sure Date, Function, SequelizeMethod and Sequelize.Model ones are not recorded as [object Object].
+	 * @param {object} sourceObject The object to take the data from.
+	 * @param {object} targetObject The object to set the data in.
+	 * @returns {void}
+	 * @memberof BaseDBComponent
+	 */
+	parseDereferencedObjectValues(sourceObject, targetObject) {
+		if (
+			(typeof sourceObject !== 'object') ||
+			(sourceObject === null) ||
+			(typeof sourceObject === 'function') ||
+			(sourceObject instanceof Date) ||
+			(sourceObject instanceof this.db.Sequelize.Utils.SequelizeMethod) ||
+			(sourceObject instanceof this.db.Sequelize.Model)
+		) {
+			return
+		}
+		if (sourceObject instanceof Array) {
+			if (!(targetObject instanceof Array) || (targetObject.length < sourceObject.length)) {
+				return
+			}
+			sourceObject.forEach((sourceItem, index) => {
+				if (
+					(sourceItem instanceof Date) ||
+					(typeof sourceItem === 'function') ||
+					(sourceItem instanceof this.db.Sequelize.Utils.SequelizeMethod) ||
+					(sourceItem instanceof this.db.Sequelize.Model)
+				) {
+					targetObject[index] = sourceItem
+					return
+				}
+				this.parseDereferencedObjectValues(sourceItem, targetObject[index])
+			})
+			return
+		}
+		for (const key in sourceObject) {
+			const sourceItem = sourceObject[key]
+			if (typeof targetObject[key] === 'undefined') {
+				continue
+			}
+			if (
+				(sourceItem instanceof Date) ||
+				(typeof sourceItem === 'function') ||
+				(sourceItem instanceof this.db.Sequelize.Utils.SequelizeMethod) ||
+				(sourceItem instanceof this.db.Sequelize.Model)
+			) {
+				targetObject[key] = sourceItem
+				continue
+			}
+			this.parseDereferencedObjectValues(sourceItem, targetObject[key])
+		}
+	}
+
+	/**
 	 * Populates the provided include array based on the relation data and the required fields data (if any).
 	 * @param {BaseDBComponent} dbComponent The curent DB component. Used to map associations from required fields that aren't explicitly specified in the relationsConfig.
 	 * @param {Array} include The include array to populate.
@@ -600,6 +656,10 @@ class BaseDBComponent {
 		// if there are required fields for any of this relation's children - make it required in the query before moving on
 		else if (requiredFieldsDataItemChildren && Object.keys(requiredFieldsDataItemChildren).length && !includeItem.required) {
 			includeItem.required = true
+		}
+		// go through all "where" items of the original relationIncludeItem and make sure Date, Function and SequelizeMethod ones are not recorded as [object Object]
+		if (relationIncludeItem.where) {
+			this.parseDereferencedObjectValues(relationIncludeItem.where, includeItem.where)
 		}
 		// set the order array's models - otherwise sequelize will ignore the sort
 		if (relationIncludeItem.order instanceof Array) {

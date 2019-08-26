@@ -1,3 +1,6 @@
+# 1.2.8
+- HUGELY important fix - added a new method to the BaseDBComponent - parseDereferencedObjectValues. It's used by setQueryDataForRelation to go through an object and its nested objects and makes sure Date, Function, SequelizeMethod and Sequelize.Model ones are not recorded as [object Object].
+
 # 1.2.7
 - Updated the toolbelt.decodeQueryValues method to not overwrite the decodedKeys in existing objects.
 
