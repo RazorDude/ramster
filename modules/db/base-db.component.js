@@ -1007,14 +1007,14 @@ class BaseDBComponent {
 			} else {
 				// workaround for this Sequelize bug - https://github.com/sequelize/sequelize/issues/8602, moved to https://github.com/sequelize/sequelize/issues/9166
 				if (readListOptions.include) {
-					let originalAttributesMap = instance.stripAndMapAttributesFromOptionsObjectRecursively(readListOptions),
-						idResults = yield instance.model.findAll(readListOptions)
+					let originalAttributesMap = instance.stripAndMapAttributesFromOptionsObjectRecursively(readListOptions)
+					let idResults = yield instance.model.findAll(readListOptions)
 					totalPages = Math.ceil(idResults.length / perPage)
 					if ((totalPages > 0) && (page > totalPages)) {
 						page = totalPages
 					}
 					let offset = (page - 1) * perPage,
-					limit = perPage + 1
+						limit = offset + perPage
 					if (idsOnlyMode) {
 						for (let i = offset; i <= limit; i++) {
 							if (typeof idResults[i] === 'undefined') {
@@ -1042,7 +1042,7 @@ class BaseDBComponent {
 						page = totalPages
 					}
 					readListOptions.offset = (page - 1) * perPage,
-					readListOptions.perPage + 1
+					readListOptions.limit = perPage + 1
 					results = yield instance.model.findAll(readListOptions)
 				}
 				if (results.length === (perPage + 1)) {

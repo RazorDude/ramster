@@ -2011,6 +2011,105 @@ module.exports = {
 					return true
 				})
 			})
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct, there are relReadKeys, no filters from associations and it is the first of one', function() {
+				return co(function*() {
+					let items = [
+						{id: 3, test2Id: 1, name: 'testName3', description: 'testDescription3'},
+						{id: 2, test2Id: 1, name: 'testName2', description: 'testDescription2'}
+					]
+					yield instance.model.update({test2Id: 1}, {where: {id: [1, 2, 3]}})
+					let data = yield instance.readList({
+						filters: {
+							id: [2, 3]
+						},
+						page: 1,
+						perPage: 9,
+						orderDirection: 'desc',
+						relReadKeys: {test2: true}
+					})
+					assert.strictEqual(data.results.length, 2, `Bad value ${data.results.length} for data.results.length, expected 2.`)
+					for (const index in data.results) {
+						let item = items[index],
+							dataItem = data.results[index].dataValues
+						for (const i in item) {
+							assert.strictEqual(dataItem[i],
+								item[i],
+								`Bad value '${dataItem[i]}' for field "${i}" for the item, index ${index}, expected ${item[i]}.`
+							)
+						}
+					}
+					assert.strictEqual(data.page, 1, `Bad value ${data.page} for data.page, expected 1.`)
+					assert.strictEqual(data.perPage, 9, `Bad value ${data.perPage} for data.perPage, expected 9.`)
+					assert.strictEqual(data.totalPages, 1, `Bad value ${data.totalPages} for data.totalPages, expected 1.`)
+					assert.strictEqual(data.more, false, `Bad value ${data.more} for data.more, expected false.`)
+					return true
+				})
+			})
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct, there are relReadKeys, no filters from associations and it is the first page of many', function() {
+				return co(function*() {
+					let items = [
+						{id: 3, test2Id: 1, name: 'testName3', description: 'testDescription3'},
+						{id: 2, test2Id: 1, name: 'testName2', description: 'testDescription2'}
+					]
+					let data = yield instance.readList({
+						filters: {
+							id: [1, 2, 3]
+						},
+						page: 1,
+						perPage: 2,
+						orderDirection: 'desc',
+						relReadKeys: {test2: true}
+					})
+					assert.strictEqual(data.results.length, 2, `Bad value ${data.results.length} for data.results.length, expected 2.`)
+					for (const index in data.results) {
+						let item = items[index],
+							dataItem = data.results[index].dataValues
+						for (const i in item) {
+							assert.strictEqual(dataItem[i],
+								item[i],
+								`Bad value '${dataItem[i]}' for field "${i}" for the item, index ${index}, expected ${item[i]}.`
+							)
+						}
+					}
+					assert.strictEqual(data.page, 1, `Bad value ${data.page} for data.page, expected 1.`)
+					assert.strictEqual(data.perPage, 2, `Bad value ${data.perPage} for data.perPage, expected 2.`)
+					assert.strictEqual(data.totalPages, 2, `Bad value ${data.totalPages} for data.totalPages, expected 2.`)
+					assert.strictEqual(data.more, true, `Bad value ${data.more} for data.more, expected true.`)
+					return true
+				})
+			})
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct, there are relReadKeys, no filters from associations and it is the second page of many', function() {
+				return co(function*() {
+					let items = [
+						{id: 1, test2Id: 1, name: 'testName1', description: 'testDescription1'}
+					]
+					let data = yield instance.readList({
+						filters: {
+							id: [1, 2, 3]
+						},
+						page: 2,
+						perPage: 2,
+						orderDirection: 'desc',
+						relReadKeys: {test2: true}
+					})
+					assert.strictEqual(data.results.length, 1, `Bad value ${data.results.length} for data.results.length, expected 1.`)
+					for (const index in data.results) {
+						let item = items[index],
+							dataItem = data.results[index].dataValues
+						for (const i in item) {
+							assert.strictEqual(dataItem[i],
+								item[i],
+								`Bad value '${dataItem[i]}' for field "${i}" for the item, index ${index}, expected ${item[i]}.`
+							)
+						}
+					}
+					assert.strictEqual(data.page, 2, `Bad value ${data.page} for data.page, expected 2.`)
+					assert.strictEqual(data.perPage, 2, `Bad value ${data.perPage} for data.perPage, expected 2.`)
+					assert.strictEqual(data.totalPages, 2, `Bad value ${data.totalPages} for data.totalPages, expected 2.`)
+					assert.strictEqual(data.more, false, `Bad value ${data.more} for data.more, expected false.`)
+					return true
+				})
+			})
 		})
 	},
 	testUpdate: function() {

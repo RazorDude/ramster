@@ -1,3 +1,6 @@
+# 1.2.10
+- And another BaseDBComponent fix + improved testing for it.
+
 # 1.2.9
 - Another HUGELY important fix - completely rewritten the workaround for the sequelize bug BaseDBComponent.readList. This fixes the issue with nested transactions not working (which is another sequelize bug).
 
