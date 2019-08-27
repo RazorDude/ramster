@@ -1003,6 +1003,7 @@ module.exports = {
 		const instance = this
 		describe('baseDBComponent.parseDereferencedObjectValues', function() {
 			it('should execute successfully and mutate the target object correctly if all parameters are correct', function() {
+				let testModel = instance.db.sequelize.define('testModel_0')
 				let sourceObject = {
 						nullKey: null,
 						numberKey: 1,
@@ -1013,7 +1014,7 @@ module.exports = {
 							return true
 						},
 						sequelizeMethodKey: instance.db.sequelize.col('test'),
-						sequelizeModelKey: instance.model,
+						sequelizeModelKey: testModel,
 						nestedObject: {
 							nullKey: null,
 							numberKey: 1,
@@ -1024,7 +1025,7 @@ module.exports = {
 								return true
 							},
 							sequelizeMethodKey: instance.db.sequelize.col('test'),
-							sequelizeModelKey: instance.model,
+							sequelizeModelKey: testModel,
 							nestedObjectArray: [{
 									deeplyNestedObject: {
 										nullKey: null,
@@ -1036,7 +1037,7 @@ module.exports = {
 											return true
 										},
 										sequelizeMethodKey: instance.db.sequelize.col('test'),
-										sequelizeModelKey: instance.model
+										sequelizeModelKey: testModel
 									}
 								},
 								1,
@@ -1047,24 +1048,23 @@ module.exports = {
 						}
 					},
 					targetObject = JSON.parse(JSON.stringify(sourceObject))
-				// instance.parseDereferencedObjectValues(sourceObject, targetObject)
-				console.log(targetObject)
+				instance.parseDereferencedObjectValues(sourceObject, targetObject)
 				assert.strictEqual(targetObject.nullKey, null, `bad value ${targetObject.nullKey} for targetObject.nullKey, expected null`)
 				assert.strictEqual(targetObject.numberKey, 1, `bad value ${targetObject.numberKey} for targetObject.numberKey, expected 1`)
 				assert.strictEqual(targetObject.booleanKey, true, `bad value ${targetObject.booleanKey} for targetObject.booleanKey, expected true`)
 				assert.strictEqual(targetObject.stringKey, 'str', `bad value ${targetObject.stringKey} for targetObject.stringKey, expected 'str'`)
 				assert(targetObject.dateKey instanceof Date, `bad value ${targetObject.dateKey} for targetObject.dateKey, expected an instance of Date`)
-				// assert.strictEqual(
-				// 	typeof targetObject.functionKey,
-				// 	'function',
-				// 	`bad value ${targetObject.functionKey} for targetObject.functionKey, expected a function`
-				// )
+				assert.strictEqual(
+					typeof targetObject.functionKey,
+					'function',
+					`bad value ${targetObject.functionKey} for targetObject.functionKey, expected a function`
+				)
 				assert(
 					targetObject.sequelizeMethodKey instanceof instance.db.Sequelize.Utils.SequelizeMethod,
 					`bad value ${targetObject.sequelizeMethodKey} for targetObject.sequelizeMethodKey, expected an instance of instance.db.Sequelize.Utils.SequelizeMethod`
 				)
 				assert(
-					targetObject.sequelizeModelKey instanceof instance.db.Sequelize.Model,
+					typeof targetObject.sequelizeModelKey.sequelize !== 'undefined',
 					`bad value ${targetObject.sequelizeModelKey} for targetObject.sequelizeModelKey, expected an instance of instance.db.Sequelize.Model`
 				)
 
@@ -1092,16 +1092,16 @@ module.exports = {
 					targetObject.nestedObject.dateKey instanceof Date,
 					`bad value ${targetObject.nestedObject.dateKey} for targetObject.nestedObject.dateKey, expected an instance of Date`
 				)
-				// assert(
-				// 	typeof targetObject.nestedObject.functionKey === 'function',
-				// 	`bad value ${targetObject.nestedObject.functionKey} for targetObject.nestedObject.functionKey, expected a function`
-				// )
+				assert(
+					typeof targetObject.nestedObject.functionKey === 'function',
+					`bad value ${targetObject.nestedObject.functionKey} for targetObject.nestedObject.functionKey, expected a function`
+				)
 				assert(
 					targetObject.nestedObject.sequelizeMethodKey instanceof instance.db.Sequelize.Utils.SequelizeMethod,
 					`bad value ${targetObject.nestedObject.sequelizeMethodKey} for targetObject.nestedObject.sequelizeMethodKey, expected an instance of instance.db.Sequelize.Utils.SequelizeMethod`
 				)
 				assert(
-					targetObject.nestedObject.sequelizeModelKey instanceof instance.db.Sequelize.Model,
+					typeof targetObject.nestedObject.sequelizeModelKey.sequelize !== 'undefined',
 					`bad value ${targetObject.nestedObject.sequelizeModelKey} for targetObject.nestedObject.sequelizeModelKey, expected an instance of instance.db.Sequelize.Model`
 				)
 
@@ -1129,16 +1129,16 @@ module.exports = {
 					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.dateKey instanceof Date,
 					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.dateKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.dateKey, expected an instance of Date`
 				)
-				// assert(
-				// 	typeof targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey === 'function',
-				// 	`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey, expected a function`
-				// )
+				assert(
+					typeof targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey === 'function',
+					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.functionKey, expected a function`
+				)
 				assert(
 					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeMethodKey instanceof instance.db.Sequelize.Utils.SequelizeMethod,
 					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeMethodKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeMethodKey, expected an instance of instance.db.Sequelize.Utils.SequelizeMethod`
 				)
 				assert(
-					targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeModelKey instanceof instance.db.Sequelize.Model,
+					typeof targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeModelKey.sequelize !== 'undefined',
 					`bad value ${targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeModelKey} for targetObject.nestedObject.nestedObjectArray[0].deeplyNestedObject.sequelizeModelKey, expected an instance of instance.db.Sequelize.Model`
 				)
 
@@ -1817,7 +1817,103 @@ module.exports = {
 	testReadList: function() {
 		const instance = this
 		describe('baseDBComponent.readList', function() {
-			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are no relReadKeys', function() {
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct, there are no relReadKeys, no filters from associations and it is the first of one', function() {
+				return co(function*() {
+					let items = [
+						{id: 3, test2Id: 1, name: 'testName3', description: 'testDescription3'},
+						{id: 2, test2Id: 1, name: 'testName2', description: 'testDescription2'}
+					]
+					yield instance.model.update({test2Id: 1}, {where: {id: [1, 2, 3]}})
+					let data = yield instance.readList({
+						filters: {
+							id: [2, 3]
+						},
+						page: 1,
+						perPage: 9,
+						orderDirection: 'desc'
+					})
+					assert.strictEqual(data.results.length, 2, `Bad value ${data.results.length} for data.results.length, expected 2.`)
+					for (const index in data.results) {
+						let item = items[index],
+							dataItem = data.results[index].dataValues
+						for (const i in item) {
+							assert.strictEqual(dataItem[i],
+								item[i],
+								`Bad value '${dataItem[i]}' for field "${i}" for the item, index ${index}, expected ${item[i]}.`
+							)
+						}
+					}
+					assert.strictEqual(data.page, 1, `Bad value ${data.page} for data.page, expected 1.`)
+					assert.strictEqual(data.perPage, 9, `Bad value ${data.perPage} for data.perPage, expected 9.`)
+					assert.strictEqual(data.totalPages, 1, `Bad value ${data.totalPages} for data.totalPages, expected 1.`)
+					assert.strictEqual(data.more, false, `Bad value ${data.more} for data.more, expected false.`)
+					return true
+				})
+			})
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct, there are no relReadKeys, no filters from associations and it is the first page of many', function() {
+				return co(function*() {
+					let items = [
+						{id: 3, test2Id: 1, name: 'testName3', description: 'testDescription3'},
+						{id: 2, test2Id: 1, name: 'testName2', description: 'testDescription2'}
+					]
+					let data = yield instance.readList({
+						filters: {
+							id: [1, 2, 3]
+						},
+						page: 1,
+						perPage: 2,
+						orderDirection: 'desc'
+					})
+					assert.strictEqual(data.results.length, 2, `Bad value ${data.results.length} for data.results.length, expected 2.`)
+					for (const index in data.results) {
+						let item = items[index],
+							dataItem = data.results[index].dataValues
+						for (const i in item) {
+							assert.strictEqual(dataItem[i],
+								item[i],
+								`Bad value '${dataItem[i]}' for field "${i}" for the item, index ${index}, expected ${item[i]}.`
+							)
+						}
+					}
+					assert.strictEqual(data.page, 1, `Bad value ${data.page} for data.page, expected 1.`)
+					assert.strictEqual(data.perPage, 2, `Bad value ${data.perPage} for data.perPage, expected 2.`)
+					assert.strictEqual(data.totalPages, 2, `Bad value ${data.totalPages} for data.totalPages, expected 2.`)
+					assert.strictEqual(data.more, true, `Bad value ${data.more} for data.more, expected true.`)
+					return true
+				})
+			})
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct, there are no relReadKeys, no filters from associations and it is the second page of many', function() {
+				return co(function*() {
+					let items = [
+						{id: 1, test2Id: 1, name: 'testName1', description: 'testDescription1'}
+					]
+					let data = yield instance.readList({
+						filters: {
+							id: [1, 2, 3]
+						},
+						page: 2,
+						perPage: 2,
+						orderDirection: 'desc'
+					})
+					assert.strictEqual(data.results.length, 1, `Bad value ${data.results.length} for data.results.length, expected 1.`)
+					for (const index in data.results) {
+						let item = items[index],
+							dataItem = data.results[index].dataValues
+						for (const i in item) {
+							assert.strictEqual(dataItem[i],
+								item[i],
+								`Bad value '${dataItem[i]}' for field "${i}" for the item, index ${index}, expected ${item[i]}.`
+							)
+						}
+					}
+					assert.strictEqual(data.page, 2, `Bad value ${data.page} for data.page, expected 2.`)
+					assert.strictEqual(data.perPage, 2, `Bad value ${data.perPage} for data.perPage, expected 2.`)
+					assert.strictEqual(data.totalPages, 2, `Bad value ${data.totalPages} for data.totalPages, expected 2.`)
+					assert.strictEqual(data.more, false, `Bad value ${data.more} for data.more, expected false.`)
+					return true
+				})
+			})
+			it('should execute successfully and read a list of db entries correctly if all parameters are correct and there are no relReadKeys, but there are filters from associations', function() {
 				return co(function*() {
 					let items = [
 							{id: 2, test2Id: 1, name: 'testName2', description: 'testDescription2'},

@@ -553,7 +553,7 @@ class BaseDBComponent {
 			(typeof sourceObject === 'function') ||
 			(sourceObject instanceof Date) ||
 			(sourceObject instanceof this.db.Sequelize.Utils.SequelizeMethod) ||
-			(sourceObject instanceof this.db.Sequelize.Model)
+			(typeof sourceObject.sequelize !== 'undefined')
 		) {
 			return
 		}
@@ -566,7 +566,7 @@ class BaseDBComponent {
 					(sourceItem instanceof Date) ||
 					(typeof sourceItem === 'function') ||
 					(sourceItem instanceof this.db.Sequelize.Utils.SequelizeMethod) ||
-					(sourceItem instanceof this.db.Sequelize.Model)
+					(sourceItem && (typeof sourceItem.sequelize !== 'undefined'))
 				) {
 					targetObject[index] = sourceItem
 					return
@@ -577,14 +577,11 @@ class BaseDBComponent {
 		}
 		for (const key in sourceObject) {
 			const sourceItem = sourceObject[key]
-			if (typeof targetObject[key] === 'undefined') {
-				continue
-			}
 			if (
 				(sourceItem instanceof Date) ||
 				(typeof sourceItem === 'function') ||
 				(sourceItem instanceof this.db.Sequelize.Utils.SequelizeMethod) ||
-				(sourceItem instanceof this.db.Sequelize.Model)
+				(sourceItem && (typeof sourceItem.sequelize !== 'undefined'))
 			) {
 				targetObject[key] = sourceItem
 				continue
@@ -972,9 +969,6 @@ class BaseDBComponent {
 				order.push([data.orderBy || instance.defaults.orderBy, data.orderDirection || instance.defaults.orderDirection])
 			}
 			if (!Object.keys(where).length) {
-				// if (!readAll || !instance.allowNoFiltersOnReadListReadAll) {
-				// 	throw {customMessage: 'No filters provided.'}
-				// }
 				where = {}
 			}
 			let readListOptions = {
@@ -1000,70 +994,65 @@ class BaseDBComponent {
 				delete readListOptions.where
 			}
 
-			if (readAll) {
-				page = 1
-			} else {
-				// nasty workaround for totalCount, as sequelize's select count doesn't work properly with associations
-				let countOptions = Object.assign({}, data)
-				countOptions.readAll = true
-				countOptions.idsOnlyMode = true
-				let totalCount = (yield instance.readList(countOptions)).perPage
-				totalPages = Math.ceil(totalCount / perPage)
-				if ((totalPages > 0) && (page > totalPages)) {
-					page = totalPages
-				}
-				readListOptions.offset = (page - 1) * perPage
-				readListOptions.limit = perPage + 1
-			}
-
-			if (idsOnlyMode) {
-				instance.stripAndMapAttributesFromOptionsObjectRecursively(readListOptions)
-			}
 			let results = []
-			// workaround for this Sequelize bug - https://github.com/sequelize/sequelize/issues/8602, moved to https://github.com/sequelize/sequelize/issues/9166
-			try {
-				results = yield instance.db.sequelize.transaction((innerT) => instance.model.findAll({...readListOptions, transaction: innerT}))
-			} catch(e) {
-				if (e && e.message && (
-						(e.message.indexOf('missing FROM-clause item for table') !== -1) ||
-						(e.message.indexOf('missing FROM-clause entry for table') !== -1)
-					) &&
-					((typeof readListOptions.offset !== 'undefined') || (typeof readListOptions.limit !== 'undefined'))
-				) {
-					let {limit, offset, ...goodStuff} = readListOptions
+			if (readAll) {
+				if (idsOnlyMode) {
+					instance.stripAndMapAttributesFromOptionsObjectRecursively(readListOptions)
+				}
+				results = yield instance.model.findAll(readListOptions)
+				totalPages = 1
+				page = 1
+				perPage = results.length
+				more = false
+			} else {
+				// workaround for this Sequelize bug - https://github.com/sequelize/sequelize/issues/8602, moved to https://github.com/sequelize/sequelize/issues/9166
+				if (readListOptions.include) {
+					let originalAttributesMap = instance.stripAndMapAttributesFromOptionsObjectRecursively(readListOptions),
+						idResults = yield instance.model.findAll(readListOptions)
+					totalPages = Math.ceil(idResults.length / perPage)
+					if ((totalPages > 0) && (page > totalPages)) {
+						page = totalPages
+					}
+					let offset = (page - 1) * perPage,
+					limit = perPage + 1
 					if (idsOnlyMode) {
-						let idResults = yield instance.model.findAll(goodStuff)
 						for (let i = offset; i <= limit; i++) {
-							if (!idResults[i]) {
+							if (typeof idResults[i] === 'undefined') {
 								break
 							}
 							results.push(idResults[i])
 						}
 					} else {
-						let originalAttributesByPath = instance.stripAndMapAttributesFromOptionsObjectRecursively(goodStuff),
-							idResults = yield instance.model.findAll(goodStuff),
-							idsToSearchFor = []
+						let idsToSearchFor = []
 						for (let i = offset; i <= limit; i++) {
-							if (!idResults[i]) {
+							if (typeof idResults[i] === 'undefined') {
 								break
 							}
 							idsToSearchFor.push(idResults[i].id)
 						}
 						if (idsToSearchFor.length) {
-							instance.restoreAttributesFromMapRecursively(goodStuff, originalAttributesByPath)
-							results = yield instance.model.findAll(goodStuff)
+							instance.restoreAttributesFromMapRecursively(readListOptions, originalAttributesMap)
+							readListOptions.where = {id: idsToSearchFor}
+							results = yield instance.model.findAll(readListOptions)
 						}
 					}
 				} else {
-					throw e
+					totalPages = Math.ceil((yield instance.model.count(readListOptions)) / perPage)
+					if ((totalPages > 0) && (page > totalPages)) {
+						page = totalPages
+					}
+					readListOptions.offset = (page - 1) * perPage,
+					readListOptions.perPage + 1
+					results = yield instance.model.findAll(readListOptions)
+				}
+				if (results.length === (perPage + 1)) {
+					results.pop()
+					more = true
+				} else {
+					more = false
 				}
 			}
-			if (readAll) {
-				perPage = results.length
-			} else if (results.length === (perPage + 1)) {
-				results.pop()
-				more = true
-			}
+
 			return {totalPages, page, perPage, more, results}
 		})
 	}

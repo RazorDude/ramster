@@ -1,3 +1,6 @@
+# 1.2.9
+- Another HUGELY important fix - completely rewritten the workaround for the sequelize bug BaseDBComponent.readList. This fixes the issue with nested transactions not working (which is another sequelize bug).
+
 # 1.2.8
 - HUGELY important fix - added a new method to the BaseDBComponent - parseDereferencedObjectValues. It's used by setQueryDataForRelation to go through an object and its nested objects and makes sure Date, Function, SequelizeMethod and Sequelize.Model ones are not recorded as [object Object].
 

@@ -504,7 +504,6 @@ module.exports = {
 			it('should execute successfully and return the entity size in megabytes if folderPath points to a folder and unit is set to 2', function() {
 				return co(function*() {
 					let folderSize = yield getFolderSize(path.join(__dirname, '../toolbelt'), 2)
-					console.log('===> folderSize', folderSize)
 					assert(folderSize < 0.07)
 					return true
 				})
