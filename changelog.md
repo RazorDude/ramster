@@ -1,3 +1,6 @@
+# 1.3.2
+- The Core.loadDB method now correctly runs the dbInjectedModules' setup methods after the associations have been completed.
+
 # 1.3.1
 - The Core.runTests method now re-runs the dbInjectedModules' setup methods after the static data insert.
 

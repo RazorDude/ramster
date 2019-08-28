@@ -218,17 +218,6 @@ class DBModule {
 				}
 			}
 			instance.setDBInComponents()
-			if ((injectModules instanceof Array) && injectModules.length) {
-				for (const i in injectModules) {
-					const moduleName = injectModules[i]
-					if (typeof instance[moduleName].setup === 'function') {
-						let setupResult = instance[moduleName].setup()
-						if (setupResult instanceof Promise) {
-							yield setupResult
-						}
-					}
-				}
-			}
 			return true
 		})
 	}

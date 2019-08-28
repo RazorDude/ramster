@@ -91,6 +91,18 @@ class Core {
 			if (mockMode) {
 				yield db.sequelize.sync({force: true})
 			}
+			const injectModules = config.db.injectModules
+			if ((injectModules instanceof Array) && injectModules.length) {
+				for (const i in injectModules) {
+					const moduleName = injectModules[i]
+					if (typeof db[moduleName].setup === 'function') {
+						let setupResult = db[moduleName].setup()
+						if (setupResult instanceof Promise) {
+							yield setupResult
+						}
+					}
+				}
+			}
 			instance.modules.db = db
 			return true
 		})
