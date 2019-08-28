@@ -1,3 +1,6 @@
+# 1.3.1
+- The Core.runTests method now re-runs the dbInjectedModules' setup methods after the static data insert.
+
 # 1.3.0
 - Important changes to the DB injected modules:
 -> They now have the db property set in them, which is a reference to the db module instance with the injected module itself removed from it

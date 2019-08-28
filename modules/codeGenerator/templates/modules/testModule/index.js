@@ -1,4 +1,3 @@
-'use strict'
 /**
  * Just a test module, containing a test class.
  * @module testModule
@@ -39,6 +38,17 @@ class TestClass {
 			this[testName] = spec[testName]
 			this.specMethodNames.push(testName)
 		}
+	}
+
+	/**
+	 * Returns true, just for a test.
+	 * @returns {Promise<object>} A promise which wraps a generator function. When resolved, returns true.
+	 * @memberof TestClass
+	 */
+	setup() {
+		return co(function*(){
+			return true
+		})
 	}
 
 	/**

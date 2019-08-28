@@ -351,6 +351,20 @@ class Core {
 							console.log('Error while populating mockStaticData, skipping: ', e)
 						}
 					}
+					// run the injected modules setup methods again - after the staticData has been inserted
+					const injectModules = config.db.injectModules
+					if ((injectModules instanceof Array) && injectModules.length) {
+						let db = instance.modules.db
+						for (const i in injectModules) {
+							const moduleName = injectModules[i]
+							if (typeof db[moduleName].setup === 'function') {
+								let setupResult = db[moduleName].setup()
+								if (setupResult instanceof Promise) {
+									yield setupResult
+								}
+							}
+						}
+					}
 					return true
 				})
 			})
