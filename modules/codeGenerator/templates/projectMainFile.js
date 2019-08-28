@@ -1,4 +1,3 @@
-'use strict'
 const
 	argv = require('yargs').argv,
 	co = require('co'),
@@ -22,6 +21,7 @@ if (argv.runTests) {
 		}, 1000)
 	})
 	ramster.runTests({
+		exitProcessOnModuleTestFail: (argv.exitProcessOnModuleTestFail === 'true') || (argv.exitProcessOnModuleTestFail === true),
 		testConfig: (argv.testConfig === 'true') || (argv.testConfig === true),
 		testDB: (argv.testDB === 'true') || (argv.testDB === true),
 		testDBInjectedModules: (argv.testDBInjectedModules === 'true') || (argv.testDBInjectedModules === true),

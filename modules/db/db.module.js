@@ -216,6 +216,20 @@ class DBModule {
 						moduleToInject = new (require(path.join(modulesPath, moduleName)))(config, instance.runningInMockMode)
 					instance[moduleName] = moduleToInject
 				}
+				// set the db in each injected module and run its setup method (if it exists)
+				for (const i in injectModules) {
+					const moduleName = injectModules[i]
+					let newInstance = Object.assign({}, instance),
+						currentModule = instance[moduleName]
+					delete newInstance[moduleName]
+					currentModule.db = newInstance
+					if (typeof currentModule.setup === 'function') {
+						let setupResult = currentModule.setup()
+						if (setupResult instanceof Promise) {
+							yield setupResult
+						}
+					}
+				}
 			}
 			instance.setDBInComponents()
 			return true

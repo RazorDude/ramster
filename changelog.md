@@ -1,3 +1,9 @@
+# 1.3.0
+- Important changes to the DB injected modules:
+-> They now have the db property set in them, which is a reference to the db module instance with the injected module itself removed from it
+-> They now support a setup() method which will be executed after the db property has been set. If it returns a promise, it will be resolved first before the ramster loading process execution continues.
+- If exitProcessOnModuleTestFail is set to true when starting in test mode and a module's tests error out, the test execition will stop there - it will not continue further to other modules.
+
 # 1.2.10
 - And another BaseDBComponent fix + improved testing for it.
 

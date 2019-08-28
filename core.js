@@ -303,7 +303,8 @@ class Core {
 				staticDataFileNames,
 				additionalClasses
 			} = options
-		let syncHistoryFilesCount = 0
+		let syncHistoryFilesCount = 0,
+			testsHaveErrors = false
 		describe(config.projectName, function() {
 			before(function() {
 				this.timeout(50000)
@@ -353,13 +354,13 @@ class Core {
 					return true
 				})
 			})
-			describeSuiteConditionally(testConfig === true, 'config', function() {
+			describeSuiteConditionally((testConfig === true) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'config', function() {
 				it('should execute testConfig successfully', function() {
 					instance.testConfig()
 					return true
 				})
 			})
-			describeSuiteConditionally(testDB === true, 'db module', function() {
+			describeSuiteConditionally((testDB === true) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'db module', function() {
 				it('should test all db module components successfully', function() {
 					const dbModule = instance.modules.db,
 						dbComponents = dbModule.components
@@ -367,7 +368,7 @@ class Core {
 						const dbComponent = dbModule.components[i],
 							{componentName, specMethodNames} = dbComponent
 						describeSuiteConditionally(
-							(specMethodNames instanceof Array) && specMethodNames.length,
+							(specMethodNames instanceof Array) && specMethodNames.length && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)),
 							`db module, component ${componentName}`,
 							function() {
 								for (const j in specMethodNames) {
@@ -379,7 +380,7 @@ class Core {
 					return true
 				})
 			})
-			describeSuiteConditionally(testDBInjectedModules === true, 'db injected modules', function() {
+			describeSuiteConditionally((testDBInjectedModules === true) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'db injected modules', function() {
 				it('should test all db injected modules components successfully', function() {
 					const dbModule = instance.modules.db,
 						dbInjectedModuleNames = dbModule.config.db.injectModules
@@ -390,7 +391,7 @@ class Core {
 						const dbInjectedModule = dbModule[moduleName],
 							{specMethodNames} = dbInjectedModule
 						describeSuiteConditionally(
-							(specMethodNames instanceof Array) && specMethodNames.length,
+							(specMethodNames instanceof Array) && specMethodNames.length && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)),
 							`db injected modules, module ${moduleName}`,
 							function() {
 								for (const j in specMethodNames) {
@@ -402,7 +403,7 @@ class Core {
 					return true
 				})
 			})
-			describeSuiteConditionally((testClients === true) || ((typeof testClients === 'string') && testClients.length), 'client modules', function() {
+			describeSuiteConditionally(((testClients === true) || ((typeof testClients === 'string') && testClients.length)) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'client modules', function() {
 				it('should test all client modules\'s components successfully', function() {
 					const clientModules = instance.modules.clients
 					let moduleNamesToTest = []
@@ -421,7 +422,7 @@ class Core {
 							const clientComponent = clientModule.components[i],
 								{componentName, specMethodNames} = clientComponent
 							describeSuiteConditionally(
-								(specMethodNames instanceof Array) && specMethodNames.length,
+								(specMethodNames instanceof Array) && specMethodNames.length && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)),
 								`client module ${clientModule.moduleName}, component ${componentName}`,
 								function() {
 									for (const j in specMethodNames) {
@@ -434,7 +435,7 @@ class Core {
 					return true
 				})
 			})
-			describeSuiteConditionally((testAPIs === true) || ((typeof testAPIs === 'string') && testAPIs.length), 'client modules', function() {
+			describeSuiteConditionally(((testAPIs === true) || ((typeof testAPIs === 'string') && testAPIs.length)) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'client modules', function() {
 				it('should test all api modules\'s components successfully', function() {
 					const apiModules = instance.modules.apis
 					let moduleNamesToTest = []
@@ -453,7 +454,7 @@ class Core {
 							const apiComponent = apiModule.components[i],
 								{componentName, specMethodNames} = apiComponent
 							describeSuiteConditionally(
-								(specMethodNames instanceof Array) && specMethodNames.length,
+								(specMethodNames instanceof Array) && specMethodNames.length && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)),
 								`client module ${apiModule.moduleName}, component ${componentName}`,
 								function() {
 									for (const j in specMethodNames) {
@@ -466,20 +467,20 @@ class Core {
 					return true
 				})
 			})
-			describeSuiteConditionally(testCronJobs === true, 'cronJobs', function() {
+			describeSuiteConditionally((testCronJobs === true) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'cronJobs', function() {
 				it('should execute testCronJobs successfully', function() {
 					instance.testCronJobs()
 					return true
 				})
 			})
-			describeSuiteConditionally((additionalClasses instanceof Array) && additionalClasses.length, 'additional classes for testing', function() {
+			describeSuiteConditionally((additionalClasses instanceof Array) && additionalClasses.length && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'additional classes for testing', function() {
 				it('should test all classes successfully', function() {
 					for (const i in additionalClasses) {
 						const {getClassInstance, suiteDescription} = additionalClasses[i],
 							classInstance = getClassInstance(instance),
 							{specMethodNames} = classInstance
 						describeSuiteConditionally(
-							(specMethodNames instanceof Array) && specMethodNames.length,
+							(specMethodNames instanceof Array) && specMethodNames.length && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)),
 							suiteDescription,
 							function() {
 								for (const i in specMethodNames) {
@@ -490,7 +491,7 @@ class Core {
 					}
 				})
 			})
-			describeSuiteConditionally(testWebpackBuildTools === true, 'webpack build tools', function() {
+			describeSuiteConditionally((testWebpackBuildTools === true) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'webpack build tools', function() {
 				it('should execute webpackBuildSpec.testMe successfully', function() {
 					webpackBuildSpec.testMe(instance.config, path.join(__dirname, 'test'))
 					return true
@@ -499,6 +500,11 @@ class Core {
 					webpackDevserverSpec.testMe(instance.config, path.join(__dirname, 'test'))
 					return true
 				})
+			})
+			afterEach(function() {
+				if (!testsHaveErrors && (this.currentTest.state === 'failed')) {
+					testsHaveErrors = true
+				}
 			})
 			after(function() {
 				return co(function*() {
