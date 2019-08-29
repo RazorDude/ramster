@@ -1,3 +1,6 @@
+# 1.4.2
+- Access control method hotfix.
+
 # 1.4.1
 - Forgot to remove a console.log I had put in for debugging purposes.
 

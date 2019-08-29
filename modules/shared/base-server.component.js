@@ -187,7 +187,8 @@ class BaseServerComponent {
 							allPresent = true,
 							group = [],
 							groupIndex = null,
-							item = null
+							item = null,
+							noneInGroupPresent = true
 						if (apIds[i] instanceof Array) {
 							allAPsInGroupRequired = true
 							userFieldNameAPIndexGroups.push(group)
@@ -209,6 +210,9 @@ class BaseServerComponent {
 								}
 								continue
 							}
+							if (noneInGroupPresent) {
+								noneInGroupPresent = false
+							}
 							if (nonePresent) {
 								nonePresent = false
 							}
@@ -221,7 +225,7 @@ class BaseServerComponent {
 							}
 						}
 						// block access if APs in the group are required, but not all are present
-						if (allAPsInGroupRequired && !allPresent) {
+						if (allAPsInGroupRequired && !allPresent && !noneInGroupPresent) {
 							throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 0}
 						}
 					}
