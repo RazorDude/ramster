@@ -1,3 +1,6 @@
+# 1.4.0
+- The BaseServerComponent.accessFilters method now supports accessPoint grouping. I.e. instead of numbers only, you can pass arrays of numbers to accessPointIds too - this will block access if one of the accessPoints in the group is present but not all.
+
 # 1.3.2
 - The Core.loadDB method now correctly runs the dbInjectedModules' setup methods after the associations have been completed.
 

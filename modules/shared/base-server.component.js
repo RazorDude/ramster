@@ -145,9 +145,10 @@ class BaseServerComponent {
 	/**
 	 * Executed before certain methods. Limits access to routes based on the logged in user's accessPoints (see the permissions system) and the settings in the options object. Throws a 401 error if the user does not meet the criteria, and yields the route method if access is allowed.
 	 * @param {object} options The list of options for the method.
-	 * @param {number[]} options.accessPointIds An array containing the ids of the access points that the user must have in his role to access the route.
+	 * @param {number[] | Array<number>[]} options.accessPointIds An array containing the ids of the access points that the user must have in his role to access the route.
 	 * @param {function} options.next A @generator function. The method to execute if the user has access.
-	 * @param {boolean} requireAllAPs If set to true, all ids in the options.accessPointIds array must be present in the user's accessPoints to access the route. Otherwise, just one of them is needed.
+	 * @param {boolean} requireAllAPs Alias for requireAllUngroupedAPs, used for backwards compatibility.
+	 * @param {boolean} requireAllUngroupedAPs If set to true, all ungrouped ids in the options.accessPointIds array must be present in the user's accessPoints to access the route. Otherwise, just one of them is needed.
 	 * @returns {function} An express-js style generator function to be mounted using co-express.
 	 * @memberof BaseServerComponent
 	 */
@@ -168,166 +169,200 @@ class BaseServerComponent {
 					nextMethod = (typeof options.next === 'function') ? options.next : instance[options.next]()
 
 				if (apIds instanceof Array) {
-					const requireAllAPs = options.requireAllAPs
-					let apIdMap = {},
-						userFieldNameAPIndexes = [],
-						allPresent = true,
+					const {requireAllAPs, requireAllUngroupedAPs} = options
+					let requireAllAPsInGroupIndexes = [],
+						apIdMap = {},
+						userFieldNameAPIndexGroups = [[]],
+						hasUserFieldValues = false,
 						nonePresent = true
+					if (requireAllAPs || requireAllUngroupedAPs) {
+						requireAllAPsInGroupIndexes.push(0)
+					}
 					userTypeAccessPoints.forEach((ap, index) => {
 						apIdMap[ap.id] = {index, active: ap.active, hasUserFieldName: ap.userFieldName ? true : false}
 					})
 					// check for the existence of the access points themselves
 					for (const i in apIds) {
-						const apData = apIdMap[apIds[i]]
-						if ((typeof apData === 'undefined') || !apData.active) {
-							allPresent = false
-							if (requireAllAPs) {
-								break
+						let allAPsInGroupRequired = false,
+							allPresent = true,
+							group = [],
+							groupIndex = null,
+							item = null
+						if (apIds[i] instanceof Array) {
+							allAPsInGroupRequired = true
+							userFieldNameAPIndexGroups.push(group)
+							item = apIds[i]
+							groupIndex = userFieldNameAPIndexGroups.length - 1
+							requireAllAPsInGroupIndexes.push(groupIndex)
+						} else {
+							item = [apIds[i]]
+							groupIndex = 0
+							group = userFieldNameAPIndexGroups[groupIndex]
+							allAPsInGroupRequired = requireAllAPsInGroupIndexes.indexOf(groupIndex) !== -1
+						}
+						for (const j in item) {
+							const apData = apIdMap[item[j]]
+							if ((typeof apData === 'undefined') || !apData.active) {
+								allPresent = false
+								if (allAPsInGroupRequired) {
+									break
+								}
+								continue
 							}
-							continue
+							if (nonePresent) {
+								nonePresent = false
+							}
+							// if the AP has the "userFieldName" field provided, add its index to the list for later evaluation
+							if (apData.hasUserFieldName) {
+								if (!hasUserFieldValues) {
+									hasUserFieldValues = true
+								}
+								group.push(apData.index)
+							}
 						}
-						if (nonePresent) {
-							nonePresent = false
-						}
-						// if the AP has the "userFieldName" field provided, add its index to the list for later evaluation
-						if (apData.hasUserFieldName) {
-							userFieldNameAPIndexes.push(apData.index)
+						// block access if APs in the group are required, but not all are present
+						if (allAPsInGroupRequired && !allPresent) {
+							throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 0}
 						}
 					}
-					// block access if no APs are present or if all APs are required, but not all are present
-					if (nonePresent || (requireAllAPs && !allPresent)) {
-						throw {customMessage: 'You do not have access to this resource.', status: 403}
+					// block access if no APs are present
+					if (nonePresent) {
+						throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 1}
 					}
 					// check the APs with the "userFieldName" field provided
 					const valueProcessorMethod = options.userFieldValueProcessorMethodName ? instance[options.userFieldValueProcessorMethodName].bind(instance) : (req, value) => value
 					nonePresent = true
-					userFieldNameAPIndexes.forEach((apIndex, i) => {
-						const ap = userTypeAccessPoints[apIndex],
-							userFieldValue = getNested(user, ap.userFieldName),
-							userFieldValueIsAnArray = (userFieldValue instanceof Array)
-						if ((typeof userFieldValue === 'undefined') || !ap.active) {
-							if (requireAllAPs) {
-								throw {customMessage: 'You do not have access to this resource.', status: 403}
-							}
-							return
-						}
-						// if we have to check whether the request has the required value(s)
-						if (ap.searchForUserFieldIn) {
-							const requestFieldValue = getNested(req, ap.searchForUserFieldIn)
-							if (typeof requestFieldValue === 'undefined') {
-								if (requireAllAPs) {
-									throw {customMessage: 'You do not have access to this resource.', status: 403}
+					userFieldNameAPIndexGroups.forEach((groupData, groupIndex) => {
+						const allAPsInGroupRequired = requireAllAPsInGroupIndexes.indexOf(groupIndex) !== -1
+						groupData.forEach((apIndex) => {
+							const ap = userTypeAccessPoints[apIndex],
+								userFieldValue = getNested(user, ap.userFieldName),
+								userFieldValueIsAnArray = (userFieldValue instanceof Array)
+							if ((typeof userFieldValue === 'undefined') || !ap.active) {
+								if (allAPsInGroupRequired) {
+									throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 2}
 								}
 								return
 							}
-							const requestFieldValueIsAnArray = requestFieldValue instanceof Array,
-								rfvActual = requestFieldValueIsAnArray ? requestFieldValue : [requestFieldValue]
-							let hasMatch = false
-							for (const index in rfvActual) {
-								const rfvItem = rfvActual[index],
-									requestFieldValues = [
-										rfvItem, // the value as-is
-										parseInt(rfvItem, 10), // the int value
-										parseFloat(rfvItem), // the float value
-										(rfvItem === true) || (rfvItem === 'true') // the boolean value
-									]
-								if (userFieldValueIsAnArray) {
-									// if the request field value is an array, filter out only the items he has access to
-									let allowedValues = []
-									for (const i in userFieldValue) {
-										const value = userFieldValue[i]
-										for (const j in requestFieldValues) {
-											if (requestFieldValues[j] === value) {
-												allowedValues.push(value)
-											}
-										}
-									}
-									if (allowedValues.length) {
-										if (!hasMatch) {
-											hasMatch = true
-										}
-										if (requestFieldValueIsAnArray) {
-											setNested(req, ap.searchForUserFieldIn, allowedValues)
-										}
-									} else if (requestFieldValueIsAnArray) {
-										setNested(req, ap.searchForUserFieldIn, undefined)
-									}
-								} else {
-									// if the request field value is an array, filter out only the items he has access to
-									let allowedValues = []
-									for (const j in requestFieldValues) {
-										if (requestFieldValues[j] === userFieldValue) {
-											allowedValues.push(userFieldValue)
-										}
-									}
-									if (allowedValues.length) {
-										if (!hasMatch) {
-											hasMatch = true
-										}
-										if (requestFieldValueIsAnArray) {
-											setNested(req, ap.searchForUserFieldIn, allowedValues)
-										}
-									} else if (requestFieldValueIsAnArray) {
-										setNested(req, ap.searchForUserFieldIn, undefined)
-									}
-								}
-								if (hasMatch) {
-									break
-								}
-							}
-							if (!hasMatch) {
-								if (requireAllAPs) {
-									throw {customMessage: 'You do not have access to this resource.', status: 403}
-								}
-								return
-							}
-						}
-						// if we have to set the value of the userField under some key(s) in the request
-						if (ap.setUserFieldValueIn) {
-							// if we're setting the userField's value in multiple objects within an array
-							if (ap.setUserFieldValueIn.indexOf('[]') !== -1) {
-								let fieldPaths = ap.setUserFieldValueIn.split('[]'),
-									containerPath = fieldPaths[0],
-									inChildPath = fieldPaths[1],
-									container = getNested(req, containerPath)
-								if (!(container instanceof Array)) {
-									if (requireAllAPs) {
-										throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400}
+							// if we have to check whether the request has the required value(s)
+							if (ap.searchForUserFieldIn) {
+								const requestFieldValue = getNested(req, ap.searchForUserFieldIn)
+								if (typeof requestFieldValue === 'undefined') {
+									if (allAPsInGroupRequired) {
+										throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 3}
 									}
 									return
 								}
-								const processedValue = valueProcessorMethod(req, userFieldValue)
-								container.forEach((item, index) => {
-									if (!setNested(req, `${containerPath}.${index}.${inChildPath}`, processedValue)) {
-										if (requireAllAPs) {
-											throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400}
+								const requestFieldValueIsAnArray = requestFieldValue instanceof Array,
+									rfvActual = requestFieldValueIsAnArray ? requestFieldValue : [requestFieldValue]
+								let hasMatch = false
+								for (const index in rfvActual) {
+									const rfvItem = rfvActual[index],
+										requestFieldValues = [
+											rfvItem, // the value as-is
+											parseInt(rfvItem, 10), // the int value
+											parseFloat(rfvItem), // the float value
+											(rfvItem === true) || (rfvItem === 'true') // the boolean value
+										]
+									if (userFieldValueIsAnArray) {
+										// if the request field value is an array, filter out only the items he has access to
+										let allowedValues = []
+										for (const i in userFieldValue) {
+											const value = userFieldValue[i]
+											for (const j in requestFieldValues) {
+												if (requestFieldValues[j] === value) {
+													allowedValues.push(value)
+												}
+											}
+										}
+										if (allowedValues.length) {
+											if (!hasMatch) {
+												hasMatch = true
+											}
+											if (requestFieldValueIsAnArray) {
+												setNested(req, ap.searchForUserFieldIn, allowedValues)
+											}
+										} else if (requestFieldValueIsAnArray) {
+											setNested(req, ap.searchForUserFieldIn, undefined)
+										}
+									} else {
+										// if the request field value is an array, filter out only the items he has access to
+										let allowedValues = []
+										for (const j in requestFieldValues) {
+											if (requestFieldValues[j] === userFieldValue) {
+												allowedValues.push(userFieldValue)
+											}
+										}
+										if (allowedValues.length) {
+											if (!hasMatch) {
+												hasMatch = true
+											}
+											if (requestFieldValueIsAnArray) {
+												setNested(req, ap.searchForUserFieldIn, allowedValues)
+											}
+										} else if (requestFieldValueIsAnArray) {
+											setNested(req, ap.searchForUserFieldIn, undefined)
+										}
+									}
+									if (hasMatch) {
+										break
+									}
+								}
+								if (!hasMatch) {
+									if (allAPsInGroupRequired) {
+										throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 4}
+									}
+									return
+								}
+							}
+							// if we have to set the value of the userField under some key(s) in the request
+							if (ap.setUserFieldValueIn) {
+								// if we're setting the userField's value in multiple objects within an array
+								if (ap.setUserFieldValueIn.indexOf('[]') !== -1) {
+									let fieldPaths = ap.setUserFieldValueIn.split('[]'),
+										containerPath = fieldPaths[0],
+										inChildPath = fieldPaths[1],
+										container = getNested(req, containerPath)
+									if (!(container instanceof Array)) {
+										if (allAPsInGroupRequired) {
+											throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 5}
 										}
 										return
 									}
-								})
-							}
-							// otherwise, if we have to set it for a single item but it didn't work
-							else if (!setNested(req, ap.setUserFieldValueIn, valueProcessorMethod(req, userFieldValue))) {
-								if (requireAllAPs) {
-									throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400}
+									const processedValue = valueProcessorMethod(req, userFieldValue)
+									container.forEach((item, index) => {
+										if (!setNested(req, `${containerPath}.${index}.${inChildPath}`, processedValue)) {
+											if (allAPsInGroupRequired) {
+												throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 6}
+											}
+											return
+										}
+									})
 								}
-								return
+								// otherwise, if we have to set it for a single item but it didn't work
+								else if (!setNested(req, ap.setUserFieldValueIn, valueProcessorMethod(req, userFieldValue))) {
+									if (allAPsInGroupRequired) {
+										throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 7}
+									}
+									return
+								}
 							}
-						}
-						if (nonePresent) {
-							nonePresent = false
-						}
+							if (nonePresent) {
+								nonePresent = false
+							}
+						})
 					})
-					if (userFieldNameAPIndexes.length && nonePresent) {
-						throw {customMessage: 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', status: 403}
+					if (hasUserFieldValues && nonePresent) {
+						throw {customMessage: 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', status: 403, stage: 8}
 					}
 					yield* nextMethod(req, res, next)
 					return
 				}
 
 				// throw the user out, because he's failed all checks
-				throw {customMessage: 'You do not have access to this resource.', status: 403}
+				throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 9}
 			} catch (e) {
+				console.log('===> error', e)
 				req.locals.error = e
 				next()
 			}
