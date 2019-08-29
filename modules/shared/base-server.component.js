@@ -362,7 +362,6 @@ class BaseServerComponent {
 				// throw the user out, because he's failed all checks
 				throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 9}
 			} catch (e) {
-				console.log('===> error', e)
 				req.locals.error = e
 				next()
 			}
