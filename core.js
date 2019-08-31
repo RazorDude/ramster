@@ -52,7 +52,7 @@ class Core {
 			}
 			this.modules = {}
 		} catch (e) {
-			console.log(e)
+			console.error(e)
 		}
 	}
 

@@ -1,3 +1,6 @@
+# 1.4.3
+- Removed the deprecation message - not its time yet ;)
+
 # 1.4.2
 - Access control method hotfix.
 

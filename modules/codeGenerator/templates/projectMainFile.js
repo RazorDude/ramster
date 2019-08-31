@@ -44,7 +44,7 @@ if (argv.runTests) {
 		yield ramster.loadAPIs()
 		ramster.loadCRONJobs()
 		yield ramster.listen()
-	}).then((res) => true, (err) => console.log(err))
+	}).then((res) => true, (err) => console.error(err))
 }
 
 module.exports = ramster

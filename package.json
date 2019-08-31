@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -51,7 +51,7 @@
     "winston": "^2.4.4",
     "yargs": "^11.1.0"
   },
-  "deprecated": true,
+  "deprecated": false,
   "description": "A standalone NodeJS MVC boilerplate.",
   "homepage": "https://github.com/RazorDude/ramster#readme",
   "keywords": [
