@@ -1,3 +1,7 @@
+# 1.5.0
+- Added the ability to request nested relReadKeys - i.e. realReadKeys: {user: true, 'user.country': true}. From this example, "user: true" can be omitted, as 'user.country': true will add the users relation anyway.
+- Fixed and improved the BaseServerComponent.accessFilter method - it now correctly covers all cases.
+
 # 1.4.3
 - Removed the deprecation message - not its time yet ;)
 

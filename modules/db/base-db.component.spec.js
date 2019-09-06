@@ -1315,7 +1315,10 @@ module.exports = {
 						componentName: 'testComponent2',
 						db: changeableInstance.db,
 						dependencyMap: {associationKeys: ['test3']},
-						associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}}
+						associationsConfig: {test3: {type: 'belongsTo', foreignKey: 'test3Id'}},
+						relations: {
+							test3: {includeItem: {model: 'test3Model', as: 'test3'}, order: [['id', 'desc']]}
+						}
 					},
 					test3: {
 						model: 'test3Model',
@@ -1336,6 +1339,16 @@ module.exports = {
 					test5: {
 						model: 'test5Model',
 						componentName: 'test5',
+						db: changeableInstance.db,
+						dependencyMap: {associationKeys: []},
+						associationsConfig: {test6: {type: 'belongsTo', foreignKey: 'test6Id'}},
+						relations: {
+							test6: {includeItem: {model: 'test6Model', as: 'test6'}, order: [['id', 'desc']]}
+						}
+					},
+					test6: {
+						model: 'test6Model',
+						componentName: 'test6',
 						db: changeableInstance.db,
 						dependencyMap: {associationKeys: []}
 					}
@@ -1366,7 +1379,7 @@ module.exports = {
 						'$test2.test3.description$': 'testDescription',
 						'$test2.test3.test5.description$': 'testInnerDescription'
 					}),
-					{include, order} = instance.getRelationObjects({test4: true}, requiredRelationsData),
+					{include, order} = instance.getRelationObjects({test4: true, 'test2.test3.test5.test6': true}, requiredRelationsData),
 					topLevelIncludeShouldBe = [
 						{model: 'test1Model', as: 'test1', required: true},
 						{model: 'testComponent2Model', as: 'test2', required: true},
@@ -1406,6 +1419,11 @@ module.exports = {
 					firstIncludeItem.include[0].where.description.$iLike,
 					'%testInnerDescription',
 					`Bad value ${firstIncludeItem.include[0].where.description.$iLike} for firstIncludeItem.include[0].where.description.$iLike, expected %testInnerDescription.`
+				)
+				assert.strictEqual(
+					firstIncludeItem.include[0].include[0].as,
+					'test6',
+					`Bad value ${firstIncludeItem.include[0].include[0].as} for firstIncludeItem.include[0].include[0].as, expected test6.`
 				)
 			})
 		})

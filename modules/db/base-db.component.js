@@ -747,9 +747,38 @@ class BaseDBComponent {
 		}
 		if (relReadKeys) {
 			for (const relationName in relReadKeys) {
-				const relationData = this.relations[relationName]
-				if (!relationData) {
-					throw {customMessage: `No relation "${relationName}" exists for component "${this.componentName}".`}
+				let actualRelationName = relationName,
+					relationData = null
+				// support nested relReadKeys, i.e. "{users.country: true}"
+				if (relationName.indexOf('.') !== -1) {
+					let relationPath = relationName.split('.')
+					actualRelationName = relationPath[0]
+					const originalRelationData = this.relations[actualRelationName]
+					if (!originalRelationData) {
+						throw {customMessage: `No relation "${actualRelationName}" exists for component "${this.componentName}".`, stage: 0}
+					}
+					relationData = JSON.parse(JSON.stringify(originalRelationData))
+					this.parseDereferencedObjectValues(originalRelationData, relationData)
+					let currentDBComponent = dbComponents[this.associationsConfig[relationData.includeItem.as].componentName || relationData.includeItem.as],
+						currentIncludeItem = relationData.includeItem
+					for (let i = 1; i < relationPath.length; i++) {
+						const innerRelationName = relationPath[i],
+							innerRelation = currentDBComponent.relations[innerRelationName]
+						if (!innerRelation) {
+							throw {customMessage: `No relation "${innerRelationName}" exists for component "${currentDBComponent.componentName}".`, stage: 1}
+						}
+						if (!currentIncludeItem.include) {
+							currentIncludeItem.include = []
+						}
+						currentIncludeItem.include.push({...innerRelation.includeItem, order: innerRelation.order})
+						currentDBComponent = dbComponents[currentDBComponent.associationsConfig[innerRelation.includeItem.as].componentName || innerRelation.includeItem.as]
+						currentIncludeItem = currentIncludeItem.include[currentIncludeItem.include.length - 1]
+					}
+				} else {
+					relationData = this.relations[actualRelationName]
+					if (!relationData) {
+						throw {customMessage: `No relation "${actualRelationName}" exists for component "${this.componentName}".`, stage: 2}
+					}
 				}
 				const associationConfigItemComponentName = associationsConfig[relationData.includeItem.as].componentName
 				this.setQueryDataForRelation(
@@ -757,7 +786,7 @@ class BaseDBComponent {
 					include,
 					associationNameMap,
 					relationData.includeItem,
-					relationName,
+					actualRelationName,
 					{}
 				)
 				if (relationData.order instanceof Array) {
@@ -1197,7 +1226,7 @@ class BaseDBComponent {
 					const assocItem = associationsConfig[alias]
 					componentNameToAssociationNameMap[assocItem.componentName || alias] = alias
 				}
-				masterOf.forEach((item, index) => {
+				masterOf.forEach((item) => {
 					readListOptions.relReadKeys[componentNameToAssociationNameMap[item]] = true
 				})
 				let existingItems = (yield instance.readList(readListOptions)).results,
