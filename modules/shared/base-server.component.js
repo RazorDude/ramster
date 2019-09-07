@@ -186,6 +186,7 @@ class BaseServerComponent {
 					for (const i in apIds) {
 						if (apIds[i] instanceof Array) {
 							accessPointGroups.push(apIds[i])
+							userFieldNameAPIndexGroups.push([])
 							requireAllAPsInGroupIndexes.push(accessPointGroups.length - 1)
 						} else {
 							accessPointGroups[0].push(apIds[i])
