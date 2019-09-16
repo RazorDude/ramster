@@ -102,6 +102,16 @@ class Core {
 						}
 					}
 				}
+			} else if (injectModules && (typeof injectModules === 'object')) {
+				for (const moduleName in injectModules) {
+					const moduleData = injectModules[i]
+					if (typeof db[moduleName].setup === 'function') {
+						let setupResult = db[moduleName].setup(moduleData.setupOptions || {})
+						if (setupResult instanceof Promise) {
+							yield setupResult
+						}
+					}
+				}
 			}
 			instance.modules.db = db
 			return true

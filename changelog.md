@@ -1,3 +1,6 @@
+# 1.5.2
+- Config.db.injectModules can now be an object of type {[moduleName: string]: {setuOptions: any}}.
+
 # 1.5.1
 - Access points hotfix.
 
