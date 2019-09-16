@@ -1,3 +1,6 @@
+# 1.5.4
+- More hotfixes for the v1.5.2 functionality.
+
 # 1.5.3
 - Hotfix.
 

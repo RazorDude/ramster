@@ -216,6 +216,13 @@ class DBModule {
 						moduleToInject = new (require(path.join(modulesPath, moduleName)))(config, instance.runningInMockMode)
 					instance[moduleName] = moduleToInject
 				}
+			} else if (injectModules && (typeof injectModules === 'object')) {
+				const modulesPath = injectableModulesPath || path.join(modulePath, '../')
+				for (const moduleName in injectModules) {
+					const moduleData = injectModules[moduleName],
+						moduleToInject = new (require(path.join(modulesPath, moduleName)))(config, instance.runningInMockMode)
+					instance[moduleName] = moduleToInject
+				}
 			}
 			instance.setDBInComponents()
 			return true
@@ -290,6 +297,14 @@ class DBModule {
 		if ((injectModules instanceof Array) && injectModules.length) {
 			for (const i in injectModules) {
 				const moduleName = injectModules[i]
+				let injectedModule = this[moduleName],
+					dbClone = Object.assign({}, this)
+				delete dbClone[moduleName]
+				injectedModule.db = dbClone
+			}
+		} else if (injectModules && (typeof injectModules === 'object')) {
+			for (const moduleName in injectModules) {
+				const moduleData = injectModules[moduleName]
 				let injectedModule = this[moduleName],
 					dbClone = Object.assign({}, this)
 				delete dbClone[moduleName]
