@@ -1,3 +1,6 @@
+# 1.5.3
+- Hotfix.
+
 # 1.5.2
 - Config.db.injectModules can now be an object of type {[moduleName: string]: {setuOptions: any}}.
 

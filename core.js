@@ -104,7 +104,7 @@ class Core {
 				}
 			} else if (injectModules && (typeof injectModules === 'object')) {
 				for (const moduleName in injectModules) {
-					const moduleData = injectModules[i]
+					const moduleData = injectModules[moduleName]
 					if (typeof db[moduleName].setup === 'function') {
 						let setupResult = db[moduleName].setup(moduleData.setupOptions || {})
 						if (setupResult instanceof Promise) {
