@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The base-server.component module. Contains the BaseServerComponent class.
  * @module baseServerComponentModule
@@ -402,7 +401,7 @@ class BaseServerComponent {
 			{dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				res.json({result: yield dbComponent.read(instance.decodeQueryValues(req.query))})
+				res.json({result: yield dbComponent.read(req.query)})
 			} catch (e) {
 				req.locals.error = e
 				next()
@@ -421,7 +420,7 @@ class BaseServerComponent {
 			{dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				res.json(yield dbComponent.readList(instance.decodeQueryValues(req.query)))
+				res.json(yield dbComponent.readList(req.query))
 			} catch (e) {
 				req.locals.error = e
 				next()
@@ -479,11 +478,10 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	readSelectList() {
-		const instance = this,
-			{dbComponent} = this
+		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				let query = instance.decodeQueryValues(req.query),
+				let query = req.query,
 					options = {readAll: true, filters: query.filters, relReadKeys: query.relReadKeys || {}, orderDirection: query.orderDirection || 'asc'},
 					prependString = query.prependString || '',
 					appendString = query.appendString || '',
@@ -512,7 +510,7 @@ class BaseServerComponent {
 
 				let data = yield dbComponent.readList(options),
 					results = []
-				data.results.forEach((row, index) => {
+				data.results.forEach((row) => {
 					let text = '',
 						concatenateWith = query.concatenateWith,
 						lastConcatenator = null

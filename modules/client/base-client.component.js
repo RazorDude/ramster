@@ -111,12 +111,11 @@ class BaseClientComponent extends BaseServerComponent {
 	 * @memberof BaseClientComponent
 	 */
 	readList() {
-		const instance = this,
-			{componentName, dbComponent, module} = this
+		const {componentName, dbComponent, module} = this
 		return function* (req, res, next) {
 			try {
 				let savedSearchData = null,
-					query = instance.decodeQueryValues(req.query),
+					query = req.query,
 					staticFilters = query.staticFilters
 				const currentUser = req.user,
 					searchComponentName = query.searchComponentName || componentName
