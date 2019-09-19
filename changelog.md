@@ -1,3 +1,6 @@
+# 1.5.6
+- Hotfix for readSelectList - only add concatenating strings for existing titleFields.
+
 # 1.5.5
 - Hotfix for readSelectList - no longer executing decodeQueryValues twice.
 

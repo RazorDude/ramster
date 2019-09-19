@@ -527,11 +527,13 @@ class BaseServerComponent {
 								value = value && (value !== '') ? 'Yes' : 'No'
 							}
 							text += value
-							if (concatenateWith instanceof Array) {
-								lastConcatenator = (concatenateWith[fIndex] || ' ')
-								text += lastConcatenator
-							} else {
-								text += concatenateWith
+							if ((typeof value !== 'undefined') && (`${value}`).length) {
+								if (concatenateWith instanceof Array) {
+									lastConcatenator = (concatenateWith[fIndex] || ' ')
+									text += lastConcatenator
+								} else {
+									text += concatenateWith
+								}
 							}
 						})
 						if (text.length) {
