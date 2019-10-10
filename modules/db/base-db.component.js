@@ -137,6 +137,11 @@ class BaseDBComponent {
 		 * @type {DBModule}
 		 */
 		this.db = undefined
+		/**
+		 * An array of image resizing options, according to npmjs/sharp's docs, to be passed to .resize() in saveImage(). Can also be provided globally in the dbConfig. Providing it on a per-class basis always overrides the globalConfig value. If not provided, the image will not be resized.
+		 * @type {any[]}
+		 */
+		this.imageResizingOptions = undefined
 	}
 
 	/**
@@ -867,10 +872,15 @@ class BaseDBComponent {
 					throw {customMessage: `Invalid or unsupported image file type "${extName}".`}
 				}
 				yield fs.mkdirp(outputFolderPath)
+				const imageResizingOptions = instance.imageResizingOptions || db.config.db.imageResizingOptions || null
 				let inputFileData = yield fs.readFile(inputFilePath),
 					outputFile = yield fs.open(path.join(outputFolderPath, `${outputFileName}.png`), 'w')
 				if (extName !== '.png') {
 					inputFileData = yield sharp(inputFileData).png().toBuffer()
+				}
+				if (imageResizingOptions instanceof Array) {
+					let op = sharp(inputFileData)
+					inputFileData = yield op.resize.call(op, imageResizingOptions).toBuffer()
 				}
 				yield fs.writeFile(outputFile, inputFileData)
 				yield fs.close(outputFile)

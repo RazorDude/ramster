@@ -1432,15 +1432,24 @@ module.exports = {
 		const instance = this,
 			{componentName, db} = this,
 			now = moment.utc().valueOf()
+		let changeableInstance = this
 		describe('baseDBComponent.saveImage', function() {
 			before(function() {
 				this.timeout(5000)
 				return co(function*() {
 					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpg'), path.join(db.config.globalUploadPath, `example_${now}.badExtension`))
 					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpg'), path.join(db.config.globalUploadPath, `example_${now}.jpg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpg'), path.join(db.config.globalUploadPath, `example_${now}_2.jpg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpg'), path.join(db.config.globalUploadPath, `example_${now}_3.jpg`))
 					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpeg'), path.join(db.config.globalUploadPath, `example_${now}.jpeg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpeg'), path.join(db.config.globalUploadPath, `example_${now}_2.jpeg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.jpeg'), path.join(db.config.globalUploadPath, `example_${now}_3.jpeg`))
 					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.svg'), path.join(db.config.globalUploadPath, `example_${now}.svg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.svg'), path.join(db.config.globalUploadPath, `example_${now}_2.svg`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.svg'), path.join(db.config.globalUploadPath, `example_${now}_3.svg`))
 					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.png'), path.join(db.config.globalUploadPath, `example_${now}.png`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.png'), path.join(db.config.globalUploadPath, `example_${now}_2.png`))
+					yield fs.copyFile(path.join(db.config.globalStoragePath, 'test/example.png'), path.join(db.config.globalUploadPath, `example_${now}_3.png`))
 					return true
 				})
 			})
@@ -1588,7 +1597,8 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully and save the image if it is a .png file', function() {
+
+			it('should execute successfully and save the image if it is a .png file and no resizing options are provided', function() {
 				return co(function*() {
 					yield instance.saveImage(`example_${now}.png`, 'ouput', 1)
 					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput.png`))
@@ -1597,7 +1607,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully, convert the image to png and save it if it is a .jpg file', function() {
+			it('should execute successfully, convert the image to png and save it if it is a .jpg file and no resizing options are provided', function() {
 				return co(function*() {
 					yield instance.saveImage(`example_${now}.jpg`, 'ouput1', 1)
 					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput1.png`))
@@ -1606,7 +1616,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully, convert the image to png and save it if it is a .jpeg file', function() {
+			it('should execute successfully, convert the image to png and save it if it is a .jpeg file and no resizing options are provided', function() {
 				return co(function*() {
 					yield instance.saveImage(`example_${now}.jpeg`, 'ouput2', 1)
 					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput2.png`))
@@ -1615,7 +1625,7 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully, convert the image to png and save it if it is an .svg file', function() {
+			it('should execute successfully, convert the image to png and save it if it is an .svg file and no resizing options are provided', function() {
 				return co(function*() {
 					yield instance.saveImage(`example_${now}.svg`, 'ouput3', 1)
 					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput3.png`))
@@ -1624,8 +1634,86 @@ module.exports = {
 					return true
 				})
 			})
+
+			it('should execute successfully and save the image if it is a .png file and resizing options are provided in the db config', function() {
+				return co(function*() {
+					changeableInstance.db.config.db.imageResizingOptions = [1024, 768, {fit: 'inside'}]
+					yield instance.saveImage(`example_${now}_2.png`, 'ouput_rsz_dbconf', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_dbconf.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_dbconf.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is a .jpg file and resizing options are provided in the db config', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}_2.jpg`, 'ouput_rsz_dbconf1', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_dbconf1.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_dbconf1.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is a .jpeg file and resizing options are provided in the db config', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}_2.jpeg`, 'ouput_rsz_dbconf2', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_dbconf2.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_dbconf2.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is an .svg file and resizing options are provided in the db config', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}_2.svg`, 'ouput_rsz_dbconf3', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_dbconf3.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_dbconf3.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+
+			it('should execute successfully and save the image if it is a .png file and resizing options are provided in the component config', function() {
+				return co(function*() {
+					delete changeableInstance.db.config.db.imageResizingOptions
+					changeableInstance.imageResizingOptions = [1024, 768, {fit: 'inside'}]
+					yield instance.saveImage(`example_${now}_3.png`, 'ouput_rsz_cmpconf', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_cmpconf.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_cmpconf.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is a .jpg file and resizing options are provided in the component properties', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}_3.jpg`, 'ouput_rsz_cmpconf1', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_cmpconf1.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_cmpconf1.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is a .jpeg file and resizing options are provided in the component properties', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}_3.jpeg`, 'ouput_rsz_cmpconf2', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_cmpconf2.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_cmpconf2.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
+			it('should execute successfully, convert the image to png and save it if it is an .svg file and resizing options are provided in the component properties', function() {
+				return co(function*() {
+					yield instance.saveImage(`example_${now}_3.svg`, 'ouput_rsz_cmpconf3', 1)
+					let stats = yield fs.lstat(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_cmpconf3.png`))
+					yield fs.remove(path.join(db.config.globalStoragePath, `images/${componentName}/1/ouput_rsz_cmpconf3.png`))
+					assert(stats.isFile())
+					return true
+				})
+			})
 			after(function() {
 				return co(function*() {
+					delete changeableInstance.imageResizingOptions
 					yield fs.remove(path.join(db.config.globalUploadPath, `example_${now}.badExtension`))
 					return true
 				})
