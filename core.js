@@ -375,7 +375,7 @@ class Core {
 					}
 					// run the injected modules setup methods again - after the staticData has been inserted
 					const injectModules = config.db.injectModules
-					if ((injectModules instanceof Array) && injectModules.length) {
+					if (injectModules) {
 						let db = instance.modules.db
 						for (const i in injectModules) {
 							const moduleName = injectModules[i]

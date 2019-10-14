@@ -1,3 +1,6 @@
+# 1.6.1
+- HOTFIX - now re-running the dbInjected modules' setup methods post static data insert again.
+
 # 1.6.0
 - Added support for image resizing to BaseDBComponent.saveImage. If a valid imageResizingOptions array of method arguments is provided either through config.db.imageResizingOptions or through a DBComponent class property of the same name (which overrides the imageResizingOptions from the config), sharp.resize(imageResizingOptions) will be executed before the data is save to the output file. Please refer to the sharp docs in npmjs for info on the contents of the imageResizingOptions array.
 
