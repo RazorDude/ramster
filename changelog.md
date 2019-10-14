@@ -1,3 +1,6 @@
+# 1.6.2
+- Another hotfix for the same thing.
+
 # 1.6.1
 - HOTFIX - now re-running the dbInjected modules' setup methods post static data insert again.
 

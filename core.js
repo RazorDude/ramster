@@ -375,12 +375,23 @@ class Core {
 					}
 					// run the injected modules setup methods again - after the staticData has been inserted
 					const injectModules = config.db.injectModules
-					if (injectModules) {
+					if ((injectModules instanceof Array) && injectModules.length) {
 						let db = instance.modules.db
 						for (const i in injectModules) {
 							const moduleName = injectModules[i]
 							if (typeof db[moduleName].setup === 'function') {
 								let setupResult = db[moduleName].setup()
+								if (setupResult instanceof Promise) {
+									yield setupResult
+								}
+							}
+						}
+					} else if (injectModules && Object.keys(injectModules).length) {
+						let db = instance.modules.db
+						for (const moduleName in injectModules) {
+							const moduleData = injectModules[moduleName]
+							if (typeof db[moduleName].setup === 'function') {
+								let setupResult = db[moduleName].setup(moduleData.setupOptions || {})
 								if (setupResult instanceof Promise) {
 									yield setupResult
 								}
