@@ -1,3 +1,9 @@
+# 1.6.3
+- Extended the BaseDBComponent.saveImage's capabilities by adding support for multiple image file formats, apart from png - heif, jpeg/jpg, tiff and webp.
+-> The method now accepts a fourth optional argument - outputFileType. This is the type that will be converted to.
+-> config.db now has a new option - defaultImageOutputFileType. This will be used as fallback if outputFileType is not provided. Finally, if defaultImageOutputFileType is not present in the config either, the method will fall back to using .png, as it did before.
+-> The BaseDBComponent class now has a new property - imageOutputFileFormatsMethodNameMap. The keys of this object are the accepted output file extensions and the values are the sharp.js method names for the given file formats.
+
 # 1.6.2
 - Another hotfix for the same thing.
 

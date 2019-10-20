@@ -142,6 +142,18 @@ class BaseDBComponent {
 		 * @type {any[]}
 		 */
 		this.imageResizingOptions = undefined
+		/**
+		 * A map of allowed image output file formats and their corresponding methods in sharp.js.
+		 * @type {{[fileFormatName: string]: string}}
+		 */
+		this.imageOutputFileFormatsMethodNameMap = {
+			heif: 'heif',
+			jpeg: 'jpeg',
+			jpg: 'jpeg',
+			png: 'png',
+			tiff: 'tiff',
+			webp: 'webp'
+		}
 	}
 
 	/**
@@ -846,12 +858,13 @@ class BaseDBComponent {
 	 * @param {string} inputFileName The name of the input file as saved in the uploads folder.
 	 * @param {string} outputFileName The name of the input file as saved in the uploads folder.
 	 * @param {number} dbObjectId The id of the db item the image is for.
+	 * @param {string} outputFileType (optional) The extension of the output file - png, jpeg, webp, tiff or heif.
 	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with true.
 	 * @memberof BaseDBComponent
 	 */
-	saveImage(inputFileName, outputFileName, dbObjectId) {
+	saveImage(inputFileName, outputFileName, dbObjectId, outputFileType) {
 		const instance = this,
-			{allowedImageTypes, componentName, db} = instance
+			{allowedImageTypes, componentName, db, imageOutputFileFormatsMethodNameMap} = instance
 		return co(function*() {
 			if ((typeof inputFileName !== 'string') || !inputFileName.length) {
 				throw {customMessage: 'Invalid inputFileName provided. Please provide a non-empty string.'}
@@ -872,15 +885,19 @@ class BaseDBComponent {
 					throw {customMessage: `Invalid or unsupported image file type "${extName}".`}
 				}
 				yield fs.mkdirp(outputFolderPath)
-				const imageResizingOptions = instance.imageResizingOptions || db.config.db.imageResizingOptions || null
+				const imageResizingOptions = instance.imageResizingOptions || db.config.db.imageResizingOptions || null,
+					outputExtName = outputFileType || db.config.db.defaultImageOutputFileType || 'png'
 				let inputFileData = yield fs.readFile(inputFilePath),
-					outputFile = yield fs.open(path.join(outputFolderPath, `${outputFileName}.png`), 'w')
-				if (extName !== '.png') {
-					inputFileData = yield sharp(inputFileData).png().toBuffer()
+					outputFile = yield fs.open(path.join(outputFolderPath, `${outputFileName}.${outputExtName}`), 'w')
+				if (extName !== `.${outputExtName}`) {
+					inputFileData = yield sharp(inputFileData)[imageOutputFileFormatsMethodNameMap[outputExtName]]().toBuffer()
 				}
 				if (imageResizingOptions instanceof Array) {
-					let op = sharp(inputFileData)
-					inputFileData = yield op.resize.call(op, imageResizingOptions).toBuffer()
+					let op = sharp(inputFileData),
+						metadata = yield op.metadata()
+					if ((metadata.width > imageResizingOptions[0]) || (metadata.height > imageResizingOptions[1])) {
+						inputFileData = yield op.resize.call(op, imageResizingOptions).toBuffer()
+					}
 				}
 				yield fs.writeFile(outputFile, inputFileData)
 				yield fs.close(outputFile)
