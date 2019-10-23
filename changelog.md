@@ -1,3 +1,6 @@
+# 1.6.5
+- dbInjectedModules now properly import their spec.js files.
+
 # 1.6.4
 - Hotfix for Core.runTests - dbInjectedModules tests can now be ran for non-array configs.
 

@@ -209,20 +209,40 @@ class DBModule {
 				}
 			}
 			const injectModules = config.db.injectModules
-			if ((injectModules instanceof Array) && injectModules.length) {
-				const modulesPath = injectableModulesPath || path.join(modulePath, '../')
-				for (const i in injectModules) {
-					const moduleName = injectModules[i],
-						moduleToInject = new (require(path.join(modulesPath, moduleName)))(config, instance.runningInMockMode)
-					instance[moduleName] = moduleToInject
+			let injectModuleNames = []
+			if ((typeof injectModules === 'object') && (injectModules !== null)) {
+				if (injectModules instanceof Array) {
+					injectModuleNames = injectModules
+				} else {
+					injectModuleNames = Object.keys(injectModules)
 				}
-			} else if (injectModules && (typeof injectModules === 'object')) {
-				const modulesPath = injectableModulesPath || path.join(modulePath, '../')
-				for (const moduleName in injectModules) {
-					const moduleData = injectModules[moduleName],
-						moduleToInject = new (require(path.join(modulesPath, moduleName)))(config, instance.runningInMockMode)
-					instance[moduleName] = moduleToInject
+			}
+			const modulesPath = injectableModulesPath || path.join(modulePath, '../')
+			for (const i in injectModuleNames) {
+				const moduleToInjectName = injectModuleNames[i],
+					moduleToInjectPath = path.join(modulesPath, moduleToInjectName)
+				let moduleToInject = new (require(moduleToInjectPath))(config, instance.runningInMockMode),
+					hasSpec = false
+				try {
+					let spec = require(path.join(moduleToInjectPath, 'index.spec.js'))
+					hasSpec = true
+					moduleToInject.specMethodNames = []
+					if ((typeof spec !== 'object') || (spec === null)) {
+						throw {customMessage: `Invalid spec file for the DB module's injected module "${module}".`}
+					}
+					for (const key in spec) {
+						let specMethod = spec[key]
+						if (typeof specMethod === 'function') {
+							moduleToInject[key] = specMethod
+							moduleToInject.specMethodNames.push(key)
+						}
+					}
+				} catch (e) {
+					if (hasSpec) {
+						throw e
+					}
 				}
+				instance[moduleToInjectName] = moduleToInject
 			}
 			instance.setDBInComponents()
 			return true
