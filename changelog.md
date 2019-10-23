@@ -1,3 +1,6 @@
+# 1.6.4
+- Hotfix for Core.runTests - dbInjectedModules tests can now be ran for non-array configs.
+
 # 1.6.3
 - Extended the BaseDBComponent.saveImage's capabilities by adding support for multiple image file formats, apart from png - heif, jpeg/jpg, tiff and webp.
 -> The method now accepts a fourth optional argument - outputFileType. This is the type that will be converted to.

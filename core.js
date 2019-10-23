@@ -430,8 +430,14 @@ class Core {
 			describeSuiteConditionally((testDBInjectedModules === true) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'db injected modules', function() {
 				it('should test all db injected modules components successfully', function() {
 					const dbModule = instance.modules.db,
-						dbInjectedModuleNames = dbModule.config.db.injectModules
-					if (!(dbInjectedModuleNames instanceof Array) || !dbInjectedModuleNames.length) {
+						dbInjectedModulesConfig =  dbModule.config.db.injectModules
+					let dbInjectedModuleNames = []
+					if (dbInjectedModulesConfig instanceof Array) {
+						dbInjectedModuleNames = dbInjectedModulesConfig
+					} else {
+						dbInjectedModuleNames = Object.keys(dbInjectedModulesConfig)
+					}
+					if (!dbInjectedModuleNames.length) {
 						return true
 					}
 					dbInjectedModuleNames.forEach((moduleName) => {
