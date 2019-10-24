@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The base-server.module module. Contains the BaseServerModule class.
  * @module baseServerModuleModule

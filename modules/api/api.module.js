@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The api module. Contains the APIModule class.
  * @module apiModule
@@ -10,7 +9,7 @@ const
 	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
 	co = require('co'),
-	{decodeQueryValues} = require('../toolbelt'),
+	{checkRoutes, decodeQueryValues} = require('../toolbelt'),
 	express = require('express'),
 	http = require('http'),
 	requestLogger = require('morgan'),
@@ -50,12 +49,16 @@ class APIModule extends BaseServerModule {
 	 * @memberof APIModule
 	 */
 	setDefaultsBeforeRequest() {
-		const instance = this,
-			{config, moduleConfig, moduleName} = this
+		const {moduleConfig, moduleName} = this,
+			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0]
 			if (req.method.toLowerCase() !== 'get') {
-				console.log(`[${moduleName} API]`, originalUrl, 'BODY Params: ', JSON.stringify(req.body || {}))
+				console.log(
+					`[${moduleName} API] ` +
+					originalUrl +
+					!checkRoutes(originalUrl, doNotLogRequestDataRoutes) ? `BODY Params: ${JSON.stringify(req.body || {})}` : ''
+				)
 			}
 			req.locals = {
 				error: null,
@@ -73,7 +76,8 @@ class APIModule extends BaseServerModule {
 	mountRoutes() {
 		let instance = this
 		return co(function*() {
-			const {afterRoutesMethodNames, config, moduleName, moduleConfig} = instance
+			const {afterRoutesMethodNames, config, moduleName, moduleConfig} = instance,
+				doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
 			instance.app = express()
 			instance.router = express.Router()
 			instance.paths = []
@@ -81,7 +85,15 @@ class APIModule extends BaseServerModule {
 				components = instance.components
 
 			// set up request logging and request body parsing
-			app.use(requestLogger(`[${moduleName} API] :method request to :url; result: :status; completed in: :response-time; :date`))
+			app.use(
+				requestLogger(function (tokens, req, res) {
+					return [
+						`[${moduleName} API] ${tokens.method(req, res)} request to `,
+						!checkRoutes(req.originalUrl, doNotLogRequestDataRoutes) ? tokens.url(req, res) : req.originalUrl.split('?')[0],
+						`; result: ${tokens.status(req, res)}; completed in: ${tokens['response-time'](req, res)} ms; date: ${tokens.date(req, res)}`
+					].join('')
+				})
+			)
 			// for raw request bodies
 			app.use((req, res, next) => {
 				if (typeof req.get('Content-Type') === 'undefined') {

@@ -1,5 +1,3 @@
-'use strict'
-
 const
 	path = require('path')
 
@@ -19,7 +17,7 @@ module.exports = {
 	redis: {addProjectKeyPrefixToHandles: true},
 	emails: {
 		emailServiceProvider: 'sendgrid',
-		sendgridApiKey: 'sg.key',
+		sendgridApiKey: process.env.NODE_RAMSTER_SG_API_KEY,
 		emailSender: 'noreply@ramster.com',
 		// customModulePath: path.join(__dirname, '../modules/emails'),
 		templatesPath: path.join(__dirname, '../modules/emails/templates'),
@@ -47,6 +45,7 @@ module.exports = {
 		site: {
 			uploadPath: path.resolve(__dirname, '../storage/tmp'),
 			anonymousAccessRoutes: ['/', '/four-oh-four', '/login', '/users/login', '/users/tokenLogin', '/users/sendPasswordResetRequest', '/users/loggedInUserData', '/users/checkEmail', '/globalConfig/readList'],
+			doNotLogRequestDataRoutes: ['/users/login', '/users/password'],
 			nonLayoutDirectRoutes: [],
 			unauthorizedPageRedirectRoute: '/login',
 			notFoundRedirectRoutes: {
@@ -61,6 +60,7 @@ module.exports = {
 	apis: {
 		mobile: {
 			anonymousAccessRoutes: ['/users/getCredentials', '/users/create', '/users/forgotPassword'],
+			doNotLogRequestDataRoutes: ['/users/login', '/users/password'],
 			responseType: 'serviceName',
 			jwt: {
 				accessTokenExpiresInMinutes: 1440

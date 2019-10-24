@@ -54,7 +54,8 @@ class ClientModule extends BaseServerModule {
 	 */
 	setDefaultsBeforeRequest() {
 		const instance = this,
-			{moduleName, moduleConfig} = this
+			{moduleName, moduleConfig} = this,
+			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0],
 				cookies = new Cookies(req, res),
@@ -69,7 +70,11 @@ class ClientModule extends BaseServerModule {
 					}
 				}
 			} else {
-				console.log(`[${moduleName} client]`, originalUrl, 'BODY Params: ', JSON.stringify(req.body || {}))
+				console.log(
+					`[${moduleName} client]`,
+					originalUrl,
+					!checkRoutes(originalUrl, doNotLogRequestDataRoutes) ? `BODY Params: ${JSON.stringify(req.body || {})}` : ''
+				)
 			}
 
 			if (!checkRoutes(originalUrl, instance.paths)) {
@@ -118,7 +123,8 @@ class ClientModule extends BaseServerModule {
 	mountRoutes(sessionStore) {
 		let instance = this
 		return co(function*() {
-			const {afterRoutesMethodNames, config, moduleName, moduleConfig, passport} = instance
+			const {afterRoutesMethodNames, config, moduleName, moduleConfig, passport} = instance,
+				doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
 			instance.app = express()
 			instance.router = express.Router()
 			instance.paths = []
@@ -126,7 +132,15 @@ class ClientModule extends BaseServerModule {
 				components = instance.components
 
 			// set up request logging and request body parsing
-			app.use(requestLogger(`[${moduleName} client] :method request to :url; result: :status; completed in: :response-time; :date`))
+			app.use(
+				requestLogger(function (tokens, req, res) {
+					return [
+						`[${moduleName} client] ${tokens.method(req, res)} request to `,
+						!checkRoutes(req.originalUrl, doNotLogRequestDataRoutes) ? tokens.url(req, res) : req.originalUrl.split('?')[0],
+						`; result: ${tokens.status(req, res)}; completed in: ${tokens['response-time'](req, res)} ms; date: ${tokens.date(req, res)}`
+					].join('')
+				})
+			)
 			// for raw request bodies
 			app.use((req, res, next) => {
 				if (typeof req.get('Content-Type') === 'undefined') {

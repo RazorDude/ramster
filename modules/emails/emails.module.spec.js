@@ -1,18 +1,8 @@
-'use strict'
 const
 	assert = require('assert'),
 	co = require('co')
 
 module.exports = {
-	testMe: function() {
-		const instance = this
-		describe('mailClient', function() {
-			it('should execute testSendEmail successfully', function() {
-				instance.testSendEmail()
-				assert(true)
-			})
-		})
-	},
 	testSendEmail: function() {
 		const instance = this
 		describe('mailClient.sendEmail', function() {
@@ -112,20 +102,10 @@ module.exports = {
 					return true
 				})
 			})
-			it('should execute successfully up to the email sending point', function() {
+			it('should execute successfully if all parameters are correct', function() {
 				this.timeout(10000)
 				return co(function*() {
-					let didThrowAnError = false
-					try {
-						yield instance.sendEmail('sample', 'admin@ramster.com', 'testSubject')
-					} catch(e) {
-						if (e && ((e.message === 'Unauthorized') || (e.code === 'ENOTFOUND'))) {
-							didThrowAnError = true
-						} else {
-							throw e
-						}
-					}
-					assert(didThrowAnError, 'no error thrown')
+					yield instance.sendEmail('sample', 'admin@ramster.com', 'testSubject')
 					return true
 				})
 			})

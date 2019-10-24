@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The db module. Contains the DBModule class.
  * @module dbModule
@@ -312,6 +311,11 @@ class DBModule {
 			dbClone.components = Object.assign({}, this.components)
 			delete dbClone.components[componentName]
 			component.db = dbClone
+		}
+		if (this.mailClient) {
+			let dbClone = Object.assign({}, this)
+			delete dbClone.mailClient
+			this.mailClient.db = dbClone
 		}
 		const injectModules = config.db.injectModules
 		if ((injectModules instanceof Array) && injectModules.length) {

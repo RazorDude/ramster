@@ -713,20 +713,18 @@ module.exports = {
 	testMailClient: function() {
 		const instance = this
 		describe('core.mailClient', function() {
-			it.skip('should execute loadMailClient successfully if all parameters and a custom emails module is used', function() {
-				return co(function*() {
-					yield instance.loadMailClient()
-					return true
-				})
-			})
 			it('should execute loadMailClient successfully if all parameters and a custom emails module is not used', function() {
 				return co(function*() {
 					yield instance.loadMailClient()
 					return true
 				})
 			})
-			it('should execute testMe successfully', function() {
-				instance.mailClient.testMe()
+			it(`should execute the module's tests successfully`, function() {
+				if (instance.mailClient.specMethodNames instanceof Array) {
+					instance.mailClient.specMethodNames.forEach((methodName) => {
+						instance.mailClient[methodName]()
+					})
+				}
 			})
 		})
 	},
@@ -837,14 +835,14 @@ module.exports = {
 			it('should execute APIModule.testMe successfully', function() {
 				const {logger, generalStore, tokenManager} = instance,
 					db = instance.modules.db
-				let testAPIModule = new APIModule(instance.config, 'site', {db, logger, generalStore, tokenManager})
+				let testAPIModule = new APIModule(instance.config, 'mobile', {db, logger, generalStore, tokenManager})
 				testAPIModule.testMe()
 			})
 			it('should execute BaseAPIComponent.testMe successfully', function() {
 				const {logger, generalStore, tokenManager} = instance,
 					db = instance.modules.db
 				let testAPIComponent = new BaseAPIComponent({componentName: 'testComponent'})
-				testAPIComponent.module = new APIModule(instance.config, 'site', {db, logger, generalStore, tokenManager})
+				testAPIComponent.module = new APIModule(instance.config, 'mobile', {db, logger, generalStore, tokenManager})
 				testAPIComponent.testMe()
 			})
 		})

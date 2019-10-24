@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.7.0",
+  "version": "1.7.1",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -67,11 +67,11 @@
     "url": "git+https://github.com/RazorDude/ramster.git"
   },
   "scripts": {
-    "fullTest-local": "node ./test/generateStuff.js && mocha ./test/test.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testCronJobs --testWebpackBuildTools --exitProcessOnModuleTestFail=true",
-    "fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testCronJobs --testWebpackBuildTools --testLint --exitProcessOnModuleTestFail=true",
+    "fullTest-local": "node ./test/generateStuff.js && mocha ./test/test.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testMailClient --testClients --testAPIs --testCronJobs --testWebpackBuildTools --exitProcessOnModuleTestFail=true",
+    "fullTest-travis": "node ./test/generateStuff.js --configProfile=travisTest && mocha ./test/test.js --configProfile=travisTest && mocha ./test/index.js --configProfile=travisTest --runTests --testConfig --testDB --testDBInjectedModules --testMailClient --testClients --testAPIs --testCronJobs --testWebpackBuildTools --testLint --exitProcessOnModuleTestFail=true",
     "generateProjectDocs": "node ./generateProjectDocs.js",
     "test-local": "node ./test/generateStuff.js && mocha ./test/test.js",
-    "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testClients --testAPIs --testCronJobs --testWebpackBuildTools --exitProcessOnModuleTestFail=true"
+    "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testMailClient --testClients --testAPIs --testCronJobs --testWebpackBuildTools --exitProcessOnModuleTestFail=true"
   },
   "devDependencies": {
     "@babel/core": "^7.1.2",

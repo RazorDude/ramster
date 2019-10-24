@@ -318,6 +318,7 @@ class Core {
 				testConfig,
 				testDB,
 				testDBInjectedModules,
+				testMailClient,
 				testClients,
 				testAPIs,
 				testCronJobs,
@@ -453,6 +454,12 @@ class Core {
 							}
 						)
 					})
+					return true
+				})
+			})
+			describeSuiteConditionally((testMailClient === true) && (!exitProcessOnModuleTestFail || (exitProcessOnModuleTestFail && !testsHaveErrors)), 'mailClient', function() {
+				it('should execute testMailClient successfully', function() {
+					instance.testMailClient()
 					return true
 				})
 			})

@@ -1,3 +1,7 @@
+# 1.7.1
+- Fixed the mailClient tests.
+- HOTFIX - added the ability to specify do-not-log request data routes - config.clients[moduleName].doNotLogRequestDataRoutes and config.apis[moduleName].doNotLogRequestDataRoutes
+
 # 1.7.0
 - The built-in emails module now allows for injecting a css string into the template. If Emails.sendEmail.options.cssFilePath or config.emails.cssFilePath is provided, the file will be read from disk and added as "_head_style" in the dynamicFields for pug to build. 
 

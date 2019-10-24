@@ -23,14 +23,16 @@ class Emails {
 	 * @memberof Emails
 	 */
 	constructor(config, mockMode) {
-		for (const testName in spec) {
-			this[testName] = spec[testName]
-		}
 		/**
 		 * The project config object.
 		 * @type {object}
 		 */
 		this.config = config
+		/**
+		 * The project db module, if it exists. It's a clone of db itself, with db.mailClient deleted to avoid circular references.
+		 * @type {object}
+		 */
+		this.db = undefined
 		/**
 		 * The project config object's emails property.
 		 * @type {object}
@@ -47,6 +49,15 @@ class Emails {
 		 * @type {string}
 		 */
 		this.sender = config.emails.emailSender
+		/**
+		 * The names of the test methods from the spec file.
+		 * @type {string[]}
+		 */
+		this.specMethodNames = []
+		for (const testMethodName in spec) {
+			this[testMethodName] = spec[testMethodName]
+			this.specMethodNames.push(testMethodName)
+		}
 		/**
 		 * A flag which is used to determine whether the class instance is running in test (mock) mode. Set based on mockMode === true, where mockMode comes from the constructor args.
 		 * @type {boolean}

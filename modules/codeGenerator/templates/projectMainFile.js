@@ -25,6 +25,7 @@ if (argv.runTests) {
 		testConfig: (argv.testConfig === 'true') || (argv.testConfig === true),
 		testDB: (argv.testDB === 'true') || (argv.testDB === true),
 		testDBInjectedModules: (argv.testDBInjectedModules === 'true') || (argv.testDBInjectedModules === true),
+		testMailClient: (argv.testMailClient === 'true') || (argv.testMailClient === true) ? true : argv.testMailClient,
 		testClients: (argv.testClients === 'true') || (argv.testClients === true) ? true : argv.testClients,
 		testAPIs: (argv.testAPIs === 'true') || (argv.testAPIs === true) ? true : argv.testAPIs,
 		testCronJobs: (argv.testCronJobs === 'true') || (argv.testCronJobs === true) ? true : argv.testCronJobs,
