@@ -1,3 +1,6 @@
+# 1.7.0
+- The built-in emails module now allows for injecting a css string into the template. If Emails.sendEmail.options.cssFilePath or config.emails.cssFilePath is provided, the file will be read from disk and added as "_head_style" in the dynamicFields for pug to build. 
+
 # 1.6.5
 - dbInjectedModules now properly import their spec.js files.
 
