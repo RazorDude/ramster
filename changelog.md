@@ -1,3 +1,6 @@
+# 1.7.3
+- Logout fix in the modules.clients.site.users.logout - the session cookie is now being properly cleared.
+
 # 1.7.2
 - HOTFIX - added the ability to specify do-not-log request data routes - config.clients[moduleName].doNotLogRequestDataRoutes and config.apis[moduleName].doNotLogRequestDataRoutes
 

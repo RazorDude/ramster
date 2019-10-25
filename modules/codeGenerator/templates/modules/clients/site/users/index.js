@@ -163,6 +163,7 @@ class UsersSiteClientComponent extends BaseClientComponent {
 		return function* (req, res, next) {
 			try {
 				req.logout()
+				res.set('Set-Cookie', `${instance.module.moduleConfig.session.key}=deleted; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT`)
 				res.redirect(302, '/login')
 			} catch (e) {
 				req.locals.error = e
