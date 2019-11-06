@@ -1,4 +1,7 @@
-# 1.7.4.
+# 1.7.5
+- Server modules fix - error handling.
+
+# 1.7.4
 - Client modules fix - now always setting req.locals, regardless of redirects.
 
 # 1.7.3

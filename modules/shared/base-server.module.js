@@ -251,8 +251,7 @@ class BaseServerModule {
 			{moduleConfig} = this,
 			notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
 		return function (req, res) {
-			const error = req.locals.error
-			if (!req.locals || !error) {
+			if (!req.locals || !req.locals.error) {
 				if (notFoundRedirectRoutes) {
 					res.redirect(302, req.isAuthenticated() && notFoundRedirectRoutes.authenticated ? notFoundRedirectRoutes.authenticated : notFoundRedirectRoutes.default)
 					return
@@ -260,10 +259,11 @@ class BaseServerModule {
 				res.status(404).json({error: 'Not found.'})
 				return
 			}
-			instance.logger.error(error)
-			const sequelizeErrorMessage = error.name
+			const error = req.locals.error,
+				sequelizeErrorMessage = error.name
 			let errorMessage = 'An internal server error has occurred. Please try again.',
 				errorStatus = 500
+			instance.logger.error(error)
 			if (sequelizeErrorMessage) {
 				if (sequelizeErrorMessage === 'SequelizeUniqueConstraintError') {
 					errorMessage = 'A similar item already exists. Please check your data and make sure it\'s unique before proceeding.'

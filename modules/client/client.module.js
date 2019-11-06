@@ -76,10 +76,6 @@ class ClientModule extends BaseServerModule {
 					!checkRoutes(originalUrl, doNotLogRequestDataRoutes) ? `BODY Params: ${JSON.stringify(req.body || {})}` : ''
 				)
 			}
-			req.locals = {
-				error: null,
-				originalUrl
-			}
 
 			if (!checkRoutes(originalUrl, instance.paths)) {
 				const notFoundRedirectRoutes = moduleConfig.notFoundRedirectRoutes
@@ -110,6 +106,10 @@ class ClientModule extends BaseServerModule {
 			}
 
 			req.user = req.isAuthenticated() && req.session && req.session.passport ? req.session.passport.user : null
+			req.locals = {
+				error: null,
+				originalUrl
+			}
 			next()
 		}
 	}
