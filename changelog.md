@@ -1,3 +1,6 @@
+# 1.7.4.
+- Client modules fix - now always setting req.locals, regardless of redirects.
+
 # 1.7.3
 - Logout fix in the modules.clients.site.users.logout - the session cookie is now being properly cleared.
 
