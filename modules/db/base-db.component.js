@@ -45,7 +45,7 @@ class BaseDBComponent {
 		 * The list of keyword operators to check and parse when escaping objects for filters. Anything not included in this list will be skipped.
 		 * @type {string[]}
 		 */
-		this.allowedFilterKeywordOperators = ['$and', '$gt', '$gte', '$lt', '$lte', '$not', '$or']
+		this.allowedFilterKeywordOperators = ['$and', '$gt', '$gte', '$lt', '$lte', '$not', '$or', '$like', '$iLike']
 		/**
 		 * The list of keyword operators to check and parse when escaping objects for filters. Anything not included in this list will be skipped.
 		 * @type {string[]}
@@ -461,6 +461,9 @@ class BaseDBComponent {
 			this.searchFields.forEach((element) => {
 				let field = element.field,
 					fieldValue = filters[field]
+				if (typeof fieldValue === 'undefined') {
+					return
+				}
 				// handle $associationName.fieldName$ cases
 				if ((field[0] === '$') && (field[field.length - 1] === '$')) {
 					let tempContainer = {}
@@ -997,7 +1000,7 @@ class BaseDBComponent {
 	 * @param {number} data.perPage The limit of results to return per page.
 	 * @param {boolean} data.readAll (optional) If set to true, page and perPage will be discarded and all results that match the other criteria will be fetched.
 	 * @param {object} data.filters The list of filters to search by, matching the fields defined in component.searchFields. An error will be thrown if not present and readAll isn't set.
-	 * @param {object} data.relReadKeys An object in the format {associationName1: true, associationName2: true}. The relations specified in this way will be added to the "include" options object and will be preent in the response.
+	 * @param {object} data.relReadKeys An object in the format {associationName1: true, associationName2: true}. The relations specified in this way will be added to the "include" options object and will be present in the response.
 	 * @param {string[]} data.exactMatch (optional) An array of field names, corresponding to the field names specified in component.searchFields. Filter values whose "field" arg match a string in "exactMatch" will be treated as inclusive - >= / <=, rather than > / <.
 	 * @param {string} data.orderBy (optional) The field to order by. Defaults to id.
 	 * @param {string} data.orderDirection (optional) The direction to order in. Can be 'asc' or 'desc' (case insensitive). Defaults to 'asc'.

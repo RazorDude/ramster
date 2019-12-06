@@ -1,3 +1,6 @@
+# 1.7.6
+- Added $like and $iLike support to the BaseDBComponent.
+
 # 1.7.5
 - Server modules fix - error handling.
 
