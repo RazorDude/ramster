@@ -42,8 +42,11 @@ class Emails {
 		 * The sendgrid client instance.
 		 * @type {sendgrid}
 		 */
-		this.sendgrid = sendgrid
-		this.sendgrid.setApiKey(config.emails.sendgridApiKey)
+		this.sendgrid = null
+		if (config.emails.sendgridApiKey) {
+			this.sendgrid = sendgrid
+			this.sendgrid.setApiKey(config.emails.sendgridApiKey)
+		}
 		/**
 		 * The email sender's email address. Set in config.emails.emailSender
 		 * @type {string}

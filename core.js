@@ -135,9 +135,21 @@ class Core {
 			} else {
 				instance.mailClient = new Emails(config, mockMode)
 			}
+			if (typeof instance.mailClient.preDBSetup === 'function') {
+				let preDBSetupResult = instance.mailClient.preDBSetup()
+				if (preDBSetupResult instanceof Promise) {
+					yield preDBSetupResult
+				}
+			}
 			if (db) {
 				db.mailClient = instance.mailClient
 				db.setDBInComponents()
+				if (typeof instance.mailClient.postDBSetup === 'function') {
+					let postDBSetupResult = instance.mailClient.postDBSetup()
+					if (postDBSetupResult instanceof Promise) {
+						yield postDBSetupResult
+					}
+				}
 			}
 			return true
 		})

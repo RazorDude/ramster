@@ -1,3 +1,8 @@
+# 1.8.0
+- The mailClient module loading function now supports two setup methods in the MailClient class - preDBSetupResult, which runs prior to db.setDBInComponents, and postDBSetupResult, which runs afterwards.
+- In the default mailClient, the sendgrid property is now only set when "config.emails.sendgridApiKey" is provided.
+- Moved the @sendgrid/mail npm module requirement from "dependencies" to "peerDependencies". 
+
 # 1.7.6
 - Added $like and $iLike support to the BaseDBComponent.
 
