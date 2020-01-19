@@ -160,6 +160,7 @@ class UsersSiteClientComponent extends BaseClientComponent {
 	 * @memberof UsersSiteClientComponent
 	 */
 	logout() {
+		const instance = this
 		return function* (req, res, next) {
 			try {
 				req.logout()

@@ -1,3 +1,7 @@
+# 1.8.1
+- Updated all dependencies.
+- Moved sharp to peerDependencies, as its version depends on the system's node version.
+
 # 1.8.0
 - The mailClient module loading function now supports two setup methods in the MailClient class - preDBSetupResult, which runs prior to db.setDBInComponents, and postDBSetupResult, which runs afterwards.
 - In the default mailClient, the sendgrid property is now only set when "config.emails.sendgridApiKey" is provided.
