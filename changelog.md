@@ -1,3 +1,6 @@
+# 1.8.2
+- Minor logging improvements.
+
 # 1.8.1
 - Updated all dependencies.
 - Moved sharp to peerDependencies, as its version depends on the system's node version.

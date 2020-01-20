@@ -55,7 +55,8 @@ class ClientModule extends BaseServerModule {
 	setDefaultsBeforeRequest() {
 		const instance = this,
 			{moduleName, moduleConfig} = this,
-			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
+			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || [],
+			loggedInUserFieldsToDisplayInRequestInfo = moduleConfig.loggedInUserFieldsToDisplayInRequestInfo || []
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0],
 				cookies = new Cookies(req, res),
@@ -72,6 +73,13 @@ class ClientModule extends BaseServerModule {
 			} else {
 				console.log(
 					`[${moduleName} client]`,
+					loggedInUserFieldsToDisplayInRequestInfo.length
+						? (
+							req.user
+								? `[user: ${loggedInUserFieldsToDisplayInRequestInfo.map((fieldName) => req.user[fieldName]).join(', ')}]`
+								: '[user: no user data]'
+						)
+						: '',
 					originalUrl,
 					!checkRoutes(originalUrl, doNotLogRequestDataRoutes) ? `BODY Params: ${JSON.stringify(req.body || {})}` : ''
 				)

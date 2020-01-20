@@ -50,13 +50,21 @@ class APIModule extends BaseServerModule {
 	 */
 	setDefaultsBeforeRequest() {
 		const {moduleConfig, moduleName} = this,
-			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
+			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || [],
+			loggedInUserFieldsToDisplayInRequestInfo = moduleConfig.loggedInUserFieldsToDisplayInRequestInfo || []
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0]
 			if (req.method.toLowerCase() !== 'get') {
 				console.log(
-					`[${moduleName} API] ` +
-					originalUrl +
+					`[${moduleName} API]`,
+					loggedInUserFieldsToDisplayInRequestInfo.length
+						? (
+							req.user
+								? `[user: ${loggedInUserFieldsToDisplayInRequestInfo.map((fieldName) => req.user[fieldName]).join(', ')}]`
+								: '[user: no user data]'
+						)
+						: '',
+					originalUrl,
 					!checkRoutes(originalUrl, doNotLogRequestDataRoutes) ? `BODY Params: ${JSON.stringify(req.body || {})}` : ''
 				)
 			}
