@@ -50,20 +50,12 @@ class APIModule extends BaseServerModule {
 	 */
 	setDefaultsBeforeRequest() {
 		const {moduleConfig, moduleName} = this,
-			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || [],
-			loggedInUserFieldsToDisplayInRequestInfo = moduleConfig.loggedInUserFieldsToDisplayInRequestInfo || []
+			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0]
 			if (req.method.toLowerCase() !== 'get') {
 				console.log(
 					`[${moduleName} API]`,
-					loggedInUserFieldsToDisplayInRequestInfo.length
-						? (
-							req.user
-								? `[user: ${loggedInUserFieldsToDisplayInRequestInfo.map((fieldName) => req.user[fieldName]).join(', ')}]`
-								: '[user: no user data]'
-						)
-						: '',
 					originalUrl,
 					!checkRoutes(originalUrl, doNotLogRequestDataRoutes) ? `BODY Params: ${JSON.stringify(req.body || {})}` : ''
 				)
@@ -85,7 +77,8 @@ class APIModule extends BaseServerModule {
 		let instance = this
 		return co(function*() {
 			const {afterRoutesMethodNames, config, moduleName, moduleConfig} = instance,
-				doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
+				doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || [],
+				loggedInUserFieldsToDisplayInRequestInfo = moduleConfig.loggedInUserFieldsToDisplayInRequestInfo || []
 			instance.app = express()
 			instance.router = express.Router()
 			instance.paths = []
@@ -96,7 +89,16 @@ class APIModule extends BaseServerModule {
 			app.use(
 				requestLogger(function (tokens, req, res) {
 					return [
-						`[${moduleName} API] ${tokens.method(req, res)} request to `,
+						`[${moduleName} API]` + (
+							loggedInUserFieldsToDisplayInRequestInfo.length 
+								? (
+									req.user
+										? `[user: ${loggedInUserFieldsToDisplayInRequestInfo.map((fieldName) => req.user[fieldName]).join(', ')}]`
+										: '[user: no user data]'
+								)
+								: ''
+						) +
+						` ${tokens.method(req, res)} request to `,
 						!checkRoutes(req.originalUrl, doNotLogRequestDataRoutes) ? tokens.url(req, res) : req.originalUrl.split('?')[0],
 						`; result: ${tokens.status(req, res)}; completed in: ${tokens['response-time'](req, res)} ms; date: ${tokens.date(req, res)}`
 					].join('')

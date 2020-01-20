@@ -55,8 +55,7 @@ class ClientModule extends BaseServerModule {
 	setDefaultsBeforeRequest() {
 		const instance = this,
 			{moduleName, moduleConfig} = this,
-			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || [],
-			loggedInUserFieldsToDisplayInRequestInfo = moduleConfig.loggedInUserFieldsToDisplayInRequestInfo || []
+			doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
 		return function(req, res, next) {
 			let originalUrl = req.originalUrl.split('?')[0],
 				cookies = new Cookies(req, res),
@@ -73,13 +72,6 @@ class ClientModule extends BaseServerModule {
 			} else {
 				console.log(
 					`[${moduleName} client]`,
-					loggedInUserFieldsToDisplayInRequestInfo.length
-						? (
-							req.user
-								? `[user: ${loggedInUserFieldsToDisplayInRequestInfo.map((fieldName) => req.user[fieldName]).join(', ')}]`
-								: '[user: no user data]'
-						)
-						: '',
 					originalUrl,
 					!checkRoutes(originalUrl, doNotLogRequestDataRoutes) ? `BODY Params: ${JSON.stringify(req.body || {})}` : ''
 				)
@@ -132,7 +124,8 @@ class ClientModule extends BaseServerModule {
 		let instance = this
 		return co(function*() {
 			const {afterRoutesMethodNames, config, moduleName, moduleConfig, passport} = instance,
-				doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
+				doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || [],
+				loggedInUserFieldsToDisplayInRequestInfo = moduleConfig.loggedInUserFieldsToDisplayInRequestInfo || []
 			instance.app = express()
 			instance.router = express.Router()
 			instance.paths = []
@@ -143,7 +136,16 @@ class ClientModule extends BaseServerModule {
 			app.use(
 				requestLogger(function (tokens, req, res) {
 					return [
-						`[${moduleName} client] ${tokens.method(req, res)} request to `,
+						`[${moduleName} client]` + (
+							loggedInUserFieldsToDisplayInRequestInfo.length
+								? (
+									req.user
+										? `[user: ${loggedInUserFieldsToDisplayInRequestInfo.map((fieldName) => req.user[fieldName]).join(', ')}]`
+										: '[user: no user data]'
+								)
+								: ''
+						) +
+						` ${tokens.method(req, res)} request to `,
 						!checkRoutes(req.originalUrl, doNotLogRequestDataRoutes) ? tokens.url(req, res) : req.originalUrl.split('?')[0],
 						`; result: ${tokens.status(req, res)}; completed in: ${tokens['response-time'](req, res)} ms; date: ${tokens.date(req, res)}`
 					].join('')
