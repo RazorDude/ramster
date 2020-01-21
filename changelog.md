@@ -1,3 +1,6 @@
+# 1.8.5
+- More logging improvements.
+
 # 1.8.4
 - More logging improvements.
 
