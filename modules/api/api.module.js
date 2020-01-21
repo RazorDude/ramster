@@ -98,6 +98,8 @@ class APIModule extends BaseServerModule {
 								)
 								: ''
 						) +
+						(moduleConfig.logRemoteAddress && req.connection ? `[remoteAddress: ${req.connection.remoteAddress}]` : '') +
+						(moduleConfig.logForwardedForHeader && req.headers ? `[x-forwarded-for: ${req.headers['x-forwarded-for']}` : '') +
 						` ${tokens.method(req, res)} request to `,
 						!checkRoutes(req.originalUrl, doNotLogRequestDataRoutes) ? tokens.url(req, res) : req.originalUrl.split('?')[0],
 						`; result: ${tokens.status(req, res)}; completed in: ${tokens['response-time'](req, res)} ms; date: ${tokens.date(req, res)}`
