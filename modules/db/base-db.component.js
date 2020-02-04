@@ -861,13 +861,33 @@ class BaseDBComponent {
 	 * @param {string} inputFileName The name of the input file as saved in the uploads folder.
 	 * @param {string} outputFileName The name of the input file as saved in the uploads folder.
 	 * @param {number} dbObjectId The id of the db item the image is for.
-	 * @param {string} outputFileType (optional) The extension of the output file - png, jpeg, webp, tiff or heif.
+	 * @param {BaseDBComponentSaveImageOptions | string} options Additional method execution options, such as image cropping coordinates and the output file type.
+	 * @typedef {object} BaseDBComponentSaveImageImageCroppingOptions
+	 * @property {number} height The height of the area to crop.
+	 * @property {number} startX The X coordinate of the starting point of the area to crop.
+	 * @property {number} startY The Y coordinate of the starting point of the area to crop.
+	 * @property {number} width The width of the area to crop.
+	 * @typedef {object} BaseDBComponentSaveImageOptions
+	 * @property {BaseDBComponentSaveImageImageCroppingOptions} imageCroppingOptions (optional) Coordinates for cropping the image.
+	 * @property {string} outputFileType (optional) The extension of the output file - png, jpeg, webp, tiff or heif.
 	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with true.
 	 * @memberof BaseDBComponent
 	 */
-	saveImage(inputFileName, outputFileName, dbObjectId, outputFileType) {
+	saveImage(inputFileName, outputFileName, dbObjectId, options) {
 		const instance = this,
 			{allowedImageTypes, componentName, db, imageOutputFileFormatsMethodNameMap} = instance
+		let actualOptions = null
+		if (typeof options === 'string') {
+			console.log(
+				'[ramster] DEPRECATION WARNING: BaseDBComponent.saveImage currently supports the outputFileType as a fourth argument ' +
+				'only for backwards compatibility purposes and will be removed in the next major release. ' +
+				'Please use the newer, options objects syntax for the fourth argument.'
+			)
+			actualOptions = {outputFileType: options}
+		} else if (!options || (typeof options !== 'object')) {
+
+		}
+		const {imageCroppingOptions, outputFileType} = actualOptions
 		return co(function*() {
 			if ((typeof inputFileName !== 'string') || !inputFileName.length) {
 				throw {customMessage: 'Invalid inputFileName provided. Please provide a non-empty string.'}
@@ -901,6 +921,14 @@ class BaseDBComponent {
 					if ((metadata.width > imageResizingOptions[0]) || (metadata.height > imageResizingOptions[1])) {
 						inputFileData = yield op.resize.call(op, imageResizingOptions).toBuffer()
 					}
+				}
+				if (imageCroppingOptions) {
+					inputFileData = yield sharp(inputFileData).extract({
+						left: imageCroppingOptions.startX,
+						top: imageCroppingOptions.startY,
+						width: imageCroppingOptions.width,
+						height: imageCroppingOptions.height
+					}).toBuffer()
 				}
 				yield fs.writeFile(outputFile, inputFileData)
 				yield fs.close(outputFile)

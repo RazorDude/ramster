@@ -1,3 +1,6 @@
+# 1.9.0
+- The BaseDBComponent.saveImage now takes a BaseDBComponentSaveImageOptions object and supports image cropping. Added a deprecation warning for the old syntax, where the fourth argument is the string for the outputFileType.
+
 # 1.8.5
 - More logging improvements.
 
