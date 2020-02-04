@@ -876,7 +876,7 @@ class BaseDBComponent {
 	saveImage(inputFileName, outputFileName, dbObjectId, options) {
 		const instance = this,
 			{allowedImageTypes, componentName, db, imageOutputFileFormatsMethodNameMap} = instance
-		let actualOptions = null
+		let actualOptions = {}
 		if (typeof options === 'string') {
 			console.log(
 				'[ramster] DEPRECATION WARNING: BaseDBComponent.saveImage currently supports the outputFileType as a fourth argument ' +
