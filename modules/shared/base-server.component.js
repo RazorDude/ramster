@@ -255,7 +255,7 @@ class BaseServerComponent {
 								}
 								const requestFieldValueIsAnArray = requestFieldValue instanceof Array,
 									rfvActual = requestFieldValueIsAnArray ? requestFieldValue : [requestFieldValue]
-								let hasMatch = false
+								let allowedValues = []
 								for (const index in rfvActual) {
 									const rfvItem = rfvActual[index],
 										requestFieldValues = [
@@ -266,52 +266,33 @@ class BaseServerComponent {
 										]
 									if (userFieldValueIsAnArray) {
 										// if the request field value is an array, filter out only the items he has access to
-										let allowedValues = []
 										for (const i in userFieldValue) {
 											const value = userFieldValue[i]
 											for (const j in requestFieldValues) {
 												if (requestFieldValues[j] === value) {
 													allowedValues.push(value)
+													break
 												}
 											}
 										}
-										if (allowedValues.length) {
-											if (!hasMatch) {
-												hasMatch = true
-											}
-											if (requestFieldValueIsAnArray) {
-												setNested(req, ap.searchForUserFieldIn, allowedValues)
-											}
-										} else if (requestFieldValueIsAnArray) {
-											setNested(req, ap.searchForUserFieldIn, undefined)
-										}
 									} else {
 										// if the request field value is an array, filter out only the items he has access to
-										let allowedValues = []
 										for (const j in requestFieldValues) {
 											if (requestFieldValues[j] === userFieldValue) {
 												allowedValues.push(userFieldValue)
+												break
 											}
 										}
-										if (allowedValues.length) {
-											if (!hasMatch) {
-												hasMatch = true
-											}
-											if (requestFieldValueIsAnArray) {
-												setNested(req, ap.searchForUserFieldIn, allowedValues)
-											}
-										} else if (requestFieldValueIsAnArray) {
-											setNested(req, ap.searchForUserFieldIn, undefined)
-										}
-									}
-									if (hasMatch) {
-										break
 									}
 								}
-								if (!hasMatch) {
+								if (allowedValues.length) {
+									setNested(req, ap.searchForUserFieldIn, allowedValues)
+								}
+								else {
 									if (allAPsInGroupRequired) {
 										throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 5}
 									}
+									setNested(req, ap.searchForUserFieldIn, undefined)
 									return
 								}
 							}

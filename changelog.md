@@ -1,3 +1,6 @@
+# 1.10.0
+- BaseServerComponent.accessFilter - changed how the logic works with searchForUserFieldIn. It now correcly sets all the values, instead of taking just the first one.
+
 # 1.9.1
 - BaseDBComponent.saveImage typo hotfix.
 
