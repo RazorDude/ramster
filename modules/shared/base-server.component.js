@@ -292,7 +292,8 @@ class BaseServerComponent {
 									if (allAPsInGroupRequired) {
 										throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 5}
 									}
-									setNested(req, ap.searchForUserFieldIn, undefined)
+									// TODO: figure this out - it fucks up certain access points, for example if saerching for req.params.id - sets it to undefined
+									// setNested(req, ap.searchForUserFieldIn, undefined)
 									return
 								}
 							}
