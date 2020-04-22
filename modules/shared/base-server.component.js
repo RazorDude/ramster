@@ -356,8 +356,7 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	create() {
-		const instance = this,
-			{dbComponent} = this
+		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
 				let options = null
@@ -379,8 +378,7 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	read() {
-		const instance = this,
-			{dbComponent} = this
+		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
 				res.json({result: yield dbComponent.read(req.query)})
@@ -398,8 +396,7 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	readList() {
-		const instance = this,
-			{dbComponent} = this
+		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
 				res.json(yield dbComponent.readList(req.query))
@@ -544,11 +541,14 @@ class BaseServerComponent {
 		const {dbComponent} = this
 		return function* (req, res, next) {
 			try {
-				const filters =  {
-					...(req.body.filters || req.body.where || {}),
-					id: req.params.id
+				let filters =  {
+						...(req.body.filters || req.body.where || {}),
+						id: req.params.id
+					},
+					dbObject = {}
+				if (filters.id.match(/,/)) {
+					filters.id = filters.id.split(',')
 				}
-				let dbObject = {}
 				delete req.body.filters
 				delete req.body.where
 				if (!req.body.dbObject) {

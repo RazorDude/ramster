@@ -1,3 +1,6 @@
+# 1.10.2
+- BaseServerComponent.update now supports an array of ids in the route params.
+
 # 1.10.1
 - BaseServerComponent.accessFilter hotfix.
 
