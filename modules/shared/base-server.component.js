@@ -506,7 +506,7 @@ class BaseServerComponent {
 							if (processValue === 'yesNo') {
 								value = value && (value !== '') ? 'Yes' : 'No'
 							}
-							if (processValue.match(/^dateFormat_/)) {
+							if (processValue && processValue.match(/^dateFormat_/)) {
 								let format = processedValue.replace('dateFormat_', '')
 								if (value instanceof Date) {
 									value = moment(value.valueOf(), 'x').format(format)

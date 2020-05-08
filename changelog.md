@@ -1,3 +1,6 @@
+# 1.11.1
+- BaseServerComponent.readSelectList hotfix.
+
 # 1.11.0
 - BaseServerComponent.readSelectList now properly processes Date titleFields.
 - Added a dateFormat option to BaseServerComponent.readSelectList's list of possible processValue array values. Use "dateFormat_YYYY-MM-DD", for example.
