@@ -8,6 +8,7 @@ const
 	BaseServerModule = require('./base-server.module'),
 	co = require('co'),
 	{decodeQueryValues, getNested, setNested} = require('../toolbelt'),
+	moment = require('moment'),
 	spec = require('./base-server.component.spec')
 
 /**
@@ -501,9 +502,18 @@ class BaseServerComponent {
 						titleFields.forEach((field, fIndex) => {
 							let value = getNested(row, field),
 								processValue = processTitleFields[fIndex] || null
-							value = (typeof value === 'undefined') || (value === null) || (typeof value === 'object') ? '' : value
+							value = (typeof value === 'undefined') || (value === null) || ((typeof value === 'object') && !(value instanceof Date)) ? '' : value
 							if (processValue === 'yesNo') {
 								value = value && (value !== '') ? 'Yes' : 'No'
+							}
+							if (processValue.match(/^dateFormat_/)) {
+								let format = processedValue.replace('dateFormat_', '')
+								if (value instanceof Date) {
+									value = moment(value.valueOf(), 'x').format(format)
+								}
+								else {
+									value = moment(value, 'YYYY-MM-DD HH:mm:ss').format(format)
+								}
 							}
 							text += value
 							if ((typeof value !== 'undefined') && (`${value}`).length) {

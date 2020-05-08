@@ -1,3 +1,7 @@
+# 1.11.0
+- BaseServerComponent.readSelectList now properly processes Date titleFields.
+- Added a dateFormat option to BaseServerComponent.readSelectList's list of possible processValue array values. Use "dateFormat_YYYY-MM-DD", for example.
+
 # 1.10.2
 - BaseServerComponent.update now supports an array of ids in the route params.
 
