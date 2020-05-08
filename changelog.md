@@ -1,3 +1,6 @@
+# 1.11.2
+- BaseServerComponent.readSelectList typo fix.
+
 # 1.11.1
 - BaseServerComponent.readSelectList hotfix.
 
