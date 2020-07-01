@@ -222,7 +222,7 @@ class ClientModule extends BaseServerModule {
 			}
 
 			// before every request - add any precursor methods defined in the module config
-			const precursorMethods = moduleConfig.precursorMethods
+			const precursorMethods = instance.precursorMethods
 			if (precursorMethods && (typeof precursorMethods === 'object')) {
 				for (const methodKey in precursorMethods) {
 					if (typeof precursorMethods[methodKey] === 'function') {
