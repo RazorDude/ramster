@@ -244,12 +244,12 @@ class Core {
 			}, mockMode),
 			jobsModule = {jobs, jobTests, activeJobs: []}
 		if (jobs instanceof Array) {
-			jobs.forEach((jobData, index) => {
+			jobs.forEach((jobData) => {
 				try {
 					if (mockMode) {
 						return
 					}
-					if (!jobData.start) {
+					if (typeof jobData.start === 'undefined') {
 						jobData.start = true
 					}
 					jobsModule.activeJobs.push(new CronJob(jobData))

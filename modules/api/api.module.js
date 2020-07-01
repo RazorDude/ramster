@@ -157,7 +157,7 @@ class APIModule extends BaseServerModule {
 			if (precursorMethods && (typeof precursorMethods === 'object')) {
 				for (const methodKey in precursorMethods) {
 					if (typeof precursorMethods[methodKey] === 'function') {
-						app.use(wrap(precursorMethods[methodKey]()))
+						app.use(wrap(precursorMethods[methodKey].call(instance)))
 					}
 				}
 			}

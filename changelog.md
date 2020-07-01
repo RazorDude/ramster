@@ -1,3 +1,6 @@
+# 1.11.3
+- The BaseClientComponent and BaseApiComponent now correctly apply "this" to the precursorMethods.
+
 # 1.11.2
 - BaseServerComponent.readSelectList typo fix.
 
