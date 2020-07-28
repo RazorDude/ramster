@@ -28,7 +28,7 @@
     "glob": "^7.1.6",
     "handlebars": "^4.7.2",
     "http": "0.0.0",
-    "jsdoc-to-markdown": "^4.0.1",
+    "jsdoc-to-markdown": "^6.0.0",
     "jsonwebtoken": "^8.5.1",
     "mocha-eslint": "^4.1.0",
     "moment": "^2.24.0",
