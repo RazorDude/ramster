@@ -1,3 +1,6 @@
+# 1.12.1
+- Increased the acceptable timeout for the core.runTests master describe block from 50000ms to 300000ms. 
+
 # 1.12.0
 - Added support for a "skipSecondSetup" option to the dbInjectedModules' moduleData in the config.
 - The migrations module now shuts down all active cron jobs before inserting data and then starts them after the data insertion has been completed

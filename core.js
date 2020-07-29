@@ -371,7 +371,7 @@ class Core {
 			testsHaveErrors = false
 		describe(config.projectName, function() {
 			before(function() {
-				this.timeout(50000)
+				this.timeout(300000)
 				return co(function*() {
 					yield instance.loadDependencies(true)
 					yield instance.loadDB(true)
