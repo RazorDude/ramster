@@ -162,7 +162,13 @@ class Core {
 	 */
 	loadMigrations() {
 		let db = this.modules.db
-		this.migrations = new Migrations(this.config, db.sequelize, db.components, db.seedingOrder)
+		this.migrations = new Migrations(
+			this.config,
+			db.sequelize,
+			db.components,
+			db.seedingOrder,
+			this.modules.cronJobs
+		)
 		db.migrations = this.migrations
 		db.setDBInComponents()
 	}
@@ -242,7 +248,7 @@ class Core {
 				mailClient,
 				tokenManager
 			}, mockMode),
-			jobsModule = {jobs, jobTests, activeJobs: []}
+			jobsModule = {jobs, jobTests, activeJobs: [], inactiveJobs: []}
 		if (jobs instanceof Array) {
 			jobs.forEach((jobData) => {
 				try {
@@ -252,6 +258,11 @@ class Core {
 					if (typeof jobData.start === 'undefined') {
 						jobData.start = true
 					}
+					else if (jobData.start !== true) {
+						jobData.start = false
+						jobsModule.inactiveJobs.push(new CronJob(jobData))
+						return
+					}
 					jobsModule.activeJobs.push(new CronJob(jobData))
 				} catch (e) {
 					console.log('Error starting a cron job:')
@@ -260,6 +271,24 @@ class Core {
 			})
 		}
 		this.modules.cronJobs = jobsModule
+	}
+
+	/**
+	 * Starts all cron jobs in the activeJobs array.
+	 * @returns {void}
+	 * @memberof Core
+	 */
+	startAllCronJobs() {
+		this.module.cronJobs.activeJobs.forEach((job) => job.start())
+	}
+
+	/**
+	 * Stops all cron jobs in the activeJobs array.
+	 * @returns {void}
+	 * @memberof Core
+	 */
+	stopAllCronJobs() {
+		this.module.cronJobs.activeJobs.forEach((job) => job.stop())
 	}
 
 	/**
@@ -346,6 +375,9 @@ class Core {
 				return co(function*() {
 					yield instance.loadDependencies(true)
 					yield instance.loadDB(true)
+					if (config.cronJobs) {
+						instance.loadCRONJobs(true)
+					}
 					if (config.emails) {
 						yield instance.loadMailClient(true)
 					}
@@ -357,9 +389,6 @@ class Core {
 					}
 					if (testAPIs) {
 						yield instance.loadAPIs()
-					}
-					if (config.cronJobs) {
-						instance.loadCRONJobs(true)
 					}
 					yield instance.listen()
 					if (config.migrations) {
@@ -399,14 +428,17 @@ class Core {
 								}
 							}
 						}
-					} else if (injectModules && Object.keys(injectModules).length) {
+					}
+					else if (injectModules && Object.keys(injectModules).length) {
 						let db = instance.modules.db
 						for (const moduleName in injectModules) {
 							const moduleData = injectModules[moduleName]
 							if (typeof db[moduleName].setup === 'function') {
-								let setupResult = db[moduleName].setup(moduleData.setupOptions || {})
-								if (setupResult instanceof Promise) {
-									yield setupResult
+								if (moduleData.skipSecondSetup) {
+									let setupResult = db[moduleName].setup(moduleData.setupOptions || {})
+									if (setupResult instanceof Promise) {
+										yield setupResult
+									}
 								}
 							}
 						}

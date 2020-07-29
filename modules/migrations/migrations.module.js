@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The migrations module. Contains the Migrations class.
  * @module migrations.module
@@ -28,9 +27,10 @@ class Migrations {
 	 * @param {object} sequelize A sequelize instance.
 	 * @param {object} dbComponents The db.components object, taken from the db module's components property.
 	 * @param {string[]} seedingOrder An array of dbComponent names, in order of which tables will be inserted in the database.
+	 * @param {object} cronJobs (optional) The cronJobs module.
 	 * @memberof Migrations
 	 */
-	constructor(config, sequelize, dbComponents, seedingOrder) {
+	constructor(config, sequelize, dbComponents, seedingOrder, cronJobs) {
 		for (const testName in spec) {
 			this[testName] = spec[testName]
 		}
@@ -64,6 +64,11 @@ class Migrations {
 		 * @type {string[]}
 		 */
 		this.seedingOrder = seedingOrder
+		/**
+		 * The cronJobs module.
+		 * @type {object}
+		 */
+		this.cronJobs = cronJobs
 	}
 
 	/**
@@ -522,65 +527,71 @@ class Migrations {
 	 */
 	insertData(data, options) {
 		const instance = this,
-			{sequelize, dbComponents, seedingOrder} = this
+			{cronJobs, sequelize, dbComponents, seedingOrder} = this
 		return instance.sequelize.transaction(function (t) {
 			return co(function*() {
 				if (!data || (typeof data !== 'object')) {
 					throw {customMessage: 'Invalid data object provided.'}
 				}
-				const queryInterface = sequelize.getQueryInterface()
-				let models = Object.keys(dbComponents),
-					noSync = options && options.noSync || false,
-					deleteTableContents = options && options.deleteTableContents || []
+				try {
+					cronJobs.activeJobs.forEach((job) => job.stop())
+					const queryInterface = sequelize.getQueryInterface()
+					let models = Object.keys(dbComponents),
+						noSync = options && options.noSync || false,
+						deleteTableContents = options && options.deleteTableContents || []
 
-				if (noSync !== true) {
-					yield sequelize.sync({force: true, transaction: t})
-				}
-
-				let tableLayout = yield instance.getTableLayout(t)
-
-				// seed the tables for the components from seedingOrder
-				for (const i in seedingOrder) {
-					let componentName = seedingOrder[i]
-					const dbComponent = dbComponents[componentName]
-					let tableName = dbComponent.model.getTableName()
-					if (!data[tableName]) {
-						continue
+					if (noSync !== true) {
+						yield sequelize.sync({force: true, transaction: t})
 					}
-					let preparedData = instance.prepareColumnData(data[tableName], tableLayout[tableName], dbComponent.sameTablePrimaryKey)
-					for (const j in preparedData) {
-						yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents})
-					}
-					delete data[tableName]
-					delete models[componentName]
-				}
 
-				// seed the tables for the rest of the components
-				for (const i in models) {
-					let componentName = models[i]
-					const dbComponent = dbComponents[componentName]
-					let tableName = dbComponent.model.getTableName()
-					if (data[tableName]) {
+					let tableLayout = yield instance.getTableLayout(t)
+
+					// seed the tables for the components from seedingOrder
+					for (const i in seedingOrder) {
+						let componentName = seedingOrder[i]
+						const dbComponent = dbComponents[componentName]
+						let tableName = dbComponent.model.getTableName()
+						if (!data[tableName]) {
+							continue
+						}
 						let preparedData = instance.prepareColumnData(data[tableName], tableLayout[tableName], dbComponent.sameTablePrimaryKey)
 						for (const j in preparedData) {
 							yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents})
 						}
 						delete data[tableName]
+						delete models[componentName]
+					}
+
+					// seed the tables for the rest of the components
+					for (const i in models) {
+						let componentName = models[i]
+						const dbComponent = dbComponents[componentName]
+						let tableName = dbComponent.model.getTableName()
+						if (data[tableName]) {
+							let preparedData = instance.prepareColumnData(data[tableName], tableLayout[tableName], dbComponent.sameTablePrimaryKey)
+							for (const j in preparedData) {
+								yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents})
+							}
+							delete data[tableName]
+						}
+					}
+
+					// seed the remaining data (junction tables and other tables without sequelize models)
+					for (let tableName in data) {
+						let thisTableLayout = tableLayout[tableName]
+						if (!thisTableLayout) {
+							continue
+						}
+						let preparedData = instance.prepareColumnData(data[tableName], thisTableLayout)
+						for (const j in preparedData) {
+							yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents, dontSetIdSequence: true})
+						}
 					}
 				}
-
-				// seed the remaining data (junction tables and other tables without sequelize models)
-				for (let tableName in data) {
-					let thisTableLayout = tableLayout[tableName]
-					if (!thisTableLayout) {
-						continue
-					}
-					let preparedData = instance.prepareColumnData(data[tableName], thisTableLayout)
-					for (const j in preparedData) {
-						yield instance.runQueryFromColumnData(queryInterface, tableName, preparedData[j], t, {deleteTableContents, dontSetIdSequence: true})
-					}
+				catch(e) {
+					cronJobs.activeJobs.forEach((job) => job.start())
+					throw e
 				}
-
 				return true
 			})
 		})

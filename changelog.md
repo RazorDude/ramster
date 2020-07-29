@@ -1,3 +1,7 @@
+# 1.12.0
+- Added support for a "skipSecondSetup" option to the dbInjectedModules' moduleData in the config.
+- The migrations module now shuts down all active cron jobs before inserting data and then starts them after the data insertion has been completed
+
 # 1.11.4
 - Fix for the precursorMethods.
 
