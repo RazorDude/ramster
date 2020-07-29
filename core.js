@@ -434,11 +434,12 @@ class Core {
 						for (const moduleName in injectModules) {
 							const moduleData = injectModules[moduleName]
 							if (typeof db[moduleName].setup === 'function') {
-								if (moduleData.skipSecondSetup) {
-									let setupResult = db[moduleName].setup(moduleData.setupOptions || {})
-									if (setupResult instanceof Promise) {
-										yield setupResult
-									}
+								if (moduleData.skipSecondSetupWhenTesting) {
+									continue
+								}
+								let setupResult = db[moduleName].setup(moduleData.setupOptions || {})
+								if (setupResult instanceof Promise) {
+									yield setupResult
 								}
 							}
 						}

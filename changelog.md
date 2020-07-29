@@ -1,3 +1,6 @@
+# 1.12.2
+- Changed skipSecondSetup to skipSecondSetupWhenTesting and actually made it work.
+
 # 1.12.1
 - Increased the acceptable timeout for the core.runTests master describe block from 50000ms to 300000ms. 
 
