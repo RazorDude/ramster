@@ -1,0 +1,26 @@
+# Snyk (https://snyk.io) policy file, patches or ignores known vulnerabilities.
+version: v1.14.1
+ignore: {}
+# patches apply the minimum changes required to fix a vulnerability
+patch:
+  SNYK-JS-LODASH-567746:
+    - sequelize > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - mocha-eslint > eslint > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - mocha-eslint > eslint > inquirer > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - mocha-eslint > eslint > table > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - pug > pug-code-gen > constantinople > babel-types > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - pug > pug-filters > constantinople > babel-types > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - pug > pug-code-gen > pug-attrs > constantinople > babel-types > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - request-promise-native > request-promise-core > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - webpack-dev-server > http-proxy-middleware > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
+    - webpack-dev-server > portfinder > async > lodash:
+        patched: '2020-05-01T05:47:31.720Z'
