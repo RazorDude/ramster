@@ -1,3 +1,6 @@
+# 1.13.3
+- Typescript type updates.
+
 # 1.13.2
 - Added much better typescript types.
 

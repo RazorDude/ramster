@@ -130,7 +130,9 @@ export class Core {
 
 }
 
-export function BaseAPIComponent(...args: any[]): void;
+export class BaseAPIComponent {
+	constructor(...args: any[]);
+}
 
 export namespace codeGenerator {
     const configRequiredForMethods: string[];
