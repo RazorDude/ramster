@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.13.1",
+  "version": "1.13.2",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -85,6 +85,7 @@
     "@sendgrid/mail": "^6.5.0",
     "babel-loader": "^8.0.6",
     "css-loader": "^0.28.11",
+    "dts-gen": "^0.6.0",
     "json2-loader": "^0.1.2",
     "less": "^3.10.3",
     "less-loader": "^4.1.0",
