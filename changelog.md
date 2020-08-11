@@ -1,3 +1,6 @@
+# 1.13.0
+- Added typescript types.
+
 # 1.12.2
 - Changed skipSecondSetup to skipSecondSetupWhenTesting and actually made it work.
 

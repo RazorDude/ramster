@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.12.2",
+  "version": "1.13.0",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -45,6 +45,7 @@
     "sequelize": "^4.44.3",
     "sharp": "^0.24.0",
     "ssh2-promise": "0.0.9",
+    "tsd-jsdoc": "^2.5.0",
     "webpack": "^4.41.5",
     "webpack-dev-server": "^3.10.1",
     "winston": "^2.4.4",
@@ -72,6 +73,7 @@
     "test-local": "node ./test/generateStuff.js && mocha ./test/test.js",
     "testRunTests-local": "node ./test/generateStuff.js && mocha ./test/index.js --runTests --testConfig --testDB --testDBInjectedModules --testMailClient --testClients --testAPIs --testCronJobs --testWebpackBuildTools --exitProcessOnModuleTestFail=true"
   },
+  "types": "types/index.d.ts",
   "devDependencies": {
     "@babel/core": "^7.8.3",
     "@babel/plugin-proposal-object-rest-spread": "^7.8.3",
