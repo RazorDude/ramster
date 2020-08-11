@@ -1,4 +1,15 @@
 /**
+ * The core module. Contains the Core class.
+ */
+declare module "coreModule" {
+    /**
+     * The core ramster class. Creating an instance of this is used to start your app.
+     */
+    class Core {
+    }
+}
+
+/**
  * The api module. Contains the APIModule class.
  */
 declare module "apiModule" {
