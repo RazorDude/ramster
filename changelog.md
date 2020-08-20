@@ -1,3 +1,6 @@
+# 1.14.0
+- The BaseServerComponent's accessFilter method now adds the "grantedAccessPointIds" object to req.locals. It's an array of ids, representing the access points which allowed the user to get access.
+
 # 1.13.3
 - Typescript type updates.
 

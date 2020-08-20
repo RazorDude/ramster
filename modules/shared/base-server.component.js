@@ -175,7 +175,8 @@ class BaseServerComponent {
 						accessPointGroups = [[]],
 						userFieldNameAPIndexGroups = [[]],
 						hasUserFieldValues = false,
-						nonePresent = true
+						nonePresent = true,
+						grantedAccessPointIds = []
 					if (requireAllAPs || requireAllUngroupedAPs) {
 						requireAllAPsInGroupIndexes.push(0)
 					}
@@ -219,6 +220,9 @@ class BaseServerComponent {
 									hasUserFieldValues = true
 								}
 								userFieldNameAPIndexGroups[i].push(apData.index)
+							}
+							else {
+								grantedAccessPointIds.push(apData.id)
 							}
 						}
 						// block access if APs in the group are required, but not all are present
@@ -333,11 +337,13 @@ class BaseServerComponent {
 							if (nonePresent) {
 								nonePresent = false
 							}
+							grantedAccessPointIds.push(ap.id)
 						})
 					})
 					if (hasUserFieldValues && nonePresent) {
 						throw {customMessage: 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', status: 403, stage: 9}
 					}
+					req.locals.grantedAccessPointIds = grantedAccessPointIds
 					yield* nextMethod(req, res, next)
 					return
 				}
