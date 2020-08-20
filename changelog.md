@@ -1,3 +1,6 @@
+# 1.14.1
+- Split accessFilter's access filtering functionality into a separate method - filterAccess. This allows the overriding of the accessFilter method without the loss of the access filtering logic.
+
 # 1.14.0
 - The BaseServerComponent's accessFilter method now adds the "grantedAccessPointIds" object to req.locals. It's an array of ids, representing the access points which allowed the user to get access.
 

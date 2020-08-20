@@ -143,7 +143,213 @@ class BaseServerComponent {
 	}
 
 	/**
-	 * Executed before certain methods. Limits access to routes based on the logged in user's accessPoints (see the permissions system) and the settings in the options object. Throws a 401 error if the user does not meet the criteria, and yields the route method if access is allowed.
+	 * Limits access to routes based on the logged in user's accessPoints (see the permissions system) and the settings in the options object. Throws a 401 error if the user does not meet the criteria.
+	 * @param {object} req An expressJS req object
+	 * @param {object} options The list of options for the method.
+	 * @param {number[] | Array<number>[]} options.accessPointIds An array containing the ids of the access points that the user must have in his role to access the route.
+	 * @param {function} options.next A @generator function. The method to execute if the user has access.
+	 * @param {boolean} requireAllAPs Alias for requireAllUngroupedAPs, used for backwards compatibility.
+	 * @param {boolean} requireAllUngroupedAPs If set to true, all ungrouped ids in the options.accessPointIds array must be present in the user's accessPoints to access the route. Otherwise, just one of them is needed.
+	 * @returns {number[]} An array of the access point ids, because of which the user was granted access to the route
+	 * @memberof BaseServerComponent
+	 */
+	filterAccess(req, options) {
+		const user = req.user
+		if ((typeof user !== 'object') || (user === null)) {
+			throw {customMessage: 'Unauthorized.', status: 401}
+		}
+		if ((typeof user.type !== 'object') || (user.type === null) || !(user.type.accessPoints instanceof Array)) {
+			throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 0}
+		}
+		const type = user.type,
+			userTypeAccessPoints = type.accessPoints,
+			apIds = options.accessPointIds,
+			nextMethod = (typeof options.next === 'function') ? options.next : instance[options.next]()
+
+		if (apIds instanceof Array) {
+			const {requireAllAPs, requireAllUngroupedAPs} = options
+			let requireAllAPsInGroupIndexes = [],
+				apIdMap = {},
+				accessPointGroups = [[]],
+				userFieldNameAPIndexGroups = [[]],
+				hasUserFieldValues = false,
+				nonePresent = true,
+				grantedAccessPointIds = []
+			if (requireAllAPs || requireAllUngroupedAPs) {
+				requireAllAPsInGroupIndexes.push(0)
+			}
+			userTypeAccessPoints.forEach((ap, index) => {
+				apIdMap[ap.id] = {index, active: ap.active, hasUserFieldName: ap.userFieldName ? true : false}
+			})
+			// first pass - add all ungrouped access points to group index 0 and add the other groups to the array of groups
+			for (const i in apIds) {
+				if (apIds[i] instanceof Array) {
+					accessPointGroups.push(apIds[i])
+					userFieldNameAPIndexGroups.push([])
+					requireAllAPsInGroupIndexes.push(accessPointGroups.length - 1)
+				} else {
+					accessPointGroups[0].push(apIds[i])
+				}
+			}
+			// second pass - check for the existence of the grouped access points themselves
+			for (const i in accessPointGroups) {
+				let allAPsInGroupRequired = requireAllAPsInGroupIndexes.indexOf(parseInt(i, 10)) !== -1,
+					allPresent = true,
+					group = accessPointGroups[i],
+					noneInGroupPresent = true
+				for (const j in group) {
+					const apData = apIdMap[group[j]]
+					if ((typeof apData === 'undefined') || !apData.active) {
+						allPresent = false
+						if (allAPsInGroupRequired) {
+							break
+						}
+						continue
+					}
+					if (noneInGroupPresent) {
+						noneInGroupPresent = false
+					}
+					if (nonePresent) {
+						nonePresent = false
+					}
+					// if the AP has the "userFieldName" field provided, add its index to the list for later evaluation
+					if (apData.hasUserFieldName) {
+						if (!hasUserFieldValues) {
+							hasUserFieldValues = true
+						}
+						userFieldNameAPIndexGroups[i].push(apData.index)
+					}
+					else {
+						grantedAccessPointIds.push(apData.id)
+					}
+				}
+				// block access if APs in the group are required, but not all are present
+				if (allAPsInGroupRequired && !allPresent && !noneInGroupPresent) {
+					throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 1}
+				}
+			}
+			// block access if no APs are present
+			if (nonePresent) {
+				throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 2}
+			}
+			// check the APs with the "userFieldName" field provided
+			const valueProcessorMethod = options.userFieldValueProcessorMethodName ? instance[options.userFieldValueProcessorMethodName].bind(instance) : (req, value) => value
+			nonePresent = true
+			userFieldNameAPIndexGroups.forEach((groupData, groupIndex) => {
+				const allAPsInGroupRequired = requireAllAPsInGroupIndexes.indexOf(groupIndex) !== -1
+				groupData.forEach((apIndex) => {
+					const ap = userTypeAccessPoints[apIndex],
+						userFieldValue = getNested(user, ap.userFieldName),
+						userFieldValueIsAnArray = (userFieldValue instanceof Array)
+					if ((typeof userFieldValue === 'undefined') || !ap.active) {
+						if (allAPsInGroupRequired) {
+							throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 3}
+						}
+						return
+					}
+					// if we have to check whether the request has the required value(s)
+					if (ap.searchForUserFieldIn) {
+						const requestFieldValue = getNested(req, ap.searchForUserFieldIn)
+						if (typeof requestFieldValue === 'undefined') {
+							if (allAPsInGroupRequired) {
+								throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 4}
+							}
+							return
+						}
+						const requestFieldValueIsAnArray = requestFieldValue instanceof Array,
+							rfvActual = requestFieldValueIsAnArray ? requestFieldValue : [requestFieldValue]
+						let allowedValues = []
+						for (const index in rfvActual) {
+							const rfvItem = rfvActual[index],
+								requestFieldValues = [
+									rfvItem, // the value as-is
+									parseInt(rfvItem, 10), // the int value
+									parseFloat(rfvItem), // the float value
+									(rfvItem === true) || (rfvItem === 'true') // the boolean value
+								]
+							if (userFieldValueIsAnArray) {
+								// if the request field value is an array, filter out only the items he has access to
+								for (const i in userFieldValue) {
+									const value = userFieldValue[i]
+									for (const j in requestFieldValues) {
+										if (requestFieldValues[j] === value) {
+											allowedValues.push(value)
+											break
+										}
+									}
+								}
+							} else {
+								// if the request field value is an array, filter out only the items he has access to
+								for (const j in requestFieldValues) {
+									if (requestFieldValues[j] === userFieldValue) {
+										allowedValues.push(userFieldValue)
+										break
+									}
+								}
+							}
+						}
+						if (allowedValues.length) {
+							setNested(req, ap.searchForUserFieldIn, allowedValues)
+						}
+						else {
+							if (allAPsInGroupRequired) {
+								throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 5}
+							}
+							// TODO: figure this out - it fucks up certain access points, for example if saerching for req.params.id - sets it to undefined
+							// setNested(req, ap.searchForUserFieldIn, undefined)
+							return
+						}
+					}
+					// if we have to set the value of the userField under some key(s) in the request
+					if (ap.setUserFieldValueIn) {
+						// if we're setting the userField's value in multiple objects within an array
+						if (ap.setUserFieldValueIn.indexOf('[]') !== -1) {
+							let fieldPaths = ap.setUserFieldValueIn.split('[]'),
+								containerPath = fieldPaths[0],
+								inChildPath = fieldPaths[1],
+								container = getNested(req, containerPath)
+							if (!(container instanceof Array)) {
+								if (allAPsInGroupRequired) {
+									throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 6}
+								}
+								return
+							}
+							const processedValue = valueProcessorMethod(req, userFieldValue)
+							container.forEach((item, index) => {
+								if (!setNested(req, `${containerPath}.${index}.${inChildPath}`, processedValue)) {
+									if (allAPsInGroupRequired) {
+										throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 7}
+									}
+									return
+								}
+							})
+						}
+						// otherwise, if we have to set it for a single item but it didn't work
+						else if (!setNested(req, ap.setUserFieldValueIn, valueProcessorMethod(req, userFieldValue))) {
+							if (allAPsInGroupRequired) {
+								throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 8}
+							}
+							return
+						}
+					}
+					if (nonePresent) {
+						nonePresent = false
+					}
+					grantedAccessPointIds.push(ap.id)
+				})
+			})
+			if (hasUserFieldValues && nonePresent) {
+				throw {customMessage: 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', status: 403, stage: 9}
+			}
+			return grantedAccessPointIds
+		}
+
+		// throw the user out, because he's failed all checks
+		throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 10}
+	}
+
+	/**
+	 * Executed before certain methods. Executes filterAccess and yields the route method if access is allowed.
 	 * @param {object} options The list of options for the method.
 	 * @param {number[] | Array<number>[]} options.accessPointIds An array containing the ids of the access points that the user must have in his role to access the route.
 	 * @param {function} options.next A @generator function. The method to execute if the user has access.
@@ -156,200 +362,8 @@ class BaseServerComponent {
 		const instance = this
 		return function* (req, res, next) {
 			try {
-				const user = req.user
-				if ((typeof user !== 'object') || (user === null)) {
-					throw {customMessage: 'Unauthorized.', status: 401}
-				}
-				if ((typeof user.type !== 'object') || (user.type === null) || !(user.type.accessPoints instanceof Array)) {
-					throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 0}
-				}
-				const type = user.type,
-					userTypeAccessPoints = type.accessPoints,
-					apIds = options.accessPointIds,
-					nextMethod = (typeof options.next === 'function') ? options.next : instance[options.next]()
-
-				if (apIds instanceof Array) {
-					const {requireAllAPs, requireAllUngroupedAPs} = options
-					let requireAllAPsInGroupIndexes = [],
-						apIdMap = {},
-						accessPointGroups = [[]],
-						userFieldNameAPIndexGroups = [[]],
-						hasUserFieldValues = false,
-						nonePresent = true,
-						grantedAccessPointIds = []
-					if (requireAllAPs || requireAllUngroupedAPs) {
-						requireAllAPsInGroupIndexes.push(0)
-					}
-					userTypeAccessPoints.forEach((ap, index) => {
-						apIdMap[ap.id] = {index, active: ap.active, hasUserFieldName: ap.userFieldName ? true : false}
-					})
-					// first pass - add all ungrouped access points to group index 0 and add the other groups to the array of groups
-					for (const i in apIds) {
-						if (apIds[i] instanceof Array) {
-							accessPointGroups.push(apIds[i])
-							userFieldNameAPIndexGroups.push([])
-							requireAllAPsInGroupIndexes.push(accessPointGroups.length - 1)
-						} else {
-							accessPointGroups[0].push(apIds[i])
-						}
-					}
-					// second pass - check for the existence of the grouped access points themselves
-					for (const i in accessPointGroups) {
-						let allAPsInGroupRequired = requireAllAPsInGroupIndexes.indexOf(parseInt(i, 10)) !== -1,
-							allPresent = true,
-							group = accessPointGroups[i],
-							noneInGroupPresent = true
-						for (const j in group) {
-							const apData = apIdMap[group[j]]
-							if ((typeof apData === 'undefined') || !apData.active) {
-								allPresent = false
-								if (allAPsInGroupRequired) {
-									break
-								}
-								continue
-							}
-							if (noneInGroupPresent) {
-								noneInGroupPresent = false
-							}
-							if (nonePresent) {
-								nonePresent = false
-							}
-							// if the AP has the "userFieldName" field provided, add its index to the list for later evaluation
-							if (apData.hasUserFieldName) {
-								if (!hasUserFieldValues) {
-									hasUserFieldValues = true
-								}
-								userFieldNameAPIndexGroups[i].push(apData.index)
-							}
-							else {
-								grantedAccessPointIds.push(apData.id)
-							}
-						}
-						// block access if APs in the group are required, but not all are present
-						if (allAPsInGroupRequired && !allPresent && !noneInGroupPresent) {
-							throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 1}
-						}
-					}
-					// block access if no APs are present
-					if (nonePresent) {
-						throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 2}
-					}
-					// check the APs with the "userFieldName" field provided
-					const valueProcessorMethod = options.userFieldValueProcessorMethodName ? instance[options.userFieldValueProcessorMethodName].bind(instance) : (req, value) => value
-					nonePresent = true
-					userFieldNameAPIndexGroups.forEach((groupData, groupIndex) => {
-						const allAPsInGroupRequired = requireAllAPsInGroupIndexes.indexOf(groupIndex) !== -1
-						groupData.forEach((apIndex) => {
-							const ap = userTypeAccessPoints[apIndex],
-								userFieldValue = getNested(user, ap.userFieldName),
-								userFieldValueIsAnArray = (userFieldValue instanceof Array)
-							if ((typeof userFieldValue === 'undefined') || !ap.active) {
-								if (allAPsInGroupRequired) {
-									throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 3}
-								}
-								return
-							}
-							// if we have to check whether the request has the required value(s)
-							if (ap.searchForUserFieldIn) {
-								const requestFieldValue = getNested(req, ap.searchForUserFieldIn)
-								if (typeof requestFieldValue === 'undefined') {
-									if (allAPsInGroupRequired) {
-										throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 4}
-									}
-									return
-								}
-								const requestFieldValueIsAnArray = requestFieldValue instanceof Array,
-									rfvActual = requestFieldValueIsAnArray ? requestFieldValue : [requestFieldValue]
-								let allowedValues = []
-								for (const index in rfvActual) {
-									const rfvItem = rfvActual[index],
-										requestFieldValues = [
-											rfvItem, // the value as-is
-											parseInt(rfvItem, 10), // the int value
-											parseFloat(rfvItem), // the float value
-											(rfvItem === true) || (rfvItem === 'true') // the boolean value
-										]
-									if (userFieldValueIsAnArray) {
-										// if the request field value is an array, filter out only the items he has access to
-										for (const i in userFieldValue) {
-											const value = userFieldValue[i]
-											for (const j in requestFieldValues) {
-												if (requestFieldValues[j] === value) {
-													allowedValues.push(value)
-													break
-												}
-											}
-										}
-									} else {
-										// if the request field value is an array, filter out only the items he has access to
-										for (const j in requestFieldValues) {
-											if (requestFieldValues[j] === userFieldValue) {
-												allowedValues.push(userFieldValue)
-												break
-											}
-										}
-									}
-								}
-								if (allowedValues.length) {
-									setNested(req, ap.searchForUserFieldIn, allowedValues)
-								}
-								else {
-									if (allAPsInGroupRequired) {
-										throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 5}
-									}
-									// TODO: figure this out - it fucks up certain access points, for example if saerching for req.params.id - sets it to undefined
-									// setNested(req, ap.searchForUserFieldIn, undefined)
-									return
-								}
-							}
-							// if we have to set the value of the userField under some key(s) in the request
-							if (ap.setUserFieldValueIn) {
-								// if we're setting the userField's value in multiple objects within an array
-								if (ap.setUserFieldValueIn.indexOf('[]') !== -1) {
-									let fieldPaths = ap.setUserFieldValueIn.split('[]'),
-										containerPath = fieldPaths[0],
-										inChildPath = fieldPaths[1],
-										container = getNested(req, containerPath)
-									if (!(container instanceof Array)) {
-										if (allAPsInGroupRequired) {
-											throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 6}
-										}
-										return
-									}
-									const processedValue = valueProcessorMethod(req, userFieldValue)
-									container.forEach((item, index) => {
-										if (!setNested(req, `${containerPath}.${index}.${inChildPath}`, processedValue)) {
-											if (allAPsInGroupRequired) {
-												throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 7}
-											}
-											return
-										}
-									})
-								}
-								// otherwise, if we have to set it for a single item but it didn't work
-								else if (!setNested(req, ap.setUserFieldValueIn, valueProcessorMethod(req, userFieldValue))) {
-									if (allAPsInGroupRequired) {
-										throw {customMessage: 'Could not set access-related field values in the request data object. Please check your data and try again.', status: 400, stage: 8}
-									}
-									return
-								}
-							}
-							if (nonePresent) {
-								nonePresent = false
-							}
-							grantedAccessPointIds.push(ap.id)
-						})
-					})
-					if (hasUserFieldValues && nonePresent) {
-						throw {customMessage: 'You do not have access to this resource. Please check your data and try again if you think this is a mistake.', status: 403, stage: 9}
-					}
-					req.locals.grantedAccessPointIds = grantedAccessPointIds
-					yield* nextMethod(req, res, next)
-					return
-				}
-
-				// throw the user out, because he's failed all checks
-				throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 10}
+				req.locals.grantedAccessPointIds = instance.filterAccess(req, options)
+				yield* nextMethod(req, res, next)
 			} catch (e) {
 				req.locals.error = e
 				next()
