@@ -163,8 +163,7 @@ class BaseServerComponent {
 		}
 		const type = user.type,
 			userTypeAccessPoints = type.accessPoints,
-			apIds = options.accessPointIds,
-			nextMethod = (typeof options.next === 'function') ? options.next : instance[options.next]()
+			apIds = options.accessPointIds
 
 		if (apIds instanceof Array) {
 			const {requireAllAPs, requireAllUngroupedAPs} = options
@@ -362,6 +361,7 @@ class BaseServerComponent {
 		const instance = this
 		return function* (req, res, next) {
 			try {
+				const nextMethod = (typeof options.next === 'function') ? options.next : instance[options.next]()
 				req.locals.grantedAccessPointIds = instance.filterAccess(req, options)
 				yield* nextMethod(req, res, next)
 			} catch (e) {
