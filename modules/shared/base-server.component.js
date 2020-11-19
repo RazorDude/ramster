@@ -154,6 +154,7 @@ class BaseServerComponent {
 	 * @memberof BaseServerComponent
 	 */
 	filterAccess(req, options) {
+		// TODO: URGENTLY patch access to relReadKeys!!!!
 		const user = req.user
 		if ((typeof user !== 'object') || (user === null)) {
 			throw {customMessage: 'Unauthorized.', status: 401}
