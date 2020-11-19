@@ -1,3 +1,6 @@
+# 1.14.4
+- Another hotfix for BaseDBComponent.setQueryDataForRelation.
+
 # 1.14.3
 - Hotfix foran edge case in BaseDBComponent.setQueryDataForRelation, where including self didn't work properly.
 

@@ -692,9 +692,8 @@ class BaseDBComponent {
 			for (const i in innerIncludeItems) {
 				const innerIncludeItem = innerIncludeItems[i],
 					associationConfigItemComponentName = associationsConfig[innerIncludeItem.as].componentName
-				let relationDBComponentName = associationConfigItemComponentName || innerIncludeItem.as
 				this.setQueryDataForRelation(
-					relationDBComponentName === this.componentName ? this : dbComponents[relationDBComponentName],
+					associationConfigItemComponentName == this.componentName ? this : dbComponents[associationConfigItemComponentName || innerIncludeItem.as],
 					innerInclude,
 					mapItemChildren,
 					innerIncludeItem,
@@ -711,9 +710,9 @@ class BaseDBComponent {
 					if (typeof targetAssociationConfigItem === 'undefined') {
 						throw {customMessage: `No association with name "${key}" found for DB component "${dbComponent.componentName}".`}
 					}
-					let relationDBComponentName = targetAssociationConfigItem.componentName || key
+					const targetComponentName = targetAssociationConfigItem.componentName || key
 					this.setQueryDataForRelation(
-						relationDBComponentName === this.componentName ? this : dbComponents[relationDBComponentName],
+						targetComponentName == this.componentName ? this : dbComponents[targetComponentName],
 						innerInclude,
 						mapItemChildren,
 						dbComponent.relations[key].includeItem,
@@ -754,9 +753,8 @@ class BaseDBComponent {
 					throw {customMessage: `No relation "${relationName}" exists for component "${this.componentName}".`}
 				}
 				const associationConfigItemComponentName = associationsConfig[relationData.includeItem.as].componentName
-				let relationDBComponentName = associationConfigItemComponentName || relationData.includeItem.as
 				this.setQueryDataForRelation(
-					relationDBComponentName === this.componentName ? this : dbComponents[relationDBComponentName],
+					associationConfigItemComponentName === this.componentName ? this : dbComponents[associationConfigItemComponentName || relationData.includeItem.as],
 					include,
 					associationNameMap,
 					relationData.includeItem,
@@ -804,9 +802,8 @@ class BaseDBComponent {
 					}
 				}
 				const associationConfigItemComponentName = associationsConfig[relationData.includeItem.as].componentName
-				let relationDBComponentName = associationConfigItemComponentName || relationData.includeItem.as
 				this.setQueryDataForRelation(
-					relationDBComponentName === this.componentName ? this : dbComponents[relationDBComponentName],
+					associationConfigItemComponentName === this.componentName ? this : dbComponents[associationConfigItemComponentName || relationData.includeItem.as],
 					include,
 					associationNameMap,
 					relationData.includeItem,
