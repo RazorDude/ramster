@@ -693,7 +693,7 @@ class BaseDBComponent {
 				const innerIncludeItem = innerIncludeItems[i],
 					associationConfigItemComponentName = associationsConfig[innerIncludeItem.as].componentName
 				this.setQueryDataForRelation(
-					associationConfigItemComponentName == this.componentName ? this : dbComponents[associationConfigItemComponentName || innerIncludeItem.as],
+					associationConfigItemComponentName == dbComponent.componentName ? dbComponent : dbComponents[associationConfigItemComponentName || innerIncludeItem.as],
 					innerInclude,
 					mapItemChildren,
 					innerIncludeItem,
@@ -712,7 +712,7 @@ class BaseDBComponent {
 					}
 					const targetComponentName = targetAssociationConfigItem.componentName || key
 					this.setQueryDataForRelation(
-						targetComponentName == this.componentName ? this : dbComponents[targetComponentName],
+						targetComponentName == dbComponent.componentName ? dbComponent : dbComponents[targetComponentName],
 						innerInclude,
 						mapItemChildren,
 						dbComponent.relations[key].includeItem,

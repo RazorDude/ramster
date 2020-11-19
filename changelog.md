@@ -1,3 +1,6 @@
+# 1.14.5
+- Another, final hotfix for BaseDBComponent.setQueryDataForRelation.
+
 # 1.14.4
 - Another hotfix for BaseDBComponent.setQueryDataForRelation.
 
