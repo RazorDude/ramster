@@ -261,7 +261,7 @@ class Core {
 							() => true,
 							(err) => console.error(err)
 						)
-						delete dJobData.onTickAsync
+						// delete dJobData.onTickAsync
 					}
 					if (typeof dJobData.start === 'undefined') {
 						dJobData.start = true

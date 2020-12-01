@@ -1,3 +1,6 @@
+# 1.15.1
+- CronJobs hotfix.
+
 # 1.15.0
 - The CronJobs module now supports passing an async, promise-based onTick method via the job's onTickAsync key.
 
