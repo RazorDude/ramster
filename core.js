@@ -255,15 +255,23 @@ class Core {
 					if (mockMode) {
 						return
 					}
-					if (typeof jobData.start === 'undefined') {
-						jobData.start = true
+					const dJobData = Object.assign({}, jobData)
+					if (!dJobData.onTick && dJobData.onTickAsync) {
+						dJobData.onTick = () => dJobData.onTickAsync().then(
+							() => true,
+							(err) => console.error(err)
+						)
+						delete dJobData.onTickAsync
 					}
-					else if (jobData.start !== true) {
-						jobData.start = false
-						jobsModule.inactiveJobs.push(new CronJob(jobData))
+					if (typeof dJobData.start === 'undefined') {
+						dJobData.start = true
+					}
+					else if (dJobData.start !== true) {
+						dJobData.start = false
+						jobsModule.inactiveJobs.push(new CronJob(dJobData))
 						return
 					}
-					jobsModule.activeJobs.push(new CronJob(jobData))
+					jobsModule.activeJobs.push(new CronJob(dJobData))
 				} catch (e) {
 					console.log('Error starting a cron job:')
 					logger.error(e)

@@ -1,3 +1,6 @@
+# 1.15.0
+- The CronJobs module now supports passing an async, promise-based onTick method via the job's onTickAsync key.
+
 # 1.14.5
 - Another, final hotfix for BaseDBComponent.setQueryDataForRelation.
 
