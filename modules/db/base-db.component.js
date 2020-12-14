@@ -5,11 +5,11 @@
 
 const
 	co = require('co'),
-	DBModule = require('./db.module'),
+	_DBModule = require('./db.module'),
 	deepmerge = require('deepmerge'),
 	fs = require('fs-extra'),
 	path = require('path'),
-	Sequelize = require('sequelize'),
+	_Sequelize = require('sequelize'),
 	sharp = require('sharp'),
 	spec = require('./base-db.component.spec')
 
@@ -300,7 +300,7 @@ class BaseDBComponent {
 					if (!relationObject.order) {
 						relationObject.order = []
 					}
-					mappedOrder = mappedOrder.concat(innerData.order.map((orderItem, oIndex) => [{model: targetComponent.model, as: associationName}].concat(orderItem)))
+					mappedOrder = mappedOrder.concat(innerData.order.map((orderItem) => [{model: targetComponent.model, as: associationName}].concat(orderItem)))
 				}
 			}
 			mappedArray.push(relationObject)
@@ -834,7 +834,7 @@ class BaseDBComponent {
 		}
 		optionsObject.attributes = ['id']
 		if (optionsObject.include) {
-			optionsObject.include.forEach((item, index) => attributesByPath.nested.push(this.stripAndMapAttributesFromOptionsObjectRecursively(item)))
+			optionsObject.include.forEach((item) => attributesByPath.nested.push(this.stripAndMapAttributesFromOptionsObjectRecursively(item)))
 		}
 		return attributesByPath
 	}
@@ -871,6 +871,7 @@ class BaseDBComponent {
 	 * @typedef {object} BaseDBComponentSaveImageOptions
 	 * @property {BaseDBComponentSaveImageImageCroppingOptions} imageCroppingOptions (optional) Coordinates for cropping the image.
 	 * @property {string} outputFileType (optional) The extension of the output file - png, jpeg, webp, tiff or heif.
+	 * @property {object} imageResizingOptions An object containing options regarding image resizing that are to be passed to Sharp.
 	 * @returns {Promise<object>} A promise which wraps a generator function. Resolves with true.
 	 * @memberof BaseDBComponent
 	 */
@@ -885,9 +886,9 @@ class BaseDBComponent {
 				'Please use the newer, options objects syntax for the fourth argument.'
 			)
 			actualOptions = {outputFileType: options}
-		} else if (!options || (typeof options !== 'object')) {
-
 		}
+		// else if (!options || (typeof options !== 'object')) {
+		// }
 		const {imageCroppingOptions, outputFileType} = actualOptions
 		return co(function*() {
 			if ((typeof inputFileName !== 'string') || !inputFileName.length) {
@@ -909,7 +910,7 @@ class BaseDBComponent {
 					throw {customMessage: `Invalid or unsupported image file type "${extName}".`}
 				}
 				yield fs.mkdirp(outputFolderPath)
-				const imageResizingOptions = instance.imageResizingOptions || db.config.db.imageResizingOptions || null,
+				const imageResizingOptions = options.imageCroppingOptions || instance.imageResizingOptions || db.config.db.imageResizingOptions || null,
 					outputExtName = outputFileType || db.config.db.defaultImageOutputFileType || 'png'
 				let inputFileData = yield fs.readFile(inputFilePath),
 					outputFile = yield fs.open(path.join(outputFolderPath, `${outputFileName}.${outputExtName}`), 'w')
@@ -1129,7 +1130,7 @@ class BaseDBComponent {
 					if ((totalPages > 0) && (page > totalPages)) {
 						page = totalPages
 					}
-					readListOptions.offset = (page - 1) * perPage,
+					readListOptions.offset = (page - 1) * perPage
 					readListOptions.limit = perPage + 1
 					results = yield instance.model.findAll(readListOptions)
 				}
@@ -1185,7 +1186,7 @@ class BaseDBComponent {
 			}
 			let objectForUpdate = {}
 			if (allowedUpdateFields instanceof Array) {
-				allowedUpdateFields.forEach((e, i) => {
+				allowedUpdateFields.forEach((e) => {
 					if (typeof dbObject[e] !== 'undefined') {
 						objectForUpdate[e] = dbObject[e]
 					}

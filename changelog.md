@@ -1,3 +1,6 @@
+# 1.16.0
+- Enabled passing an "imageResizingProperties" property to the options argument of the BaseDBComponent's saveImage method.
+
 # 1.15.1
 - CronJobs hotfix.
 
