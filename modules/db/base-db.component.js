@@ -910,7 +910,7 @@ class BaseDBComponent {
 					throw {customMessage: `Invalid or unsupported image file type "${extName}".`}
 				}
 				yield fs.mkdirp(outputFolderPath)
-				const imageResizingOptions = options.imageCroppingOptions || instance.imageResizingOptions || db.config.db.imageResizingOptions || null,
+				const imageResizingOptions = options.imageResizingOptions || instance.imageResizingOptions || db.config.db.imageResizingOptions || null,
 					outputExtName = outputFileType || db.config.db.defaultImageOutputFileType || 'png'
 				let inputFileData = yield fs.readFile(inputFilePath),
 					outputFile = yield fs.open(path.join(outputFolderPath, `${outputFileName}.${outputExtName}`), 'w')
