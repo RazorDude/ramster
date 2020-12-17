@@ -890,7 +890,7 @@ class BaseDBComponent {
 		else if ((typeof options === 'object') && (options !== null)) {
 			actualOptions = Object.assign({}, options)
 		}
-		const {imageCroppingOptions, outputFileType} = actualOptions
+		const {imageCroppingOptions, keepInputFile, outputFileType} = actualOptions
 		return co(function*() {
 			if ((typeof inputFileName !== 'string') || !inputFileName.length) {
 				throw {customMessage: 'Invalid inputFileName provided. Please provide a non-empty string.'}
@@ -935,7 +935,9 @@ class BaseDBComponent {
 				}
 				yield fs.writeFile(outputFile, inputFileData)
 				yield fs.close(outputFile)
-				yield fs.remove(inputFilePath)
+				if (keepInputFile !== true) {
+					yield fs.remove(inputFilePath)
+				}
 			} catch (e) {
 				if (e && e.customMessage) {
 					throw e

@@ -1,3 +1,6 @@
+# 1.16.3
+- BaseDBComponent.saveImage now supports a "keepInputFile" boolean option.
+
 # 1.16.2
 - Hotfix.
 
