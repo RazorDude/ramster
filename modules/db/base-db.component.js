@@ -887,8 +887,9 @@ class BaseDBComponent {
 			)
 			actualOptions = {outputFileType: options}
 		}
-		// else if (!options || (typeof options !== 'object')) {
-		// }
+		else if ((typeof options === 'object') && (options !== null)) {
+			actualOptions = Object.assign({}, options)
+		}
 		const {imageCroppingOptions, outputFileType} = actualOptions
 		return co(function*() {
 			if ((typeof inputFileName !== 'string') || !inputFileName.length) {
@@ -910,7 +911,7 @@ class BaseDBComponent {
 					throw {customMessage: `Invalid or unsupported image file type "${extName}".`}
 				}
 				yield fs.mkdirp(outputFolderPath)
-				const imageResizingOptions = options.imageResizingOptions || instance.imageResizingOptions || db.config.db.imageResizingOptions || null,
+				const imageResizingOptions = actualOptions.imageResizingOptions || instance.imageResizingOptions || db.config.db.imageResizingOptions || null,
 					outputExtName = outputFileType || db.config.db.defaultImageOutputFileType || 'png'
 				let inputFileData = yield fs.readFile(inputFilePath),
 					outputFile = yield fs.open(path.join(outputFolderPath, `${outputFileName}.${outputExtName}`), 'w')
