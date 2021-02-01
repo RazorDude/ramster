@@ -1,3 +1,6 @@
+# 1.16.4
+- API module anonymousAccessRoutes fix.
+
 # 1.16.3
 - BaseDBComponent.saveImage now supports a "keepInputFile" boolean option.
 

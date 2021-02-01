@@ -4,7 +4,6 @@
  */
 
 const
-	BaseApiComponent = require('./base-api.component'),
 	BaseServerModule = require('../shared/base-server.module'),
 	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
@@ -164,9 +163,9 @@ class APIModule extends BaseServerModule {
 
 			// load all route paths
 			for (const i in components) {
-				components[i].routes.forEach((routeData, index) => {
+				components[i].routes.forEach((routeData) => {
 					if (routeData.path instanceof Array) {
-						routeData.path.forEach((path, pIndex) => {
+						routeData.path.forEach((path) => {
 							instance.paths.push(path)
 						})
 					} else {
@@ -179,8 +178,8 @@ class APIModule extends BaseServerModule {
 			for (const i in components) {
 				let component = components[i]
 				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
-				component.routes.forEach((routeData, index) => {
-					if (moduleConfig.anonymousAccessRoutes.indexOf(routeData.path) === -1) {
+				component.routes.forEach((routeData) => {
+					if (!checkRoutes(routeData.path, moduleConfig.anonymousAccessRoutes)) {
 						instance.router[routeData.method](routeData.path, wrap(instance.tokenManager.validate()), wrap(component[routeData.func](routeData.options || {})))
 						return
 					}

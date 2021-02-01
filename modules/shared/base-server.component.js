@@ -4,8 +4,8 @@
  */
 
 const
-	BaseDBComponent = require('../db/base-db.component'),
-	BaseServerModule = require('./base-server.module'),
+	BaseDBComponent = require('../db/base-db.component'), // eslint-disable-line no-unused-vars
+	BaseServerModule = require('./base-server.module'), // eslint-disable-line no-unused-vars
 	co = require('co'),
 	{decodeQueryValues, getNested, setNested} = require('../toolbelt'),
 	moment = require('moment'),
@@ -24,7 +24,7 @@ class BaseServerComponent {
 	 * @param {string[]} options.addDefaultRoutes (optional) The list of default routes to add - create, read, readList, readSelectList, update, bulkUpsert, delete.
 	 * @param {baseServerComponentRouteConfigObject[]} options.additionalDefaultRoutes (optional) A list of routes to set as default ones for all components that inherit the class that sets them, in addition to the ramster-provided default routes.
 	 * @param {boolean} options.appendComponentNameToRoutes (optional) If set to true, the component name will be added as a prefix too all routes in the "routes" array. In such a case, be sure to use "" instead of "/" for the route path of methods that are supposed to be at "/componentName". Otherwise you'll get a not found error, because the routes will mount at "/componentName/".
-	 * @param {string[]} options.afterRoutesMethodNames (optional) The list of method names to mount as net() for all routes. Must correspond to actual methods from the server component. Will be mounted in the order provided.
+	 * @param {string[]} options.afterRoutesMethodNames (optional) The list of method names to mount as next() for all routes. Must correspond to actual methods from the server component. Will be mounted in the order provided.
 	 * @typedef {Object.<string, any>} baseServerComponentRouteConfigObject
 	 * @property {string} method The HTTP method type - GET, POST, PUT, PATCH and DELETE. Case-insensitive.
 	 * @property {string} path The HTTP REST path of the route (not including the server URL).
@@ -99,7 +99,7 @@ class BaseServerComponent {
 			}
 			if (item.path instanceof Array) {
 				let paths = []
-				item.path.forEach((e, i) => paths.push(`${appendString}${e}`))
+				item.path.forEach((e) => paths.push(`${appendString}${e}`))
 				this.routes[index].path = paths
 				return
 			}
@@ -132,7 +132,7 @@ class BaseServerComponent {
 					newRoute.path = `/${componentName}${newRoute.path}`
 				}
 			}
-			addDefaultRoutes.forEach((route, index) => {
+			addDefaultRoutes.forEach((route) => {
 				if (defaultRoutes[route]) {
 					defaultRoutesToAdd.push(defaultRoutes[route])
 				}
@@ -233,7 +233,7 @@ class BaseServerComponent {
 				throw {customMessage: 'You do not have access to this resource.', status: 403, stage: 2}
 			}
 			// check the APs with the "userFieldName" field provided
-			const valueProcessorMethod = options.userFieldValueProcessorMethodName ? instance[options.userFieldValueProcessorMethodName].bind(instance) : (req, value) => value
+			const valueProcessorMethod = options.userFieldValueProcessorMethodName ? this[options.userFieldValueProcessorMethodName].bind(this) : (req, value) => value
 			nonePresent = true
 			userFieldNameAPIndexGroups.forEach((groupData, groupIndex) => {
 				const allAPsInGroupRequired = requireAllAPsInGroupIndexes.indexOf(groupIndex) !== -1
@@ -583,7 +583,7 @@ class BaseServerComponent {
 				delete req.body.filters
 				delete req.body.where
 				if (!req.body.dbObject) {
-					Object.keys(req.body).forEach((key, index) => {
+					Object.keys(req.body).forEach((key) => {
 						dbObject[key] = req.body[key]
 						delete req.body[key]
 					})

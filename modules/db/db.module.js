@@ -4,17 +4,13 @@
  */
 
 const
-	BaseDBComponent = require('./base-db.component'),
 	co = require('co'),
 	fs = require('fs-extra'),
-	GeneralStore = require('../generalStore/generalStore.module'),
-	Logger = require('../errorLogger/errorLogger.module'),
 	path = require('path'),
 	pd = require('pretty-data').pd,
 	Sequelize = require('sequelize'),
 	spec = require('./db.module.spec'),
-	ssh = require('ssh2-promise'),
-	TokenManager = require('../tokenManager/tokenManager.module')
+	ssh = require('ssh2-promise')
 
 /**
  * The DBModule class. This class connects to the database, loads all db components, creates associations and synchronizes the db tables. After it's fully loaded, it contains all dbComponents under its components key.
@@ -278,7 +274,7 @@ class DBModule {
 					let component = components[componentName],
 						componentDependencyMap = component.dependencyMap,
 						componentSeedingOrderIndex = seedingOrder.indexOf(componentName)
-					componentDependencyMap.slaveOf.forEach((item, index) => {
+					componentDependencyMap.slaveOf.forEach((item) => {
 						let itemSeedingOrderIndex = seedingOrder.indexOf(item)
 						if (itemSeedingOrderIndex > componentSeedingOrderIndex) {
 							if (seedingOrderIsCorrect) {
@@ -328,7 +324,7 @@ class DBModule {
 			}
 		} else if (injectModules && (typeof injectModules === 'object')) {
 			for (const moduleName in injectModules) {
-				const moduleData = injectModules[moduleName]
+				// const moduleData = injectModules[moduleName]
 				let injectedModule = this[moduleName],
 					dbClone = Object.assign({}, this)
 				delete dbClone[moduleName]

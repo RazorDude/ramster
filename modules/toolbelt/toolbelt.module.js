@@ -106,12 +106,12 @@ const
 
 		if ((typeof input === 'object') && (input !== null)) {
 			str = JSON.stringify(input)
-			keyMap.forEach((e, i) => {
+			keyMap.forEach((e) => {
 				str = str.replace(new RegExp(`("${e[inputType]}":)`, 'g'), `"${e[outputType]}":`)
 			})
 		} else if (typeof input === 'string') {
 			str = input
-			keyMap.forEach((e, i) => {
+			keyMap.forEach((e) => {
 				str = str.replace(new RegExp(`(\\?${e[inputType]}=)`, 'g'), `?${e[outputType]}=`).replace(new RegExp(`(&${e[inputType]}=)`, 'g'), `&${e[outputType]}=`)
 			})
 		} else {
@@ -136,7 +136,7 @@ const
 		for (const i in routes) {
 			let thisRoute = routes[i],
 				splitThisRoute = thisRoute.split('/')
-			if (route === thisRoute) {
+			if ((route === thisRoute) || (thisRoute === '*')) {
 				return true
 			}
 			if ((thisRoute.indexOf(':') !== -1) && (splitThisRoute.length === splitRoute.length)) {
@@ -384,7 +384,7 @@ const
 					for (let j = i + 1; j < fieldDataLength; j++) {
 						innerPath += `${fieldData[j]}${j < (fieldDataLength - 1) ? '.' : ''}`
 					}
-					nextElement.forEach((item, iIndex) => {
+					nextElement.forEach((item) => {
 						let innerValue = getNested(item, innerPath)
 						if (typeof innerValue !== 'undefined') {
 							// if the innerValue is an array too, merge it with the currentElement - this way we can have nested arrays without indexes

@@ -22,7 +22,7 @@ const
 	CodeGenerator = require('./modules/codeGenerator'),
 	coreTests = require('./core.spec'),
 	{DBModule} = require('./modules/db'),
-	{describeSuiteConditionally, runTestConditionally} = require('./modules/toolbelt'),
+	{describeSuiteConditionally, runTestConditionally: _runTestConditionally} = require('./modules/toolbelt'),
 	Emails = require('./modules/emails'),
 	GeneralStore = require('./modules/generalStore'),
 	Logger = require('./modules/errorLogger'),

@@ -5,7 +5,6 @@
 
 
 const
-	BaseClientComponent = require('./base-client.component'),
 	BaseServerModule = require('../shared/base-server.module'),
 	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
@@ -234,9 +233,9 @@ class ClientModule extends BaseServerModule {
 			// load all route paths
 			let layoutRoutes = []
 			for (const i in components) {
-				components[i].routes.forEach((routeData, index) => {
+				components[i].routes.forEach((routeData) => {
 					if (routeData.path instanceof Array) {
-						routeData.path.forEach((path, pIndex) => {
+						routeData.path.forEach((path) => {
 							instance.paths.push(path)
 							if (routeData.isALayoutRoute) {
 								layoutRoutes.push(path)
@@ -259,7 +258,7 @@ class ClientModule extends BaseServerModule {
 			for (const i in components) {
 				let component = components[i]
 				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
-				component.routes.forEach((routeData, index) => {
+				component.routes.forEach((routeData) => {
 					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 				})
 				if (componentAfterRoutesMethodNames.length) {
