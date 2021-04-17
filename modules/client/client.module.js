@@ -286,7 +286,7 @@ class ClientModule extends BaseServerModule {
 			}
 
 			instance.server = http.createServer(app)
-			instance.server.listen(moduleConfig.serverPort, () => {
+			instance.server.listen(moduleConfig.serverPort, moduleConfig.serverHost || '0.0.0.0', () => {
 				console.log(`[${moduleName} client] Server started.`)
 				console.log(`[${moduleName} client] Port:`, moduleConfig.serverPort)
 				console.log(`[${moduleName} client] Configuration profile:`, config.name)

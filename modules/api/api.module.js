@@ -210,7 +210,7 @@ class APIModule extends BaseServerModule {
 			}
 
 			instance.server = http.createServer(app)
-			instance.server.listen(moduleConfig.serverPort, () => {
+			instance.server.listen(moduleConfig.serverPort, moduleConfig.serverHost || '0.0.0.0', () => {
 				console.log(`[${moduleName} API] Server started.`)
 				console.log(`[${moduleName} API] Port:`, moduleConfig.serverPort)
 				console.log(`[${moduleName} API] Configuration profile:`, config.name)

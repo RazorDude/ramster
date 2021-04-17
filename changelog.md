@@ -1,3 +1,6 @@
+# 1.16.5
+- API and Client module now support a `serverHost` attribute in the config, which will start the server at a particular host ip if provided. If not provided, it will default to `0.0.0.0`.
+
 # 1.16.4
 - API module anonymousAccessRoutes fix.
 
