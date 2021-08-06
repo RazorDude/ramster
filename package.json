@@ -43,7 +43,7 @@
     "redis": "^2.6.2",
     "request-promise-native": "^1.0.8",
     "sequelize": "^4.44.3",
-    "sharp": "^0.24.0",
+    "sharp": "^0.24.1",
     "ssh2-promise": "0.0.9",
     "tsd-jsdoc": "^2.5.0",
     "webpack": "^4.41.5",
