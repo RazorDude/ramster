@@ -30,7 +30,7 @@
     "http": "0.0.0",
     "jsdoc-to-markdown": "^4.0.1",
     "jsonwebtoken": "^8.5.1",
-    "mocha-eslint": "^4.1.0",
+    "mocha-eslint": "^7.0.0",
     "moment": "^2.24.0",
     "morgan": "^1.9.1",
     "node-xlsx": "^0.12.1",
@@ -47,9 +47,9 @@
     "ssh2-promise": "0.0.9",
     "tsd-jsdoc": "^2.5.0",
     "webpack": "^4.41.5",
-    "webpack-dev-server": "^3.10.1",
+    "webpack-dev-server": "^4.0.0",
     "winston": "^2.4.4",
-    "yargs": "^11.1.1"
+    "yargs": "^15.0.1"
   },
   "deprecated": false,
   "description": "A standalone NodeJS MVC boilerplate.",
