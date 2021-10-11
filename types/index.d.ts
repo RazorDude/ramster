@@ -24,7 +24,7 @@ export class BaseDBComponent<T> {
         dbObjects: T[] | Record<string, boolean>[],
         options: {
             additionalCreateFields?: Record<string, unknown>
-            transaction: unknown
+            transaction?: unknown
             updateFilters?: Record<string, unknown>
             userId?: number
         }
@@ -39,7 +39,7 @@ export class BaseDBComponent<T> {
             additionalFilters?: Record<string, unknown>
             checkForRelatedModels?: boolean
             id: number | number[]
-            transaction: unknown
+            transaction?: unknown
         }
     ): Promise<{ deleted: number }>;
 
@@ -67,7 +67,7 @@ export class BaseDBComponent<T> {
             exactMatch?: string[]
             filters: Record<string, unknown>
             relReadKeys?: Record<string, boolean>
-            transaction: unknown
+            transaction?: unknown
         }
     ): Promise<T>;
 
@@ -82,7 +82,7 @@ export class BaseDBComponent<T> {
             idsOnlyMode?: boolean
             orderBy?: string
             orderDirection?: string
-            transaction: unknown
+            transaction?: unknown
         }
     ): Promise<{ more: boolean; page: number; perPage: number; results: T[]; totalPages: number }>;
 
@@ -125,7 +125,7 @@ export class BaseDBComponent<T> {
         data: {
             dbObject: T | Record<string, boolean>
             filters?: Record<string, unknown>
-            transaction: unknown
+            transaction?: unknown
             userId?: number
             where?: Record<string, unknown>
         }

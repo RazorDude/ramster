@@ -1,3 +1,6 @@
+# 1.16.7
+- Updated TS typings.
+
 # 1.16.6
 - Updated TS typings.
 
