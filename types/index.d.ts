@@ -3,58 +3,133 @@
 export class BaseClientComponent {
     constructor(...args: any[]);
 
-    checkImportFile(...args: any[]): void;
+    checkImportFile(): void;
 
-    importFile(...args: any[]): void;
+    importFile(additionalOptions?: Record<string, unknown>): void;
 
-    importFileCheck(...args: any[]): void;
+    importFileCheck(inputFileName: string, delimiter?: string): Promise<unknown>;
 
-    readList(...args: any[]): void;
+    readList(): void;
 
 }
 
-export class BaseDBComponent {
-    constructor(...args: any[]);
+export class BaseDBComponent<T> {
+    constructor();
 
-    associate(...args: any[]): void;
+    associate(): void;
 
-    bulkCreate(...args: any[]): void;
+    bulkCreate(data: T[] | Record<string, unknown>[], options?: { transaction?: unknown; userId?: number }): Promise<T[]>;
 
-    bulkUpsert(...args: any[]): void;
+    bulkUpsert(
+        dbObjects: T[] | Record<string, boolean>[],
+        options: {
+            additionalCreateFields?: Record<string, unknown>
+            transaction: unknown
+            updateFilters?: Record<string, unknown>
+            userId?: number
+        }
+    ): Promise<{ success: boolean }>;
 
-    checkFilterValue(...args: any[]): void;
+    checkFilterValue(fitlerValue: unknown): boolean;
 
-    create(...args: any[]): void;
+    create(data: T | Record<string, unknown>, options?: { transaction?: unknown; userId?: number }): Promise<T>;
 
-    delete(...args: any[]): void;
+    delete(
+        data: {
+            additionalFilters?: Record<string, unknown>
+            checkForRelatedModels?: boolean
+            id: number | number[]
+            transaction: unknown
+        }
+    ): Promise<{ deleted: number }>;
 
-    getRelationObjects(...args: any[]): void;
+    getRelationObjects(relReadKeys: Record<string, boolean>, requiredRelationsData: Record<string, unknown>): {
+        include: Record<string, unknown>
+        order: Record<string, unknown>
+    };
 
-    getWhereObjects(...args: any[]): void;
+    getWhereObjects(filters: Record<string, unknown>, exactMatch: string[]): {
+        where: Record<string, unknown>;
+        requiredRelationsData: Record<string, unknown>;
+    };
 
-    mapNestedRelations(...args: any[]): void;
+    mapNestedRelations(sourceComponent: BaseDBComponent, config: unknown[]): {
+        include: Record<string, unknown>[]
+        order: string[][]
+    };
 
-    mapRelations(...args: any[]): void;
+    mapRelations(): void;
 
-    parseDereferencedObjectValues(...args: any[]): void;
+    parseDereferencedObjectValues(sourceObject: Record<string, unknown>, targetObject: Record<string, unknown>): void;
 
-    read(...args: any[]): void;
+    read(
+        data: {
+            exactMatch?: string[]
+            filters: Record<string, unknown>
+            relReadKeys?: Record<string, boolean>
+            transaction: unknown
+        }
+    ): Promise<T>;
 
-    readList(...args: any[]): void;
+    readList(
+        data: {
+            exactMatch?: string[]
+            filters?: Record<string, unknown>
+            page?: number
+            perPage?: number
+            readAll?: boolean
+            relReadKeys?: Record<string, boolean>
+            idsOnlyMode?: boolean
+            orderBy?: string
+            orderDirection?: string
+            transaction: unknown
+        }
+    ): Promise<{ more: boolean; page: number; perPage: number; results: T[]; totalPages: number }>;
 
-    restoreAttributesFromMapRecursively(...args: any[]): void;
+    restoreAttributesFromMapRecursively(optionsObject: Record<string, unknown>, map: Record<string, unknown>): void;
 
-    saveImage(...args: any[]): void;
+    saveImage(
+        inputFileName: string,
+        outputFileName: string,
+        dbObjectId: number,
+        options?: {
+            imageResizingOptions?: {
+                height?: number | string
+                startX?: number
+                startY?: number
+                width?: number | string
+            }
+            outputFileType?: string
+        }
+    ): Promise<boolean>;
 
-    setFilterValue(...args: any[]): void;
+    setFilterValue(container: Record<string, unknown>, filter: Record<string, unknown>, field: string, value: unknown, exactMatch: string[]): boolean;
 
-    setOrderDataForRelation(...args: any[]): void;
+    setOrderDataForRelation(order: string[][], relactionIncludeItem: Record<string, unknown>, fieldMap: Record<string, unknown>): void;
 
-    setQueryDataForRelation(...args: any[]): void;
+    setQueryDataForRelation(
+        dbComponent: Record<string, unknown>,
+        include: Record<string, unknown>,
+        associationNameMap: Record<string, unknown>,
+        relationIncludeItem: Record<string, unknown>,
+        relationName: string,
+        requiredFieldsData: Record<string, unknown>
+    ): void;
 
-    stripAndMapAttributesFromOptionsObjectRecursively(...args: any[]): void;
+    stripAndMapAttributesFromOptionsObjectRecursively(optionsObject: Record<string, unknown>): {
+        nested: Record<string, unknown>[]
+        topLevel: string[]
+    };
 
-    update(...args: any[]): void;
+    update(
+        data: {
+            dbObject: T | Record<string, boolean>
+            filters?: Record<string, unknown>
+            transaction: unknown
+            userId?: number
+            where?: Record<string, unknown>
+        }
+    ): Promise<[number, T[]]>;
 
 }
 
@@ -288,7 +363,7 @@ export namespace csvPromise {
 }
 
 export namespace toolbelt {
-    function arraySort(array: any, orderBy: any, caseSensitiveOption: any): any;
+    function arraySort(array: unknown[], orderBy: any, caseSensitiveOption: any): any;
 
     function changeKeyCase(keyMap: any, input: any, outputType: any): any;
 

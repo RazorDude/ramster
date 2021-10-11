@@ -222,7 +222,7 @@ class BaseClientComponent extends BaseServerComponent {
 					})
 				} else {
 					let columnsToMatch = {}
-					check.templateColumns.forEach((column, cIndex) => {
+					check.templateColumns.forEach((column) => {
 						let fileColumn = req.body[column]
 						if (!fileColumn) {
 							throw {customMessage: 'The file does not match the template and not all columns have been mapped.'}
