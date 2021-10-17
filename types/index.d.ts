@@ -53,7 +53,7 @@ export class BaseDBComponent<T> {
         requiredRelationsData: Record<string, unknown>;
     };
 
-    mapNestedRelations(sourceComponent: BaseDBComponent, config: unknown[]): {
+    mapNestedRelations(sourceComponent: BaseDBComponent<unknown>, config: unknown[]): {
         include: Record<string, unknown>[]
         order: string[][]
     };
