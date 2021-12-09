@@ -1,3 +1,6 @@
+# 1.16.9
+- Migrations fix for tables that don't have id sequences (i.e. UUID tables).
+
 # 1.16.8
 - Updated the TS typings.
 

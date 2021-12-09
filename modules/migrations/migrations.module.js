@@ -332,7 +332,16 @@ class Migrations {
 				}
 
 				if (dontSetIdSequence !== true) {
-					yield sequelize.query(`select setval('"${tableName}_id_seq"'::regclass, (select "id" from "${tableName}" order by "id" desc limit 1));`, {transaction: t})
+					yield sequelize.query(
+						`do $$\n` +
+						`begin\n` +
+							`if exists (select 0 from pg_class where relname = '${tableName}_id_seq')\n` +
+							`then\n` +
+								`select setval('"${tableName}_id_seq"'::regclass, (select "id" from "${tableName}" order by "id" desc limit 1));` +
+							`end if;\n` +
+						`end $$`,
+						{transaction: t}
+					)
 				}
 			}
 			return true
