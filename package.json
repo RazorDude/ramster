@@ -33,7 +33,7 @@
     "mocha-eslint": "^4.1.0",
     "moment": "^2.24.0",
     "morgan": "^1.9.1",
-    "node-xlsx": "^0.12.1",
+    "node-xlsx": "^0.16.0",
     "passport": "^0.4.1",
     "passport-local": "^1.0.0",
     "pg": "^7.17.1",
