@@ -126,6 +126,7 @@ class DBModule {
 						host: postgreSQL.host,
 						port: postgreSQL.port,
 						dialect: 'postgres',
+						ssl: postgreSQL.ssl || false,
 						logging: (postgreSQL.logging === true) ?
 							(sql) => {
 								console.log('================ /SQL\\ ==================')
