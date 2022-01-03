@@ -1,3 +1,6 @@
+# 1.17.1
+- Fixed the BaseDBComponent typings.
+
 # 1.17.0
 - Added the SSL boolean option to the PostgreSQL config.
 

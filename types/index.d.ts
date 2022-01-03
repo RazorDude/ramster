@@ -123,7 +123,7 @@ export class BaseDBComponent<T> {
 
     update(
         data: {
-            dbObject: T | Record<string, boolean>
+            dbObject: T | Record<string, unknown>
             filters?: Record<string, unknown>
             transaction?: unknown
             userId?: number
