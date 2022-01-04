@@ -1,3 +1,6 @@
+# 1.17.2
+- Another fix for the BaseDBComponent typings.
+
 # 1.17.1
 - Fixed the BaseDBComponent typings.
 

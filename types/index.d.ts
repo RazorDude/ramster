@@ -21,7 +21,7 @@ export class BaseDBComponent<T> {
     bulkCreate(data: T[] | Record<string, unknown>[], options?: { transaction?: unknown; userId?: number }): Promise<T[]>;
 
     bulkUpsert(
-        dbObjects: T[] | Record<string, boolean>[],
+        dbObjects: T[] | Record<string, unknown>[],
         options: {
             additionalCreateFields?: Record<string, unknown>
             transaction?: unknown
