@@ -1,6 +1,6 @@
 {
   "name": "ramster",
-  "version": "1.17.2",
+  "version": "1.17.3",
   "author": {
     "name": "Rumen Rumenov",
     "email": "mmetalonlyy@gmail.com"
@@ -43,7 +43,6 @@
     "redis": "^2.6.2",
     "request-promise-native": "^1.0.8",
     "sequelize": "^4.44.3",
-    "sharp": "^0.24.0",
     "ssh2-promise": "0.0.9",
     "tsd-jsdoc": "^2.5.0",
     "webpack": "^4.41.5",
@@ -83,6 +82,7 @@
     "@babel/preset-react": "^7.8.3",
     "@babel/runtime": "^7.8.3",
     "@sendgrid/mail": "^6.5.0",
+    "@types/sequelize": "^4.28.11",
     "babel-loader": "^8.0.6",
     "css-loader": "^0.28.11",
     "dts-gen": "^0.6.0",
@@ -92,6 +92,7 @@
     "node-sass": "^4.13.1",
     "react-hot-loader": "^4.12.18",
     "sass-loader": "^6.0.7",
+    "sharp": "^0.24.0",
     "style-loader": "^0.20.3"
   },
   "peerDependencies": {
