@@ -97,8 +97,7 @@ module.exports = {
 		})
 	},
 	testConfig: function() {
-		const instance = this,
-			config = this.config
+		const config = this.config
 		describe('core.config', function() {
 			describe('general items', function() {
 				it('should have a non-empty projectName string', function() {
@@ -399,8 +398,7 @@ module.exports = {
 				})
 				it('should have a valid directory inside the apiModulesPath for every api config object, if apiModulesPath is specified', function() {
 					return co(function*() {
-						let dirContents = yield fs.readdir(apiModulesPath),
-							hasAllDirectories = true
+						const hasAllDirectories = true
 						for (const apiModuleName in apisConfig) {
 							let apiModuleDirStats = yield fs.lstat(path.join(apiModulesPath, apiModuleName))
 							if (!apiModuleDirStats.isDirectory()) {

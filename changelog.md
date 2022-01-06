@@ -1,3 +1,10 @@
+# 1.17.4
+- Linting fixes.
+- Actually added proper SSL for the db.
+
+# 1.17.3
+- Another fix for the BaseDBComponent typings.
+
 # 1.17.2
 - Another fix for the BaseDBComponent typings.
 

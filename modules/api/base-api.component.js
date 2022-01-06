@@ -4,7 +4,7 @@
  */
 
 const
-	ApiModule = require('./api.module'),
+	_ApiModule = require('./api.module'),
 	BaseServerComponent = require('../shared/base-server.component'),
 	spec = require('./base-api.component.spec')
 
@@ -26,7 +26,7 @@ class BaseAPIComponent extends BaseServerComponent {
 		}
 		/**
 		 * The currently initialized instance of the ApiModule.
-		 * @type {ApiModule}
+		 * @type {_ApiModule}
 		 */
 		this.module = undefined
 	}

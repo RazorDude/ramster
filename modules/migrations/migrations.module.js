@@ -228,7 +228,7 @@ class Migrations {
 		return co(function*() {
 			let tables = (yield instance.sequelize.query(`select "t"."table_name" FROM "information_schema"."tables" AS "t" where "t"."table_schema"='${instance.config.db.schema}';`, {transaction: t}))[0],
 				dropQuery = ''
-			tables.forEach((row, index) => {
+			tables.forEach((row) => {
 				dropQuery += `drop table "${row.table_name}" cascade;`
 			})
 			yield instance.sequelize.query(dropQuery, {transaction: t})
@@ -249,8 +249,7 @@ class Migrations {
 	 * @memberof Migrations
 	 */
 	runQueryFromColumnData(queryInterface, tableName, inserts, t, options) {
-		const instance = this,
-			{config, sequelize} = this
+		const {config, sequelize} = this
 		return co(function*() {
 			if (!queryInterface || (typeof queryInterface !== 'object') || (typeof queryInterface.escape !== 'function')) {
 				throw {customMessage: `Invalid queryInterface object provided.`}
@@ -361,7 +360,7 @@ class Migrations {
 		}
 		if (value instanceof Array) {
 			let escapedObject = []
-			value.forEach((item, index) => escapedObject.push(this.escapeRecursively(queryInterface, item)))
+			value.forEach((item) => escapedObject.push(this.escapeRecursively(queryInterface, item)))
 			return escapedObject
 		}
 		if (typeof value === 'object') {
@@ -493,7 +492,7 @@ class Migrations {
 			let currentSet = {values: []},
 				linearArray = instance.getLinearArrayFromDependencyGraph(dependencyGraph)
 			// compile the sequential items with identical column lists into data sets
-			linearArray.forEach((item, iIndex) => {
+			linearArray.forEach((item) => {
 				let {columns, values} = instance.prepareDataObjectForQuery(tableLayout, item),
 					stringifiedColumns = JSON.stringify(columns)
 				if (!currentSet.stringifiedColumns) {
@@ -646,8 +645,8 @@ class Migrations {
 			} catch (e) {
 				yield fs.unlink(oldFilePath)
 			}
-			let newFileDescriptor = yield fs.open(path.join(instance.config.migrations.seedFilesPath, `${seedFileName}.json`), 'w'),
-				result = yield fs.write(newFileDescriptor, seed)
+			let newFileDescriptor = yield fs.open(path.join(instance.config.migrations.seedFilesPath, `${seedFileName}.json`), 'w')
+			yield fs.write(newFileDescriptor, seed)
 			yield fs.close(newFileDescriptor)
 			return {success: true}
 		})
@@ -705,7 +704,6 @@ class Migrations {
 	 */
 	insertStaticData(fileName) {
 		const instance = this,
-			sequelize = this.sequelize,
 			dbComponents = this.dbComponents
 		return co(function*() {
 			// write a backup of the current database data for safety reasons
@@ -718,7 +716,7 @@ class Migrations {
 			// get the data from the file and merge it with the current data
 			let staticData = JSON.parse((yield fs.readFile(path.join(instance.config.migrations.staticDataPath, `${fileName || 'staticData'}.json`))).toString())
 			// insert the staticData according to the seeding order
-			instance.seedingOrder.forEach((componentName, index) => {
+			instance.seedingOrder.forEach((componentName) => {
 				const tableName = dbComponents[componentName].model.getTableName()
 				if (staticData[tableName]) {
 					const tableStaticData = JSON.parse(JSON.stringify(staticData[tableName])),
@@ -733,15 +731,15 @@ class Migrations {
 					if (primaryKeys.length) {
 						currentTableData.forEach((row, index) => {
 							let currentKey = ''
-							primaryKeys.forEach((pk, pkIndex) => {
+							primaryKeys.forEach((pk) => {
 								currentKey += `${row[pk]}-`
 							})
 							currentKey = currentKey.substr(0, currentKey.length - 1)
 							currentTableDataPKIndexMap[currentKey] = index
 						})
-						tableStaticData.data.forEach((row, index) => {
+						tableStaticData.data.forEach((row) => {
 							let currentKey = ''
-							primaryKeys.forEach((pk, pkIndex) => {
+							primaryKeys.forEach((pk) => {
 								currentKey += `${row[pk]}-`
 							})
 							currentKey = currentKey.substr(0, currentKey.length - 1)
@@ -771,15 +769,15 @@ class Migrations {
 					if (primaryKeys.length) {
 						currentTableData.forEach((row, index) => {
 							let currentKey = ''
-							primaryKeys.forEach((pk, pkIndex) => {
+							primaryKeys.forEach((pk) => {
 								currentKey += `${row[pk]}-`
 							})
 							currentKey = currentKey.substr(0, currentKey.length - 1)
 							currentTableDataPKIndexMap[currentKey] = index
 						})
-						tableStaticData.data.forEach((row, index) => {
+						tableStaticData.data.forEach((row) => {
 							let currentKey = ''
-							primaryKeys.forEach((pk, pkIndex) => {
+							primaryKeys.forEach((pk) => {
 								currentKey += `${row[pk]}-`
 							})
 							currentKey = currentKey.substr(0, currentKey.length - 1)
