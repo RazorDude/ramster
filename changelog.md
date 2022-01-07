@@ -1,3 +1,6 @@
+# 1.17.5
+- Updated the checkRoutes method in the toolbelt module.
+
 # 1.17.4
 - Linting fixes.
 - Actually added proper SSL for the db.

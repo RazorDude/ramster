@@ -1,5 +1,3 @@
-'use strict'
-
 const
 	assert = require('assert'),
 	co = require('co'),
@@ -27,8 +25,7 @@ module.exports = {
 		})
 	},
 	testSignToken: function() {
-		const instance = this,
-			{config} = this
+		const instance = this
 		describe('tokenManager.signToken', function() {
 			it('should throw an error if userData is undefined', function() {
 				return co(function*() {
@@ -123,8 +120,7 @@ module.exports = {
 		})
 	},
 	testVerifyToken: function() {
-		const instance = this,
-			{config} = this
+		const instance = this
 		describe('tokenManager.verifyToken', function() {
 			it('should throw an error if the token is undefined', function() {
 				return co(function*() {
@@ -214,9 +210,9 @@ module.exports = {
 				return new Promise((resolve, reject) => {
 					instance.signToken({id: -1}, 'testSecret', 1 / 60).then((token) => {
 						setTimeout(() => {
-							instance.verifyToken(token, 'testSecret').then((promiseResult) => {
+							instance.verifyToken(token, 'testSecret').then(() => {
 								reject('Token did not expire.')
-							}, (err) => {
+							}, () => {
 								resolve(true)
 							})
 						}, 1500)
@@ -243,8 +239,7 @@ module.exports = {
 		})
 	},
 	testCreateToken: function() {
-		const instance = this,
-			{config} = this
+		const instance = this
 		describe('tokenManager.createToken', function() {
 			it('should throw an error if type is not "access" or "refresh"', function() {
 				return co(function*() {

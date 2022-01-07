@@ -139,19 +139,28 @@ const
 			if ((route === thisRoute) || (thisRoute === '*')) {
 				return true
 			}
-			if ((thisRoute.indexOf(':') !== -1) && (splitThisRoute.length === splitRoute.length)) {
-				let valid = true
-				for (const j in splitThisRoute) {
-					let thisRouteItem = splitThisRoute[j],
-						routeItem = splitRoute[j]
-					if ((routeItem !== thisRouteItem) && (thisRouteItem.indexOf(':') === -1)) {
-						valid = false
+			let valid = true
+			for (const j in splitThisRoute) {
+				const thisRouteItem = splitThisRoute[j]
+				const routeItem = splitRoute[j]
+				const isParam = !!thisRouteItem.match(/^:/)
+				if (typeof routeItem === 'undefined') {
+					valid = false
+					break
+				}
+				if (thisRouteItem === '*') {
+					if (+j === splitThisRoute.length - 1) {
 						break
 					}
+					continue
 				}
-				if (valid) {
-					return true
+				if ((routeItem !== thisRouteItem) && !isParam) {
+					valid = false
+					break
 				}
+			}
+			if (valid) {
+				return true
 			}
 		}
 		return false
