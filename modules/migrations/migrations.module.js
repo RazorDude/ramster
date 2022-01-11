@@ -79,7 +79,7 @@ class Migrations {
 		this.paths = ['/seed', '/sync', '/generateSeed', '/generateBackup', '/insertStaticData']
 		const {config, moduleConfig} = this
 		const instance = this
-		const app = this.app
+		const app = express()
 		app.use(requestLogger(`[Migrations Module API] :method request to :url; result: :status; completed in: :response-time; :date`))
 		app.use(express.json())
 		app.get('/seed', wrap(function* (req, res, next) {

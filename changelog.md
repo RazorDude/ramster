@@ -1,3 +1,6 @@
+# 1.18.1
+- Migrations module api hotfix.
+
 # 1.18.0
 - Removed `bodyParser` as it's now deprecated.
 - Added support for having routes without the parsing of the body (useful for proxying requests) via the `withBodyParserRoutes: string | string[]`, `withBodyParserRoutesRegex: string` and `noBodyParserRoutesRegex: string` config variables in each module's config object. These config variables are mutually exclusive.
