@@ -4,7 +4,6 @@
  */
 
 const
-	bodyParser = require('body-parser'),
 	co = require('co'),
 	express = require('express'),
 	{findVertexByIdDFS} = require('../toolbelt'),
@@ -77,19 +76,13 @@ class Migrations {
 	 * @memberof Migrations
 	 */
 	listen() {
-		this.app = express()
-		this.router = express.Router()
 		this.paths = ['/seed', '/sync', '/generateSeed', '/generateBackup', '/insertStaticData']
 		const {config, moduleConfig} = this
-		let instance = this,
-			app = this.app,
-			router = this.router
-
+		const instance = this
+		const app = this.app
 		app.use(requestLogger(`[Migrations Module API] :method request to :url; result: :status; completed in: :response-time; :date`))
-		app.use(bodyParser.json())
-
-
-		router.get('/seed', wrap(function* (req, res, next) {
+		app.use(express.json())
+		app.get('/seed', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.seed(
 					req.query.seedFolder && decodeURIComponent(req.query.seedFolder),
@@ -100,8 +93,7 @@ class Migrations {
 				next()
 			}
 		}))
-
-		router.get('/sync', wrap(function* (req, res, next) {
+		app.get('/sync', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.sync()})
 			} catch (error) {
@@ -109,8 +101,7 @@ class Migrations {
 				next()
 			}
 		}))
-
-		router.get('/generateSeed', wrap(function* (req, res, next) {
+		app.get('/generateSeed', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.generateSeed(
 					req.query.seedFile && decodeURIComponent(req.query.seedFile)
@@ -120,8 +111,7 @@ class Migrations {
 				next()
 			}
 		}))
-
-		router.get('/generateBackup', wrap(function* (req, res, next) {
+		app.get('/generateBackup', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.generateBackup()})
 			} catch (error) {
@@ -129,8 +119,7 @@ class Migrations {
 				next()
 			}
 		}))
-
-		router.get('/insertStaticData', wrap(function* (req, res, next) {
+		app.get('/insertStaticData', wrap(function* (req, res, next) {
 			try {
 				res.json({data: yield instance.insertStaticData(decodeURIComponent(req.query.fileName))})
 			} catch (error) {
@@ -138,8 +127,6 @@ class Migrations {
 				next()
 			}
 		}))
-
-		app.use('/', router)
 		app.use(this.paths, (req, res) => {
 			if (req.locals && req.locals.error) {
 				console.log(req.locals.error)
@@ -147,7 +134,6 @@ class Migrations {
 			}
 			res.status(200).end()
 		})
-
 		this.server = http.createServer(app)
 		this.server.listen(moduleConfig.serverPort, () => {
 			console.log(`[Migrations Module API] Server started.`)

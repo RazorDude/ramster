@@ -6,7 +6,6 @@
 
 const
 	BaseServerModule = require('../shared/base-server.module'),
-	bodyParser = require('body-parser'),
 	cookieParser = require('cookie-parser'),
 	co = require('co'),
 	Cookies = require('cookies'),
@@ -120,13 +119,17 @@ class ClientModule extends BaseServerModule {
 	 * @memberof ClientModule
 	 */
 	mountRoutes(sessionStore) {
-		let instance = this
+		const instance = this
 		return co(function*() {
-			const {afterRoutesMethodNames, config, moduleName, moduleConfig, passport} = instance,
-				doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || [],
-				loggedInUserFieldsToDisplayInRequestInfo = moduleConfig.loggedInUserFieldsToDisplayInRequestInfo || []
+			const {afterRoutesMethodNames, config, moduleName, moduleConfig, passport} = instance
+			const doNotLogRequestDataRoutes = moduleConfig.doNotLogRequestDataRoutes || []
+			const loggedInUserFieldsToDisplayInRequestInfo = moduleConfig.loggedInUserFieldsToDisplayInRequestInfo || []
+			const routesWithBodyParser =
+				moduleConfig.withBodyParserRoutes ||
+				moduleConfig.withBodyParserRoutesRegex ||
+				moduleConfig.noBodyParserRoutesRegex ||
+				'*'
 			instance.app = express()
-			instance.router = express.Router()
 			instance.paths = []
 			let app = instance.app,
 				components = instance.components
@@ -153,25 +156,30 @@ class ClientModule extends BaseServerModule {
 				})
 			)
 			// for raw request bodies
-			app.use((req, res, next) => {
-				if (typeof req.get('Content-Type') === 'undefined') {
-					let data = ''
-					req.setEncoding('utf8')
-					req.on('data', function(chunk) {
-						data += chunk
-					})
-					req.on('end', function() {
-						req.rawBody = data
-						next()
-					})
-					return
+			app.use(
+				routesWithBodyParser,
+				(req, _res, next) => {
+					if (typeof req.get('Content-Type') === 'undefined') {
+						let data = ''
+						req.setEncoding('utf8')
+						req.on('data', function(chunk) {
+							data += chunk
+						})
+						req.on('end', function() {
+							req.rawBody = data
+							next()
+						})
+						return
+					}
+					next()
 				}
-				next()
-			})
-			app.use(bodyParser.json()) // for 'application/json' request bodies
-			app.use(bodyParser.urlencoded({extended: false})) // 'x-www-form-urlencoded' request bodies
+			)
+			// for 'application/json' request bodies
+			app.use(routesWithBodyParser, express.json())
+			// 'x-www-form-urlencoded' request bodies
+			app.use(routesWithBodyParser, express.urlencoded({extended: false}))
 			if (config.globalUploadPath) {
-				app.use(multipart({limit: moduleConfig.fileSizeLimit || '10mb', uploadDir: config.globalUploadPath})) // for multipart bodies - file uploads etc.
+				app.use(routesWithBodyParser, multipart({limit: moduleConfig.fileSizeLimit || '10mb', uploadDir: config.globalUploadPath})) // for multipart bodies - file uploads etc.
 			}
 			app.use(cookieParser())
 
@@ -259,15 +267,14 @@ class ClientModule extends BaseServerModule {
 				let component = components[i]
 				const componentAfterRoutesMethodNames = component.afterRoutesMethodNames
 				component.routes.forEach((routeData) => {
-					instance.router[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
+					app[routeData.method](routeData.path, wrap(component[routeData.func](routeData.options || {})))
 				})
 				if (componentAfterRoutesMethodNames.length) {
 					for (const i in componentAfterRoutesMethodNames) {
-						instance.router.use(`/${component.componentName}/*`, component[componentAfterRoutesMethodNames[i]]())
+						app.use(`/${component.componentName}/*`, component[componentAfterRoutesMethodNames[i]]())
 					}
 				}
 			}
-			app.use('/', instance.router)
 
 			// add the express app to each component's module instance and run its setup method, if needed
 			for (const i in components) {

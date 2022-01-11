@@ -1,4 +1,3 @@
-'use strict'
 /**
  * The toolbelt module. Contains various utility functions.
  * @module toolbeltModule
