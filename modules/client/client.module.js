@@ -4,19 +4,19 @@
  */
 
 
-const
-	BaseServerModule = require('../shared/base-server.module'),
-	cookieParser = require('cookie-parser'),
-	co = require('co'),
-	Cookies = require('cookies'),
-	{checkRoutes, decodeQueryValues} = require('../toolbelt'),
-	express = require('express'),
-	expressSession = require('express-session'),
-	http = require('http'),
-	multipart = require('connect-multiparty'),
-	requestLogger = require('morgan'),
-	spec = require('./client.module.spec'),
-	wrap = require('co-express')
+const BaseServerModule = require('../shared/base-server.module')
+const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
+const co = require('co')
+const Cookies = require('cookies')
+const {checkRoutes, decodeQueryValues} = require('../toolbelt')
+const express = require('express')
+const expressSession = require('express-session')
+const http = require('http')
+const multipart = require('connect-multiparty')
+const requestLogger = require('morgan')
+const spec = require('./client.module.spec')
+const wrap = require('co-express')
 
 /**
  *The ClientModule class. It has its own server and contains a bunch of components, in which client server api endpoits are defined.
@@ -175,9 +175,9 @@ class ClientModule extends BaseServerModule {
 				}
 			)
 			// for 'application/json' request bodies
-			app.use(routesWithBodyParser, express.json())
+			app.use(routesWithBodyParser, bodyParser.json())
 			// 'x-www-form-urlencoded' request bodies
-			app.use(routesWithBodyParser, express.urlencoded({extended: false}))
+			app.use(routesWithBodyParser, bodyParser.urlencoded({extended: false}))
 			if (config.globalUploadPath) {
 				app.use(routesWithBodyParser, multipart({limit: moduleConfig.fileSizeLimit || '10mb', uploadDir: config.globalUploadPath})) // for multipart bodies - file uploads etc.
 			}

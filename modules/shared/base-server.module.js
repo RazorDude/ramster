@@ -3,19 +3,17 @@
  * @module baseServerModuleModule
  */
 
-const
-	BaseServerComponent = require('./base-server.component'),
-	co = require('co'),
-	{changeKeyCase} = require('../toolbelt'),
-	DBModule = require('../db/db.module'),
-	fs = require('fs-extra'),
-	GeneralStore = require('../generalStore/generalStore.module'),
-	Logger = require('../errorLogger/errorLogger.module'),
-	merge = require('deepmerge'),
-	passport = require('passport'),
-	path = require('path'),
-	spec = require('./base-server.module.spec'),
-	TokenManager = require('../tokenManager/tokenManager.module')
+const _BaseServerComponent = require('./base-server.component')
+const co = require('co')
+const {changeKeyCase} = require('../toolbelt')
+const _DBModule = require('../db/db.module')
+const fs = require('fs-extra')
+const _GeneralStore = require('../generalStore/generalStore.module')
+const _Logger = require('../errorLogger/errorLogger.module')
+const passport = require('passport')
+const path = require('path')
+const spec = require('./base-server.module.spec')
+const _TokenManager = require('../tokenManager/tokenManager.module')
 
 /**
  * The base class for server (client and api) modules. It loads the module components and set some pre- and post-route method defaults.
@@ -30,10 +28,10 @@ class BaseServerModule {
 	 * @param {string} moduleType The type of the module. Can be 'client' or 'api'.
 	 * @param {object} options An object containing additonal properties.
 	 * @param {string[]} options.afterRoutesMethodNames An array of strings, which represent module methods to be mounted after all routes as next() for the whole module.
-	 * @param {DBModule} options.db An instance of the DBModule class.
-	 * @param {Logger} options.logger An instance of the Logger class.
-	 * @param {GeneralStore} options.generalStore An instance of the GeneralStore class.
-	 * @param {TokenManager} options.tokenManager An instance of the TokenManager class
+	 * @param {_DBModule} options.db An instance of the DBModule class.
+	 * @param {_Logger} options.logger An instance of the Logger class.
+	 * @param {_GeneralStore} options.generalStore An instance of the GeneralStore class.
+	 * @param {_TokenManager} options.tokenManager An instance of the TokenManager class
 	 * @memberof BaseServerModule
 	 */
 	constructor(config, moduleName, moduleType, options) {
@@ -68,7 +66,7 @@ class BaseServerModule {
 		this.moduleConfig = config[`${moduleType}s`][moduleName]
 		/**
 		 * The list of instances of all baseServerComponents for this module.
-		 * @type {Object.<string, BaseServerComponent>}
+		 * @type {Object.<string, _BaseServerComponent>}
 		 */
 		this.components = {}
 		/**
@@ -77,23 +75,23 @@ class BaseServerModule {
 		 */
 		this.passport = passport
 		/**
-		 * An instance of the DBModule class.
-		 * @type {DBModule}
+		 * An instance of the _DBModule class.
+		 * @type {_DBModule}
 		 */
 		this.db = db
 		/**
 		 * An instance of the Logger class.
-		 * @type {Logger}
+		 * @type {_Logger}
 		 */
 		this.logger = logger
 		/**
 		 * An instance of the GeneralStore class.
-		 * @type {GeneralStore}
+		 * @type {_GeneralStore}
 		 */
 		this.generalStore = generalStore
 		/**
 		 * An instance of the TokenManager class.
-		 * @type {TokenManager}
+		 * @type {_TokenManager}
 		 */
 		this.tokenManager = tokenManager
 		/**

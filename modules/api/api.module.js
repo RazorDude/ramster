@@ -3,16 +3,16 @@
  * @module apiModule
  */
 
-const
-	BaseServerModule = require('../shared/base-server.module'),
-	cookieParser = require('cookie-parser'),
-	co = require('co'),
-	{checkRoutes, decodeQueryValues} = require('../toolbelt'),
-	express = require('express'),
-	http = require('http'),
-	requestLogger = require('morgan'),
-	spec = require('./api.module.spec'),
-	wrap = require('co-express')
+const BaseServerModule = require('../shared/base-server.module')
+const bodyParser = require('body-parser')
+const cookieParser = require('cookie-parser')
+const co = require('co')
+const {checkRoutes, decodeQueryValues} = require('../toolbelt')
+const express = require('express')
+const http = require('http')
+const requestLogger = require('morgan')
+const spec = require('./api.module.spec')
+const wrap = require('co-express')
 
 /**
  * The ramster APIModule class. It has its own server and contains a bunch of components, in which api endpoits are defined.
@@ -128,12 +128,12 @@ class APIModule extends BaseServerModule {
 				}
 			)
 			// for 'application/json' request bodies
-			app.use(routesWithBodyParser, express.json())
+			app.use(routesWithBodyParser, bodyParser.json())
 			// 'x-www-form-urlencoded' request bodies
-			app.use(routesWithBodyParser, express.urlencoded({extended: false}))
+			app.use(routesWithBodyParser, bodyParser.urlencoded({extended: false}))
 			app.use(cookieParser())
 
-			app.use((req, res, next) => {
+			app.use((req, _res, next) => {
 				if (req.method.toLowerCase() === 'get') {
 					req.query = decodeQueryValues(req.query)
 				}

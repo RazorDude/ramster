@@ -3,13 +3,12 @@
  * @module baseServerComponentModule
  */
 
-const
-	BaseDBComponent = require('../db/base-db.component'), // eslint-disable-line no-unused-vars
-	BaseServerModule = require('./base-server.module'), // eslint-disable-line no-unused-vars
-	co = require('co'),
-	{decodeQueryValues, getNested, setNested} = require('../toolbelt'),
-	moment = require('moment'),
-	spec = require('./base-server.component.spec')
+const _BaseDBComponent = require('../db/base-db.component')
+const _BaseServerModule = require('./base-server.module')
+const co = require('co')
+const { decodeQueryValues, getNested, setNested } = require('../toolbelt')
+const moment = require('moment')
+const spec = require('./base-server.component.spec')
 
 /**
  * The base class for server (client and api) components. It contains common methods that are server-type agnostic.
@@ -54,13 +53,13 @@ class BaseServerComponent {
 		this.componentName = componentName
 		/**
 		 * A reference to the dbComponent related to this server component (if any).
-		 * @type {BaseDBComponent}
+		 * @type {_BaseDBComponent}
 		 */
 		this.dbComponent = undefined
 		this.decodeQueryValues = decodeQueryValues
 		/**
 		 * The currently initialized instance of the BaseServerModule.
-		 * @type {BaseServerModule}
+		 * @type {_BaseServerModule}
 		 */
 		this.module = undefined
 		this.setRoutes({addDefaultRoutes, additionalDefaultRoutes, appendComponentNameToRoutes, routes})

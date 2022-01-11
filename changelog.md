@@ -1,3 +1,6 @@
+# 1.18.2
+- Reverted back to using bodyParser, as express was breaking things.
+
 # 1.18.1
 - Migrations module api hotfix.
 
