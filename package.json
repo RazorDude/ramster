@@ -89,7 +89,7 @@
     "json2-loader": "^0.1.2",
     "less": "^3.10.3",
     "less-loader": "^4.1.0",
-    "node-sass": "^4.13.1",
+    "node-sass": "^7.0.0",
     "react-hot-loader": "^4.12.18",
     "sass-loader": "^6.0.7",
     "sharp": "^0.24.0",
