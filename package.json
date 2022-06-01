@@ -92,12 +92,12 @@
     "node-sass": "^4.13.1",
     "react-hot-loader": "^4.12.18",
     "sass-loader": "^6.0.7",
-    "sharp": "^0.24.0",
+    "sharp": "^0.30.5",
     "style-loader": "^0.20.3"
   },
   "peerDependencies": {
     "@sendgrid/mail": "^6.3.1",
-    "sharp": "^0.24.0"
+    "sharp": "^0.30.5"
   },
   "engines": {
     "node": ">= 8.9.4"
