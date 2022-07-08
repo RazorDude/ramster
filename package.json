@@ -31,7 +31,7 @@
     "jsdoc-to-markdown": "^4.0.1",
     "jsonwebtoken": "^8.5.1",
     "mocha-eslint": "^4.1.0",
-    "moment": "^2.24.0",
+    "moment": "^2.29.4",
     "morgan": "^1.9.1",
     "node-xlsx": "^0.12.1",
     "passport": "^0.4.1",
