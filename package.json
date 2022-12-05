@@ -11,7 +11,7 @@
   "dependencies": {
     "bcryptjs": "^2.4.3",
     "bell-on-bundler-error-plugin": "^2.0.0",
-    "body-parser": "^1.19.1",
+    "body-parser": "^1.19.2",
     "cli": "^1.0.1",
     "co": "^4.6.0",
     "co-express": "^2.0.0",
@@ -22,7 +22,7 @@
     "cron": "^1.7.2",
     "csv": "^2.0.0",
     "deepmerge": "^2.2.1",
-    "express": "^4.17.1",
+    "express": "^4.17.3",
     "express-session": "^1.17.0",
     "fs-extra": "^5.0.0",
     "glob": "^7.1.6",
