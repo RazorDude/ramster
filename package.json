@@ -45,7 +45,7 @@
     "sequelize": "^4.44.3",
     "ssh2-promise": "0.0.9",
     "tsd-jsdoc": "^2.5.0",
-    "webpack": "^4.41.5",
+    "webpack": "^5.75.0",
     "webpack-dev-server": "^3.10.1",
     "winston": "^2.4.4",
     "yargs": "^11.1.1"
@@ -84,16 +84,16 @@
     "@sendgrid/mail": "^6.5.0",
     "@types/sequelize": "^4.28.11",
     "babel-loader": "^8.0.6",
-    "css-loader": "^0.28.11",
+    "css-loader": "^6.7.3",
     "dts-gen": "^0.6.0",
     "json2-loader": "^0.1.2",
     "less": "^3.10.3",
-    "less-loader": "^4.1.0",
+    "less-loader": "^11.1.0",
     "node-sass": "^4.13.1",
     "react-hot-loader": "^4.12.18",
-    "sass-loader": "^6.0.7",
+    "sass-loader": "^13.2.0",
     "sharp": "^0.24.0",
-    "style-loader": "^0.20.3"
+    "style-loader": "^3.3.1"
   },
   "peerDependencies": {
     "@sendgrid/mail": "^6.3.1",
