@@ -22,7 +22,7 @@
     "cron": "^1.7.2",
     "csv": "^2.0.0",
     "deepmerge": "^2.2.1",
-    "express": "^4.17.1",
+    "express": "^4.19.2",
     "express-session": "^1.17.0",
     "fs-extra": "^5.0.0",
     "glob": "^7.1.6",
