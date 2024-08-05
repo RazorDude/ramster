@@ -1,0 +1,129 @@
+{
+	"env": {
+		"mocha": true,
+		"node": true
+	},
+  "extends": [
+    "plugin:@typescript-eslint/eslint-recommended",
+    "plugin:@typescript-eslint/recommended",
+    "plugin:prettier/recommended",
+    "prettier",
+    "plugin:import/errors",
+    "plugin:import/warnings",
+    "plugin:import/typescript"
+  ],
+  "ignorePatterns": ["dist", "node_modules"],
+	"parser": "@typescript-eslint/parser",
+	"parserOptions": {
+		"ecmaVersion": 7,
+		"sourceType": "module"
+	},
+  "plugins": [
+    "prettier",
+    "import"
+  ],
+	"rules": {
+    "@typescript-eslint/ban-types": [
+      "error",
+      {
+        "extendDefaults": true,
+        "types": {
+          "{}": false
+        }
+      }
+    ],
+    "@typescript-eslint/explicit-module-boundary-types": "error",
+    "@typescript-eslint/no-empty-function": "off",
+    "@typescript-eslint/no-empty-interface": "off",
+    "@typescript-eslint/no-explicit-any": "error",
+    "@typescript-eslint/no-non-null-assertion": "off",
+    "class-methods-use-this": "off",
+    "comma-dangle": "off",
+    "eqeqeq": "error",
+    "indent-legacy": 0,
+    "import/no-unresolved": 0,
+    "import/named": 0,
+    "import/namespace": 0,
+    "import/default": 0,
+    "import/no-cycle": "error",
+    "import/no-named-as-default-member": 0,
+    "import/order": [
+      "error",
+      {
+        "groups": [
+          "builtin",
+          "unknown",
+          "external",
+          "internal",
+          "sibling"
+        ],
+        "pathGroups": [
+          {
+            "pattern": "react",
+            "group": "builtin",
+            "position": "before"
+          }
+        ],
+        "pathGroupsExcludedImportTypes": [
+          "react"
+        ],
+        "newlines-between": "always-and-inside-groups",
+        "alphabetize": {
+          "order": "asc",
+          "caseInsensitive": false
+        }
+      }
+    ],
+    "indent": 0,
+    "no-param-reassign": [
+      2,
+      {
+        "props": false
+      }
+    ],
+    "no-tabs": [
+      "error",
+      {
+        "allowIndentationTabs": false
+      }
+    ],
+    "no-use-before-define": "off",
+    "no-unused-vars": ["warning", { "argsIgnorePattern": "^_" }],
+    "prettier/prettier": [
+      "error",
+      {
+        "arrowParens": "avoid",
+        "printWidth": 120,
+        "semi": false,
+        "singleQuote": true,
+        "tabWidth": 2,
+        "trailingComma": "none",
+        "useTabs": false
+      },
+      {
+        "usePrettierrc": true
+      }
+    ],
+    "quotes": [
+      "error",
+      "single",
+      {
+        "avoidEscape": true
+      }
+    ],
+    "sort-imports": [
+      "error",
+      {
+        "ignoreCase": false,
+        "ignoreDeclarationSort": true,
+        "ignoreMemberSort": false,
+        "memberSyntaxSortOrder": [
+          "none",
+          "all",
+          "multiple",
+          "single"
+        ]
+      }
+    ]
+	}
+}

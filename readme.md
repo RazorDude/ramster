@@ -1,0 +1,3 @@
+# Ramster
+
+NodeJS MVC framework

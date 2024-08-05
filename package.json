@@ -1,0 +1,43 @@
+{
+  "name": "ramster",
+  "version": "2.0.0-beta0",
+  "author": {
+    "name": "Rumen Rumenov",
+    "email": "mmetalonlyy@gmail.com"
+  },
+  "bugs": {
+    "url": "https://github.com/RazorDude/ramster/issues"
+  },
+  "deprecated": false,
+  "description": "An all-in-one NodeJS framework.",
+  "homepage": "https://github.com/RazorDude/ramster#readme",
+  "keywords": [
+    "nodejs",
+    "mvc",
+    "framework",
+    "ramster"
+  ],
+  "license": "MIT",
+  "main": "dist/index.js",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/RazorDude/ramster.git"
+  },
+  "scripts": {},
+  "types": "types/index.d.ts",
+  "devDependencies": {
+    "@types/node": "^18.19.33",
+    "@typescript-eslint/eslint-plugin": "^7.9.0",
+    "@typescript-eslint/parser": "^7.9.0",
+    "eslint": "^8.57.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-plugin-flowtype": "^8.0.3",
+    "eslint-plugin-header": "^3.1.1",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-prettier": "^5.1.3",
+    "typescript": "^5.4.5"
+  },
+  "engines": {
+    "node": ">=18.20.3"
+  }
+}
