@@ -125,8 +125,7 @@ export class Ramster extends RamsterModule<{}, {}> {
       let moduleIndex = newLoadOrder.indexOf(modulePath)
       if (moduleIndex === -1) {
         newLoadOrder.push(modulePath)
-      } else {
-        
+        moduleIndex = +newLoadOrder.length
       }
       if (unloadedModule.dependencies?.length) {
         const { dependencies } = unloadedModule
