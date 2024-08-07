@@ -44,7 +44,7 @@ export class Ramster extends RamsterModule<{}, {}> {
   }
 
   /**
-   * Imports all modules in ta directory recursively. Goes through all modules
+   * Imports all modules in the directory recursively. Goes through all modules
    * in a directory, importing them, their components and their submodules, and
    * mapping the list by the names of the modules, chained by a dot.
    */
@@ -105,6 +105,37 @@ export class Ramster extends RamsterModule<{}, {}> {
    * Loads a list of modules recuresively, based on a module map as generated
    * by the importModules method.
    */
-  async loadModules(moduleMap: Record<string, UnloadedModuleItem>): Promise<void> {
+  async loadModules(
+    moduleMap: Record<string, UnloadedModuleItem>,
+    loadOrder?: string[]
+  ):
+    Promise<void> {
+    let isRoot = true
+    let newLoadOrder: string[] = []
+    if (loadOrder) {
+      isRoot = false
+      newLoadOrder = loadOrder?.map(item => item)
+    }
+    for (const modulePath in moduleMap) {
+      const {
+        unloadedComponents,
+        unloadedModule,
+        unloadedSubmodules
+      } = moduleMap[modulePath]
+      let moduleIndex = newLoadOrder.indexOf(modulePath)
+      if (moduleIndex === -1) {
+        newLoadOrder.push(modulePath)
+      } else {
+        
+      }
+      if (unloadedModule.dependencies?.length) {
+        const { dependencies } = unloadedModule
+        for (const dependencyModulePath in dependencies) {
+          if (newLoadOrder.indexOf(dependencyModulePath) === -1) {
+            newLoadOrder.push(dependencyModulePath)
+          }
+        }
+      }
+    }
   }
 }
