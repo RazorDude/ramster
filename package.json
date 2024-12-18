@@ -22,7 +22,7 @@
     "cron": "^1.7.2",
     "csv": "^2.0.0",
     "deepmerge": "^2.2.1",
-    "express": "^4.17.1",
+    "express": "^4.21.2",
     "express-session": "^1.17.0",
     "fs-extra": "^5.0.0",
     "glob": "^7.1.6",
@@ -46,7 +46,7 @@
     "ssh2-promise": "0.0.9",
     "tsd-jsdoc": "^2.5.0",
     "webpack": "^4.41.5",
-    "webpack-dev-server": "^3.10.1",
+    "webpack-dev-server": "^5.2.0",
     "winston": "^2.4.4",
     "yargs": "^11.1.1"
   },
